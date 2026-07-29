@@ -142,6 +142,7 @@
                 </div>
                 <div class="form-group"><label>Description</label><textarea id="eDesc" rows="3" placeholder="Comment exécuter l'exercice..."></textarea></div>
                 <div class="form-group"><label>Conseils de sécurité</label><textarea id="eTips" rows="3" placeholder="Points clés à surveiller..."></textarea></div>
+                <div class="form-group"><label>GIF (URL)</label><input type="text" id="eGif" placeholder="https://..."></div>
                 <input type="hidden" id="eDay">
                 <input type="hidden" id="eIndex">
                 <div class="modal-actions">
@@ -154,199 +155,241 @@
 
     <script>
         // ============================================================
-        // DONNÉES AVEC DESCRIPTIONS ET CONSEILS
+        // DONNÉES PAR DÉFAUT - AVEC GIFS INTÉGRÉS
         // ============================================================
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
             'Jambes'
         ];
 
+        // GIFS PAR DÉFAUT (modifiables ici)
+        const DEFAULT_GIFS = {
+            'Développé couché': 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
+            'Squat': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Soulevé de terre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
+        };
+
         const DEFAULT_DATA = [
-            // LUNDI - Poitrine & Triceps
             [
-                { n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
+                { n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
                   desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux. Ne verrouillez pas les coudes en haut du mouvement.',
                   tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Gardez les poignets droits. Expirez en poussant, inspirez en descendant.' 
                 },
                 { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères. Redescendez en contrôlant jusqu\'au niveau des épaules.',
                   tips: 'Maintiens les poignets droits. Inspire en descendant, expire en poussant. Ne va pas trop bas pour protéger les épaules.' 
                 },
                 { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout entre deux poulies hautes. Saisissez les poignées, avancez d\'un pas. Ramenez les mains devant vous en croisant les poignets. Revenez lentement en position de départ.',
                   tips: 'Gardez les coudes légèrement fléchis. Concentrez-vous sur la contraction des pectoraux. Retour lent et contrôlé.'
                 },
                 { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Saisissez les barres parallèles. Descendez en fléchissant les coudes à 90°. Remontez en poussant sur les barres. Gardez le corps droit.',
                   tips: 'Ne descendez pas trop bas. Si trop difficile, utilisez un élastique. Pour cibler les triceps, gardez le buste vertical.'
                 },
                 { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Face à la poulie haute. Saisissez la barre ou la corde. Coudes près du corps, bloqués. Abaissez en tendant les bras vers le bas. Remontez en contrôlant à 90°.',
                   tips: 'Seuls les avant-bras bougent. Contractez fort les triceps en fin de mouvement. Ne balancez pas le buste.'
                 },
                 { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis, haltère à deux mains derrière la tête. Coudes vers le haut, près des oreilles. Abaissez derrière la tête. Remontez en tendant les bras au-dessus.',
                   tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos. Contrôlez la descente.'
                 }
             ],
-            // MARDI - Dos & Biceps
             [
                 { n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Pieds largeur d\'épaules, barre au-dessus des lacets. Saisissez la barre, dos droit. Poussez dans les talons pour vous lever. La barre reste collée aux jambes. Contractez les fessiers en haut.',
                   tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir. Engagez la sangle abdominale. Expirez en montant, inspirez en descendant.'
                 },
                 { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Penché en avant, dos droit. Tirez la barre vers le bas de la poitrine. Serrez les omoplates en haut. Redescendez en contrôlant.',
                   tips: 'Gardez le dos droit ! Tirez par les coudes, pas par les bras. Squeeze les omoplates en haut.'
                 },
                 { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis à la poulie haute. Saisissez la barre large. Tirez vers la poitrine. Contractez les dorsaux en bas. Remontez en contrôlant.',
                   tips: 'Gardez le buste stable. Tirez par les coudes. Squeeze les dorsaux en bas.'
                 },
                 { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis, pieds calés. Saisissez la poignée en V. Tirez vers le ventre. Serrez les omoplates. Relâchez en contrôlant.',
                   tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en fin de mouvement.'
                 },
                 { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout, barre en prise pronation. Coudes près du corps. Remontez la barre vers les épaules. Contractez les biceps en haut. Redescendez en contrôlant.',
                   tips: 'Gardez les coudes près du corps. Ne balancez pas le buste. Contractez les biceps en haut.'
                 },
                 { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout, haltères en prise neutre. Remontez vers les épaules. Ne tournez pas les poignets. Contractez les biceps.',
                   tips: 'Gardez les poignets droits. Contractez les biceps en haut. Ne balancez pas le buste.'
                 }
             ],
-            // MERCREDI - Jambes
             [
                 { n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Barre sur les épaules. Pieds largeur d\'épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol. Remontez en poussant dans les talons.',
                   tips: 'Dos droit, poitrine ouverte. Poussez dans les talons. Les genoux suivent la direction des pieds.'
                 },
                 { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Barre dans les mains. Genoux légèrement fléchis. Penchez-vous en avant. Barre le long des jambes. Remontez en contractant les fessiers.',
                   tips: 'Dos droit ! Sensation dans les ischio-jambiers. Contractez les fessiers en haut.'
                 },
                 { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis sur la machine. Pieds sur la plaque. Poussez en tendant les jambes. Revenez en contrôlant.',
                   tips: 'Dos plaqué contre le siège. Ne bloquez pas les genoux. Contrôlez la descente.'
                 },
                 { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Faites un grand pas en avant. Fléchissez les deux genoux à 90°. Poussez pour revenir. Alternez avec l\'autre jambe.',
                   tips: 'Genou avant ne dépasse pas les orteils. Dos droit, gainage engagé. Gardez le buste vertical.'
                 },
                 { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Allongé sur la machine. Rouleau sous les mollets. Ramenez les talons vers les fesses. Redescendez en contrôlant.',
                   tips: 'Gardez les hanches plaquées. Contractez les ischio-jambiers. Mouvement contrôlé.'
                 },
                 { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets. Redescendez en étirant.',
                   tips: 'Amplitude maximale. Montez haut, descendez bas. Contractez fort en haut.'
                 }
             ],
-            // JEUDI - Épaules & Cœur
             [
                 { n: 'Développé militaire', m: 'Épaules', s: 4, r: '6-8', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout ou assis. Barre au niveau des clavicules. Poussez au-dessus de la tête. Redescendez en contrôlant.',
                   tips: 'Gardez le buste stable. Ne poussez pas avec le dos. Contractez les épaules en haut.'
                 },
                 { n: 'Élévations latérales', m: 'Épaules', s: 3, r: '10-12', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout, haltères le long du corps. Levez les bras sur les côtés. Jusqu\'à hauteur des épaules. Redescendez en contrôlant.',
                   tips: 'Coudes légèrement fléchis. Ne montez pas trop haut. Contrôlez la descente.'
                 },
                 { n: 'Oiseau', m: 'Épaules', s: 3, r: '12-15', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Penché en avant, dos droit. Levez les bras sur les côtés. Serrez les omoplates. Redescendez en contrôlant.',
                   tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en haut.'
                 },
                 { n: 'Face Pull', m: 'Épaules', s: 3, r: '12-15', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Face à la poulie. Saisissez la corde. Tirez vers le visage. Écartez les mains en serrant les omoplates.',
                   tips: 'Gardez les coudes hauts. Squeeze les omoplates. Excellent pour la posture.'
                 },
                 { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Suspendu à une barre. Levez les jambes à 90°. Redescendez en contrôlant.',
                   tips: 'Ne balancez pas le corps. Engagez les abdominaux. Descendez lentement.'
                 },
                 { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'À genoux face à la poulie. Saisissez la corde derrière la tête. Fléchissez le buste. Contractez les abdominaux.',
                   tips: 'Gardez les hanches fixes. Contractez fort les abdominaux. Ne tirez pas avec les bras.'
                 }
             ],
-            // VENDREDI (identique à lundi)
             [
                 { n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
                   desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux. Ne verrouillez pas les coudes en haut du mouvement.',
                   tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Gardez les poignets droits. Expirez en poussant, inspirez en descendant.'
                 },
                 { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères. Redescendez en contrôlant jusqu\'au niveau des épaules.',
                   tips: 'Maintiens les poignets droits. Inspire en descendant, expire en poussant. Ne va pas trop bas pour protéger les épaules.'
                 },
                 { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout entre deux poulies hautes. Saisissez les poignées, avancez d\'un pas. Ramenez les mains devant vous en croisant les poignets. Revenez lentement en position de départ.',
                   tips: 'Gardez les coudes légèrement fléchis. Concentrez-vous sur la contraction des pectoraux. Retour lent et contrôlé.'
                 },
                 { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Saisissez les barres parallèles. Descendez en fléchissant les coudes à 90°. Remontez en poussant sur les barres. Gardez le corps droit.',
                   tips: 'Ne descendez pas trop bas. Si trop difficile, utilisez un élastique. Pour cibler les triceps, gardez le buste vertical.'
                 },
                 { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Face à la poulie haute. Saisissez la barre ou la corde. Coudes près du corps, bloqués. Abaissez en tendant les bras vers le bas. Remontez en contrôlant à 90°.',
                   tips: 'Seuls les avant-bras bougent. Contractez fort les triceps en fin de mouvement. Ne balancez pas le buste.'
                 },
                 { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis, haltère à deux mains derrière la tête. Coudes vers le haut, près des oreilles. Abaissez derrière la tête. Remontez en tendant les bras au-dessus.',
                   tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos. Contrôlez la descente.'
                 }
             ],
-            // SAMEDI (identique à mardi)
             [
                 { n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Pieds largeur d\'épaules, barre au-dessus des lacets. Saisissez la barre, dos droit. Poussez dans les talons pour vous lever. La barre reste collée aux jambes. Contractez les fessiers en haut.',
                   tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir. Engagez la sangle abdominale. Expirez en montant, inspirez en descendant.'
                 },
                 { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Penché en avant, dos droit. Tirez la barre vers le bas de la poitrine. Serrez les omoplates en haut. Redescendez en contrôlant.',
                   tips: 'Gardez le dos droit ! Tirez par les coudes, pas par les bras. Squeeze les omoplates en haut.'
                 },
                 { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis à la poulie haute. Saisissez la barre large. Tirez vers la poitrine. Contractez les dorsaux en bas. Remontez en contrôlant.',
                   tips: 'Gardez le buste stable. Tirez par les coudes. Squeeze les dorsaux en bas.'
                 },
                 { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis, pieds calés. Saisissez la poignée en V. Tirez vers le ventre. Serrez les omoplates. Relâchez en contrôlant.',
                   tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en fin de mouvement.'
                 },
                 { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout, barre en prise pronation. Coudes près du corps. Remontez la barre vers les épaules. Contractez les biceps en haut. Redescendez en contrôlant.',
                   tips: 'Gardez les coudes près du corps. Ne balancez pas le buste. Contractez les biceps en haut.'
                 },
                 { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout, haltères en prise neutre. Remontez vers les épaules. Ne tournez pas les poignets. Contractez les biceps.',
                   tips: 'Gardez les poignets droits. Contractez les biceps en haut. Ne balancez pas le buste.'
                 }
             ],
-            // DIMANCHE (identique à mercredi)
             [
                 { n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Barre sur les épaules. Pieds largeur d\'épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol. Remontez en poussant dans les talons.',
                   tips: 'Dos droit, poitrine ouverte. Poussez dans les talons. Les genoux suivent la direction des pieds.'
                 },
                 { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Barre dans les mains. Genoux légèrement fléchis. Penchez-vous en avant. Barre le long des jambes. Remontez en contractant les fessiers.',
                   tips: 'Dos droit ! Sensation dans les ischio-jambiers. Contractez les fessiers en haut.'
                 },
                 { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Assis sur la machine. Pieds sur la plaque. Poussez en tendant les jambes. Revenez en contrôlant.',
                   tips: 'Dos plaqué contre le siège. Ne bloquez pas les genoux. Contrôlez la descente.'
                 },
                 { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Faites un grand pas en avant. Fléchissez les deux genoux à 90°. Poussez pour revenir. Alternez avec l\'autre jambe.',
                   tips: 'Genou avant ne dépasse pas les orteils. Dos droit, gainage engagé. Gardez le buste vertical.'
                 },
                 { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Allongé sur la machine. Rouleau sous les mollets. Ramenez les talons vers les fesses. Redescendez en contrôlant.',
                   tips: 'Gardez les hanches plaquées. Contractez les ischio-jambiers. Mouvement contrôlé.'
                 },
                 { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                  gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                   desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets. Redescendez en étirant.',
                   tips: 'Amplitude maximale. Montez haut, descendez bas. Contractez fort en haut.'
                 }
@@ -365,34 +408,41 @@
         // INIT
         // ============================================================
         function init() {
-            const saved = localStorage.getItem('sportData');
-            if (saved) {
-                try {
-                    const d = JSON.parse(saved);
-                    data = d.data || DEFAULT_DATA;
-                    done = d.done || data.map(day => day.map(() => false));
-                    logs = d.logs || {};
-                } catch (e) { data = DEFAULT_DATA;
-                    done = data.map(day => day.map(() => false));
-                    logs = {}; }
-            } else {
-                data = DEFAULT_DATA;
-                done = data.map(day => day.map(() => false));
-                logs = {};
-            }
+            // On utilise TOUJOURS les données par défaut, pas de localStorage
+            data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            done = data.map(day => day.map(() => false));
+            logs = {};
             const today = new Date().getDay();
             currentDay = today === 0 ? 6 : today - 1;
             render();
         }
 
         function save() {
-            localStorage.setItem('sportData', JSON.stringify({ data, done, logs }));
+            // On sauvegarde seulement les logs (poids et répétitions) et les exercices complétés
+            localStorage.setItem('sportData', JSON.stringify({ done, logs }));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('sportData');
+            if (saved) {
+                try {
+                    const d = JSON.parse(saved);
+                    done = d.done || data.map(day => day.map(() => false));
+                    logs = d.logs || {};
+                } catch (e) { done = data.map(day => day.map(() => false));
+                    logs = {}; }
+            } else {
+                done = data.map(day => day.map(() => false));
+                logs = {};
+            }
         }
 
         // ============================================================
         // AFFICHAGE
         // ============================================================
         function render() {
+            loadData();
+
             document.querySelectorAll('.day-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === currentDay);
                 btn.onclick = () => { currentDay = i;
@@ -465,7 +515,6 @@
             const ex = data[day][i];
             if (!ex) return;
             ex.s = Math.max(1, (ex.s || 3) + delta);
-            save();
             render();
         }
 
@@ -484,7 +533,6 @@
                     ex.r = `${n}-${n+2}`;
                 }
             }
-            save();
             render();
         }
 
@@ -492,7 +540,6 @@
             if (!confirm('Supprimer ?')) return;
             data[day].splice(i, 1);
             if (done[day]) done[day].splice(i, 1);
-            save();
             render();
         }
 
@@ -508,6 +555,7 @@
             document.getElementById('eEmoji').value = '🏋️';
             document.getElementById('eDesc').value = '';
             document.getElementById('eTips').value = '';
+            document.getElementById('eGif').value = '';
             document.getElementById('eDay').value = currentDay;
             document.getElementById('eIndex').value = -1;
             document.getElementById('editModal').classList.add('active');
@@ -532,6 +580,7 @@
             document.getElementById('eEmoji').value = ex.e || '🏋️';
             document.getElementById('eDesc').value = ex.desc || '';
             document.getElementById('eTips').value = ex.tips || '';
+            document.getElementById('eGif').value = ex.gif || '';
             document.getElementById('eDay').value = day;
             document.getElementById('eIndex').value = i;
             document.getElementById('editModal').classList.add('active');
@@ -555,7 +604,8 @@
                 r: document.getElementById('eReps').value.trim(),
                 e: document.getElementById('eEmoji').value.trim() || '🏋️',
                 desc: document.getElementById('eDesc').value.trim(),
-                tips: document.getElementById('eTips').value.trim()
+                tips: document.getElementById('eTips').value.trim(),
+                gif: document.getElementById('eGif').value.trim() || 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
             };
 
             if (i === -1) {
@@ -572,11 +622,11 @@
                     ex.e = newEx.e;
                     ex.desc = newEx.desc;
                     ex.tips = newEx.tips;
+                    ex.gif = newEx.gif;
                 }
             }
-            save();
-            closeEdit();
             render();
+            closeEdit();
         }
 
         // ============================================================
@@ -593,7 +643,7 @@
             document.getElementById('detailTitle').textContent = '🏋️ ' + ex.n;
 
             const img = document.getElementById('detailImage');
-            if (ex.gif) {
+            if (ex.gif && ex.gif.trim() !== '') {
                 img.innerHTML = `<img src="${ex.gif}" alt="${ex.n}" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>🏋️</div>'">`;
             } else {
                 img.innerHTML = `<div class="no-img">🏋️</div>`;
@@ -624,7 +674,6 @@
             const ex = data[detailDay][detailIndex];
             if (ex) {
                 ex.gif = url;
-                save();
                 document.getElementById('detailImage').innerHTML =
                     `<img src="${url}" alt="${ex.n}" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>🏋️</div>'">`;
             }
