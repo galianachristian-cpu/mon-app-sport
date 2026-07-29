@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏋️ Mon Programme Hebdomadaire</title>
+    <title>🏋️ Mon Programme</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e17;color:#f0f4f8;padding:16px;max-width:850px;margin:0 auto}
@@ -20,8 +20,7 @@
         .day-btn.today{border-color:#b388ff;box-shadow:0 0 20px rgba(179,136,255,0.2)}
         .progress{text-align:center;color:#8ba0b8;margin-bottom:16px;font-size:0.9rem}
         .progress strong{color:#00d4ff}
-        .exercise-card{background:#111827;border:1px solid #2a3a4f;border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all 0.3s ease}
-        .exercise-card:hover{border-color:#00d4ff}
+        .exercise-card{background:#111827;border:1px solid #2a3a4f;border-radius:14px;padding:14px 16px;margin-bottom:10px}
         .exercise-card .top-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
         .exercise-card .emoji{font-size:1.8rem;width:46px;height:46px;border-radius:12px;background:#0a0e17;border:1px solid #2a3a4f;display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .exercise-card .info{flex:1;min-width:120px}
@@ -36,7 +35,7 @@
         .exercise-card .log input{width:44px;padding:3px 4px;border-radius:6px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.7rem;text-align:center}
         .exercise-card .check{width:30px;height:30px;border-radius:50%;border:2px solid #2a3a4f;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:transparent;transition:all 0.3s ease;flex-shrink:0}
         .exercise-card .check.done{background:#00e676;border-color:#00e676;color:#0a0e17}
-        .exercise-card .card-actions{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #2a3a4f;padding-top:8px;margin-top:8px;flex-wrap:wrap}
+        .exercise-card .card-actions{display:flex;gap:8px;border-top:1px solid #2a3a4f;padding-top:8px;margin-top:8px}
         .exercise-card .card-actions .action-btn{background:transparent;border:1px solid #2a3a4f;border-radius:6px;color:#8ba0b8;cursor:pointer;padding:4px 12px;font-size:0.7rem;font-family:inherit;transition:all 0.3s ease}
         .exercise-card .card-actions .action-btn:hover{background:#2a3a4f;color:#f0f4f8}
         .exercise-card .card-actions .action-btn.edit:hover{border-color:#00d4ff;color:#00d4ff}
@@ -48,7 +47,7 @@
         .modal .close{float:right;background:none;border:none;color:#8ba0b8;font-size:1.5rem;cursor:pointer;padding:0 4px}
         .modal .close:hover{color:#f0f4f8}
         .modal h2{font-size:1.3rem;margin-bottom:12px}
-        .modal .image-container{width:100%;background:#0a0e17;border:1px solid #2a3a4f;border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;min-height:200px;display:flex;align-items:center;justify-content:center}
+        .modal .image-container{width:100%;background:#0a0e17;border:1px solid #2a3a4f;border-radius:12px;overflow:hidden;margin-bottom:12px;min-height:200px;display:flex;align-items:center;justify-content:center}
         .modal .image-container img{width:100%;height:auto;max-height:280px;object-fit:contain}
         .modal .image-container .no-image{font-size:2rem;opacity:0.3;text-align:center;padding:20px}
         .modal .gif-input-section{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;background:#0a0e17;padding:12px;border-radius:10px;border:1px solid #2a3a4f}
@@ -86,8 +85,8 @@
 <body>
 
     <div class="header">
-        <h1>🏋️ Mon Programme Hebdomadaire</h1>
-        <p>📅 Du lundi au dimanche — Clique sur un jour</p>
+        <h1>🏋️ Mon Programme</h1>
+        <p>📅 Clique sur un jour</p>
     </div>
 
     <div class="day-selector" id="daySelector">
@@ -100,43 +99,41 @@
         <button class="day-btn" data-day="6">Dim<br><span class="sub">Jambes</span></button>
     </div>
 
-    <div class="weekday-indicator" id="weekdayIndicator">📅 Lundi — Programme Poitrine & Triceps</div>
+    <div class="weekday-indicator" id="weekdayIndicator">📅 Lundi — Poitrine & Triceps</div>
 
-    <div class="progress">✅ <strong id="doneCount">0</strong> / <span id="totalCount">0</span> terminés</div>
+    <div class="progress">✅ <strong id="doneCount">0</strong> / <span id="totalCount">0</span></div>
 
     <div id="exercisesContainer"></div>
 
-    <!-- MODAL DÉTAIL EXERCICE -->
+    <!-- MODAL DÉTAIL -->
     <div class="modal-overlay" id="detailModal">
         <div class="modal">
             <button class="close" onclick="closeDetail()">✕</button>
             <h2 id="detailTitle">🏋️ Exercice</h2>
             <div class="image-container" id="detailImage">
-                <div class="no-image">🏋️<br><span style="font-size:0.8rem;">Chargement...</span></div>
+                <div class="no-image">🏋️</div>
             </div>
             <div class="gif-input-section">
-                <input type="text" id="gifUrlInput" placeholder="Collez l'URL d'un GIF ici">
-                <button onclick="updateGif()">📥 Changer le GIF</button>
-                <div class="hint">💡 Utilisez Giphy.com ou Tenor.com</div>
+                <input type="text" id="gifUrlInput" placeholder="Collez l'URL d'un GIF">
+                <button onclick="updateGif()">📥 Changer</button>
             </div>
             <div class="stats" id="detailStats"></div>
             <div id="detailBody"></div>
-            <div class="image-credit">📸 GIFs de Giphy.com</div>
         </div>
     </div>
 
-    <!-- MODAL AJOUT/MODIFICATION EXERCICE -->
+    <!-- MODAL EDITION -->
     <div class="modal-overlay" id="exerciseModal">
         <div class="modal">
             <button class="close" onclick="closeModal()">✕</button>
-            <h2 id="modalTitle">➕ Ajouter un exercice</h2>
+            <h2 id="modalTitle">✏️ Modifier</h2>
             <form id="exerciseForm" onsubmit="saveExercise(event)">
                 <div class="form-group">
                     <label>Nom</label>
-                    <input type="text" id="exName" placeholder="Ex: Développé couché" required>
+                    <input type="text" id="exName" required>
                 </div>
                 <div class="form-group">
-                    <label>Groupe musculaire</label>
+                    <label>Groupe</label>
                     <select id="exMuscle">
                         <option value="Poitrine">Poitrine</option>
                         <option value="Triceps">Triceps</option>
@@ -150,42 +147,44 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Séries</label>
-                        <input type="number" id="exSets" value="3" min="1">
+                        <input type="number" id="exSets" min="1">
                     </div>
                     <div class="form-group">
                         <label>Répétitions</label>
-                        <input type="text" id="exReps" placeholder="8-12">
+                        <input type="text" id="exReps">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Emoji</label>
                     <select id="exEmoji">
-                        <option value="🏋️">🏋️ Haltère</option>
-                        <option value="💪">💪 Bras</option>
-                        <option value="🦵">🦵 Jambe</option>
-                        <option value="🔥">🔥 Intense</option>
-                        <option value="🎯">🎯 Ciblé</option>
-                        <option value="⚡">⚡ Explosif</option>
+                        <option value="🏋️">🏋️</option>
+                        <option value="💪">💪</option>
+                        <option value="🦵">🦵</option>
+                        <option value="🔥">🔥</option>
+                        <option value="🎯">🎯</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea id="exDescription" placeholder="Comment exécuter l'exercice..."></textarea>
+                    <textarea id="exDescription"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Conseils de sécurité</label>
-                    <textarea id="exTips" placeholder="Points clés à surveiller..."></textarea>
+                    <label>Conseils</label>
+                    <textarea id="exTips"></textarea>
                 </div>
-                <input type="hidden" id="exEditId" value="">
+                <input type="hidden" id="exEditId">
                 <div class="modal-actions">
                     <button type="button" class="btn-ghost" onclick="closeModal()">Annuler</button>
-                    <button type="submit" class="btn-primary" id="modalSubmitBtn">Ajouter</button>
+                    <button type="submit" class="btn-primary" id="modalSubmitBtn">Enregistrer</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
+        // ============================================================
+        // DONNÉES
+        // ============================================================
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
             'Jambes'
@@ -193,468 +192,126 @@
 
         const GIFS = {
             'Développé couché': 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
-            'Développé incliné haltères': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Écartés aux câbles': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Dips': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Extension triceps poulie haute': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Extension triceps au-dessus tête': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
             'Soulevé de terre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Rowing barre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Tirage vertical (Lat Pulldown)': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Tirage horizontal (Cable Row)': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Curl barre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Curl marteau': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Squat': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Soulevé de terre roumain': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Presse à jambes': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Fentes marchées': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Curl jambes allongé': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Mollets debout': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Développé militaire': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Élévations latérales': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Oiseau (Rear Delt Fly)': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Face Pull': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Relevé de jambes suspendu': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Crunch aux câbles': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
+            'Squat': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
         };
 
         const DEFAULT_EXERCISES = [
-            // LUNDI - Poitrine & Triceps
-            [{
-                name: 'Développé couché',
-                muscle: 'Poitrine',
-                sets: 4,
-                reps: '6-8',
-                emoji: '🏋️',
-                muscles: 'Pectoraux, Triceps, Épaules',
-                group: 'Poitrine',
-                description: '🏋️ Allongez-vous sur un banc plat, les pieds bien ancrés au sol.\n📌 Saisissez la barre avec une prise légèrement plus large que les épaules.\n⬇️ Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine.\n⬆️ Poussez vers le haut en contractant fortement les pectoraux.\n🚫 Ne verrouillez pas les coudes en haut du mouvement.',
-                tips: '🟢 Gardez les omoplates plaquées contre le banc.\n🟢 Contrôlez la descente.\n🟢 Gardez les poignets droits.\n🟢 Expirez en poussant, inspirez en descendant.'
-            }, {
-                name: 'Développé incliné haltères',
-                muscle: 'Poitrine',
-                sets: 3,
-                reps: '8-10',
-                emoji: '💪',
-                muscles: 'Pectoraux supérieurs, Triceps, Épaules',
-                group: 'Poitrine',
-                description: '🏋️ Banc incliné à 30-45°.\n📌 Un haltère dans chaque main.\n⬆️ Poussez vers le haut en rapprochant les haltères.\n⬇️ Redescendez en contrôlant jusqu\'au niveau des épaules.',
-                tips: '🟢 Maintiens les poignets droits.\n🟢 Inspire en descendant, expire en poussant.\n🟢 Ne va pas trop bas pour protéger les épaules.'
-            }, {
-                name: 'Écartés aux câbles',
-                muscle: 'Poitrine',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🎯',
-                muscles: 'Pectoraux, Épaules',
-                group: 'Poitrine',
-                description: '🏋️ Debout entre deux poulies hautes.\n📌 Saisissez les poignées, avancez d\'un pas.\n🔄 Ramenez les mains devant vous en croisant les poignets.\n⬅️ Revenez lentement en position de départ.',
-                tips: '🟢 Gardez les coudes légèrement fléchis.\n🟢 Concentrez-vous sur la contraction des pectoraux.\n🟢 Retour lent et contrôlé.'
-            }, {
-                name: 'Dips',
-                muscle: 'Triceps',
-                sets: 3,
-                reps: '10-12',
-                emoji: '💪',
-                muscles: 'Triceps, Pectoraux, Épaules',
-                group: 'Triceps',
-                description: '🏋️ Saisissez les barres parallèles.\n⬇️ Descendez en fléchissant les coudes à 90°.\n⬆️ Remontez en poussant sur les barres.\n📌 Gardez le corps droit.',
-                tips: '🟢 Ne descendez pas trop bas.\n🟢 Si trop difficile, utilisez un élastique.\n🟢 Pour cibler les triceps, gardez le buste vertical.'
-            }, {
-                name: 'Extension triceps poulie haute',
-                muscle: 'Triceps',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🎯',
-                muscles: 'Triceps',
-                group: 'Triceps',
-                description: '🏋️ Face à la poulie haute.\n📌 Saisissez la barre ou la corde.\n🔄 Coudes près du corps, bloqués.\n⬇️ Abaissez en tendant les bras vers le bas.\n⬆️ Remontez en contrôlant à 90°.',
-                tips: '🟢 Seuls les avant-bras bougent.\n🟢 Contractez fort les triceps en fin de mouvement.\n🟢 Ne balancez pas le buste.'
-            }, {
-                name: 'Extension triceps au-dessus tête',
-                muscle: 'Triceps',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🔥',
-                muscles: 'Triceps',
-                group: 'Triceps',
-                description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
-                tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
-            }],
-            // MARDI - Dos & Biceps
-            [{
-                name: 'Soulevé de terre',
-                muscle: 'Dos',
-                sets: 4,
-                reps: '5-6',
-                emoji: '🏋️',
-                muscles: 'Dos, Ischio-jambiers, Fessiers, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Pieds largeur d\'épaules, barre au-dessus des lacets.\n📌 Saisissez la barre, dos droit.\n⬆️ Poussez dans les talons pour vous lever.\n🔄 La barre reste collée aux jambes.\n💪 Contractez les fessiers en haut.',
-                tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir.\n🟢 Engagez la sangle abdominale.\n🟢 Expirez en montant, inspirez en descendant.'
-            }, {
-                name: 'Rowing barre',
-                muscle: 'Dos',
-                sets: 4,
-                reps: '8-10',
-                emoji: '💪',
-                muscles: 'Dos, Biceps, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Penché en avant, dos droit.\n📌 Tirez la barre vers le bas de la poitrine.\n🔄 Serrez les omoplates en haut.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez le dos droit !\n🟢 Tirez par les coudes, pas par les bras.\n🟢 Squeeze les omoplates en haut.'
-            }, {
-                name: 'Tirage vertical (Lat Pulldown)',
-                muscle: 'Dos',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🎯',
-                muscles: 'Dorsaux, Biceps, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Assis à la poulie haute.\n📌 Saisissez la barre large.\n⬇️ Tirez vers la poitrine.\n💪 Contractez les dorsaux en bas.\n⬆️ Remontez en contrôlant.',
-                tips: '🟢 Gardez le buste stable.\n🟢 Tirez par les coudes.\n🟢 Squeeze les dorsaux en bas.'
-            }, {
-                name: 'Tirage horizontal (Cable Row)',
-                muscle: 'Dos',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🔥',
-                muscles: 'Dos, Biceps, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Assis, pieds calés.\n📌 Saisissez la poignée en V.\n⬇️ Tirez vers le ventre.\n🔄 Serrez les omoplates.\n⬆️ Relâchez en contrôlant.',
-                tips: '🟢 Dos droit !\n🟢 Tirez par les coudes.\n🟢 Squeeze les omoplates en fin de mouvement.'
-            }, {
-                name: 'Curl barre',
-                muscle: 'Biceps',
-                sets: 3,
-                reps: '10-12',
-                emoji: '💪',
-                muscles: 'Biceps, Avant-bras',
-                group: 'Biceps',
-                description: '🏋️ Debout, barre en prise pronation.\n📌 Coudes près du corps.\n⬆️ Remontez la barre vers les épaules.\n💪 Contractez les biceps en haut.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez les coudes près du corps.\n🟢 Ne balancez pas le buste.\n🟢 Contractez les biceps en haut.'
-            }, {
-                name: 'Curl marteau',
-                muscle: 'Biceps',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🔥',
-                muscles: 'Biceps, Brachial, Avant-bras',
-                group: 'Biceps',
-                description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
-                tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
-            }],
-            // MERCREDI - Jambes
-            [{
-                name: 'Squat',
-                muscle: 'Jambes',
-                sets: 4,
-                reps: '6-8',
-                emoji: '🦵',
-                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Barre sur les épaules.\n📌 Pieds largeur d\'épaules.\n⬇️ Descendez comme pour vous asseoir.\n🔄 Cuisses parallèles au sol.\n⬆️ Remontez en poussant dans les talons.',
-                tips: '🟢 Dos droit, poitrine ouverte.\n🟢 Poussez dans les talons.\n🟢 Les genoux suivent la direction des pieds.'
-            }, {
-                name: 'Soulevé de terre roumain',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '8-10',
-                emoji: '🏋️',
-                muscles: 'Ischio-jambiers, Fessiers, Dos',
-                group: 'Jambes',
-                description: '🏋️ Barre dans les mains.\n📌 Genoux légèrement fléchis.\n⬇️ Penchez-vous en avant.\n🔄 Barre le long des jambes.\n⬆️ Remontez en contractant les fessiers.',
-                tips: '🟢 Dos droit !\n🟢 Sensation dans les ischio-jambiers.\n🟢 Contractez les fessiers en haut.'
-            }, {
-                name: 'Presse à jambes',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🦵',
-                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Assis sur la machine.\n📌 Pieds sur la plaque.\n⬆️ Poussez en tendant les jambes.\n⬇️ Revenez en contrôlant.',
-                tips: '🟢 Dos plaqué contre le siège.\n🟢 Ne bloquez pas les genoux.\n🟢 Contrôlez la descente.'
-            }, {
-                name: 'Fentes marchées',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '12 chaque',
-                emoji: '⚡',
-                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Faites un grand pas en avant.\n⬇️ Fléchissez les deux genoux à 90°.\n⬆️ Poussez pour revenir.\n🔄 Alternez avec l\'autre jambe.',
-                tips: '🟢 Genou avant ne dépasse pas les orteils.\n🟢 Dos droit, gainage engagé.\n🟢 Gardez le buste vertical.'
-            }, {
-                name: 'Curl jambes allongé',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🎯',
-                muscles: 'Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Allongé sur la machine.\n📌 Rouleau sous les mollets.\n⬇️ Ramenez les talons vers les fesses.\n⬆️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez les hanches plaquées.\n🟢 Contractez les ischio-jambiers.\n🟢 Mouvement contrôlé.'
-            }, {
-                name: 'Mollets debout',
-                muscle: 'Jambes',
-                sets: 4,
-                reps: '15-20',
-                emoji: '💪',
-                muscles: 'Mollets',
-                group: 'Jambes',
-                description: '🏋️ Debout sous les coussins.\n⬆️ Montez sur la pointe des pieds.\n💪 Contractez les mollets.\n⬇️ Redescendez en étirant.',
-                tips: '🟢 Amplitude maximale.\n🟢 Montez haut, descendez bas.\n🟢 Contractez fort en haut.'
-            }],
-            // JEUDI - Épaules & Cœur
-            [{
-                name: 'Développé militaire',
-                muscle: 'Épaules',
-                sets: 4,
-                reps: '6-8',
-                emoji: '🏋️',
-                muscles: 'Épaules, Triceps, Trapèzes',
-                group: 'Épaules',
-                description: '🏋️ Debout ou assis.\n📌 Barre au niveau des clavicules.\n⬆️ Poussez au-dessus de la tête.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez le buste stable.\n🟢 Ne poussez pas avec le dos.\n🟢 Contractez les épaules en haut.'
-            }, {
-                name: 'Élévations latérales',
-                muscle: 'Épaules',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🎯',
-                muscles: 'Épaules (Deltoïdes latéraux)',
-                group: 'Épaules',
-                description: '🏋️ Debout, haltères le long du corps.\n⬆️ Levez les bras sur les côtés.\n🔄 Jusqu\'à hauteur des épaules.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Coudes légèrement fléchis.\n🟢 Ne montez pas trop haut.\n🟢 Contrôlez la descente.'
-            }, {
-                name: 'Oiseau (Rear Delt Fly)',
-                muscle: 'Épaules',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🔥',
-                muscles: 'Épaules (Deltoïdes postérieurs), Trapèzes',
-                group: 'Épaules',
-                description: '🏋️ Penché en avant, dos droit.\n⬆️ Levez les bras sur les côtés.\n🔄 Serrez les omoplates.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Dos droit !\n🟢 Tirez par les coudes.\n🟢 Squeeze les omoplates en haut.'
-            }, {
-                name: 'Face Pull',
-                muscle: 'Épaules',
-                sets: 3,
-                reps: '12-15',
-                emoji: '💪',
-                muscles: 'Épaules (Deltoïdes postérieurs), Trapèzes',
-                group: 'Épaules',
-                description: '🏋️ Face à la poulie.\n📌 Saisissez la corde.\n⬇️ Tirez vers le visage.\n🔄 Écartez les mains en serrant les omoplates.',
-                tips: '🟢 Gardez les coudes hauts.\n🟢 Squeeze les omoplates.\n🟢 Excellent pour la posture.'
-            }, {
-                name: 'Relevé de jambes suspendu',
-                muscle: 'Cœur',
-                sets: 3,
-                reps: '15',
-                emoji: '🔥',
-                muscles: 'Abdominaux',
-                group: 'Cœur',
-                description: '🏋️ Suspendu à une barre.\n⬆️ Levez les jambes à 90°.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Ne balancez pas le corps.\n🟢 Engagez les abdominaux.\n🟢 Descendez lentement.'
-            }, {
-                name: 'Crunch aux câbles',
-                muscle: 'Cœur',
-                sets: 3,
-                reps: '14-20',
-                emoji: '🎯',
-                muscles: 'Abdominaux',
-                group: 'Cœur',
-                description: '🏋️ À genoux face à la poulie.\n📌 Saisissez la corde derrière la tête.\n⬇️ Fléchissez le buste.\n💪 Contractez les abdominaux.',
-                tips: '🟢 Gardez les hanches fixes.\n🟢 Contractez fort les abdominaux.\n🟢 Ne tirez pas avec les bras.'
-            }],
-            // VENDREDI - Poitrine & Triceps
-            [{
-                name: 'Développé couché',
-                muscle: 'Poitrine',
-                sets: 4,
-                reps: '6-8',
-                emoji: '🏋️',
-                muscles: 'Pectoraux, Triceps, Épaules',
-                group: 'Poitrine',
-                description: '🏋️ Allongez-vous sur un banc plat, les pieds bien ancrés au sol.\n📌 Saisissez la barre avec une prise légèrement plus large que les épaules.\n⬇️ Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine.\n⬆️ Poussez vers le haut en contractant fortement les pectoraux.\n🚫 Ne verrouillez pas les coudes en haut du mouvement.',
-                tips: '🟢 Gardez les omoplates plaquées contre le banc.\n🟢 Contrôlez la descente.\n🟢 Gardez les poignets droits.\n🟢 Expirez en poussant, inspirez en descendant.'
-            }, {
-                name: 'Développé incliné haltères',
-                muscle: 'Poitrine',
-                sets: 3,
-                reps: '8-10',
-                emoji: '💪',
-                muscles: 'Pectoraux supérieurs, Triceps, Épaules',
-                group: 'Poitrine',
-                description: '🏋️ Banc incliné à 30-45°.\n📌 Un haltère dans chaque main.\n⬆️ Poussez vers le haut en rapprochant les haltères.\n⬇️ Redescendez en contrôlant jusqu\'au niveau des épaules.',
-                tips: '🟢 Maintiens les poignets droits.\n🟢 Inspire en descendant, expire en poussant.\n🟢 Ne va pas trop bas pour protéger les épaules.'
-            }, {
-                name: 'Écartés aux câbles',
-                muscle: 'Poitrine',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🎯',
-                muscles: 'Pectoraux, Épaules',
-                group: 'Poitrine',
-                description: '🏋️ Debout entre deux poulies hautes.\n📌 Saisissez les poignées, avancez d\'un pas.\n🔄 Ramenez les mains devant vous en croisant les poignets.\n⬅️ Revenez lentement en position de départ.',
-                tips: '🟢 Gardez les coudes légèrement fléchis.\n🟢 Concentrez-vous sur la contraction des pectoraux.\n🟢 Retour lent et contrôlé.'
-            }, {
-                name: 'Dips',
-                muscle: 'Triceps',
-                sets: 3,
-                reps: '10-12',
-                emoji: '💪',
-                muscles: 'Triceps, Pectoraux, Épaules',
-                group: 'Triceps',
-                description: '🏋️ Saisissez les barres parallèles.\n⬇️ Descendez en fléchissant les coudes à 90°.\n⬆️ Remontez en poussant sur les barres.\n📌 Gardez le corps droit.',
-                tips: '🟢 Ne descendez pas trop bas.\n🟢 Si trop difficile, utilisez un élastique.\n🟢 Pour cibler les triceps, gardez le buste vertical.'
-            }, {
-                name: 'Extension triceps poulie haute',
-                muscle: 'Triceps',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🎯',
-                muscles: 'Triceps',
-                group: 'Triceps',
-                description: '🏋️ Face à la poulie haute.\n📌 Saisissez la barre ou la corde.\n🔄 Coudes près du corps, bloqués.\n⬇️ Abaissez en tendant les bras vers le bas.\n⬆️ Remontez en contrôlant à 90°.',
-                tips: '🟢 Seuls les avant-bras bougent.\n🟢 Contractez fort les triceps en fin de mouvement.\n🟢 Ne balancez pas le buste.'
-            }, {
-                name: 'Extension triceps au-dessus tête',
-                muscle: 'Triceps',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🔥',
-                muscles: 'Triceps',
-                group: 'Triceps',
-                description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
-                tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
-            }],
-            // SAMEDI - Dos & Biceps
-            [{
-                name: 'Soulevé de terre',
-                muscle: 'Dos',
-                sets: 4,
-                reps: '5-6',
-                emoji: '🏋️',
-                muscles: 'Dos, Ischio-jambiers, Fessiers, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Pieds largeur d\'épaules, barre au-dessus des lacets.\n📌 Saisissez la barre, dos droit.\n⬆️ Poussez dans les talons pour vous lever.\n🔄 La barre reste collée aux jambes.\n💪 Contractez les fessiers en haut.',
-                tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir.\n🟢 Engagez la sangle abdominale.\n🟢 Expirez en montant, inspirez en descendant.'
-            }, {
-                name: 'Rowing barre',
-                muscle: 'Dos',
-                sets: 4,
-                reps: '8-10',
-                emoji: '💪',
-                muscles: 'Dos, Biceps, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Penché en avant, dos droit.\n📌 Tirez la barre vers le bas de la poitrine.\n🔄 Serrez les omoplates en haut.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez le dos droit !\n🟢 Tirez par les coudes, pas par les bras.\n🟢 Squeeze les omoplates en haut.'
-            }, {
-                name: 'Tirage vertical (Lat Pulldown)',
-                muscle: 'Dos',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🎯',
-                muscles: 'Dorsaux, Biceps, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Assis à la poulie haute.\n📌 Saisissez la barre large.\n⬇️ Tirez vers la poitrine.\n💪 Contractez les dorsaux en bas.\n⬆️ Remontez en contrôlant.',
-                tips: '🟢 Gardez le buste stable.\n🟢 Tirez par les coudes.\n🟢 Squeeze les dorsaux en bas.'
-            }, {
-                name: 'Tirage horizontal (Cable Row)',
-                muscle: 'Dos',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🔥',
-                muscles: 'Dos, Biceps, Trapèzes',
-                group: 'Dos',
-                description: '🏋️ Assis, pieds calés.\n📌 Saisissez la poignée en V.\n⬇️ Tirez vers le ventre.\n🔄 Serrez les omoplates.\n⬆️ Relâchez en contrôlant.',
-                tips: '🟢 Dos droit !\n🟢 Tirez par les coudes.\n🟢 Squeeze les omoplates en fin de mouvement.'
-            }, {
-                name: 'Curl barre',
-                muscle: 'Biceps',
-                sets: 3,
-                reps: '10-12',
-                emoji: '💪',
-                muscles: 'Biceps, Avant-bras',
-                group: 'Biceps',
-                description: '🏋️ Debout, barre en prise pronation.\n📌 Coudes près du corps.\n⬆️ Remontez la barre vers les épaules.\n💪 Contractez les biceps en haut.\n⬇️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez les coudes près du corps.\n🟢 Ne balancez pas le buste.\n🟢 Contractez les biceps en haut.'
-            }, {
-                name: 'Curl marteau',
-                muscle: 'Biceps',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🔥',
-                muscles: 'Biceps, Brachial, Avant-bras',
-                group: 'Biceps',
-                description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
-                tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
-            }],
-            // DIMANCHE - Jambes
-            [{
-                name: 'Squat',
-                muscle: 'Jambes',
-                sets: 4,
-                reps: '6-8',
-                emoji: '🦵',
-                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Barre sur les épaules.\n📌 Pieds largeur d\'épaules.\n⬇️ Descendez comme pour vous asseoir.\n🔄 Cuisses parallèles au sol.\n⬆️ Remontez en poussant dans les talons.',
-                tips: '🟢 Dos droit, poitrine ouverte.\n🟢 Poussez dans les talons.\n🟢 Les genoux suivent la direction des pieds.'
-            }, {
-                name: 'Soulevé de terre roumain',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '8-10',
-                emoji: '🏋️',
-                muscles: 'Ischio-jambiers, Fessiers, Dos',
-                group: 'Jambes',
-                description: '🏋️ Barre dans les mains.\n📌 Genoux légèrement fléchis.\n⬇️ Penchez-vous en avant.\n🔄 Barre le long des jambes.\n⬆️ Remontez en contractant les fessiers.',
-                tips: '🟢 Dos droit !\n🟢 Sensation dans les ischio-jambiers.\n🟢 Contractez les fessiers en haut.'
-            }, {
-                name: 'Presse à jambes',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '10-12',
-                emoji: '🦵',
-                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Assis sur la machine.\n📌 Pieds sur la plaque.\n⬆️ Poussez en tendant les jambes.\n⬇️ Revenez en contrôlant.',
-                tips: '🟢 Dos plaqué contre le siège.\n🟢 Ne bloquez pas les genoux.\n🟢 Contrôlez la descente.'
-            }, {
-                name: 'Fentes marchées',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '12 chaque',
-                emoji: '⚡',
-                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Faites un grand pas en avant.\n⬇️ Fléchissez les deux genoux à 90°.\n⬆️ Poussez pour revenir.\n🔄 Alternez avec l\'autre jambe.',
-                tips: '🟢 Genou avant ne dépasse pas les orteils.\n🟢 Dos droit, gainage engagé.\n🟢 Gardez le buste vertical.'
-            }, {
-                name: 'Curl jambes allongé',
-                muscle: 'Jambes',
-                sets: 3,
-                reps: '12-15',
-                emoji: '🎯',
-                muscles: 'Ischio-jambiers',
-                group: 'Jambes',
-                description: '🏋️ Allongé sur la machine.\n📌 Rouleau sous les mollets.\n⬇️ Ramenez les talons vers les fesses.\n⬆️ Redescendez en contrôlant.',
-                tips: '🟢 Gardez les hanches plaquées.\n🟢 Contractez les ischio-jambiers.\n🟢 Mouvement contrôlé.'
-            }, {
-                name: 'Mollets debout',
-                muscle: 'Jambes',
-                sets: 4,
-                reps: '15-20',
-                emoji: '💪',
-                muscles: 'Mollets',
-                group: 'Jambes',
-                description: '🏋️ Debout sous les coussins.\n⬆️ Montez sur la pointe des pieds.\n💪 Contractez les mollets.\n⬇️ Redescendez en étirant.',
-                tips: '🟢 Amplitude maximale.\n🟢 Montez haut, descendez bas.\n🟢 Contractez fort en haut.'
-            }]
+            // LUNDI
+            [{ name: 'Développé couché', muscle: 'Poitrine', sets: 4, reps: '6-8', emoji: '🏋️', muscles: 'Pectoraux, Triceps',
+                    description: 'Allongez-vous sur un banc plat.',
+                    tips: 'Gardez les omoplates plaquées.' },
+                { name: 'Développé incliné haltères', muscle: 'Poitrine', sets: 3, reps: '8-10', emoji: '💪',
+                    muscles: 'Pectoraux supérieurs', description: 'Banc incliné à 30-45°.',
+                    tips: 'Maintiens les poignets droits.' },
+                { name: 'Écartés aux câbles', muscle: 'Poitrine', sets: 3, reps: '12-15', emoji: '🎯',
+                    muscles: 'Pectoraux', description: 'Debout entre deux poulies.',
+                    tips: 'Gardez les coudes fléchis.' },
+                { name: 'Dips', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Triceps',
+                    description: 'Saisissez les barres parallèles.', tips: 'Ne descendez pas trop bas.' },
+                { name: 'Extension triceps poulie haute', muscle: 'Triceps', sets: 3, reps: '12-15', emoji: '🎯',
+                    muscles: 'Triceps', description: 'Face à la poulie haute.',
+                    tips: 'Seuls les avant-bras bougent.' },
+                { name: 'Extension triceps au-dessus tête', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '🔥',
+                    muscles: 'Triceps', description: 'Assis, haltère derrière la tête.',
+                    tips: 'Coudes près des oreilles.' }
+            ],
+            // MARDI
+            [{ name: 'Soulevé de terre', muscle: 'Dos', sets: 4, reps: '5-6', emoji: '🏋️',
+                    muscles: 'Dos, Ischio-jambiers', description: 'Pieds largeur épaules.',
+                    tips: 'DOS DROIT ABSOLUMENT !' },
+                { name: 'Rowing barre', muscle: 'Dos', sets: 4, reps: '8-10', emoji: '💪', muscles: 'Dos, Biceps',
+                    description: 'Penché en avant, dos droit.', tips: 'Tirez par les coudes.' },
+                { name: 'Tirage vertical', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🎯', muscles: 'Dorsaux',
+                    description: 'Assis à la poulie haute.', tips: 'Tirez par les coudes.' },
+                { name: 'Tirage horizontal', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🔥', muscles: 'Dos',
+                    description: 'Assis, pieds calés.', tips: 'Squeeze les omoplates.' },
+                { name: 'Curl barre', muscle: 'Biceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Biceps',
+                    description: 'Debout, barre en prise pronation.', tips: 'Coudes près du corps.' },
+                { name: 'Curl marteau', muscle: 'Biceps', sets: 3, reps: '12-15', emoji: '🔥', muscles: 'Biceps',
+                    description: 'Debout, haltères en prise neutre.', tips: 'Poignets droits.' }
+            ],
+            // MERCREDI
+            [{ name: 'Squat', muscle: 'Jambes', sets: 4, reps: '6-8', emoji: '🦵', muscles: 'Quadriceps, Fessiers',
+                    description: 'Barre sur les épaules.', tips: 'Dos droit, poussez dans les talons.' },
+                { name: 'Soulevé de terre roumain', muscle: 'Jambes', sets: 3, reps: '8-10', emoji: '🏋️',
+                    muscles: 'Ischio-jambiers', description: 'Barre dans les mains.',
+                    tips: 'Dos droit !' },
+                { name: 'Presse à jambes', muscle: 'Jambes', sets: 3, reps: '10-12', emoji: '🦵',
+                    muscles: 'Quadriceps', description: 'Assis sur la machine.',
+                    tips: 'Dos plaqué.' },
+                { name: 'Fentes marchées', muscle: 'Jambes', sets: 3, reps: '12 chaque', emoji: '⚡',
+                    muscles: 'Quadriceps', description: 'Grand pas en avant.',
+                    tips: 'Genou avant ne dépasse pas les orteils.' },
+                { name: 'Curl jambes allongé', muscle: 'Jambes', sets: 3, reps: '12-15', emoji: '🎯',
+                    muscles: 'Ischio-jambiers', description: 'Allongé sur la machine.',
+                    tips: 'Hanches plaquées.' },
+                { name: 'Mollets debout', muscle: 'Jambes', sets: 4, reps: '15-20', emoji: '💪', muscles: 'Mollets',
+                    description: 'Debout sous les coussins.', tips: 'Amplitude maximale.' }
+            ],
+            // JEUDI
+            [{ name: 'Développé militaire', muscle: 'Épaules', sets: 4, reps: '6-8', emoji: '🏋️',
+                    muscles: 'Épaules', description: 'Debout ou assis.', tips: 'Buste stable.' },
+                { name: 'Élévations latérales', muscle: 'Épaules', sets: 3, reps: '10-12', emoji: '🎯',
+                    muscles: 'Deltoïdes', description: 'Haltères le long du corps.',
+                    tips: 'Coudes légèrement fléchis.' },
+                { name: 'Oiseau', muscle: 'Épaules', sets: 3, reps: '12-15', emoji: '🔥', muscles: 'Deltoïdes post.',
+                    description: 'Penché en avant.', tips: 'Dos droit.' },
+                { name: 'Face Pull', muscle: 'Épaules', sets: 3, reps: '12-15', emoji: '💪', muscles: 'Deltoïdes post.',
+                    description: 'Face à la poulie.', tips: 'Coudes hauts.' },
+                { name: 'Relevé de jambes suspendu', muscle: 'Cœur', sets: 3, reps: '15', emoji: '🔥',
+                    muscles: 'Abdominaux', description: 'Suspendu à une barre.',
+                    tips: 'Ne balancez pas.' },
+                { name: 'Crunch aux câbles', muscle: 'Cœur', sets: 3, reps: '14-20', emoji: '🎯', muscles: 'Abdominaux',
+                    description: 'À genoux face à la poulie.', tips: 'Hanches fixes.' }
+            ],
+            // VENDREDI (identique à lundi)
+            [{ name: 'Développé couché', muscle: 'Poitrine', sets: 4, reps: '6-8', emoji: '🏋️', muscles: 'Pectoraux',
+                    description: 'Allongez-vous sur un banc plat.', tips: 'Omoplates plaquées.' },
+                { name: 'Développé incliné haltères', muscle: 'Poitrine', sets: 3, reps: '8-10', emoji: '💪',
+                    muscles: 'Pectoraux sup.', description: 'Banc incliné.', tips: 'Poignets droits.' },
+                { name: 'Écartés aux câbles', muscle: 'Poitrine', sets: 3, reps: '12-15', emoji: '🎯', muscles: 'Pectoraux',
+                    description: 'Debout entre deux poulies.', tips: 'Coudes fléchis.' },
+                { name: 'Dips', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Triceps',
+                    description: 'Barres parallèles.', tips: 'Ne descendez pas trop bas.' },
+                { name: 'Extension triceps poulie haute', muscle: 'Triceps', sets: 3, reps: '12-15', emoji: '🎯',
+                    muscles: 'Triceps', description: 'Face à la poulie.', tips: 'Avant-bras bougent.' },
+                { name: 'Extension triceps au-dessus tête', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '🔥',
+                    muscles: 'Triceps', description: 'Assis, haltère derrière la tête.', tips: 'Coudes près des oreilles.' }
+            ],
+            // SAMEDI (identique à mardi)
+            [{ name: 'Soulevé de terre', muscle: 'Dos', sets: 4, reps: '5-6', emoji: '🏋️', muscles: 'Dos',
+                    description: 'Pieds largeur épaules.', tips: 'DOS DROIT !' },
+                { name: 'Rowing barre', muscle: 'Dos', sets: 4, reps: '8-10', emoji: '💪', muscles: 'Dos',
+                    description: 'Penché en avant.', tips: 'Tirez par les coudes.' },
+                { name: 'Tirage vertical', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🎯', muscles: 'Dos',
+                    description: 'Assis à la poulie.', tips: 'Tirez par les coudes.' },
+                { name: 'Tirage horizontal', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🔥', muscles: 'Dos',
+                    description: 'Assis, pieds calés.', tips: 'Squeeze les omoplates.' },
+                { name: 'Curl barre', muscle: 'Biceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Biceps',
+                    description: 'Debout, barre en prise.', tips: 'Coudes près du corps.' },
+                { name: 'Curl marteau', muscle: 'Biceps', sets: 3, reps: '12-15', emoji: '🔥', muscles: 'Biceps',
+                    description: 'Debout, haltères.', tips: 'Poignets droits.' }
+            ],
+            // DIMANCHE (identique à mercredi)
+            [{ name: 'Squat', muscle: 'Jambes', sets: 4, reps: '6-8', emoji: '🦵', muscles: 'Jambes',
+                    description: 'Barre sur les épaules.', tips: 'Dos droit.' },
+                { name: 'Soulevé de terre roumain', muscle: 'Jambes', sets: 3, reps: '8-10', emoji: '🏋️',
+                    muscles: 'Jambes', description: 'Barre dans les mains.', tips: 'Dos droit !' },
+                { name: 'Presse à jambes', muscle: 'Jambes', sets: 3, reps: '10-12', emoji: '🦵', muscles: 'Jambes',
+                    description: 'Assis sur la machine.', tips: 'Dos plaqué.' },
+                { name: 'Fentes marchées', muscle: 'Jambes', sets: 3, reps: '12 chaque', emoji: '⚡', muscles: 'Jambes',
+                    description: 'Grand pas en avant.', tips: 'Genou avant.' },
+                { name: 'Curl jambes allongé', muscle: 'Jambes', sets: 3, reps: '12-15', emoji: '🎯', muscles: 'Jambes',
+                    description: 'Allongé sur la machine.', tips: 'Hanches plaquées.' },
+                { name: 'Mollets debout', muscle: 'Jambes', sets: 4, reps: '15-20', emoji: '💪', muscles: 'Jambes',
+                    description: 'Debout sous les coussins.', tips: 'Amplitude maximale.' }
+            ]
         ];
 
+        // ============================================================
+        // ETAT
+        // ============================================================
         let currentDay = 0;
         let completed = [];
         let logs = {};
@@ -662,6 +319,9 @@
         let currentDetailDay = 0;
         let currentDetailIndex = 0;
 
+        // ============================================================
+        // INIT
+        // ============================================================
         function init() {
             const saved = localStorage.getItem('sportApp_week');
             if (saved) {
@@ -751,10 +411,7 @@
                         <div class="top-row" onclick="showDetail(${currentDay}, ${index})">
                             <div class="emoji">${ex.emoji}</div>
                             <div class="info">
-                                <div class="name">
-                                    ${ex.name}
-                                    <span class="muscle">${ex.muscle}</span>
-                                </div>
+                                <div class="name">${ex.name} <span class="muscle">${ex.muscle}</span></div>
                                 <div class="sets-reps">
                                     <span class="label">📊 Séries</span>
                                     <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, -1)">−</button>
@@ -805,6 +462,9 @@
             document.getElementById('totalCount').textContent = total;
         }
 
+        // ============================================================
+        // DETAIL
+        // ============================================================
         function showDetail(day, index) {
             const ex = exercises[day][index];
             currentDetailDay = day;
@@ -812,12 +472,11 @@
             document.getElementById('detailTitle').textContent = `🏋️ ${ex.name}`;
             const imageContainer = document.getElementById('detailImage');
             const gifUrl = ex.gif || '';
-            if (gifUrl && gifUrl.trim() !== '') {
+            if (gifUrl) {
                 imageContainer.innerHTML =
-                    `<img src="${gifUrl}" alt="${ex.name}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>GIF indisponible<br>Collez une nouvelle URL ci-dessous</span></div>'">`;
+                    `<img src="${gifUrl}" alt="${ex.name}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️</div>'">`;
             } else {
-                imageContainer.innerHTML =
-                    `<div class="no-image">🏋️<br><span style="font-size:0.8rem;">Aucun GIF<br>Collez une URL ci-dessous</span></div>`;
+                imageContainer.innerHTML = `<div class="no-image">🏋️</div>`;
             }
             document.getElementById('gifUrlInput').value = gifUrl || '';
             document.getElementById('detailStats').innerHTML =
@@ -829,19 +488,34 @@
             const musclesList = (ex.muscles || ex.muscle || '').split(',').map(m => m.trim());
             document.getElementById('detailBody').innerHTML = `
                 <div class="section"><h4>🎯 Muscles ciblés</h4><div class="muscles">${musclesList.map(m => `<span class="pill">${m}</span>`).join('')}</div></div>
-                <div class="section"><h4>📝 Description</h4><p>${ex.description || 'Aucune description disponible.'}</p></div>
-                <div class="section"><h4>⚠️ Conseils de sécurité</h4><div class="tips"><p>${ex.tips || 'Aucun conseil spécifique.'}</p></div></div>
+                <div class="section"><h4>📝 Description</h4><p>${ex.description || 'Aucune description.'}</p></div>
+                <div class="section"><h4>⚠️ Conseils</h4><div class="tips"><p>${ex.tips || 'Aucun conseil.'}</p></div></div>
             `;
             document.getElementById('detailModal').classList.add('active');
         }
 
         function closeDetail() { document.getElementById('detailModal').classList.remove('active'); }
 
+        function updateGif() {
+            const url = document.getElementById('gifUrlInput').value.trim();
+            if (!url) return;
+            const ex = exercises[currentDetailDay][currentDetailIndex];
+            if (ex) { ex.gif = url;
+                saveData();
+                document.getElementById('detailImage').innerHTML = `<img src="${url}" alt="GIF" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️</div>'">`; }
+        }
+
+        // ============================================================
+        // EDITION - LE BOUTON MODIFIER !
+        // ============================================================
         function editExercise(exId) {
             const ex = exercises[currentDay]?.find(e => e.id === exId);
-            if (!ex) return;
-            document.getElementById('modalTitle').textContent = '✏️ Modifier l\'exercice';
-            document.getElementById('modalSubmitBtn').textContent = 'Modifier';
+            if (!ex) {
+                showToast('Exercice introuvable');
+                return;
+            }
+            document.getElementById('modalTitle').textContent = '✏️ Modifier ' + ex.name;
+            document.getElementById('modalSubmitBtn').textContent = 'Enregistrer';
             document.getElementById('exEditId').value = exId;
             document.getElementById('exName').value = ex.name;
             document.getElementById('exMuscle').value = ex.muscle;
@@ -854,14 +528,14 @@
         }
 
         function deleteExercise(exId) {
-            if (!confirm('Supprimer cet exercice ?')) return;
+            if (!confirm('Supprimer ?')) return;
             const idx = exercises[currentDay]?.findIndex(e => e.id === exId);
             if (idx !== -1) {
                 exercises[currentDay].splice(idx, 1);
                 if (completed[currentDay]) delete completed[currentDay][exId];
                 saveData();
                 renderExercises();
-                showToast('🗑️ Exercice supprimé', 'info');
+                showToast('🗑️ Supprimé');
             }
         }
 
@@ -874,12 +548,11 @@
             const muscle = document.getElementById('exMuscle').value;
             const sets = parseInt(document.getElementById('exSets').value) || 3;
             const reps = document.getElementById('exReps').value.trim();
-            const emoji = document.getElementById('exEmoji').value || '🏋️';
+            const emoji = document.getElementById('exEmoji').value;
             const description = document.getElementById('exDescription').value.trim();
             const tips = document.getElementById('exTips').value.trim();
 
-            if (!name) { showToast('Veuillez entrer un nom.', 'error'); return; }
-            if (!exercises[currentDay]) exercises[currentDay] = [];
+            if (!name) { showToast('Entrez un nom'); return; }
 
             if (id) {
                 const ex = exercises[currentDay].find(e => e.id === id);
@@ -892,7 +565,7 @@
                     ex.description = description || undefined;
                     ex.tips = tips || undefined;
                 }
-                showToast('✅ Exercice modifié !', 'success');
+                showToast('✅ Modifié !');
             } else {
                 exercises[currentDay].push({
                     id: 'ex' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -905,41 +578,25 @@
                     tips: tips || undefined,
                     muscles: muscle
                 });
-                showToast('✅ Exercice ajouté !', 'success');
+                showToast('✅ Ajouté !');
             }
             saveData();
             closeModal();
             renderExercises();
         }
 
-        function updateGif() {
-            const url = document.getElementById('gifUrlInput').value.trim();
-            if (!url) { showToast('⚠️ Veuillez coller une URL de GIF'); return; }
-            const imageContainer = document.getElementById('detailImage');
-            imageContainer.innerHTML =
-                `<img src="${url}" alt="GIF" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>Erreur de chargement</span></div>'">`;
-            const ex = exercises[currentDetailDay][currentDetailIndex];
-            if (ex) { ex.gif = url;
-                saveData();
-                showToast('✅ GIF sauvegardé !'); }
-        }
-
         function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.style.cssText =
-                `position:fixed;bottom:20px;right:20px;background:#111827;border:1px solid #2a3a4f;border-radius:12px;padding:12px 20px;color:#f0f4f8;font-size:0.9rem;z-index:2000;animation:fadeIn 0.3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.5)`;
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300); }, 2000);
+            const t = document.createElement('div');
+            t.style.cssText =
+                'position:fixed;bottom:20px;right:20px;background:#111827;border:1px solid #2a3a4f;border-radius:12px;padding:12px 20px;color:#f0f4f8;z-index:2000;font-size:0.9rem;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
         }
 
+        document.addEventListener('DOMContentLoaded', init);
         document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) closeDetail(); });
         document.getElementById('exerciseModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeDetail();
-                closeModal(); } });
-        document.addEventListener('DOMContentLoaded', init);
 
         window.showDetail = showDetail;
         window.closeDetail = closeDetail;
@@ -953,6 +610,5 @@
         window.closeModal = closeModal;
         window.saveExercise = saveExercise;
     </script>
-
 </body>
 </html>
