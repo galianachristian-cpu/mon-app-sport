@@ -68,8 +68,19 @@
         .modal .muscles{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
         .modal .muscles .pill{padding:2px 10px;border-radius:20px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);font-size:0.6rem;font-weight:600;color:#00d4ff}
         .modal .image-credit{font-size:0.5rem;color:#4a5a6a;text-align:center;margin-top:8px}
+        .modal .form-group{margin-bottom:16px}
+        .modal .form-group label{display:block;font-size:0.75rem;font-weight:600;color:#8ba0b8;margin-bottom:4px}
+        .modal .form-group input,.modal .form-group select,.modal .form-group textarea{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.9rem;font-family:inherit}
+        .modal .form-group input:focus,.modal .form-group select:focus,.modal .form-group textarea:focus{outline:none;border-color:#00d4ff}
+        .modal .form-group textarea{resize:vertical;min-height:60px}
+        .modal .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .modal .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+        .btn-ghost{background:transparent;color:#8ba0b8;border:1px solid #2a3a4f;padding:8px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.3s ease}
+        .btn-ghost:hover{background:#1a2332;color:#f0f4f8}
+        .btn-primary{background:#00d4ff;color:#0a0e17;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.3s ease}
+        .btn-primary:hover{background:#00b8d4}
         @media (max-width:600px){.day-selector{grid-template-columns:repeat(7,1fr);gap:3px}.day-btn{font-size:0.5rem;padding:8px 2px}.day-btn .sub{font-size:0.4rem}}
-        @media (max-width:480px){.day-selector{grid-template-columns:repeat(4,1fr);gap:4px}.day-btn{font-size:0.6rem;padding:8px 4px}.exercise-card{padding:12px}.exercise-card .top-row{gap:10px}.exercise-card .info .name{font-size:0.85rem}.modal{padding:16px}.modal .stats{grid-template-columns:1fr 1fr}.modal .image-container{min-height:150px}.modal .image-container img{max-height:200px}.modal .gif-input-section{flex-direction:column}.modal .gif-input-section button{width:100%}}
+        @media (max-width:480px){.day-selector{grid-template-columns:repeat(4,1fr);gap:4px}.day-btn{font-size:0.6rem;padding:8px 4px}.exercise-card{padding:12px}.exercise-card .top-row{gap:10px}.exercise-card .info .name{font-size:0.85rem}.modal{padding:16px}.modal .stats{grid-template-columns:1fr 1fr}.modal .image-container{min-height:150px}.modal .image-container img{max-height:200px}.modal .gif-input-section{flex-direction:column}.modal .gif-input-section button{width:100%}.modal .form-row{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -95,6 +106,7 @@
 
     <div id="exercisesContainer"></div>
 
+    <!-- MODAL DÉTAIL EXERCICE -->
     <div class="modal-overlay" id="detailModal">
         <div class="modal">
             <button class="close" onclick="closeDetail()">✕</button>
@@ -113,6 +125,7 @@
         </div>
     </div>
 
+    <!-- MODAL AJOUT/MODIFICATION EXERCICE -->
     <div class="modal-overlay" id="exerciseModal">
         <div class="modal">
             <button class="close" onclick="closeModal()">✕</button>
@@ -165,8 +178,8 @@
                 </div>
                 <input type="hidden" id="exEditId" value="">
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-                    <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Ajouter</button>
+                    <button type="button" class="btn-ghost" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn-primary" id="modalSubmitBtn">Ajouter</button>
                 </div>
             </form>
         </div>
@@ -454,7 +467,7 @@
                 description: '🏋️ À genoux face à la poulie.\n📌 Saisissez la corde derrière la tête.\n⬇️ Fléchissez le buste.\n💪 Contractez les abdominaux.',
                 tips: '🟢 Gardez les hanches fixes.\n🟢 Contractez fort les abdominaux.\n🟢 Ne tirez pas avec les bras.'
             }],
-            // VENDREDI - Poitrine & Triceps (identique à Lundi)
+            // VENDREDI - Poitrine & Triceps
             [{
                 name: 'Développé couché',
                 muscle: 'Poitrine',
@@ -516,7 +529,7 @@
                 description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
                 tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
             }],
-            // SAMEDI - Dos & Biceps (identique à Mardi)
+            // SAMEDI - Dos & Biceps
             [{
                 name: 'Soulevé de terre',
                 muscle: 'Dos',
@@ -578,7 +591,7 @@
                 description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
                 tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
             }],
-            // DIMANCHE - Jambes (identique à Mercredi)
+            // DIMANCHE - Jambes
             [{
                 name: 'Squat',
                 muscle: 'Jambes',
@@ -940,6 +953,6 @@
         window.closeModal = closeModal;
         window.saveExercise = saveExercise;
     </script>
+
 </body>
 </html>
-Version complète avec tous les exercices
