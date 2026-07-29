@@ -9,6 +9,19 @@
         body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e17;color:#f0f4f8;padding:16px;max-width:850px;margin:0 auto}
         .header{display:flex;justify-content:space-between;align-items:center;padding:20px 0 10px;border-bottom:2px solid #2a3a4f;margin-bottom:16px;flex-wrap:wrap;gap:10px}
         .header h1{font-size:1.8rem;background:linear-gradient(135deg,#00d4ff,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .header-right{display:flex;align-items:center;gap:12px}
+        
+        /* VOYANT DE SAUVEGARDE */
+        .save-indicator{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;border:1px solid #2a3a4f;background:#111827;font-size:0.75rem}
+        .save-dot{width:12px;height:12px;border-radius:50%;display:inline-block;transition:all 0.5s ease}
+        .save-dot.saving{background:#ffab00;box-shadow:0 0 12px rgba(255,171,0,0.4);animation:pulse 0.8s ease-in-out infinite}
+        .save-dot.saved{background:#00e676;box-shadow:0 0 12px rgba(0,230,118,0.3)}
+        .save-dot.error{background:#ff5252;box-shadow:0 0 12px rgba(255,82,82,0.3)}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+        .save-text{color:#8ba0b8;font-weight:600}
+        .save-text.saved{color:#00e676}
+        .save-text.error{color:#ff5252}
+        
         .btn-add{background:#00d4ff;color:#0a0e17;border:none;padding:8px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.85rem;font-family:inherit;transition:background 0.3s}
         .btn-add:hover{background:#00b8d4}
         .day-selector{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
@@ -16,7 +29,6 @@
         .day-btn:hover{border-color:#00d4ff;color:#f0f4f8}
         .day-btn.active{border-color:#00d4ff;background:#00d4ff;color:#0a0e17}
         .day-btn .sub{display:block;font-weight:400;font-size:0.5rem;opacity:0.7;margin-top:2px}
-        .day-btn.today{border-color:#b388ff;box-shadow:0 0 20px rgba(179,136,255,0.2)}
         .weekday-indicator{text-align:center;padding:8px 16px;background:#00d4ff;color:#0a0e17;border-radius:12px;font-weight:700;font-size:1rem;margin-bottom:16px}
         .progress{text-align:center;color:#8ba0b8;margin-bottom:16px;font-size:0.9rem}
         .progress strong{color:#00d4ff}
@@ -80,7 +92,14 @@
 
     <div class="header">
         <h1>🏋️ Mon Programme</h1>
-        <button class="btn-add" onclick="openAdd()">➕ Ajouter</button>
+        <div class="header-right">
+            <!-- VOYANT DE SAUVEGARDE -->
+            <div class="save-indicator" id="saveIndicator">
+                <span class="save-dot" id="saveDot"></span>
+                <span class="save-text" id="saveText">Prêt</span>
+            </div>
+            <button class="btn-add" onclick="openAdd()">➕ Ajouter</button>
+        </div>
     </div>
 
     <div class="day-selector" id="daySelector">
@@ -406,53 +425,119 @@
         let logs = {};
 
         // ============================================================
+        // VOYANT DE SAUVEGARDE
+        // ============================================================
+        function setSaveStatus(status, message) {
+            const dot = document.getElementById('saveDot');
+            const text = document.getElementById('saveText');
+            
+            // Enlever toutes les classes
+            dot.className = 'save-dot';
+            text.className = 'save-text';
+            
+            if (status === 'saving') {
+                dot.classList.add('saving');
+                text.textContent = message || 'Sauvegarde...';
+            } else if (status === 'saved') {
+                dot.classList.add('saved');
+                text.textContent = message || 'Sauvegardé ✓';
+                text.classList.add('saved');
+            } else if (status === 'error') {
+                dot.classList.add('error');
+                text.textContent = message || 'Erreur ⚠️';
+                text.classList.add('error');
+            } else {
+                // Idle / Prêt
+                text.textContent = message || 'Prêt';
+            }
+        }
+
+        // ============================================================
         // INIT
         // ============================================================
         function init() {
-            // Données par défaut
-            data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            setSaveStatus('saving', 'Chargement...');
             
-            // Charger les logs depuis localStorage
-            const saved = localStorage.getItem('sportData');
+            // Charger les données
+            const saved = localStorage.getItem('sportAppData');
+            
             if (saved) {
                 try {
                     const d = JSON.parse(saved);
+                    if (d.data && d.data.length === 7) {
+                        data = d.data;
+                    } else {
+                        data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                    }
                     done = d.done || data.map(day => day.map(() => false));
                     logs = d.logs || {};
-                } catch (e) { done = data.map(day => day.map(() => false));
-                    logs = {}; }
+                    setSaveStatus('saved', 'Données chargées ✓');
+                } catch (e) {
+                    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                    done = data.map(day => day.map(() => false));
+                    logs = {};
+                    setSaveStatus('error', 'Erreur chargement');
+                }
             } else {
+                data = JSON.parse(JSON.stringify(DEFAULT_DATA));
                 done = data.map(day => day.map(() => false));
                 logs = {};
+                setSaveStatus('saved', 'Données par défaut');
             }
             
-            // ===> CHANGEMENT ICI : jour actuel <===
-            const today = new Date().getDay(); // 0 = Dimanche, 1 = Lundi, ...
-            if (today === 0) {
-                currentDay = 6; // Dimanche → index 6
-            } else {
-                currentDay = today - 1; // Lundi(1) → index 0, Mardi(2) → index 1, etc.
-            }
+            // Jour actuel
+            const today = new Date().getDay();
+            currentDay = today === 0 ? 6 : today - 1;
             
             render();
+            
+            setTimeout(() => {
+                setSaveStatus('saved', 'Prêt ✓');
+            }, 500);
         }
 
-        function save() {
-            localStorage.setItem('sportData', JSON.stringify({ done, logs }));
+        // ============================================================
+        // SAUVEGARDE
+        // ============================================================
+        function sauvegarderDonnees() {
+            setSaveStatus('saving', 'Sauvegarde...');
+            
+            try {
+                const aSauvegarder = {
+                    data: data,
+                    done: done,
+                    logs: logs,
+                    date: new Date().toISOString()
+                };
+                localStorage.setItem('sportAppData', JSON.stringify(aSauvegarder));
+                
+                // Vérifier que la sauvegarde a réussi
+                const test = localStorage.getItem('sportAppData');
+                if (test) {
+                    setSaveStatus('saved', 'Sauvegardé ✓');
+                } else {
+                    setSaveStatus('error', 'Erreur sauvegarde');
+                }
+            } catch (e) {
+                console.warn('Erreur sauvegarde:', e);
+                setSaveStatus('error', 'Erreur ⚠️');
+            }
+        }
+
+        function autoSave() {
+            sauvegarderDonnees();
         }
 
         // ============================================================
         // AFFICHAGE
         // ============================================================
         function render() {
-            // Mettre à jour les jours
             document.querySelectorAll('.day-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === currentDay);
                 btn.onclick = () => { currentDay = i;
                     render(); };
             });
 
-            // Mettre à jour l'indicateur
             document.getElementById('weekdayIndicator').textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
 
             const dayData = data[currentDay] || [];
@@ -496,6 +581,8 @@
                     </div>
                 `;
             }).join('');
+            
+            autoSave();
         }
 
         // ============================================================
@@ -504,15 +591,15 @@
         function toggleDone(day, i) {
             if (!done[day]) done[day] = [];
             done[day][i] = !done[day][i];
-            save();
             render();
+            autoSave();
         }
 
         function saveLog(day, i, field, val) {
             const k = `${day}_${i}`;
             if (!logs[k]) logs[k] = { w: '', r: '' };
             logs[k][field] = val;
-            save();
+            autoSave();
         }
 
         function adjustSet(day, i, delta) {
@@ -520,6 +607,7 @@
             if (!ex) return;
             ex.s = Math.max(1, (ex.s || 3) + delta);
             render();
+            autoSave();
         }
 
         function adjustRep(day, i, delta) {
@@ -538,6 +626,7 @@
                 }
             }
             render();
+            autoSave();
         }
 
         function deleteEx(day, i) {
@@ -545,6 +634,7 @@
             data[day].splice(i, 1);
             if (done[day]) done[day].splice(i, 1);
             render();
+            autoSave();
         }
 
         // ============================================================
@@ -628,6 +718,7 @@
             }
             render();
             closeEdit();
+            autoSave();
         }
 
         // ============================================================
@@ -677,6 +768,7 @@
                 ex.gif = url;
                 document.getElementById('detailImage').innerHTML =
                     `<img src="${url}" alt="${ex.n}" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>🏋️</div>'">`;
+                autoSave();
             }
         }
 
@@ -695,6 +787,10 @@
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay.active').forEach(el => el.classList.remove('active'));
             }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            sauvegarderDonnees();
         });
 
         document.addEventListener('DOMContentLoaded', init);
