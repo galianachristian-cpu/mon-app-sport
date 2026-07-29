@@ -136,13 +136,12 @@
                     <div class="form-group"><label>Séries</label><input type="number" id="eSets" min="1"></div>
                     <div class="form-group"><label>Répétitions</label><input type="text" id="eReps"></div>
                 </div>
-                <!-- MODIFICATION ICI : champ texte pour l'emoji -->
                 <div class="form-group">
-                    <label>Emoji (copiez/collez votre emoji ici)</label>
+                    <label>Emoji</label>
                     <input type="text" id="eEmoji" placeholder="Ex: 🏋️ 💪 🔥" maxlength="4">
                 </div>
-                <div class="form-group"><label>Description</label><textarea id="eDesc" rows="2"></textarea></div>
-                <div class="form-group"><label>Conseils</label><textarea id="eTips" rows="2"></textarea></div>
+                <div class="form-group"><label>Description</label><textarea id="eDesc" rows="3" placeholder="Comment exécuter l'exercice..."></textarea></div>
+                <div class="form-group"><label>Conseils de sécurité</label><textarea id="eTips" rows="3" placeholder="Points clés à surveiller..."></textarea></div>
                 <input type="hidden" id="eDay">
                 <input type="hidden" id="eIndex">
                 <div class="modal-actions">
@@ -155,7 +154,7 @@
 
     <script>
         // ============================================================
-        // DONNÉES
+        // DONNÉES AVEC DESCRIPTIONS ET CONSEILS
         // ============================================================
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
@@ -163,54 +162,194 @@
         ];
 
         const DEFAULT_DATA = [
-            [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️' },
-                { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪' },
-                { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯' },
-                { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪' },
-                { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯' },
-                { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥' }
+            // LUNDI - Poitrine & Triceps
+            [
+                { n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
+                  desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux. Ne verrouillez pas les coudes en haut du mouvement.',
+                  tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Gardez les poignets droits. Expirez en poussant, inspirez en descendant.' 
+                },
+                { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                  desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères. Redescendez en contrôlant jusqu\'au niveau des épaules.',
+                  tips: 'Maintiens les poignets droits. Inspire en descendant, expire en poussant. Ne va pas trop bas pour protéger les épaules.' 
+                },
+                { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                  desc: 'Debout entre deux poulies hautes. Saisissez les poignées, avancez d\'un pas. Ramenez les mains devant vous en croisant les poignets. Revenez lentement en position de départ.',
+                  tips: 'Gardez les coudes légèrement fléchis. Concentrez-vous sur la contraction des pectoraux. Retour lent et contrôlé.'
+                },
+                { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
+                  desc: 'Saisissez les barres parallèles. Descendez en fléchissant les coudes à 90°. Remontez en poussant sur les barres. Gardez le corps droit.',
+                  tips: 'Ne descendez pas trop bas. Si trop difficile, utilisez un élastique. Pour cibler les triceps, gardez le buste vertical.'
+                },
+                { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
+                  desc: 'Face à la poulie haute. Saisissez la barre ou la corde. Coudes près du corps, bloqués. Abaissez en tendant les bras vers le bas. Remontez en contrôlant à 90°.',
+                  tips: 'Seuls les avant-bras bougent. Contractez fort les triceps en fin de mouvement. Ne balancez pas le buste.'
+                },
+                { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
+                  desc: 'Assis, haltère à deux mains derrière la tête. Coudes vers le haut, près des oreilles. Abaissez derrière la tête. Remontez en tendant les bras au-dessus.',
+                  tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos. Contrôlez la descente.'
+                }
             ],
-            [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️' },
-                { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪' },
-                { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯' },
-                { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥' },
-                { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪' },
-                { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥' }
+            // MARDI - Dos & Biceps
+            [
+                { n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
+                  desc: 'Pieds largeur d\'épaules, barre au-dessus des lacets. Saisissez la barre, dos droit. Poussez dans les talons pour vous lever. La barre reste collée aux jambes. Contractez les fessiers en haut.',
+                  tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir. Engagez la sangle abdominale. Expirez en montant, inspirez en descendant.'
+                },
+                { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
+                  desc: 'Penché en avant, dos droit. Tirez la barre vers le bas de la poitrine. Serrez les omoplates en haut. Redescendez en contrôlant.',
+                  tips: 'Gardez le dos droit ! Tirez par les coudes, pas par les bras. Squeeze les omoplates en haut.'
+                },
+                { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯',
+                  desc: 'Assis à la poulie haute. Saisissez la barre large. Tirez vers la poitrine. Contractez les dorsaux en bas. Remontez en contrôlant.',
+                  tips: 'Gardez le buste stable. Tirez par les coudes. Squeeze les dorsaux en bas.'
+                },
+                { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥',
+                  desc: 'Assis, pieds calés. Saisissez la poignée en V. Tirez vers le ventre. Serrez les omoplates. Relâchez en contrôlant.',
+                  tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en fin de mouvement.'
+                },
+                { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
+                  desc: 'Debout, barre en prise pronation. Coudes près du corps. Remontez la barre vers les épaules. Contractez les biceps en haut. Redescendez en contrôlant.',
+                  tips: 'Gardez les coudes près du corps. Ne balancez pas le buste. Contractez les biceps en haut.'
+                },
+                { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
+                  desc: 'Debout, haltères en prise neutre. Remontez vers les épaules. Ne tournez pas les poignets. Contractez les biceps.',
+                  tips: 'Gardez les poignets droits. Contractez les biceps en haut. Ne balancez pas le buste.'
+                }
             ],
-            [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵' },
-                { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️' },
-                { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵' },
-                { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡' },
-                { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯' },
-                { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪' }
+            // MERCREDI - Jambes
+            [
+                { n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+                  desc: 'Barre sur les épaules. Pieds largeur d\'épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol. Remontez en poussant dans les talons.',
+                  tips: 'Dos droit, poitrine ouverte. Poussez dans les talons. Les genoux suivent la direction des pieds.'
+                },
+                { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                  desc: 'Barre dans les mains. Genoux légèrement fléchis. Penchez-vous en avant. Barre le long des jambes. Remontez en contractant les fessiers.',
+                  tips: 'Dos droit ! Sensation dans les ischio-jambiers. Contractez les fessiers en haut.'
+                },
+                { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                  desc: 'Assis sur la machine. Pieds sur la plaque. Poussez en tendant les jambes. Revenez en contrôlant.',
+                  tips: 'Dos plaqué contre le siège. Ne bloquez pas les genoux. Contrôlez la descente.'
+                },
+                { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                  desc: 'Faites un grand pas en avant. Fléchissez les deux genoux à 90°. Poussez pour revenir. Alternez avec l\'autre jambe.',
+                  tips: 'Genou avant ne dépasse pas les orteils. Dos droit, gainage engagé. Gardez le buste vertical.'
+                },
+                { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                  desc: 'Allongé sur la machine. Rouleau sous les mollets. Ramenez les talons vers les fesses. Redescendez en contrôlant.',
+                  tips: 'Gardez les hanches plaquées. Contractez les ischio-jambiers. Mouvement contrôlé.'
+                },
+                { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                  desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets. Redescendez en étirant.',
+                  tips: 'Amplitude maximale. Montez haut, descendez bas. Contractez fort en haut.'
+                }
             ],
-            [{ n: 'Développé militaire', m: 'Épaules', s: 4, r: '6-8', e: '🏋️' },
-                { n: 'Élévations latérales', m: 'Épaules', s: 3, r: '10-12', e: '🎯' },
-                { n: 'Oiseau', m: 'Épaules', s: 3, r: '12-15', e: '🔥' },
-                { n: 'Face Pull', m: 'Épaules', s: 3, r: '12-15', e: '💪' },
-                { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥' },
-                { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯' }
+            // JEUDI - Épaules & Cœur
+            [
+                { n: 'Développé militaire', m: 'Épaules', s: 4, r: '6-8', e: '🏋️',
+                  desc: 'Debout ou assis. Barre au niveau des clavicules. Poussez au-dessus de la tête. Redescendez en contrôlant.',
+                  tips: 'Gardez le buste stable. Ne poussez pas avec le dos. Contractez les épaules en haut.'
+                },
+                { n: 'Élévations latérales', m: 'Épaules', s: 3, r: '10-12', e: '🎯',
+                  desc: 'Debout, haltères le long du corps. Levez les bras sur les côtés. Jusqu\'à hauteur des épaules. Redescendez en contrôlant.',
+                  tips: 'Coudes légèrement fléchis. Ne montez pas trop haut. Contrôlez la descente.'
+                },
+                { n: 'Oiseau', m: 'Épaules', s: 3, r: '12-15', e: '🔥',
+                  desc: 'Penché en avant, dos droit. Levez les bras sur les côtés. Serrez les omoplates. Redescendez en contrôlant.',
+                  tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en haut.'
+                },
+                { n: 'Face Pull', m: 'Épaules', s: 3, r: '12-15', e: '💪',
+                  desc: 'Face à la poulie. Saisissez la corde. Tirez vers le visage. Écartez les mains en serrant les omoplates.',
+                  tips: 'Gardez les coudes hauts. Squeeze les omoplates. Excellent pour la posture.'
+                },
+                { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥',
+                  desc: 'Suspendu à une barre. Levez les jambes à 90°. Redescendez en contrôlant.',
+                  tips: 'Ne balancez pas le corps. Engagez les abdominaux. Descendez lentement.'
+                },
+                { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯',
+                  desc: 'À genoux face à la poulie. Saisissez la corde derrière la tête. Fléchissez le buste. Contractez les abdominaux.',
+                  tips: 'Gardez les hanches fixes. Contractez fort les abdominaux. Ne tirez pas avec les bras.'
+                }
             ],
-            [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️' },
-                { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪' },
-                { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯' },
-                { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪' },
-                { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯' },
-                { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥' }
+            // VENDREDI (identique à lundi)
+            [
+                { n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️',
+                  desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux. Ne verrouillez pas les coudes en haut du mouvement.',
+                  tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Gardez les poignets droits. Expirez en poussant, inspirez en descendant.'
+                },
+                { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                  desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères. Redescendez en contrôlant jusqu\'au niveau des épaules.',
+                  tips: 'Maintiens les poignets droits. Inspire en descendant, expire en poussant. Ne va pas trop bas pour protéger les épaules.'
+                },
+                { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                  desc: 'Debout entre deux poulies hautes. Saisissez les poignées, avancez d\'un pas. Ramenez les mains devant vous en croisant les poignets. Revenez lentement en position de départ.',
+                  tips: 'Gardez les coudes légèrement fléchis. Concentrez-vous sur la contraction des pectoraux. Retour lent et contrôlé.'
+                },
+                { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
+                  desc: 'Saisissez les barres parallèles. Descendez en fléchissant les coudes à 90°. Remontez en poussant sur les barres. Gardez le corps droit.',
+                  tips: 'Ne descendez pas trop bas. Si trop difficile, utilisez un élastique. Pour cibler les triceps, gardez le buste vertical.'
+                },
+                { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
+                  desc: 'Face à la poulie haute. Saisissez la barre ou la corde. Coudes près du corps, bloqués. Abaissez en tendant les bras vers le bas. Remontez en contrôlant à 90°.',
+                  tips: 'Seuls les avant-bras bougent. Contractez fort les triceps en fin de mouvement. Ne balancez pas le buste.'
+                },
+                { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
+                  desc: 'Assis, haltère à deux mains derrière la tête. Coudes vers le haut, près des oreilles. Abaissez derrière la tête. Remontez en tendant les bras au-dessus.',
+                  tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos. Contrôlez la descente.'
+                }
             ],
-            [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️' },
-                { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪' },
-                { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯' },
-                { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥' },
-                { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪' },
-                { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥' }
+            // SAMEDI (identique à mardi)
+            [
+                { n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
+                  desc: 'Pieds largeur d\'épaules, barre au-dessus des lacets. Saisissez la barre, dos droit. Poussez dans les talons pour vous lever. La barre reste collée aux jambes. Contractez les fessiers en haut.',
+                  tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir. Engagez la sangle abdominale. Expirez en montant, inspirez en descendant.'
+                },
+                { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
+                  desc: 'Penché en avant, dos droit. Tirez la barre vers le bas de la poitrine. Serrez les omoplates en haut. Redescendez en contrôlant.',
+                  tips: 'Gardez le dos droit ! Tirez par les coudes, pas par les bras. Squeeze les omoplates en haut.'
+                },
+                { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯',
+                  desc: 'Assis à la poulie haute. Saisissez la barre large. Tirez vers la poitrine. Contractez les dorsaux en bas. Remontez en contrôlant.',
+                  tips: 'Gardez le buste stable. Tirez par les coudes. Squeeze les dorsaux en bas.'
+                },
+                { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥',
+                  desc: 'Assis, pieds calés. Saisissez la poignée en V. Tirez vers le ventre. Serrez les omoplates. Relâchez en contrôlant.',
+                  tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en fin de mouvement.'
+                },
+                { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
+                  desc: 'Debout, barre en prise pronation. Coudes près du corps. Remontez la barre vers les épaules. Contractez les biceps en haut. Redescendez en contrôlant.',
+                  tips: 'Gardez les coudes près du corps. Ne balancez pas le buste. Contractez les biceps en haut.'
+                },
+                { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
+                  desc: 'Debout, haltères en prise neutre. Remontez vers les épaules. Ne tournez pas les poignets. Contractez les biceps.',
+                  tips: 'Gardez les poignets droits. Contractez les biceps en haut. Ne balancez pas le buste.'
+                }
             ],
-            [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵' },
-                { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️' },
-                { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵' },
-                { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡' },
-                { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯' },
-                { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪' }
+            // DIMANCHE (identique à mercredi)
+            [
+                { n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+                  desc: 'Barre sur les épaules. Pieds largeur d\'épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol. Remontez en poussant dans les talons.',
+                  tips: 'Dos droit, poitrine ouverte. Poussez dans les talons. Les genoux suivent la direction des pieds.'
+                },
+                { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                  desc: 'Barre dans les mains. Genoux légèrement fléchis. Penchez-vous en avant. Barre le long des jambes. Remontez en contractant les fessiers.',
+                  tips: 'Dos droit ! Sensation dans les ischio-jambiers. Contractez les fessiers en haut.'
+                },
+                { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                  desc: 'Assis sur la machine. Pieds sur la plaque. Poussez en tendant les jambes. Revenez en contrôlant.',
+                  tips: 'Dos plaqué contre le siège. Ne bloquez pas les genoux. Contrôlez la descente.'
+                },
+                { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                  desc: 'Faites un grand pas en avant. Fléchissez les deux genoux à 90°. Poussez pour revenir. Alternez avec l\'autre jambe.',
+                  tips: 'Genou avant ne dépasse pas les orteils. Dos droit, gainage engagé. Gardez le buste vertical.'
+                },
+                { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                  desc: 'Allongé sur la machine. Rouleau sous les mollets. Ramenez les talons vers les fesses. Redescendez en contrôlant.',
+                  tips: 'Gardez les hanches plaquées. Contractez les ischio-jambiers. Mouvement contrôlé.'
+                },
+                { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                  desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets. Redescendez en étirant.',
+                  tips: 'Amplitude maximale. Montez haut, descendez bas. Contractez fort en haut.'
+                }
             ]
         ];
 
@@ -420,12 +559,10 @@
             };
 
             if (i === -1) {
-                // AJOUT
                 data[day].push(newEx);
                 if (!done[day]) done[day] = [];
                 done[day].push(false);
             } else {
-                // MODIFICATION
                 const ex = data[day][i];
                 if (ex) {
                     ex.n = newEx.n;
@@ -469,11 +606,9 @@
                 <div class="stat"><div class="value" style="color:#00e676;">${ex.m}</div><div class="label">Groupe</div></div>
             `;
 
-            const muscles = ex.muscles || ex.m;
             document.getElementById('detailBody').innerHTML = `
-                <div class="detail-section"><h4>🎯 Muscles ciblés</h4><p>${muscles}</p></div>
                 <div class="detail-section"><h4>📝 Description</h4><p>${ex.desc || 'Aucune description.'}</p></div>
-                <div class="detail-section"><h4>⚠️ Conseils</h4><div class="tips"><p>${ex.tips || 'Aucun conseil.'}</p></div></div>
+                <div class="detail-section"><h4>⚠️ Conseils de sécurité</h4><div class="tips"><p>${ex.tips || 'Aucun conseil.'}</p></div></div>
             `;
 
             document.getElementById('detailModal').classList.add('active');
