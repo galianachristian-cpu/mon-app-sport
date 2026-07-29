@@ -7,90 +7,83 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e17;color:#f0f4f8;padding:16px;max-width:850px;margin:0 auto}
-        .header{text-align:center;padding:20px 0 10px;border-bottom:2px solid #2a3a4f;margin-bottom:16px}
+        .header{display:flex;justify-content:space-between;align-items:center;padding:20px 0 10px;border-bottom:2px solid #2a3a4f;margin-bottom:16px;flex-wrap:wrap;gap:10px}
         .header h1{font-size:1.8rem;background:linear-gradient(135deg,#00d4ff,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-        .header p{color:#8ba0b8;font-size:0.9rem;margin-top:4px}
-        .weekday-indicator{text-align:center;padding:8px 16px;background:#00d4ff;color:#0a0e17;border-radius:12px;font-weight:700;font-size:1rem;margin-bottom:16px;letter-spacing:1px}
-        .day-selector{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px}
+        .btn-add{background:#00d4ff;color:#0a0e17;border:none;padding:8px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.85rem;font-family:inherit;transition:background 0.3s}
+        .btn-add:hover{background:#00b8d4}
+        .day-selector{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
         .day-btn{padding:10px 2px;border:2px solid #2a3a4f;border-radius:10px;background:#111827;color:#8ba0b8;cursor:pointer;font-weight:700;font-size:0.65rem;text-align:center;transition:all 0.3s ease;font-family:inherit}
         .day-btn:hover{border-color:#00d4ff;color:#f0f4f8}
         .day-btn.active{border-color:#00d4ff;background:#00d4ff;color:#0a0e17}
         .day-btn .sub{display:block;font-weight:400;font-size:0.5rem;opacity:0.7;margin-top:2px}
-        .day-btn.active .sub{opacity:0.9}
-        .day-btn.today{border-color:#b388ff;box-shadow:0 0 20px rgba(179,136,255,0.2)}
+        .weekday-indicator{text-align:center;padding:8px 16px;background:#00d4ff;color:#0a0e17;border-radius:12px;font-weight:700;font-size:1rem;margin-bottom:16px}
         .progress{text-align:center;color:#8ba0b8;margin-bottom:16px;font-size:0.9rem}
         .progress strong{color:#00d4ff}
         .exercise-card{background:#111827;border:1px solid #2a3a4f;border-radius:14px;padding:14px 16px;margin-bottom:10px}
-        .exercise-card .top-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-        .exercise-card .emoji{font-size:1.8rem;width:46px;height:46px;border-radius:12px;background:#0a0e17;border:1px solid #2a3a4f;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-        .exercise-card .info{flex:1;min-width:120px}
+        .exercise-card .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+        .exercise-card .emoji{font-size:1.8rem;width:40px;height:40px;border-radius:10px;background:#0a0e17;border:1px solid #2a3a4f;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .exercise-card .info{flex:1;min-width:100px}
         .exercise-card .info .name{font-weight:700;font-size:0.95rem}
         .exercise-card .info .muscle{font-size:0.55rem;font-weight:400;color:#8ba0b8;background:#0a0e17;padding:2px 10px;border-radius:20px;margin-left:6px}
-        .exercise-card .info .sets-reps{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
-        .exercise-card .info .sets-reps .label{font-size:0.65rem;color:#8ba0b8}
-        .exercise-card .info .sets-reps .value{font-size:0.85rem;font-weight:700;color:#00d4ff;min-width:20px;text-align:center}
-        .exercise-card .info .sets-reps .adj-btn{width:22px;height:22px;border-radius:50%;border:1px solid #2a3a4f;background:transparent;color:#8ba0b8;cursor:pointer;font-size:0.65rem;font-weight:700;transition:all 0.3s ease;display:flex;align-items:center;justify-content:center;font-family:inherit}
-        .exercise-card .info .sets-reps .adj-btn:hover{border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,0.1)}
+        .exercise-card .info .sets-reps{display:flex;align-items:center;gap:4px;margin-top:4px;flex-wrap:wrap;font-size:0.7rem;color:#8ba0b8}
+        .exercise-card .info .sets-reps .val{color:#00d4ff;font-weight:700;min-width:20px;text-align:center}
+        .exercise-card .info .sets-reps .adj{width:20px;height:20px;border-radius:50%;border:1px solid #2a3a4f;background:transparent;color:#8ba0b8;cursor:pointer;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-family:inherit}
+        .exercise-card .info .sets-reps .adj:hover{border-color:#00d4ff;color:#00d4ff}
         .exercise-card .log{display:flex;align-items:center;gap:6px;font-size:0.7rem;color:#8ba0b8;flex-wrap:wrap}
-        .exercise-card .log input{width:44px;padding:3px 4px;border-radius:6px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.7rem;text-align:center}
-        .exercise-card .check{width:30px;height:30px;border-radius:50%;border:2px solid #2a3a4f;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:transparent;transition:all 0.3s ease;flex-shrink:0}
+        .exercise-card .log input{width:40px;padding:2px 4px;border-radius:6px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.7rem;text-align:center}
+        .exercise-card .check{width:28px;height:28px;border-radius:50%;border:2px solid #2a3a4f;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:transparent;transition:all 0.3s ease;flex-shrink:0}
         .exercise-card .check.done{background:#00e676;border-color:#00e676;color:#0a0e17}
-        .exercise-card .card-actions{display:flex;gap:8px;border-top:1px solid #2a3a4f;padding-top:8px;margin-top:8px}
-        .exercise-card .card-actions .action-btn{background:transparent;border:1px solid #2a3a4f;border-radius:6px;color:#8ba0b8;cursor:pointer;padding:4px 12px;font-size:0.7rem;font-family:inherit;transition:all 0.3s ease}
-        .exercise-card .card-actions .action-btn:hover{background:#2a3a4f;color:#f0f4f8}
-        .exercise-card .card-actions .action-btn.edit:hover{border-color:#00d4ff;color:#00d4ff}
-        .exercise-card .card-actions .action-btn.delete:hover{border-color:#f85149;color:#f85149;background:rgba(248,81,73,0.1)}
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+        .exercise-card .actions{display:flex;gap:6px;border-top:1px solid #2a3a4f;padding-top:8px;margin-top:8px;flex-wrap:wrap}
+        .exercise-card .actions button{background:transparent;border:1px solid #2a3a4f;border-radius:6px;color:#8ba0b8;cursor:pointer;padding:4px 12px;font-size:0.7rem;font-family:inherit;transition:all 0.3s ease}
+        .exercise-card .actions button:hover{background:#2a3a4f;color:#f0f4f8}
+        .exercise-card .actions .edit:hover{border-color:#00d4ff;color:#00d4ff}
+        .exercise-card .actions .del:hover{border-color:#f85149;color:#f85149;background:rgba(248,81,73,0.1)}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
         .modal-overlay.active{display:flex}
-        .modal{background:#111827;border:1px solid #2a3a4f;border-radius:16px;max-width:650px;width:100%;max-height:95vh;overflow-y:auto;padding:24px;animation:fadeIn 0.3s ease}
+        .modal{background:#111827;border:1px solid #2a3a4f;border-radius:16px;max-width:550px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;animation:fadeIn 0.3s ease}
         @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         .modal .close{float:right;background:none;border:none;color:#8ba0b8;font-size:1.5rem;cursor:pointer;padding:0 4px}
         .modal .close:hover{color:#f0f4f8}
-        .modal h2{font-size:1.3rem;margin-bottom:12px}
-        .modal .image-container{width:100%;background:#0a0e17;border:1px solid #2a3a4f;border-radius:12px;overflow:hidden;margin-bottom:12px;min-height:200px;display:flex;align-items:center;justify-content:center}
-        .modal .image-container img{width:100%;height:auto;max-height:280px;object-fit:contain}
-        .modal .image-container .no-image{font-size:2rem;opacity:0.3;text-align:center;padding:20px}
-        .modal .gif-input-section{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;background:#0a0e17;padding:12px;border-radius:10px;border:1px solid #2a3a4f}
-        .modal .gif-input-section input{flex:1;padding:8px 12px;border-radius:8px;border:1px solid #2a3a4f;background:#111827;color:#f0f4f8;font-size:0.8rem;font-family:inherit;min-width:150px}
-        .modal .gif-input-section input:focus{outline:none;border-color:#00d4ff}
-        .modal .gif-input-section button{padding:8px 18px;border-radius:8px;border:none;background:#00d4ff;color:#0a0e17;font-weight:700;cursor:pointer;font-size:0.8rem;font-family:inherit;transition:background 0.3s ease}
-        .modal .gif-input-section button:hover{background:#00b8d4}
-        .modal .gif-input-section .hint{width:100%;font-size:0.55rem;color:#8ba0b8;text-align:center;margin-top:4px}
-        .modal .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
-        .modal .stats .stat{text-align:center;background:#0a0e17;padding:10px 6px;border-radius:10px;border:1px solid #2a3a4f}
-        .modal .stats .stat .value{font-size:1.3rem;font-weight:800;color:#00d4ff}
-        .modal .stats .stat .label{font-size:0.5rem;text-transform:uppercase;color:#8ba0b8;letter-spacing:0.5px;margin-top:2px}
-        .modal .section{background:#0a0e17;padding:12px 14px;border-radius:10px;border:1px solid #2a3a4f;margin-bottom:10px}
-        .modal .section h4{font-size:0.6rem;text-transform:uppercase;color:#8ba0b8;margin-bottom:4px;letter-spacing:0.5px}
-        .modal .section p{font-size:0.85rem;line-height:1.7;white-space:pre-line}
-        .modal .section .tips{border-left:3px solid #ffab00;padding-left:12px}
-        .modal .muscles{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-        .modal .muscles .pill{padding:2px 10px;border-radius:20px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);font-size:0.6rem;font-weight:600;color:#00d4ff}
-        .modal .image-credit{font-size:0.5rem;color:#4a5a6a;text-align:center;margin-top:8px}
-        .modal .form-group{margin-bottom:16px}
-        .modal .form-group label{display:block;font-size:0.75rem;font-weight:600;color:#8ba0b8;margin-bottom:4px}
-        .modal .form-group input,.modal .form-group select,.modal .form-group textarea{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.9rem;font-family:inherit}
+        .modal h2{font-size:1.2rem;margin-bottom:12px}
+        .modal .form-group{margin-bottom:14px}
+        .modal .form-group label{display:block;font-size:0.7rem;font-weight:600;color:#8ba0b8;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px}
+        .modal .form-group input,.modal .form-group select,.modal .form-group textarea{width:100%;padding:8px 12px;border-radius:8px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.9rem;font-family:inherit}
         .modal .form-group input:focus,.modal .form-group select:focus,.modal .form-group textarea:focus{outline:none;border-color:#00d4ff}
-        .modal .form-group textarea{resize:vertical;min-height:60px}
-        .modal .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        .modal .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-        .btn-ghost{background:transparent;color:#8ba0b8;border:1px solid #2a3a4f;padding:8px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.3s ease}
+        .modal .form-group textarea{resize:vertical;min-height:50px}
+        .modal .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .modal .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+        .btn-ghost{background:transparent;color:#8ba0b8;border:1px solid #2a3a4f;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit}
         .btn-ghost:hover{background:#1a2332;color:#f0f4f8}
-        .btn-primary{background:#00d4ff;color:#0a0e17;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.3s ease}
+        .btn-primary{background:#00d4ff;color:#0a0e17;border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit}
         .btn-primary:hover{background:#00b8d4}
-        @media (max-width:600px){.day-selector{grid-template-columns:repeat(7,1fr);gap:3px}.day-btn{font-size:0.5rem;padding:8px 2px}.day-btn .sub{font-size:0.4rem}}
-        @media (max-width:480px){.day-selector{grid-template-columns:repeat(4,1fr);gap:4px}.day-btn{font-size:0.6rem;padding:8px 4px}.exercise-card{padding:12px}.exercise-card .top-row{gap:10px}.exercise-card .info .name{font-size:0.85rem}.modal{padding:16px}.modal .stats{grid-template-columns:1fr 1fr}.modal .image-container{min-height:150px}.modal .image-container img{max-height:200px}.modal .gif-input-section{flex-direction:column}.modal .gif-input-section button{width:100%}.modal .form-row{grid-template-columns:1fr}}
+        .modal .detail-section{background:#0a0e17;padding:12px 14px;border-radius:10px;border:1px solid #2a3a4f;margin-bottom:10px}
+        .modal .detail-section h4{font-size:0.6rem;text-transform:uppercase;color:#8ba0b8;margin-bottom:4px;letter-spacing:0.5px}
+        .modal .detail-section p{font-size:0.85rem;line-height:1.7;white-space:pre-line}
+        .modal .detail-section .tips{border-left:3px solid #ffab00;padding-left:12px}
+        .modal .detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+        .modal .detail-stats .stat{text-align:center;background:#0a0e17;padding:8px;border-radius:10px;border:1px solid #2a3a4f}
+        .modal .detail-stats .stat .value{font-size:1.3rem;font-weight:800;color:#00d4ff}
+        .modal .detail-stats .stat .label{font-size:0.5rem;text-transform:uppercase;color:#8ba0b8;letter-spacing:0.5px;margin-top:2px}
+        .modal .image-container{width:100%;background:#0a0e17;border:1px solid #2a3a4f;border-radius:12px;margin-bottom:12px;min-height:150px;display:flex;align-items:center;justify-content:center}
+        .modal .image-container img{width:100%;max-height:200px;object-fit:contain;border-radius:12px}
+        .modal .image-container .no-img{font-size:2rem;opacity:0.3}
+        .modal .gif-input{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+        .modal .gif-input input{flex:1;padding:6px 10px;border-radius:8px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.8rem;font-family:inherit;min-width:120px}
+        .modal .gif-input button{padding:6px 14px;border-radius:8px;border:none;background:#00d4ff;color:#0a0e17;font-weight:700;cursor:pointer;font-size:0.75rem;font-family:inherit}
+        .modal .gif-input button:hover{background:#00b8d4}
+        @media (max-width:600px){.day-selector{grid-template-columns:repeat(7,1fr);gap:3px}.day-btn{font-size:0.5rem;padding:6px 2px}}
+        @media (max-width:480px){.day-selector{grid-template-columns:repeat(4,1fr);gap:4px}.day-btn{font-size:0.6rem;padding:8px 4px}.exercise-card{padding:12px}.exercise-card .top{gap:8px}.exercise-card .info .name{font-size:0.85rem}.modal{padding:16px}.modal .form-row{grid-template-columns:1fr}.modal .detail-stats{grid-template-columns:1fr 1fr}}
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>🏋️ Mon Programme</h1>
-        <p>📅 Clique sur un jour</p>
+        <button class="btn-add" onclick="openAdd()">➕ Ajouter</button>
     </div>
 
     <div class="day-selector" id="daySelector">
-        <button class="day-btn" data-day="0">Lun<br><span class="sub">Poitrine</span></button>
+        <button class="day-btn active" data-day="0">Lun<br><span class="sub">Poitrine</span></button>
         <button class="day-btn" data-day="1">Mar<br><span class="sub">Dos</span></button>
         <button class="day-btn" data-day="2">Mer<br><span class="sub">Jambes</span></button>
         <button class="day-btn" data-day="3">Jeu<br><span class="sub">Épaules</span></button>
@@ -110,31 +103,26 @@
         <div class="modal">
             <button class="close" onclick="closeDetail()">✕</button>
             <h2 id="detailTitle">🏋️ Exercice</h2>
-            <div class="image-container" id="detailImage">
-                <div class="no-image">🏋️</div>
+            <div class="image-container" id="detailImage"><div class="no-img">🏋️</div></div>
+            <div class="gif-input">
+                <input type="text" id="gifInput" placeholder="URL du GIF">
+                <button onclick="updateGif()">Mettre à jour</button>
             </div>
-            <div class="gif-input-section">
-                <input type="text" id="gifUrlInput" placeholder="Collez l'URL d'un GIF">
-                <button onclick="updateGif()">📥 Changer</button>
-            </div>
-            <div class="stats" id="detailStats"></div>
+            <div class="detail-stats" id="detailStats"></div>
             <div id="detailBody"></div>
         </div>
     </div>
 
     <!-- MODAL EDITION -->
-    <div class="modal-overlay" id="exerciseModal">
+    <div class="modal-overlay" id="editModal">
         <div class="modal">
-            <button class="close" onclick="closeModal()">✕</button>
-            <h2 id="modalTitle">✏️ Modifier</h2>
-            <form id="exerciseForm" onsubmit="saveExercise(event)">
-                <div class="form-group">
-                    <label>Nom</label>
-                    <input type="text" id="exName" required>
-                </div>
+            <button class="close" onclick="closeEdit()">✕</button>
+            <h2 id="editTitle">✏️ Modifier</h2>
+            <form id="editForm" onsubmit="saveEdit(event)">
+                <div class="form-group"><label>Nom</label><input type="text" id="eName" required></div>
                 <div class="form-group">
                     <label>Groupe</label>
-                    <select id="exMuscle">
+                    <select id="eMuscle">
                         <option value="Poitrine">Poitrine</option>
                         <option value="Triceps">Triceps</option>
                         <option value="Dos">Dos</option>
@@ -145,37 +133,21 @@
                     </select>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Séries</label>
-                        <input type="number" id="exSets" min="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Répétitions</label>
-                        <input type="text" id="exReps">
-                    </div>
+                    <div class="form-group"><label>Séries</label><input type="number" id="eSets" min="1"></div>
+                    <div class="form-group"><label>Répétitions</label><input type="text" id="eReps"></div>
                 </div>
+                <!-- MODIFICATION ICI : champ texte pour l'emoji -->
                 <div class="form-group">
-                    <label>Emoji</label>
-                    <select id="exEmoji">
-                        <option value="🏋️">🏋️</option>
-                        <option value="💪">💪</option>
-                        <option value="🦵">🦵</option>
-                        <option value="🔥">🔥</option>
-                        <option value="🎯">🎯</option>
-                    </select>
+                    <label>Emoji (copiez/collez votre emoji ici)</label>
+                    <input type="text" id="eEmoji" placeholder="Ex: 🏋️ 💪 🔥" maxlength="4">
                 </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="exDescription"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Conseils</label>
-                    <textarea id="exTips"></textarea>
-                </div>
-                <input type="hidden" id="exEditId">
+                <div class="form-group"><label>Description</label><textarea id="eDesc" rows="2"></textarea></div>
+                <div class="form-group"><label>Conseils</label><textarea id="eTips" rows="2"></textarea></div>
+                <input type="hidden" id="eDay">
+                <input type="hidden" id="eIndex">
                 <div class="modal-actions">
-                    <button type="button" class="btn-ghost" onclick="closeModal()">Annuler</button>
-                    <button type="submit" class="btn-primary" id="modalSubmitBtn">Enregistrer</button>
+                    <button type="button" class="btn-ghost" onclick="closeEdit()">Annuler</button>
+                    <button type="submit" class="btn-primary">Enregistrer</button>
                 </div>
             </form>
         </div>
@@ -190,122 +162,55 @@
             'Jambes'
         ];
 
-        const GIFS = {
-            'Développé couché': 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
-            'Soulevé de terre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-            'Squat': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
-        };
-
-        const DEFAULT_EXERCISES = [
-            // LUNDI
-            [{ name: 'Développé couché', muscle: 'Poitrine', sets: 4, reps: '6-8', emoji: '🏋️', muscles: 'Pectoraux, Triceps',
-                    description: 'Allongez-vous sur un banc plat.',
-                    tips: 'Gardez les omoplates plaquées.' },
-                { name: 'Développé incliné haltères', muscle: 'Poitrine', sets: 3, reps: '8-10', emoji: '💪',
-                    muscles: 'Pectoraux supérieurs', description: 'Banc incliné à 30-45°.',
-                    tips: 'Maintiens les poignets droits.' },
-                { name: 'Écartés aux câbles', muscle: 'Poitrine', sets: 3, reps: '12-15', emoji: '🎯',
-                    muscles: 'Pectoraux', description: 'Debout entre deux poulies.',
-                    tips: 'Gardez les coudes fléchis.' },
-                { name: 'Dips', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Triceps',
-                    description: 'Saisissez les barres parallèles.', tips: 'Ne descendez pas trop bas.' },
-                { name: 'Extension triceps poulie haute', muscle: 'Triceps', sets: 3, reps: '12-15', emoji: '🎯',
-                    muscles: 'Triceps', description: 'Face à la poulie haute.',
-                    tips: 'Seuls les avant-bras bougent.' },
-                { name: 'Extension triceps au-dessus tête', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '🔥',
-                    muscles: 'Triceps', description: 'Assis, haltère derrière la tête.',
-                    tips: 'Coudes près des oreilles.' }
+        const DEFAULT_DATA = [
+            [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️' },
+                { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪' },
+                { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯' },
+                { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪' },
+                { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯' },
+                { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥' }
             ],
-            // MARDI
-            [{ name: 'Soulevé de terre', muscle: 'Dos', sets: 4, reps: '5-6', emoji: '🏋️',
-                    muscles: 'Dos, Ischio-jambiers', description: 'Pieds largeur épaules.',
-                    tips: 'DOS DROIT ABSOLUMENT !' },
-                { name: 'Rowing barre', muscle: 'Dos', sets: 4, reps: '8-10', emoji: '💪', muscles: 'Dos, Biceps',
-                    description: 'Penché en avant, dos droit.', tips: 'Tirez par les coudes.' },
-                { name: 'Tirage vertical', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🎯', muscles: 'Dorsaux',
-                    description: 'Assis à la poulie haute.', tips: 'Tirez par les coudes.' },
-                { name: 'Tirage horizontal', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🔥', muscles: 'Dos',
-                    description: 'Assis, pieds calés.', tips: 'Squeeze les omoplates.' },
-                { name: 'Curl barre', muscle: 'Biceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Biceps',
-                    description: 'Debout, barre en prise pronation.', tips: 'Coudes près du corps.' },
-                { name: 'Curl marteau', muscle: 'Biceps', sets: 3, reps: '12-15', emoji: '🔥', muscles: 'Biceps',
-                    description: 'Debout, haltères en prise neutre.', tips: 'Poignets droits.' }
+            [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️' },
+                { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪' },
+                { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯' },
+                { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥' },
+                { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪' },
+                { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥' }
             ],
-            // MERCREDI
-            [{ name: 'Squat', muscle: 'Jambes', sets: 4, reps: '6-8', emoji: '🦵', muscles: 'Quadriceps, Fessiers',
-                    description: 'Barre sur les épaules.', tips: 'Dos droit, poussez dans les talons.' },
-                { name: 'Soulevé de terre roumain', muscle: 'Jambes', sets: 3, reps: '8-10', emoji: '🏋️',
-                    muscles: 'Ischio-jambiers', description: 'Barre dans les mains.',
-                    tips: 'Dos droit !' },
-                { name: 'Presse à jambes', muscle: 'Jambes', sets: 3, reps: '10-12', emoji: '🦵',
-                    muscles: 'Quadriceps', description: 'Assis sur la machine.',
-                    tips: 'Dos plaqué.' },
-                { name: 'Fentes marchées', muscle: 'Jambes', sets: 3, reps: '12 chaque', emoji: '⚡',
-                    muscles: 'Quadriceps', description: 'Grand pas en avant.',
-                    tips: 'Genou avant ne dépasse pas les orteils.' },
-                { name: 'Curl jambes allongé', muscle: 'Jambes', sets: 3, reps: '12-15', emoji: '🎯',
-                    muscles: 'Ischio-jambiers', description: 'Allongé sur la machine.',
-                    tips: 'Hanches plaquées.' },
-                { name: 'Mollets debout', muscle: 'Jambes', sets: 4, reps: '15-20', emoji: '💪', muscles: 'Mollets',
-                    description: 'Debout sous les coussins.', tips: 'Amplitude maximale.' }
+            [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵' },
+                { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️' },
+                { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵' },
+                { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡' },
+                { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯' },
+                { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪' }
             ],
-            // JEUDI
-            [{ name: 'Développé militaire', muscle: 'Épaules', sets: 4, reps: '6-8', emoji: '🏋️',
-                    muscles: 'Épaules', description: 'Debout ou assis.', tips: 'Buste stable.' },
-                { name: 'Élévations latérales', muscle: 'Épaules', sets: 3, reps: '10-12', emoji: '🎯',
-                    muscles: 'Deltoïdes', description: 'Haltères le long du corps.',
-                    tips: 'Coudes légèrement fléchis.' },
-                { name: 'Oiseau', muscle: 'Épaules', sets: 3, reps: '12-15', emoji: '🔥', muscles: 'Deltoïdes post.',
-                    description: 'Penché en avant.', tips: 'Dos droit.' },
-                { name: 'Face Pull', muscle: 'Épaules', sets: 3, reps: '12-15', emoji: '💪', muscles: 'Deltoïdes post.',
-                    description: 'Face à la poulie.', tips: 'Coudes hauts.' },
-                { name: 'Relevé de jambes suspendu', muscle: 'Cœur', sets: 3, reps: '15', emoji: '🔥',
-                    muscles: 'Abdominaux', description: 'Suspendu à une barre.',
-                    tips: 'Ne balancez pas.' },
-                { name: 'Crunch aux câbles', muscle: 'Cœur', sets: 3, reps: '14-20', emoji: '🎯', muscles: 'Abdominaux',
-                    description: 'À genoux face à la poulie.', tips: 'Hanches fixes.' }
+            [{ n: 'Développé militaire', m: 'Épaules', s: 4, r: '6-8', e: '🏋️' },
+                { n: 'Élévations latérales', m: 'Épaules', s: 3, r: '10-12', e: '🎯' },
+                { n: 'Oiseau', m: 'Épaules', s: 3, r: '12-15', e: '🔥' },
+                { n: 'Face Pull', m: 'Épaules', s: 3, r: '12-15', e: '💪' },
+                { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥' },
+                { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯' }
             ],
-            // VENDREDI (identique à lundi)
-            [{ name: 'Développé couché', muscle: 'Poitrine', sets: 4, reps: '6-8', emoji: '🏋️', muscles: 'Pectoraux',
-                    description: 'Allongez-vous sur un banc plat.', tips: 'Omoplates plaquées.' },
-                { name: 'Développé incliné haltères', muscle: 'Poitrine', sets: 3, reps: '8-10', emoji: '💪',
-                    muscles: 'Pectoraux sup.', description: 'Banc incliné.', tips: 'Poignets droits.' },
-                { name: 'Écartés aux câbles', muscle: 'Poitrine', sets: 3, reps: '12-15', emoji: '🎯', muscles: 'Pectoraux',
-                    description: 'Debout entre deux poulies.', tips: 'Coudes fléchis.' },
-                { name: 'Dips', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Triceps',
-                    description: 'Barres parallèles.', tips: 'Ne descendez pas trop bas.' },
-                { name: 'Extension triceps poulie haute', muscle: 'Triceps', sets: 3, reps: '12-15', emoji: '🎯',
-                    muscles: 'Triceps', description: 'Face à la poulie.', tips: 'Avant-bras bougent.' },
-                { name: 'Extension triceps au-dessus tête', muscle: 'Triceps', sets: 3, reps: '10-12', emoji: '🔥',
-                    muscles: 'Triceps', description: 'Assis, haltère derrière la tête.', tips: 'Coudes près des oreilles.' }
+            [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️' },
+                { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪' },
+                { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯' },
+                { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪' },
+                { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯' },
+                { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥' }
             ],
-            // SAMEDI (identique à mardi)
-            [{ name: 'Soulevé de terre', muscle: 'Dos', sets: 4, reps: '5-6', emoji: '🏋️', muscles: 'Dos',
-                    description: 'Pieds largeur épaules.', tips: 'DOS DROIT !' },
-                { name: 'Rowing barre', muscle: 'Dos', sets: 4, reps: '8-10', emoji: '💪', muscles: 'Dos',
-                    description: 'Penché en avant.', tips: 'Tirez par les coudes.' },
-                { name: 'Tirage vertical', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🎯', muscles: 'Dos',
-                    description: 'Assis à la poulie.', tips: 'Tirez par les coudes.' },
-                { name: 'Tirage horizontal', muscle: 'Dos', sets: 3, reps: '10-12', emoji: '🔥', muscles: 'Dos',
-                    description: 'Assis, pieds calés.', tips: 'Squeeze les omoplates.' },
-                { name: 'Curl barre', muscle: 'Biceps', sets: 3, reps: '10-12', emoji: '💪', muscles: 'Biceps',
-                    description: 'Debout, barre en prise.', tips: 'Coudes près du corps.' },
-                { name: 'Curl marteau', muscle: 'Biceps', sets: 3, reps: '12-15', emoji: '🔥', muscles: 'Biceps',
-                    description: 'Debout, haltères.', tips: 'Poignets droits.' }
+            [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️' },
+                { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪' },
+                { n: 'Tirage vertical', m: 'Dos', s: 3, r: '10-12', e: '🎯' },
+                { n: 'Tirage horizontal', m: 'Dos', s: 3, r: '10-12', e: '🔥' },
+                { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪' },
+                { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥' }
             ],
-            // DIMANCHE (identique à mercredi)
-            [{ name: 'Squat', muscle: 'Jambes', sets: 4, reps: '6-8', emoji: '🦵', muscles: 'Jambes',
-                    description: 'Barre sur les épaules.', tips: 'Dos droit.' },
-                { name: 'Soulevé de terre roumain', muscle: 'Jambes', sets: 3, reps: '8-10', emoji: '🏋️',
-                    muscles: 'Jambes', description: 'Barre dans les mains.', tips: 'Dos droit !' },
-                { name: 'Presse à jambes', muscle: 'Jambes', sets: 3, reps: '10-12', emoji: '🦵', muscles: 'Jambes',
-                    description: 'Assis sur la machine.', tips: 'Dos plaqué.' },
-                { name: 'Fentes marchées', muscle: 'Jambes', sets: 3, reps: '12 chaque', emoji: '⚡', muscles: 'Jambes',
-                    description: 'Grand pas en avant.', tips: 'Genou avant.' },
-                { name: 'Curl jambes allongé', muscle: 'Jambes', sets: 3, reps: '12-15', emoji: '🎯', muscles: 'Jambes',
-                    description: 'Allongé sur la machine.', tips: 'Hanches plaquées.' },
-                { name: 'Mollets debout', muscle: 'Jambes', sets: 4, reps: '15-20', emoji: '💪', muscles: 'Jambes',
-                    description: 'Debout sous les coussins.', tips: 'Amplitude maximale.' }
+            [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵' },
+                { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️' },
+                { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵' },
+                { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡' },
+                { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯' },
+                { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪' }
             ]
         ];
 
@@ -313,302 +218,314 @@
         // ETAT
         // ============================================================
         let currentDay = 0;
-        let completed = [];
+        let data = [];
+        let done = [];
         let logs = {};
-        let exercises = DEFAULT_EXERCISES;
-        let currentDetailDay = 0;
-        let currentDetailIndex = 0;
 
         // ============================================================
         // INIT
         // ============================================================
         function init() {
-            const saved = localStorage.getItem('sportApp_week');
+            const saved = localStorage.getItem('sportData');
             if (saved) {
                 try {
-                    const data = JSON.parse(saved);
-                    completed = data.completed || [];
-                    logs = data.logs || {};
-                    if (data.exercises) exercises = data.exercises;
-                } catch (e) {}
-            }
-            if (completed.length === 0) completed = exercises.map(day => day.map(() => false));
-            for (let day = 0; day < exercises.length; day++) {
-                for (let i = 0; i < exercises[day].length; i++) {
-                    const ex = exercises[day][i];
-                    if (!ex.gif && GIFS[ex.name]) ex.gif = GIFS[ex.name];
-                }
-            }
-            const today = new Date().getDay();
-            const todayIndex = today === 0 ? 6 : today - 1;
-            renderDays(todayIndex);
-            renderExercises();
-            updateProgress();
-            updateWeekdayIndicator();
-        }
-
-        function saveData() {
-            localStorage.setItem('sportApp_week', JSON.stringify({ exercises, completed, logs }));
-        }
-
-        function renderDays(activeDay) {
-            const container = document.getElementById('daySelector');
-            const btns = container.querySelectorAll('.day-btn');
-            const today = new Date().getDay();
-            const todayIndex = today === 0 ? 6 : today - 1;
-            btns.forEach((btn, index) => {
-                btn.classList.toggle('active', index === activeDay);
-                btn.classList.toggle('today', index === todayIndex);
-                btn.onclick = () => { currentDay = index;
-                    renderDays(index);
-                    renderExercises();
-                    updateProgress();
-                    updateWeekdayIndicator(); };
-            });
-            currentDay = activeDay;
-        }
-
-        function updateWeekdayIndicator() {
-            document.getElementById('weekdayIndicator').textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
-        }
-
-        function adjustSets(day, index, delta) {
-            const ex = exercises[day][index];
-            if (!ex) return;
-            const newVal = Math.max(1, (ex.sets || 3) + delta);
-            ex.sets = newVal;
-            saveData();
-            renderExercises();
-        }
-
-        function adjustReps(day, index, delta) {
-            const ex = exercises[day][index];
-            if (!ex) return;
-            let currentReps = ex.reps || '8-10';
-            if (!isNaN(currentReps) && currentReps.trim() !== '') {
-                const newVal = Math.max(1, parseInt(currentReps) + delta);
-                ex.reps = String(newVal);
+                    const d = JSON.parse(saved);
+                    data = d.data || DEFAULT_DATA;
+                    done = d.done || data.map(day => day.map(() => false));
+                    logs = d.logs || {};
+                } catch (e) { data = DEFAULT_DATA;
+                    done = data.map(day => day.map(() => false));
+                    logs = {}; }
             } else {
-                const parts = currentReps.split('-');
-                if (parts.length === 2 && !isNaN(parts[0])) {
-                    const base = parseInt(parts[0]);
-                    const newVal = Math.max(1, base + delta);
-                    ex.reps = `${newVal}-${newVal + 2}`;
-                }
+                data = DEFAULT_DATA;
+                done = data.map(day => day.map(() => false));
+                logs = {};
             }
-            saveData();
-            renderExercises();
+            const today = new Date().getDay();
+            currentDay = today === 0 ? 6 : today - 1;
+            render();
         }
 
-        function renderExercises() {
+        function save() {
+            localStorage.setItem('sportData', JSON.stringify({ data, done, logs }));
+        }
+
+        // ============================================================
+        // AFFICHAGE
+        // ============================================================
+        function render() {
+            document.querySelectorAll('.day-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === currentDay);
+                btn.onclick = () => { currentDay = i;
+                    render(); };
+            });
+
+            document.getElementById('weekdayIndicator').textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
+
+            const dayData = data[currentDay] || [];
+            const doneDay = done[currentDay] || [];
+            const total = dayData.length;
+            const doneCount = doneDay.filter(Boolean).length;
+            document.getElementById('doneCount').textContent = doneCount;
+            document.getElementById('totalCount').textContent = total;
+
             const container = document.getElementById('exercisesContainer');
-            const dayEx = exercises[currentDay] || [];
-            container.innerHTML = dayEx.map((ex, index) => {
-                const done = completed[currentDay] && completed[currentDay][index];
-                const log = logs[`${currentDay}_${index}`] || { weight: '', reps: '' };
+            container.innerHTML = dayData.map((ex, i) => {
+                const isDone = doneDay[i] || false;
+                const log = logs[`${currentDay}_${i}`] || { w: '', r: '' };
                 return `
                     <div class="exercise-card">
-                        <div class="top-row" onclick="showDetail(${currentDay}, ${index})">
-                            <div class="emoji">${ex.emoji}</div>
+                        <div class="top" onclick="showDetail(${currentDay}, ${i})">
+                            <div class="emoji">${ex.e || '🏋️'}</div>
                             <div class="info">
-                                <div class="name">${ex.name} <span class="muscle">${ex.muscle}</span></div>
+                                <div class="name">${ex.n} <span class="muscle">${ex.m}</span></div>
                                 <div class="sets-reps">
-                                    <span class="label">📊 Séries</span>
-                                    <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, -1)">−</button>
-                                    <span class="value">${ex.sets}</span>
-                                    <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, 1)">+</button>
-                                    <span style="color:#8ba0b8;margin:0 4px;">|</span>
-                                    <span class="label">🔄 Reps</span>
-                                    <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, -1)">−</button>
-                                    <span class="value">${ex.reps}</span>
-                                    <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, 1)">+</button>
+                                    <span class="label">📊</span>
+                                    <button class="adj" onclick="event.stopPropagation();adjustSet(${currentDay},${i},-1)">−</button>
+                                    <span class="val">${ex.s}</span>
+                                    <button class="adj" onclick="event.stopPropagation();adjustSet(${currentDay},${i},1)">+</button>
+                                    <span style="margin:0 4px;">|</span>
+                                    <button class="adj" onclick="event.stopPropagation();adjustRep(${currentDay},${i},-1)">−</button>
+                                    <span class="val">${ex.r}</span>
+                                    <button class="adj" onclick="event.stopPropagation();adjustRep(${currentDay},${i},1)">+</button>
                                 </div>
                             </div>
                             <div class="log">
-                                Poids <input type="number" id="weight_${currentDay}_${index}" value="${log.weight}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'weight', this.value)">
-                                Reps <input type="number" id="reps_${currentDay}_${index}" value="${log.reps}" min="0" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'reps', this.value)">
+                                Poids <input type="number" id="w_${currentDay}_${i}" value="${log.w}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog(${currentDay},${i},'w',this.value)">
+                                Reps <input type="number" id="r_${currentDay}_${i}" value="${log.r}" min="0" onclick="event.stopPropagation();" onchange="saveLog(${currentDay},${i},'r',this.value)">
                             </div>
-                            <button class="check ${done ? 'done' : ''}" onclick="event.stopPropagation();toggleComplete(${currentDay}, ${index})">${done ? '✓' : ''}</button>
+                            <button class="check ${isDone?'done':''}" onclick="event.stopPropagation();toggleDone(${currentDay},${i})">${isDone?'✓':''}</button>
                         </div>
-                        <div class="card-actions">
-                            <button class="action-btn edit" onclick="event.stopPropagation();editExercise('${ex.id}')">✏️ Modifier</button>
-                            <button class="action-btn delete" onclick="event.stopPropagation();deleteExercise('${ex.id}')">🗑️ Supprimer</button>
+                        <div class="actions">
+                            <button class="edit" onclick="openEdit(${currentDay},${i})">✏️ Modifier</button>
+                            <button class="del" onclick="deleteEx(${currentDay},${i})">🗑️ Supprimer</button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function toggleComplete(day, index) {
-            if (!completed[day]) completed[day] = [];
-            completed[day][index] = !completed[day][index];
-            saveData();
-            renderExercises();
-            updateProgress();
+        // ============================================================
+        // ACTIONS
+        // ============================================================
+        function toggleDone(day, i) {
+            if (!done[day]) done[day] = [];
+            done[day][i] = !done[day][i];
+            save();
+            render();
         }
 
-        function saveLog(day, index, field, value) {
-            const key = `${day}_${index}`;
-            if (!logs[key]) logs[key] = { weight: '', reps: '' };
-            logs[key][field] = value;
-            saveData();
+        function saveLog(day, i, field, val) {
+            const k = `${day}_${i}`;
+            if (!logs[k]) logs[k] = { w: '', r: '' };
+            logs[k][field] = val;
+            save();
         }
 
-        function updateProgress() {
-            const dayEx = exercises[currentDay] || [];
-            const total = dayEx.length;
-            const done = completed[currentDay] ? completed[currentDay].filter(Boolean).length : 0;
-            document.getElementById('doneCount').textContent = done;
-            document.getElementById('totalCount').textContent = total;
+        function adjustSet(day, i, delta) {
+            const ex = data[day][i];
+            if (!ex) return;
+            ex.s = Math.max(1, (ex.s || 3) + delta);
+            save();
+            render();
+        }
+
+        function adjustRep(day, i, delta) {
+            const ex = data[day][i];
+            if (!ex) return;
+            let val = ex.r || '8-10';
+            if (!isNaN(val) && val.trim() !== '') {
+                const n = Math.max(1, parseInt(val) + delta);
+                ex.r = String(n);
+            } else {
+                const parts = val.split('-');
+                if (parts.length === 2 && !isNaN(parts[0])) {
+                    const base = parseInt(parts[0]);
+                    const n = Math.max(1, base + delta);
+                    ex.r = `${n}-${n+2}`;
+                }
+            }
+            save();
+            render();
+        }
+
+        function deleteEx(day, i) {
+            if (!confirm('Supprimer ?')) return;
+            data[day].splice(i, 1);
+            if (done[day]) done[day].splice(i, 1);
+            save();
+            render();
+        }
+
+        // ============================================================
+        // AJOUTER UN EXERCICE
+        // ============================================================
+        function openAdd() {
+            document.getElementById('editTitle').textContent = '➕ Ajouter un exercice';
+            document.getElementById('eName').value = '';
+            document.getElementById('eMuscle').value = 'Poitrine';
+            document.getElementById('eSets').value = '3';
+            document.getElementById('eReps').value = '';
+            document.getElementById('eEmoji').value = '🏋️';
+            document.getElementById('eDesc').value = '';
+            document.getElementById('eTips').value = '';
+            document.getElementById('eDay').value = currentDay;
+            document.getElementById('eIndex').value = -1;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // ============================================================
+        // EDITION
+        // ============================================================
+        let editDay = 0,
+            editIndex = 0;
+
+        function openEdit(day, i) {
+            editDay = day;
+            editIndex = i;
+            const ex = data[day][i];
+            if (!ex) return;
+            document.getElementById('editTitle').textContent = '✏️ Modifier ' + ex.n;
+            document.getElementById('eName').value = ex.n;
+            document.getElementById('eMuscle').value = ex.m;
+            document.getElementById('eSets').value = ex.s;
+            document.getElementById('eReps').value = ex.r;
+            document.getElementById('eEmoji').value = ex.e || '🏋️';
+            document.getElementById('eDesc').value = ex.desc || '';
+            document.getElementById('eTips').value = ex.tips || '';
+            document.getElementById('eDay').value = day;
+            document.getElementById('eIndex').value = i;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEdit() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function saveEdit(e) {
+            e.preventDefault();
+            const day = parseInt(document.getElementById('eDay').value);
+            const i = parseInt(document.getElementById('eIndex').value);
+            const name = document.getElementById('eName').value.trim();
+            if (!name) { alert('Entrez un nom'); return; }
+
+            const newEx = {
+                n: name,
+                m: document.getElementById('eMuscle').value,
+                s: parseInt(document.getElementById('eSets').value) || 3,
+                r: document.getElementById('eReps').value.trim(),
+                e: document.getElementById('eEmoji').value.trim() || '🏋️',
+                desc: document.getElementById('eDesc').value.trim(),
+                tips: document.getElementById('eTips').value.trim()
+            };
+
+            if (i === -1) {
+                // AJOUT
+                data[day].push(newEx);
+                if (!done[day]) done[day] = [];
+                done[day].push(false);
+            } else {
+                // MODIFICATION
+                const ex = data[day][i];
+                if (ex) {
+                    ex.n = newEx.n;
+                    ex.m = newEx.m;
+                    ex.s = newEx.s;
+                    ex.r = newEx.r;
+                    ex.e = newEx.e;
+                    ex.desc = newEx.desc;
+                    ex.tips = newEx.tips;
+                }
+            }
+            save();
+            closeEdit();
+            render();
         }
 
         // ============================================================
         // DETAIL
         // ============================================================
-        function showDetail(day, index) {
-            const ex = exercises[day][index];
-            currentDetailDay = day;
-            currentDetailIndex = index;
-            document.getElementById('detailTitle').textContent = `🏋️ ${ex.name}`;
-            const imageContainer = document.getElementById('detailImage');
-            const gifUrl = ex.gif || '';
-            if (gifUrl) {
-                imageContainer.innerHTML =
-                    `<img src="${gifUrl}" alt="${ex.name}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️</div>'">`;
+        let detailDay = 0,
+            detailIndex = 0;
+
+        function showDetail(day, i) {
+            detailDay = day;
+            detailIndex = i;
+            const ex = data[day][i];
+            if (!ex) return;
+            document.getElementById('detailTitle').textContent = '🏋️ ' + ex.n;
+
+            const img = document.getElementById('detailImage');
+            if (ex.gif) {
+                img.innerHTML = `<img src="${ex.gif}" alt="${ex.n}" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>🏋️</div>'">`;
             } else {
-                imageContainer.innerHTML = `<div class="no-image">🏋️</div>`;
+                img.innerHTML = `<div class="no-img">🏋️</div>`;
             }
-            document.getElementById('gifUrlInput').value = gifUrl || '';
-            document.getElementById('detailStats').innerHTML =
-                `
-                <div class="stat"><div class="value">${ex.sets}</div><div class="label">Séries</div></div>
-                <div class="stat"><div class="value" style="color:#b388ff;">${ex.reps}</div><div class="label">Répétitions</div></div>
-                <div class="stat"><div class="value" style="color:#00e676;">${ex.muscle}</div><div class="label">Groupe</div></div>
+            document.getElementById('gifInput').value = ex.gif || '';
+
+            document.getElementById('detailStats').innerHTML = `
+                <div class="stat"><div class="value">${ex.s}</div><div class="label">Séries</div></div>
+                <div class="stat"><div class="value" style="color:#b388ff;">${ex.r}</div><div class="label">Répétitions</div></div>
+                <div class="stat"><div class="value" style="color:#00e676;">${ex.m}</div><div class="label">Groupe</div></div>
             `;
-            const musclesList = (ex.muscles || ex.muscle || '').split(',').map(m => m.trim());
+
+            const muscles = ex.muscles || ex.m;
             document.getElementById('detailBody').innerHTML = `
-                <div class="section"><h4>🎯 Muscles ciblés</h4><div class="muscles">${musclesList.map(m => `<span class="pill">${m}</span>`).join('')}</div></div>
-                <div class="section"><h4>📝 Description</h4><p>${ex.description || 'Aucune description.'}</p></div>
-                <div class="section"><h4>⚠️ Conseils</h4><div class="tips"><p>${ex.tips || 'Aucun conseil.'}</p></div></div>
+                <div class="detail-section"><h4>🎯 Muscles ciblés</h4><p>${muscles}</p></div>
+                <div class="detail-section"><h4>📝 Description</h4><p>${ex.desc || 'Aucune description.'}</p></div>
+                <div class="detail-section"><h4>⚠️ Conseils</h4><div class="tips"><p>${ex.tips || 'Aucun conseil.'}</p></div></div>
             `;
+
             document.getElementById('detailModal').classList.add('active');
         }
 
-        function closeDetail() { document.getElementById('detailModal').classList.remove('active'); }
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
 
         function updateGif() {
-            const url = document.getElementById('gifUrlInput').value.trim();
+            const url = document.getElementById('gifInput').value.trim();
             if (!url) return;
-            const ex = exercises[currentDetailDay][currentDetailIndex];
-            if (ex) { ex.gif = url;
-                saveData();
-                document.getElementById('detailImage').innerHTML = `<img src="${url}" alt="GIF" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️</div>'">`; }
-        }
-
-        // ============================================================
-        // EDITION - LE BOUTON MODIFIER !
-        // ============================================================
-        function editExercise(exId) {
-            const ex = exercises[currentDay]?.find(e => e.id === exId);
-            if (!ex) {
-                showToast('Exercice introuvable');
-                return;
-            }
-            document.getElementById('modalTitle').textContent = '✏️ Modifier ' + ex.name;
-            document.getElementById('modalSubmitBtn').textContent = 'Enregistrer';
-            document.getElementById('exEditId').value = exId;
-            document.getElementById('exName').value = ex.name;
-            document.getElementById('exMuscle').value = ex.muscle;
-            document.getElementById('exSets').value = ex.sets;
-            document.getElementById('exReps').value = ex.reps;
-            document.getElementById('exEmoji').value = ex.emoji || '🏋️';
-            document.getElementById('exDescription').value = ex.description || '';
-            document.getElementById('exTips').value = ex.tips || '';
-            document.getElementById('exerciseModal').classList.add('active');
-        }
-
-        function deleteExercise(exId) {
-            if (!confirm('Supprimer ?')) return;
-            const idx = exercises[currentDay]?.findIndex(e => e.id === exId);
-            if (idx !== -1) {
-                exercises[currentDay].splice(idx, 1);
-                if (completed[currentDay]) delete completed[currentDay][exId];
-                saveData();
-                renderExercises();
-                showToast('🗑️ Supprimé');
+            const ex = data[detailDay][detailIndex];
+            if (ex) {
+                ex.gif = url;
+                save();
+                document.getElementById('detailImage').innerHTML =
+                    `<img src="${url}" alt="${ex.n}" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>🏋️</div>'">`;
             }
         }
 
-        function closeModal() { document.getElementById('exerciseModal').classList.remove('active'); }
-
-        function saveExercise(e) {
-            e.preventDefault();
-            const id = document.getElementById('exEditId').value;
-            const name = document.getElementById('exName').value.trim();
-            const muscle = document.getElementById('exMuscle').value;
-            const sets = parseInt(document.getElementById('exSets').value) || 3;
-            const reps = document.getElementById('exReps').value.trim();
-            const emoji = document.getElementById('exEmoji').value;
-            const description = document.getElementById('exDescription').value.trim();
-            const tips = document.getElementById('exTips').value.trim();
-
-            if (!name) { showToast('Entrez un nom'); return; }
-
-            if (id) {
-                const ex = exercises[currentDay].find(e => e.id === id);
-                if (ex) {
-                    ex.name = name;
-                    ex.muscle = muscle;
-                    ex.sets = sets;
-                    ex.reps = reps;
-                    ex.emoji = emoji;
-                    ex.description = description || undefined;
-                    ex.tips = tips || undefined;
+        // ============================================================
+        // EVENTS
+        // ============================================================
+        document.querySelectorAll('.modal-overlay').forEach(el => {
+            el.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
                 }
-                showToast('✅ Modifié !');
-            } else {
-                exercises[currentDay].push({
-                    id: 'ex' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    name,
-                    muscle,
-                    sets,
-                    reps,
-                    emoji,
-                    description: description || undefined,
-                    tips: tips || undefined,
-                    muscles: muscle
-                });
-                showToast('✅ Ajouté !');
-            }
-            saveData();
-            closeModal();
-            renderExercises();
-        }
+            });
+        });
 
-        function showToast(msg) {
-            const t = document.createElement('div');
-            t.style.cssText =
-                'position:fixed;bottom:20px;right:20px;background:#111827;border:1px solid #2a3a4f;border-radius:12px;padding:12px 20px;color:#f0f4f8;z-index:2000;font-size:0.9rem;';
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 2000);
-        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(el => el.classList.remove('active'));
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', init);
-        document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) closeDetail(); });
-        document.getElementById('exerciseModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
         window.showDetail = showDetail;
         window.closeDetail = closeDetail;
-        window.toggleComplete = toggleComplete;
-        window.saveLog = saveLog;
         window.updateGif = updateGif;
-        window.adjustSets = adjustSets;
-        window.adjustReps = adjustReps;
-        window.editExercise = editExercise;
-        window.deleteExercise = deleteExercise;
-        window.closeModal = closeModal;
-        window.saveExercise = saveExercise;
+        window.openAdd = openAdd;
+        window.openEdit = openEdit;
+        window.closeEdit = closeEdit;
+        window.saveEdit = saveEdit;
+        window.toggleDone = toggleDone;
+        window.saveLog = saveLog;
+        window.adjustSet = adjustSet;
+        window.adjustRep = adjustRep;
+        window.deleteEx = deleteEx;
     </script>
 </body>
 </html>
