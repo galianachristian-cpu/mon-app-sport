@@ -16,6 +16,7 @@
         .day-btn:hover{border-color:#00d4ff;color:#f0f4f8}
         .day-btn.active{border-color:#00d4ff;background:#00d4ff;color:#0a0e17}
         .day-btn .sub{display:block;font-weight:400;font-size:0.5rem;opacity:0.7;margin-top:2px}
+        .day-btn.today{border-color:#b388ff;box-shadow:0 0 20px rgba(179,136,255,0.2)}
         .weekday-indicator{text-align:center;padding:8px 16px;background:#00d4ff;color:#0a0e17;border-radius:12px;font-weight:700;font-size:1rem;margin-bottom:16px}
         .progress{text-align:center;color:#8ba0b8;margin-bottom:16px;font-size:0.9rem}
         .progress strong{color:#00d4ff}
@@ -83,7 +84,7 @@
     </div>
 
     <div class="day-selector" id="daySelector">
-        <button class="day-btn active" data-day="0">Lun<br><span class="sub">Poitrine</span></button>
+        <button class="day-btn" data-day="0">Lun<br><span class="sub">Poitrine</span></button>
         <button class="day-btn" data-day="1">Mar<br><span class="sub">Dos</span></button>
         <button class="day-btn" data-day="2">Mer<br><span class="sub">Jambes</span></button>
         <button class="day-btn" data-day="3">Jeu<br><span class="sub">Épaules</span></button>
@@ -155,7 +156,7 @@
 
     <script>
         // ============================================================
-        // DONNÉES PAR DÉFAUT - AVEC GIFS INTÉGRÉS POUR TOUS
+        // DONNÉES PAR DÉFAUT
         // ============================================================
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
@@ -295,7 +296,7 @@
                   tips: 'Gardez les hanches fixes. Contractez fort les abdominaux. Ne tirez pas avec les bras.'
                 }
             ],
-            // VENDREDI (identique lundi)
+            // VENDREDI
             [
                 { n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
                   gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
@@ -328,7 +329,7 @@
                   tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos. Contrôlez la descente.'
                 }
             ],
-            // SAMEDI (identique mardi)
+            // SAMEDI
             [
                 { n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
                   gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/souleve-de-terre.gif',
@@ -361,7 +362,7 @@
                   tips: 'Gardez les poignets droits. Contractez les biceps en haut. Ne balancez pas le buste.'
                 }
             ],
-            // DIMANCHE (identique mercredi)
+            // DIMANCHE
             [
                 { n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
                   gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
@@ -408,10 +409,10 @@
         // INIT
         // ============================================================
         function init() {
-            // Données par défaut (tout le monde voit la même chose)
+            // Données par défaut
             data = JSON.parse(JSON.stringify(DEFAULT_DATA));
             
-            // Charger seulement les logs et les exercices complétés depuis localStorage
+            // Charger les logs depuis localStorage
             const saved = localStorage.getItem('sportData');
             if (saved) {
                 try {
@@ -425,8 +426,14 @@
                 logs = {};
             }
             
-            const today = new Date().getDay();
-            currentDay = today === 0 ? 6 : today - 1;
+            // ===> CHANGEMENT ICI : jour actuel <===
+            const today = new Date().getDay(); // 0 = Dimanche, 1 = Lundi, ...
+            if (today === 0) {
+                currentDay = 6; // Dimanche → index 6
+            } else {
+                currentDay = today - 1; // Lundi(1) → index 0, Mardi(2) → index 1, etc.
+            }
+            
             render();
         }
 
@@ -438,12 +445,14 @@
         // AFFICHAGE
         // ============================================================
         function render() {
+            // Mettre à jour les jours
             document.querySelectorAll('.day-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', i === currentDay);
                 btn.onclick = () => { currentDay = i;
                     render(); };
             });
 
+            // Mettre à jour l'indicateur
             document.getElementById('weekdayIndicator').textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
 
             const dayData = data[currentDay] || [];
@@ -539,7 +548,7 @@
         }
 
         // ============================================================
-        // AJOUTER / MODIFIER UN EXERCICE
+        // AJOUTER / MODIFIER
         // ============================================================
         function openAdd() {
             document.getElementById('editTitle').textContent = '➕ Ajouter un exercice';
@@ -550,7 +559,7 @@
             document.getElementById('eEmoji').value = '🏋️';
             document.getElementById('eDesc').value = '';
             document.getElementById('eTips').value = '';
-            document.getElementById('eGif').value = 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/';
+            document.getElementById('eGif').value = '';
             document.getElementById('eDay').value = currentDay;
             document.getElementById('eIndex').value = -1;
             document.getElementById('editModal').classList.add('active');
@@ -597,7 +606,7 @@
                 e: document.getElementById('eEmoji').value.trim() || '🏋️',
                 desc: document.getElementById('eDesc').value.trim(),
                 tips: document.getElementById('eTips').value.trim(),
-                gif: document.getElementById('eGif').value.trim() || 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/'
+                gif: document.getElementById('eGif').value.trim() || ''
             };
 
             if (i === -1) {
