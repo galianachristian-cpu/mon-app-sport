@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏋️ Mon Programme Hebdomadaire</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0e17;
+            color: #f0f4f8;
+            padding: 16px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0 10px;
+            border-bottom: 2px solid #2a3a4f;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #00d4ff, #b388ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #8ba0b8;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .weekday-indicator {
+            text-align: center;
+            padding: 8px 16px;
+            background: #00d4ff;
+            color: #0a0e17;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+        }
+
+        .day-selector {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+
+        .day-btn {
+            padding: 10px 2px;
+            border: 2px solid #2a3a4f;
+            border-radius: 10px;
+            background: #111827;
+            color: #8ba0b8;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.65rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .day-btn:hover {
+            border-color: #00d4ff;
+            color: #f0f4f8;
+        }
+
+        .day-btn.active {
+            border-color: #00d4ff;
+            background: #00d4ff;
+            color: #0a0e17;
+        }
+
+        .day-btn .sub {
+            display: block;
+            font-weight: 400;
+            font-size: 0.5rem;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .day-btn.active .sub {
+            opacity: 0.9;
+        }
+
+        .day-btn.today {
+            border-color: #b388ff;
+            box-shadow: 0 0 20px rgba(179, 136, 255, 0.2);
+        }
+
+        .progress {
+            text-align: center;
+            color: #8ba0b8;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+
+        .progress strong {
+            color: #00d4ff;
+        }
+
+        .exercise-card {
+            background: #111827;
+            border: 1px solid #2a3a4f;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .exercise-card:hover {
+            border-color: #00d4ff;
+            transform: translateX(4px);
+        }
+
+        .exercise-card .emoji {
+            font-size: 1.8rem;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #0a0e17;
+            border: 1px solid #2a3a4f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .exercise-card .info {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .exercise-card .info .name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .exercise-card .info .muscle {
+            font-size: 0.55rem;
+            font-weight: 400;
+            color: #8ba0b8;
+            background: #0a0e17;
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+
+        .exercise-card .info .sets-reps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .exercise-card .info .sets-reps .label {
+            font-size: 0.65rem;
+            color: #8ba0b8;
+        }
+
+        .exercise-card .info .sets-reps .value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #00d4ff;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .exercise-card .info .sets-reps .adj-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid #2a3a4f;
+            background: transparent;
+            color: #8ba0b8;
+            cursor: pointer;
+            font-size: 0.65rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+        }
+
+        .exercise-card .info .sets-reps .adj-btn:hover {
+            border-color: #00d4ff;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .exercise-card .log {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: #8ba0b8;
+        }
+
+        .exercise-card .log input {
+            width: 44px;
+            padding: 3px 4px;
+            border-radius: 6px;
+            border: 1px solid #2a3a4f;
+            background: #0a0e17;
+            color: #f0f4f8;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .exercise-card .check {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #2a3a4f;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: transparent;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .exercise-card .check.done {
+            background: #00e676;
+            border-color: #00e676;
+            color: #0a0e17;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #111827;
+            border: 1px solid #2a3a4f;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            padding: 24px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal .close {
+            float: right;
+            background: none;
+            border: none;
+            color: #8ba0b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .modal .close:hover {
+            color: #f0f4f8;
+        }
+
+        .modal h2 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+
+        .modal .image-container {
+            width: 100%;
+            background: #0a0e17;
+            border: 1px solid #2a3a4f;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal .image-container img {
+            width: 100%;
+            height: auto;
+            max-height: 280px;
+            object-fit: contain;
+        }
+
+        .modal .image-container .no-image {
+            font-size: 2rem;
+            opacity: 0.3;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .modal .gif-input-section {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            background: #0a0e17;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #2a3a4f;
+        }
+
+        .modal .gif-input-section input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #2a3a4f;
+            background: #111827;
+            color: #f0f4f8;
+            font-size: 0.8rem;
+            font-family: inherit;
+            min-width: 150px;
+        }
+
+        .modal .gif-input-section input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .modal .gif-input-section button {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            background: #00d4ff;
+            color: #0a0e17;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-family: inherit;
+            transition: background 0.3s ease;
+        }
+
+        .modal .gif-input-section button:hover {
+            background: #00b8d4;
+        }
+
+        .modal .gif-input-section .hint {
+            width: 100%;
+            font-size: 0.55rem;
+            color: #8ba0b8;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .modal .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .modal .stats .stat {
+            text-align: center;
+            background: #0a0e17;
+            padding: 10px 6px;
+            border-radius: 10px;
+            border: 1px solid #2a3a4f;
+        }
+
+        .modal .stats .stat .value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #00d4ff;
+        }
+
+        .modal .stats .stat .label {
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            color: #8ba0b8;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .modal .section {
+            background: #0a0e17;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #2a3a4f;
+            margin-bottom: 10px;
+        }
+
+        .modal .section h4 {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            color: #8ba0b8;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .modal .section p {
+            font-size: 0.85rem;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+
+        .modal .section .tips {
+            border-left: 3px solid #ffab00;
+            padding-left: 12px;
+        }
+
+        .modal .muscles {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .modal .muscles .pill {
+            padding: 2px 10px;
+            border-radius: 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #00d4ff;
+        }
+
+        .modal .image-credit {
+            font-size: 0.5rem;
+            color: #4a5a6a;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .day-selector {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 3px;
+            }
+
+            .day-btn {
+                font-size: 0.5rem;
+                padding: 8px 2px;
+            }
+
+            .day-btn .sub {
+                font-size: 0.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .day-selector {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+            }
+
+            .day-btn {
+                font-size: 0.6rem;
+                padding: 8px 4px;
+            }
+
+            .exercise-card {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+
+            .exercise-card .info .name {
+                font-size: 0.85rem;
+            }
+
+            .modal {
+                padding: 16px;
+            }
+
+            .modal .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .modal .image-container {
+                min-height: 150px;
+            }
+
+            .modal .image-container img {
+                max-height: 200px;
+            }
+
+            .modal .gif-input-section {
+                flex-direction: column;
+            }
+
+            .modal .gif-input-section button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🏋️ Mon Programme Hebdomadaire</h1>
+        <p>📅 Du lundi au dimanche — Clique sur un jour</p>
+    </div>
+
+    <!-- JOURS DE LA SEMAINE -->
+    <div class="day-selector" id="daySelector">
+        <button class="day-btn" data-day="0">Lun<br><span class="sub">Poitrine</span></button>
+        <button class="day-btn" data-day="1">Mar<br><span class="sub">Dos</span></button>
+        <button class="day-btn" data-day="2">Mer<br><span class="sub">Jambes</span></button>
+        <button class="day-btn" data-day="3">Jeu<br><span class="sub">Épaules</span></button>
+        <button class="day-btn" data-day="4">Ven<br><span class="sub">Poitrine</span></button>
+        <button class="day-btn" data-day="5">Sam<br><span class="sub">Dos</span></button>
+        <button class="day-btn" data-day="6">Dim<br><span class="sub">Jambes</span></button>
+    </div>
+
+    <!-- INDICATEUR DU JOUR -->
+    <div class="weekday-indicator" id="weekdayIndicator">📅 Lundi — Programme Poitrine & Triceps</div>
+
+    <div class="progress">✅ <strong id="doneCount">0</strong> / <span id="totalCount">0</span> terminés</div>
+
+    <div id="exercisesContainer"></div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <button class="close" onclick="closeDetail()">✕</button>
+            <h2 id="detailTitle">🏋️ Exercice</h2>
+
+            <div class="image-container" id="detailImage">
+                <div class="no-image">🏋️<br><span style="font-size:0.8rem;">Chargement...</span></div>
+            </div>
+
+            <div class="gif-input-section">
+                <input type="text" id="gifUrlInput" placeholder="Collez l'URL d'un GIF ici">
+                <button onclick="updateGif()">📥 Changer le GIF</button>
+                <div class="hint">💡 Utilisez Giphy.com ou Tenor.com</div>
+            </div>
+
+            <div class="stats" id="detailStats"></div>
+            <div id="detailBody"></div>
+            <div class="image-credit">📸 GIFs de Giphy.com</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  JOURS DE LA SEMAINE
+        // ============================================================
+        const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+        const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps',
+            'Dos & Biceps', 'Jambes'
+        ];
+
+        // ============================================================
+        //  LISTE DES GIFS
+        // ============================================================
+        const GIFS = {
+            'Développé couché': 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
+            'Développé incliné haltères': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Écartés aux câbles': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Dips': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Extension triceps poulie haute': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Extension triceps au-dessus tête': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Soulevé de terre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Rowing barre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Tirage vertical (Lat Pulldown)': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Tirage horizontal (Cable Row)': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Curl barre': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Curl marteau': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Squat': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Soulevé de terre roumain': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Presse à jambes': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Fentes marchées': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Curl jambes allongé': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Mollets debout': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Développé militaire': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Élévations latérales': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Oiseau (Rear Delt Fly)': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Face Pull': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Relevé de jambes suspendu': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+            'Crunch aux câbles': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
+        };
+
+        // ============================================================
+        //  EXERCICES PAR JOUR (7 jours)
+        // ============================================================
+        const DEFAULT_EXERCISES = [
+            // JOUR 0 - LUNDI (Poitrine & Triceps)
+            [{
+                name: 'Développé couché',
+                muscle: 'Poitrine',
+                sets: 4,
+                reps: '6-8',
+                emoji: '🏋️',
+                muscles: 'Pectoraux, Triceps, Épaules',
+                group: 'Poitrine',
+                description: '🏋️ Allongez-vous sur un banc plat, les pieds bien ancrés au sol.\n📌 Saisissez la barre avec une prise légèrement plus large que les épaules.\n⬇️ Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine.\n⬆️ Poussez vers le haut en contractant fortement les pectoraux.\n🚫 Ne verrouillez pas les coudes en haut du mouvement.',
+                tips: '🟢 Gardez les omoplates plaquées contre le banc.\n🟢 Contrôlez la descente.\n🟢 Gardez les poignets droits.\n🟢 Expirez en poussant, inspirez en descendant.'
+            }, {
+                name: 'Développé incliné haltères',
+                muscle: 'Poitrine',
+                sets: 3,
+                reps: '8-10',
+                emoji: '💪',
+                muscles: 'Pectoraux supérieurs, Triceps, Épaules',
+                group: 'Poitrine',
+                description: '🏋️ Banc incliné à 30-45°.\n📌 Un haltère dans chaque main.\n⬆️ Poussez vers le haut en rapprochant les haltères.\n⬇️ Redescendez en contrôlant jusqu\'au niveau des épaules.',
+                tips: '🟢 Maintiens les poignets droits.\n🟢 Inspire en descendant, expire en poussant.\n🟢 Ne va pas trop bas pour protéger les épaules.'
+            }, {
+                name: 'Écartés aux câbles',
+                muscle: 'Poitrine',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🎯',
+                muscles: 'Pectoraux, Épaules',
+                group: 'Poitrine',
+                description: '🏋️ Debout entre deux poulies hautes.\n📌 Saisissez les poignées, avancez d\'un pas.\n🔄 Ramenez les mains devant vous en croisant les poignets.\n⬅️ Revenez lentement en position de départ.',
+                tips: '🟢 Gardez les coudes légèrement fléchis.\n🟢 Concentrez-vous sur la contraction des pectoraux.\n🟢 Retour lent et contrôlé.'
+            }, {
+                name: 'Dips',
+                muscle: 'Triceps',
+                sets: 3,
+                reps: '10-12',
+                emoji: '💪',
+                muscles: 'Triceps, Pectoraux, Épaules',
+                group: 'Triceps',
+                description: '🏋️ Saisissez les barres parallèles.\n⬇️ Descendez en fléchissant les coudes à 90°.\n⬆️ Remontez en poussant sur les barres.\n📌 Gardez le corps droit.',
+                tips: '🟢 Ne descendez pas trop bas.\n🟢 Si trop difficile, utilisez un élastique.\n🟢 Pour cibler les triceps, gardez le buste vertical.'
+            }, {
+                name: 'Extension triceps poulie haute',
+                muscle: 'Triceps',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🎯',
+                muscles: 'Triceps',
+                group: 'Triceps',
+                description: '🏋️ Face à la poulie haute.\n📌 Saisissez la barre ou la corde.\n🔄 Coudes près du corps, bloqués.\n⬇️ Abaissez en tendant les bras vers le bas.\n⬆️ Remontez en contrôlant à 90°.',
+                tips: '🟢 Seuls les avant-bras bougent.\n🟢 Contractez fort les triceps en fin de mouvement.\n🟢 Ne balancez pas le buste.'
+            }, {
+                name: 'Extension triceps au-dessus tête',
+                muscle: 'Triceps',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🔥',
+                muscles: 'Triceps',
+                group: 'Triceps',
+                description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
+                tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
+            }],
+            // JOUR 1 - MARDI (Dos & Biceps)
+            [{
+                name: 'Soulevé de terre',
+                muscle: 'Dos',
+                sets: 4,
+                reps: '5-6',
+                emoji: '🏋️',
+                muscles: 'Dos, Ischio-jambiers, Fessiers, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Pieds largeur d\'épaules, barre au-dessus des lacets.\n📌 Saisissez la barre, dos droit.\n⬆️ Poussez dans les talons pour vous lever.\n🔄 La barre reste collée aux jambes.\n💪 Contractez les fessiers en haut.',
+                tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir.\n🟢 Engagez la sangle abdominale.\n🟢 Expirez en montant, inspirez en descendant.'
+            }, {
+                name: 'Rowing barre',
+                muscle: 'Dos',
+                sets: 4,
+                reps: '8-10',
+                emoji: '💪',
+                muscles: 'Dos, Biceps, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Penché en avant, dos droit.\n📌 Tirez la barre vers le bas de la poitrine.\n🔄 Serrez les omoplates en haut.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez le dos droit !\n🟢 Tirez par les coudes, pas par les bras.\n🟢 Squeeze les omoplates en haut.'
+            }, {
+                name: 'Tirage vertical (Lat Pulldown)',
+                muscle: 'Dos',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🎯',
+                muscles: 'Dorsaux, Biceps, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Assis à la poulie haute.\n📌 Saisissez la barre large.\n⬇️ Tirez vers la poitrine.\n💪 Contractez les dorsaux en bas.\n⬆️ Remontez en contrôlant.',
+                tips: '🟢 Gardez le buste stable.\n🟢 Tirez par les coudes.\n🟢 Squeeze les dorsaux en bas.'
+            }, {
+                name: 'Tirage horizontal (Cable Row)',
+                muscle: 'Dos',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🔥',
+                muscles: 'Dos, Biceps, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Assis, pieds calés.\n📌 Saisissez la poignée en V.\n⬇️ Tirez vers le ventre.\n🔄 Serrez les omoplates.\n⬆️ Relâchez en contrôlant.',
+                tips: '🟢 Dos droit !\n🟢 Tirez par les coudes.\n🟢 Squeeze les omoplates en fin de mouvement.'
+            }, {
+                name: 'Curl barre',
+                muscle: 'Biceps',
+                sets: 3,
+                reps: '10-12',
+                emoji: '💪',
+                muscles: 'Biceps, Avant-bras',
+                group: 'Biceps',
+                description: '🏋️ Debout, barre en prise pronation.\n📌 Coudes près du corps.\n⬆️ Remontez la barre vers les épaules.\n💪 Contractez les biceps en haut.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez les coudes près du corps.\n🟢 Ne balancez pas le buste.\n🟢 Contractez les biceps en haut.'
+            }, {
+                name: 'Curl marteau',
+                muscle: 'Biceps',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🔥',
+                muscles: 'Biceps, Brachial, Avant-bras',
+                group: 'Biceps',
+                description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
+                tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
+            }],
+            // JOUR 2 - MERCREDI (Jambes)
+            [{
+                name: 'Squat',
+                muscle: 'Jambes',
+                sets: 4,
+                reps: '6-8',
+                emoji: '🦵',
+                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Barre sur les épaules.\n📌 Pieds largeur d\'épaules.\n⬇️ Descendez comme pour vous asseoir.\n🔄 Cuisses parallèles au sol.\n⬆️ Remontez en poussant dans les talons.',
+                tips: '🟢 Dos droit, poitrine ouverte.\n🟢 Poussez dans les talons.\n🟢 Les genoux suivent la direction des pieds.'
+            }, {
+                name: 'Soulevé de terre roumain',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '8-10',
+                emoji: '🏋️',
+                muscles: 'Ischio-jambiers, Fessiers, Dos',
+                group: 'Jambes',
+                description: '🏋️ Barre dans les mains.\n📌 Genoux légèrement fléchis.\n⬇️ Penchez-vous en avant.\n🔄 Barre le long des jambes.\n⬆️ Remontez en contractant les fessiers.',
+                tips: '🟢 Dos droit !\n🟢 Sensation dans les ischio-jambiers.\n🟢 Contractez les fessiers en haut.'
+            }, {
+                name: 'Presse à jambes',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🦵',
+                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Assis sur la machine.\n📌 Pieds sur la plaque.\n⬆️ Poussez en tendant les jambes.\n⬇️ Revenez en contrôlant.',
+                tips: '🟢 Dos plaqué contre le siège.\n🟢 Ne bloquez pas les genoux.\n🟢 Contrôlez la descente.'
+            }, {
+                name: 'Fentes marchées',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '12 chaque',
+                emoji: '⚡',
+                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Faites un grand pas en avant.\n⬇️ Fléchissez les deux genoux à 90°.\n⬆️ Poussez pour revenir.\n🔄 Alternez avec l\'autre jambe.',
+                tips: '🟢 Genou avant ne dépasse pas les orteils.\n🟢 Dos droit, gainage engagé.\n🟢 Gardez le buste vertical.'
+            }, {
+                name: 'Curl jambes allongé',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🎯',
+                muscles: 'Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Allongé sur la machine.\n📌 Rouleau sous les mollets.\n⬇️ Ramenez les talons vers les fesses.\n⬆️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez les hanches plaquées.\n🟢 Contractez les ischio-jambiers.\n🟢 Mouvement contrôlé.'
+            }, {
+                name: 'Mollets debout',
+                muscle: 'Jambes',
+                sets: 4,
+                reps: '15-20',
+                emoji: '💪',
+                muscles: 'Mollets',
+                group: 'Jambes',
+                description: '🏋️ Debout sous les coussins.\n⬆️ Montez sur la pointe des pieds.\n💪 Contractez les mollets.\n⬇️ Redescendez en étirant.',
+                tips: '🟢 Amplitude maximale.\n🟢 Montez haut, descendez bas.\n🟢 Contractez fort en haut.'
+            }],
+            // JOUR 3 - JEUDI (Épaules & Cœur)
+            [{
+                name: 'Développé militaire',
+                muscle: 'Épaules',
+                sets: 4,
+                reps: '6-8',
+                emoji: '🏋️',
+                muscles: 'Épaules, Triceps, Trapèzes',
+                group: 'Épaules',
+                description: '🏋️ Debout ou assis.\n📌 Barre au niveau des clavicules.\n⬆️ Poussez au-dessus de la tête.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez le buste stable.\n🟢 Ne poussez pas avec le dos.\n🟢 Contractez les épaules en haut.'
+            }, {
+                name: 'Élévations latérales',
+                muscle: 'Épaules',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🎯',
+                muscles: 'Épaules (Deltoïdes latéraux)',
+                group: 'Épaules',
+                description: '🏋️ Debout, haltères le long du corps.\n⬆️ Levez les bras sur les côtés.\n🔄 Jusqu\'à hauteur des épaules.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Coudes légèrement fléchis.\n🟢 Ne montez pas trop haut.\n🟢 Contrôlez la descente.'
+            }, {
+                name: 'Oiseau (Rear Delt Fly)',
+                muscle: 'Épaules',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🔥',
+                muscles: 'Épaules (Deltoïdes postérieurs), Trapèzes',
+                group: 'Épaules',
+                description: '🏋️ Penché en avant, dos droit.\n⬆️ Levez les bras sur les côtés.\n🔄 Serrez les omoplates.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Dos droit !\n🟢 Tirez par les coudes.\n🟢 Squeeze les omoplates en haut.'
+            }, {
+                name: 'Face Pull',
+                muscle: 'Épaules',
+                sets: 3,
+                reps: '12-15',
+                emoji: '💪',
+                muscles: 'Épaules (Deltoïdes postérieurs), Trapèzes',
+                group: 'Épaules',
+                description: '🏋️ Face à la poulie.\n📌 Saisissez la corde.\n⬇️ Tirez vers le visage.\n🔄 Écartez les mains en serrant les omoplates.',
+                tips: '🟢 Gardez les coudes hauts.\n🟢 Squeeze les omoplates.\n🟢 Excellent pour la posture.'
+            }, {
+                name: 'Relevé de jambes suspendu',
+                muscle: 'Cœur',
+                sets: 3,
+                reps: '15',
+                emoji: '🔥',
+                muscles: 'Abdominaux',
+                group: 'Cœur',
+                description: '🏋️ Suspendu à une barre.\n⬆️ Levez les jambes à 90°.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Ne balancez pas le corps.\n🟢 Engagez les abdominaux.\n🟢 Descendez lentement.'
+            }, {
+                name: 'Crunch aux câbles',
+                muscle: 'Cœur',
+                sets: 3,
+                reps: '14-20',
+                emoji: '🎯',
+                muscles: 'Abdominaux',
+                group: 'Cœur',
+                description: '🏋️ À genoux face à la poulie.\n📌 Saisissez la corde derrière la tête.\n⬇️ Fléchissez le buste.\n💪 Contractez les abdominaux.',
+                tips: '🟢 Gardez les hanches fixes.\n🟢 Contractez fort les abdominaux.\n🟢 Ne tirez pas avec les bras.'
+            }],
+            // JOUR 4 - VENDREDI (Poitrine & Triceps - identique à Lundi)
+            [{
+                name: 'Développé couché',
+                muscle: 'Poitrine',
+                sets: 4,
+                reps: '6-8',
+                emoji: '🏋️',
+                muscles: 'Pectoraux, Triceps, Épaules',
+                group: 'Poitrine',
+                description: '🏋️ Allongez-vous sur un banc plat, les pieds bien ancrés au sol.\n📌 Saisissez la barre avec une prise légèrement plus large que les épaules.\n⬇️ Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine.\n⬆️ Poussez vers le haut en contractant fortement les pectoraux.\n🚫 Ne verrouillez pas les coudes en haut du mouvement.',
+                tips: '🟢 Gardez les omoplates plaquées contre le banc.\n🟢 Contrôlez la descente.\n🟢 Gardez les poignets droits.\n🟢 Expirez en poussant, inspirez en descendant.'
+            }, {
+                name: 'Développé incliné haltères',
+                muscle: 'Poitrine',
+                sets: 3,
+                reps: '8-10',
+                emoji: '💪',
+                muscles: 'Pectoraux supérieurs, Triceps, Épaules',
+                group: 'Poitrine',
+                description: '🏋️ Banc incliné à 30-45°.\n📌 Un haltère dans chaque main.\n⬆️ Poussez vers le haut en rapprochant les haltères.\n⬇️ Redescendez en contrôlant jusqu\'au niveau des épaules.',
+                tips: '🟢 Maintiens les poignets droits.\n🟢 Inspire en descendant, expire en poussant.\n🟢 Ne va pas trop bas pour protéger les épaules.'
+            }, {
+                name: 'Écartés aux câbles',
+                muscle: 'Poitrine',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🎯',
+                muscles: 'Pectoraux, Épaules',
+                group: 'Poitrine',
+                description: '🏋️ Debout entre deux poulies hautes.\n📌 Saisissez les poignées, avancez d\'un pas.\n🔄 Ramenez les mains devant vous en croisant les poignets.\n⬅️ Revenez lentement en position de départ.',
+                tips: '🟢 Gardez les coudes légèrement fléchis.\n🟢 Concentrez-vous sur la contraction des pectoraux.\n🟢 Retour lent et contrôlé.'
+            }, {
+                name: 'Dips',
+                muscle: 'Triceps',
+                sets: 3,
+                reps: '10-12',
+                emoji: '💪',
+                muscles: 'Triceps, Pectoraux, Épaules',
+                group: 'Triceps',
+                description: '🏋️ Saisissez les barres parallèles.\n⬇️ Descendez en fléchissant les coudes à 90°.\n⬆️ Remontez en poussant sur les barres.\n📌 Gardez le corps droit.',
+                tips: '🟢 Ne descendez pas trop bas.\n🟢 Si trop difficile, utilisez un élastique.\n🟢 Pour cibler les triceps, gardez le buste vertical.'
+            }, {
+                name: 'Extension triceps poulie haute',
+                muscle: 'Triceps',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🎯',
+                muscles: 'Triceps',
+                group: 'Triceps',
+                description: '🏋️ Face à la poulie haute.\n📌 Saisissez la barre ou la corde.\n🔄 Coudes près du corps, bloqués.\n⬇️ Abaissez en tendant les bras vers le bas.\n⬆️ Remontez en contrôlant à 90°.',
+                tips: '🟢 Seuls les avant-bras bougent.\n🟢 Contractez fort les triceps en fin de mouvement.\n🟢 Ne balancez pas le buste.'
+            }, {
+                name: 'Extension triceps au-dessus tête',
+                muscle: 'Triceps',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🔥',
+                muscles: 'Triceps',
+                group: 'Triceps',
+                description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
+                tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
+            }],
+            // JOUR 5 - SAMEDI (Dos & Biceps - identique à Mardi)
+            [{
+                name: 'Soulevé de terre',
+                muscle: 'Dos',
+                sets: 4,
+                reps: '5-6',
+                emoji: '🏋️',
+                muscles: 'Dos, Ischio-jambiers, Fessiers, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Pieds largeur d\'épaules, barre au-dessus des lacets.\n📌 Saisissez la barre, dos droit.\n⬆️ Poussez dans les talons pour vous lever.\n🔄 La barre reste collée aux jambes.\n💪 Contractez les fessiers en haut.',
+                tips: '🔴 DOS DROIT ABSOLUMENT ! Ne pas arrondir.\n🟢 Engagez la sangle abdominale.\n🟢 Expirez en montant, inspirez en descendant.'
+            }, {
+                name: 'Rowing barre',
+                muscle: 'Dos',
+                sets: 4,
+                reps: '8-10',
+                emoji: '💪',
+                muscles: 'Dos, Biceps, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Penché en avant, dos droit.\n📌 Tirez la barre vers le bas de la poitrine.\n🔄 Serrez les omoplates en haut.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez le dos droit !\n🟢 Tirez par les coudes, pas par les bras.\n🟢 Squeeze les omoplates en haut.'
+            }, {
+                name: 'Tirage vertical (Lat Pulldown)',
+                muscle: 'Dos',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🎯',
+                muscles: 'Dorsaux, Biceps, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Assis à la poulie haute.\n📌 Saisissez la barre large.\n⬇️ Tirez vers la poitrine.\n💪 Contractez les dorsaux en bas.\n⬆️ Remontez en contrôlant.',
+                tips: '🟢 Gardez le buste stable.\n🟢 Tirez par les coudes.\n🟢 Squeeze les dorsaux en bas.'
+            }, {
+                name: 'Tirage horizontal (Cable Row)',
+                muscle: 'Dos',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🔥',
+                muscles: 'Dos, Biceps, Trapèzes',
+                group: 'Dos',
+                description: '🏋️ Assis, pieds calés.\n📌 Saisissez la poignée en V.\n⬇️ Tirez vers le ventre.\n🔄 Serrez les omoplates.\n⬆️ Relâchez en contrôlant.',
+                tips: '🟢 Dos droit !\n🟢 Tirez par les coudes.\n🟢 Squeeze les omoplates en fin de mouvement.'
+            }, {
+                name: 'Curl barre',
+                muscle: 'Biceps',
+                sets: 3,
+                reps: '10-12',
+                emoji: '💪',
+                muscles: 'Biceps, Avant-bras',
+                group: 'Biceps',
+                description: '🏋️ Debout, barre en prise pronation.\n📌 Coudes près du corps.\n⬆️ Remontez la barre vers les épaules.\n💪 Contractez les biceps en haut.\n⬇️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez les coudes près du corps.\n🟢 Ne balancez pas le buste.\n🟢 Contractez les biceps en haut.'
+            }, {
+                name: 'Curl marteau',
+                muscle: 'Biceps',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🔥',
+                muscles: 'Biceps, Brachial, Avant-bras',
+                group: 'Biceps',
+                description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
+                tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
+            }],
+            // JOUR 6 - DIMANCHE (Jambes - identique à Mercredi)
+            [{
+                name: 'Squat',
+                muscle: 'Jambes',
+                sets: 4,
+                reps: '6-8',
+                emoji: '🦵',
+                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Barre sur les épaules.\n📌 Pieds largeur d\'épaules.\n⬇️ Descendez comme pour vous asseoir.\n🔄 Cuisses parallèles au sol.\n⬆️ Remontez en poussant dans les talons.',
+                tips: '🟢 Dos droit, poitrine ouverte.\n🟢 Poussez dans les talons.\n🟢 Les genoux suivent la direction des pieds.'
+            }, {
+                name: 'Soulevé de terre roumain',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '8-10',
+                emoji: '🏋️',
+                muscles: 'Ischio-jambiers, Fessiers, Dos',
+                group: 'Jambes',
+                description: '🏋️ Barre dans les mains.\n📌 Genoux légèrement fléchis.\n⬇️ Penchez-vous en avant.\n🔄 Barre le long des jambes.\n⬆️ Remontez en contractant les fessiers.',
+                tips: '🟢 Dos droit !\n🟢 Sensation dans les ischio-jambiers.\n🟢 Contractez les fessiers en haut.'
+            }, {
+                name: 'Presse à jambes',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '10-12',
+                emoji: '🦵',
+                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Assis sur la machine.\n📌 Pieds sur la plaque.\n⬆️ Poussez en tendant les jambes.\n⬇️ Revenez en contrôlant.',
+                tips: '🟢 Dos plaqué contre le siège.\n🟢 Ne bloquez pas les genoux.\n🟢 Contrôlez la descente.'
+            }, {
+                name: 'Fentes marchées',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '12 chaque',
+                emoji: '⚡',
+                muscles: 'Quadriceps, Fessiers, Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Faites un grand pas en avant.\n⬇️ Fléchissez les deux genoux à 90°.\n⬆️ Poussez pour revenir.\n🔄 Alternez avec l\'autre jambe.',
+                tips: '🟢 Genou avant ne dépasse pas les orteils.\n🟢 Dos droit, gainage engagé.\n🟢 Gardez le buste vertical.'
+            }, {
+                name: 'Curl jambes allongé',
+                muscle: 'Jambes',
+                sets: 3,
+                reps: '12-15',
+                emoji: '🎯',
+                muscles: 'Ischio-jambiers',
+                group: 'Jambes',
+                description: '🏋️ Allongé sur la machine.\n📌 Rouleau sous les mollets.\n⬇️ Ramenez les talons vers les fesses.\n⬆️ Redescendez en contrôlant.',
+                tips: '🟢 Gardez les hanches plaquées.\n🟢 Contractez les ischio-jambiers.\n🟢 Mouvement contrôlé.'
+            }, {
+                name: 'Mollets debout',
+                muscle: 'Jambes',
+                sets: 4,
+                reps: '15-20',
+                emoji: '💪',
+                muscles: 'Mollets',
+                group: 'Jambes',
+                description: '🏋️ Debout sous les coussins.\n⬆️ Montez sur la pointe des pieds.\n💪 Contractez les mollets.\n⬇️ Redescendez en étirant.',
+                tips: '🟢 Amplitude maximale.\n🟢 Montez haut, descendez bas.\n🟢 Contractez fort en haut.'
+            }]
+        ];
+
+        // ============================================================
+        //  ÉTAT
+        // ============================================================
+        let currentDay = 0;
+        let completed = [];
+        let logs = {};
+        let exercises = DEFAULT_EXERCISES;
+        let currentDetailDay = 0;
+        let currentDetailIndex = 0;
+
+        // ============================================================
+        //  FONCTIONS
+        // ============================================================
+        function init() {
+            const saved = localStorage.getItem('sportApp_week');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    completed = data.completed || [];
+                    logs = data.logs || {};
+                    if (data.exercises) {
+                        exercises = data.exercises;
+                    }
+                } catch (e) {}
+            }
+
+            if (completed.length === 0) {
+                completed = exercises.map(day => day.map(() => false));
+            }
+
+            // Ajouter les GIFs manquants
+            for (let day = 0; day < exercises.length; day++) {
+                for (let i = 0; i < exercises[day].length; i++) {
+                    const ex = exercises[day][i];
+                    if (!ex.gif && GIFS[ex.name]) {
+                        ex.gif = GIFS[ex.name];
+                    }
+                }
+            }
+
+            // Déterminer le jour actuel (0 = lundi)
+            const today = new Date().getDay();
+            const currentDayIndex = today === 0 ? 6 : today - 1;
+
+            renderDays(currentDayIndex);
+            renderExercises();
+            updateProgress();
+            updateWeekdayIndicator();
+        }
+
+        function saveData() {
+            localStorage.setItem('sportApp_week', JSON.stringify({ exercises, completed, logs }));
+        }
+
+        function renderDays(activeDay) {
+            const container = document.getElementById('daySelector');
+            const btns = container.querySelectorAll('.day-btn');
+
+            // Déterminer le jour actuel (0 = lundi)
+            const today = new Date().getDay();
+            const todayIndex = today === 0 ? 6 : today - 1;
+
+            btns.forEach((btn, index) => {
+                btn.classList.toggle('active', index === activeDay);
+                btn.classList.toggle('today', index === todayIndex);
+                btn.onclick = () => {
+                    currentDay = index;
+                    renderDays(index);
+                    renderExercises();
+                    updateProgress();
+                    updateWeekdayIndicator();
+                };
+            });
+
+            currentDay = activeDay;
+        }
+
+        function updateWeekdayIndicator() {
+            const indicator = document.getElementById('weekdayIndicator');
+            indicator.textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
+        }
+
+        function adjustSets(day, index, delta) {
+            const ex = exercises[day][index];
+            if (!ex) return;
+            const newVal = Math.max(1, (ex.sets || 3) + delta);
+            ex.sets = newVal;
+            saveData();
+            renderExercises();
+        }
+
+        function adjustReps(day, index, delta) {
+            const ex = exercises[day][index];
+            if (!ex) return;
+            let currentReps = ex.reps || '8-10';
+            if (!isNaN(currentReps) && currentReps.trim() !== '') {
+                const newVal = Math.max(1, parseInt(currentReps) + delta);
+                ex.reps = String(newVal);
+            } else {
+                const parts = currentReps.split('-');
+                if (parts.length === 2 && !isNaN(parts[0])) {
+                    const base = parseInt(parts[0]);
+                    const newVal = Math.max(1, base + delta);
+                    ex.reps = `${newVal}-${newVal + 2}`;
+                }
+            }
+            saveData();
+            renderExercises();
+        }
+
+        function renderExercises() {
+            const container = document.getElementById('exercisesContainer');
+            const dayEx = exercises[currentDay] || [];
+
+            container.innerHTML = dayEx.map((ex, index) => {
+                const done = completed[currentDay] && completed[currentDay][index];
+                const log = logs[`${currentDay}_${index}`] || { weight: '', reps: '' };
+
+                return `
+                    <div class="exercise-card" onclick="showDetail(${currentDay}, ${index})">
+                        <div class="emoji">${ex.emoji}</div>
+                        <div class="info">
+                            <div class="name">
+                                ${ex.name}
+                                <span class="muscle">${ex.muscle}</span>
+                            </div>
+                            <div class="sets-reps">
+                                <span class="label">📊 Séries</span>
+                                <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, -1)">−</button>
+                                <span class="value">${ex.sets}</span>
+                                <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, 1)">+</button>
+                                <span style="color:#8ba0b8;margin:0 4px;">|</span>
+                                <span class="label">🔄 Reps</span>
+                                <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, -1)">−</button>
+                                <span class="value">${ex.reps}</span>
+                                <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="log">
+                            Poids <input type="number" id="weight_${currentDay}_${index}" value="${log.weight}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'weight', this.value)">
+                            Reps <input type="number" id="reps_${currentDay}_${index}" value="${log.reps}" min="0" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'reps', this.value)">
+                        </div>
+                        <button class="check ${done ? 'done' : ''}" onclick="event.stopPropagation();toggleComplete(${currentDay}, ${index})">${done ? '✓' : ''}</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleComplete(day, index) {
+            if (!completed[day]) completed[day] = [];
+            completed[day][index] = !completed[day][index];
+            saveData();
+            renderExercises();
+            updateProgress();
+        }
+
+        function saveLog(day, index, field, value) {
+            const key = `${day}_${index}`;
+            if (!logs[key]) logs[key] = { weight: '', reps: '' };
+            logs[key][field] = value;
+            saveData();
+        }
+
+        function updateProgress() {
+            const dayEx = exercises[currentDay] || [];
+            const total = dayEx.length;
+            const done = completed[currentDay] ? completed[currentDay].filter(Boolean).length : 0;
+            document.getElementById('doneCount').textContent = done;
+            document.getElementById('totalCount').textContent = total;
+        }
+
+        // ============================================================
+        //  DÉTAIL AVEC GIF
+        // ============================================================
+        function showDetail(day, index) {
+            const ex = exercises[day][index];
+            currentDetailDay = day;
+            currentDetailIndex = index;
+
+            document.getElementById('detailTitle').textContent = `🏋️ ${ex.name}`;
+
+            const imageContainer = document.getElementById('detailImage');
+            const gifUrl = ex.gif || '';
+
+            if (gifUrl && gifUrl.trim() !== '') {
+                imageContainer.innerHTML = `
+                    <img src="${gifUrl}" alt="${ex.name}" 
+                         onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>GIF indisponible<br>Collez une nouvelle URL ci-dessous</span></div>'">
+                `;
+            } else {
+                imageContainer.innerHTML = `
+                    <div class="no-image">🏋️<br><span style="font-size:0.8rem;">Aucun GIF<br>Collez une URL ci-dessous</span></div>
+                `;
+            }
+
+            document.getElementById('gifUrlInput').value = gifUrl || '';
+
+            document.getElementById('detailStats').innerHTML = `
+                <div class="stat"><div class="value">${ex.sets}</div><div class="label">Séries</div></div>
+                <div class="stat"><div class="value" style="color:#b388ff;">${ex.reps}</div><div class="label">Répétitions</div></div>
+                <div class="stat"><div class="value" style="color:#00e676;">${ex.muscle}</div><div class="label">Groupe</div></div>
+            `;
+
+            const musclesList = (ex.muscles || ex.muscle || '').split(',').map(m => m.trim());
+
+            document.getElementById('detailBody').innerHTML = `
+                <div class="section">
+                    <h4>🎯 Muscles ciblés</h4>
+                    <div class="muscles">
+                        ${musclesList.map(m => `<span class="pill">${m}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="section">
+                    <h4>📝 Description</h4>
+                    <p>${ex.description || 'Aucune description disponible.'}</p>
+                </div>
+                <div class="section">
+                    <h4>⚠️ Conseils de sécurité</h4>
+                    <div class="tips">
+                        <p>${ex.tips || 'Aucun conseil spécifique.'}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // ============================================================
+        //  METTRE À JOUR LE GIF
+        // ============================================================
+        function updateGif() {
+            const url = document.getElementById('gifUrlInput').value.trim();
+            if (!url) {
+                showToast('⚠️ Veuillez coller une URL de GIF');
+                return;
+            }
+
+            const imageContainer = document.getElementById('detailImage');
+            imageContainer.innerHTML = `
+                <img src="${url}" alt="GIF" 
+                     onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>Erreur de chargement</span></div>'">
+            `;
+
+            const ex = exercises[currentDetailDay][currentDetailIndex];
+            if (ex) {
+                ex.gif = url;
+                saveData();
+                showToast('✅ GIF sauvegardé !');
+            }
+        }
+
+        // ============================================================
+        //  TOAST
+        // ============================================================
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: 20px; right: 20px;
+                background: #111827; border: 1px solid #2a3a4f;
+                border-radius: 12px; padding: 12px 20px;
+                color: #f0f4f8; font-size: 0.9rem;
+                z-index: 2000; animation: fadeIn 0.3s ease;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            `;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // ============================================================
+        //  EVENTS
+        // ============================================================
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDetail();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeDetail();
+        });
+
+        // ============================================================
+        //  LANCER
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Exposer
+        window.showDetail = showDetail;
+        window.closeDetail = closeDetail;
+        window.toggleComplete = toggleComplete;
+        window.saveLog = saveLog;
+        window.updateGif = updateGif;
+        window.adjustSets = adjustSets;
+        window.adjustReps = adjustReps;
+        window.switchDay = (day) => {
+            renderDays(day);
+            renderExercises();
+            updateProgress();
+            updateWeekdayIndicator();
+        };
+    </script>
+
+</body>
+</html>
