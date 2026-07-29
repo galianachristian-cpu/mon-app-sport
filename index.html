@@ -5,530 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏋️ Mon Programme Hebdomadaire</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #0a0e17;
-            color: #f0f4f8;
-            padding: 16px;
-            max-width: 850px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            padding: 20px 0 10px;
-            border-bottom: 2px solid #2a3a4f;
-            margin-bottom: 16px;
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, #00d4ff, #b388ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header p {
-            color: #8ba0b8;
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
-
-        .weekday-indicator {
-            text-align: center;
-            padding: 8px 16px;
-            background: #00d4ff;
-            color: #0a0e17;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 16px;
-            letter-spacing: 1px;
-        }
-
-        .day-selector {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-bottom: 20px;
-        }
-
-        .day-btn {
-            padding: 10px 2px;
-            border: 2px solid #2a3a4f;
-            border-radius: 10px;
-            background: #111827;
-            color: #8ba0b8;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.65rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .day-btn:hover {
-            border-color: #00d4ff;
-            color: #f0f4f8;
-        }
-
-        .day-btn.active {
-            border-color: #00d4ff;
-            background: #00d4ff;
-            color: #0a0e17;
-        }
-
-        .day-btn .sub {
-            display: block;
-            font-weight: 400;
-            font-size: 0.5rem;
-            opacity: 0.7;
-            margin-top: 2px;
-        }
-
-        .day-btn.active .sub {
-            opacity: 0.9;
-        }
-
-        .day-btn.today {
-            border-color: #b388ff;
-            box-shadow: 0 0 20px rgba(179, 136, 255, 0.2);
-        }
-
-        .progress {
-            text-align: center;
-            color: #8ba0b8;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-        }
-
-        .progress strong {
-            color: #00d4ff;
-        }
-
-        .exercise-card {
-    background: #111827;
-    border: 1px solid #2a3a4f;
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;  /* ← Changement important */
-    gap: 10px;
-}
-        }
-
-        .exercise-card:hover {
-            border-color: #00d4ff;
-            transform: translateX(4px);
-        }
-
-        .exercise-card .emoji {
-            font-size: 1.8rem;
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            background: #0a0e17;
-            border: 1px solid #2a3a4f;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .exercise-card .info {
-            flex: 1;
-            min-width: 120px;
-        }
-
-        .exercise-card .info .name {
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
-
-        .exercise-card .info .muscle {
-            font-size: 0.55rem;
-            font-weight: 400;
-            color: #8ba0b8;
-            background: #0a0e17;
-            padding: 2px 10px;
-            border-radius: 20px;
-            margin-left: 6px;
-        }
-
-        .exercise-card .info .sets-reps {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 4px;
-            flex-wrap: wrap;
-        }
-
-        .exercise-card .info .sets-reps .label {
-            font-size: 0.65rem;
-            color: #8ba0b8;
-        }
-
-        .exercise-card .info .sets-reps .value {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #00d4ff;
-            min-width: 20px;
-            text-align: center;
-        }
-
-        .exercise-card .info .sets-reps .adj-btn {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 1px solid #2a3a4f;
-            background: transparent;
-            color: #8ba0b8;
-            cursor: pointer;
-            font-size: 0.65rem;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: inherit;
-        }
-
-        .exercise-card .info .sets-reps .adj-btn:hover {
-            border-color: #00d4ff;
-            color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
-        }
-
-        .exercise-card .log {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.7rem;
-            color: #8ba0b8;
-        }
-
-        .exercise-card .log input {
-            width: 44px;
-            padding: 3px 4px;
-            border-radius: 6px;
-            border: 1px solid #2a3a4f;
-            background: #0a0e17;
-            color: #f0f4f8;
-            font-size: 0.7rem;
-            text-align: center;
-        }
-
-        .exercise-card .check {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid #2a3a4f;
-            background: transparent;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            color: transparent;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .exercise-card .check.done {
-            background: #00e676;
-            border-color: #00e676;
-            color: #0a0e17;
-        }
-
-        /* MODAL */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.92);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: #111827;
-            border: 1px solid #2a3a4f;
-            border-radius: 16px;
-            max-width: 650px;
-            width: 100%;
-            max-height: 95vh;
-            overflow-y: auto;
-            padding: 24px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal .close {
-            float: right;
-            background: none;
-            border: none;
-            color: #8ba0b8;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0 4px;
-        }
-
-        .modal .close:hover {
-            color: #f0f4f8;
-        }
-
-        .modal h2 {
-            font-size: 1.3rem;
-            margin-bottom: 12px;
-        }
-
-        .modal .image-container {
-            width: 100%;
-            background: #0a0e17;
-            border: 1px solid #2a3a4f;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 12px;
-            position: relative;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal .image-container img {
-            width: 100%;
-            height: auto;
-            max-height: 280px;
-            object-fit: contain;
-        }
-
-        .modal .image-container .no-image {
-            font-size: 2rem;
-            opacity: 0.3;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .modal .gif-input-section {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            background: #0a0e17;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #2a3a4f;
-        }
-
-        .modal .gif-input-section input {
-            flex: 1;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #2a3a4f;
-            background: #111827;
-            color: #f0f4f8;
-            font-size: 0.8rem;
-            font-family: inherit;
-            min-width: 150px;
-        }
-
-        .modal .gif-input-section input:focus {
-            outline: none;
-            border-color: #00d4ff;
-        }
-
-        .modal .gif-input-section button {
-            padding: 8px 18px;
-            border-radius: 8px;
-            border: none;
-            background: #00d4ff;
-            color: #0a0e17;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-family: inherit;
-            transition: background 0.3s ease;
-        }
-
-        .modal .gif-input-section button:hover {
-            background: #00b8d4;
-        }
-
-        .modal .gif-input-section .hint {
-            width: 100%;
-            font-size: 0.55rem;
-            color: #8ba0b8;
-            text-align: center;
-            margin-top: 4px;
-        }
-
-        .modal .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .modal .stats .stat {
-            text-align: center;
-            background: #0a0e17;
-            padding: 10px 6px;
-            border-radius: 10px;
-            border: 1px solid #2a3a4f;
-        }
-
-        .modal .stats .stat .value {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: #00d4ff;
-        }
-
-        .modal .stats .stat .label {
-            font-size: 0.5rem;
-            text-transform: uppercase;
-            color: #8ba0b8;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
-
-        .modal .section {
-            background: #0a0e17;
-            padding: 12px 14px;
-            border-radius: 10px;
-            border: 1px solid #2a3a4f;
-            margin-bottom: 10px;
-        }
-
-        .modal .section h4 {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            color: #8ba0b8;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-        }
-
-        .modal .section p {
-            font-size: 0.85rem;
-            line-height: 1.7;
-            white-space: pre-line;
-        }
-
-        .modal .section .tips {
-            border-left: 3px solid #ffab00;
-            padding-left: 12px;
-        }
-
-        .modal .muscles {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-        }
-
-        .modal .muscles .pill {
-            padding: 2px 10px;
-            border-radius: 20px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            font-size: 0.6rem;
-            font-weight: 600;
-            color: #00d4ff;
-        }
-
-        .modal .image-credit {
-            font-size: 0.5rem;
-            color: #4a5a6a;
-            text-align: center;
-            margin-top: 8px;
-        }
-
-        @media (max-width: 600px) {
-            .day-selector {
-                grid-template-columns: repeat(7, 1fr);
-                gap: 3px;
-            }
-
-            .day-btn {
-                font-size: 0.5rem;
-                padding: 8px 2px;
-            }
-
-            .day-btn .sub {
-                font-size: 0.4rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .day-selector {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 4px;
-            }
-
-            .day-btn {
-                font-size: 0.6rem;
-                padding: 8px 4px;
-            }
-
-            .exercise-card {
-                padding: 10px 12px;
-                gap: 10px;
-            }
-
-            .exercise-card .info .name {
-                font-size: 0.85rem;
-            }
-
-            .modal {
-                padding: 16px;
-            }
-
-            .modal .stats {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .modal .image-container {
-                min-height: 150px;
-            }
-
-            .modal .image-container img {
-                max-height: 200px;
-            }
-
-            .modal .gif-input-section {
-                flex-direction: column;
-            }
-
-            .modal .gif-input-section button {
-                width: 100%;
-            }
-        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e17;color:#f0f4f8;padding:16px;max-width:850px;margin:0 auto}
+        .header{text-align:center;padding:20px 0 10px;border-bottom:2px solid #2a3a4f;margin-bottom:16px}
+        .header h1{font-size:1.8rem;background:linear-gradient(135deg,#00d4ff,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .header p{color:#8ba0b8;font-size:0.9rem;margin-top:4px}
+        .weekday-indicator{text-align:center;padding:8px 16px;background:#00d4ff;color:#0a0e17;border-radius:12px;font-weight:700;font-size:1rem;margin-bottom:16px;letter-spacing:1px}
+        .day-selector{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px}
+        .day-btn{padding:10px 2px;border:2px solid #2a3a4f;border-radius:10px;background:#111827;color:#8ba0b8;cursor:pointer;font-weight:700;font-size:0.65rem;text-align:center;transition:all 0.3s ease;font-family:inherit}
+        .day-btn:hover{border-color:#00d4ff;color:#f0f4f8}
+        .day-btn.active{border-color:#00d4ff;background:#00d4ff;color:#0a0e17}
+        .day-btn .sub{display:block;font-weight:400;font-size:0.5rem;opacity:0.7;margin-top:2px}
+        .day-btn.active .sub{opacity:0.9}
+        .day-btn.today{border-color:#b388ff;box-shadow:0 0 20px rgba(179,136,255,0.2)}
+        .progress{text-align:center;color:#8ba0b8;margin-bottom:16px;font-size:0.9rem}
+        .progress strong{color:#00d4ff}
+        .exercise-card{background:#111827;border:1px solid #2a3a4f;border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all 0.3s ease}
+        .exercise-card:hover{border-color:#00d4ff}
+        .exercise-card .top-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+        .exercise-card .emoji{font-size:1.8rem;width:46px;height:46px;border-radius:12px;background:#0a0e17;border:1px solid #2a3a4f;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .exercise-card .info{flex:1;min-width:120px}
+        .exercise-card .info .name{font-weight:700;font-size:0.95rem}
+        .exercise-card .info .muscle{font-size:0.55rem;font-weight:400;color:#8ba0b8;background:#0a0e17;padding:2px 10px;border-radius:20px;margin-left:6px}
+        .exercise-card .info .sets-reps{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+        .exercise-card .info .sets-reps .label{font-size:0.65rem;color:#8ba0b8}
+        .exercise-card .info .sets-reps .value{font-size:0.85rem;font-weight:700;color:#00d4ff;min-width:20px;text-align:center}
+        .exercise-card .info .sets-reps .adj-btn{width:22px;height:22px;border-radius:50%;border:1px solid #2a3a4f;background:transparent;color:#8ba0b8;cursor:pointer;font-size:0.65rem;font-weight:700;transition:all 0.3s ease;display:flex;align-items:center;justify-content:center;font-family:inherit}
+        .exercise-card .info .sets-reps .adj-btn:hover{border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,0.1)}
+        .exercise-card .log{display:flex;align-items:center;gap:6px;font-size:0.7rem;color:#8ba0b8;flex-wrap:wrap}
+        .exercise-card .log input{width:44px;padding:3px 4px;border-radius:6px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.7rem;text-align:center}
+        .exercise-card .check{width:30px;height:30px;border-radius:50%;border:2px solid #2a3a4f;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:transparent;transition:all 0.3s ease;flex-shrink:0}
+        .exercise-card .check.done{background:#00e676;border-color:#00e676;color:#0a0e17}
+        /* BOUTONS TOUJOURS VISIBLES */
+        .exercise-card .card-actions{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #2a3a4f;padding-top:8px;margin-top:8px;flex-wrap:wrap}
+        .exercise-card .card-actions .action-btn{background:transparent;border:1px solid #2a3a4f;border-radius:6px;color:#8ba0b8;cursor:pointer;padding:4px 12px;font-size:0.7rem;font-family:inherit;transition:all 0.3s ease}
+        .exercise-card .card-actions .action-btn:hover{background:#2a3a4f;color:#f0f4f8}
+        .exercise-card .card-actions .action-btn.edit:hover{border-color:#00d4ff;color:#00d4ff}
+        .exercise-card .card-actions .action-btn.delete:hover{border-color:#f85149;color:#f85149;background:rgba(248,81,73,0.1)}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+        .modal-overlay.active{display:flex}
+        .modal{background:#111827;border:1px solid #2a3a4f;border-radius:16px;max-width:650px;width:100%;max-height:95vh;overflow-y:auto;padding:24px;animation:fadeIn 0.3s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .modal .close{float:right;background:none;border:none;color:#8ba0b8;font-size:1.5rem;cursor:pointer;padding:0 4px}
+        .modal .close:hover{color:#f0f4f8}
+        .modal h2{font-size:1.3rem;margin-bottom:12px}
+        .modal .image-container{width:100%;background:#0a0e17;border:1px solid #2a3a4f;border-radius:12px;overflow:hidden;margin-bottom:12px;position:relative;min-height:200px;display:flex;align-items:center;justify-content:center}
+        .modal .image-container img{width:100%;height:auto;max-height:280px;object-fit:contain}
+        .modal .image-container .no-image{font-size:2rem;opacity:0.3;text-align:center;padding:20px}
+        .modal .gif-input-section{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;background:#0a0e17;padding:12px;border-radius:10px;border:1px solid #2a3a4f}
+        .modal .gif-input-section input{flex:1;padding:8px 12px;border-radius:8px;border:1px solid #2a3a4f;background:#111827;color:#f0f4f8;font-size:0.8rem;font-family:inherit;min-width:150px}
+        .modal .gif-input-section input:focus{outline:none;border-color:#00d4ff}
+        .modal .gif-input-section button{padding:8px 18px;border-radius:8px;border:none;background:#00d4ff;color:#0a0e17;font-weight:700;cursor:pointer;font-size:0.8rem;font-family:inherit;transition:background 0.3s ease}
+        .modal .gif-input-section button:hover{background:#00b8d4}
+        .modal .gif-input-section .hint{width:100%;font-size:0.55rem;color:#8ba0b8;text-align:center;margin-top:4px}
+        .modal .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+        .modal .stats .stat{text-align:center;background:#0a0e17;padding:10px 6px;border-radius:10px;border:1px solid #2a3a4f}
+        .modal .stats .stat .value{font-size:1.3rem;font-weight:800;color:#00d4ff}
+        .modal .stats .stat .label{font-size:0.5rem;text-transform:uppercase;color:#8ba0b8;letter-spacing:0.5px;margin-top:2px}
+        .modal .section{background:#0a0e17;padding:12px 14px;border-radius:10px;border:1px solid #2a3a4f;margin-bottom:10px}
+        .modal .section h4{font-size:0.6rem;text-transform:uppercase;color:#8ba0b8;margin-bottom:4px;letter-spacing:0.5px}
+        .modal .section p{font-size:0.85rem;line-height:1.7;white-space:pre-line}
+        .modal .section .tips{border-left:3px solid #ffab00;padding-left:12px}
+        .modal .muscles{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+        .modal .muscles .pill{padding:2px 10px;border-radius:20px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);font-size:0.6rem;font-weight:600;color:#00d4ff}
+        .modal .image-credit{font-size:0.5rem;color:#4a5a6a;text-align:center;margin-top:8px}
+        @media (max-width:600px){.day-selector{grid-template-columns:repeat(7,1fr);gap:3px}.day-btn{font-size:0.5rem;padding:8px 2px}.day-btn .sub{font-size:0.4rem}}
+        @media (max-width:480px){.day-selector{grid-template-columns:repeat(4,1fr);gap:4px}.day-btn{font-size:0.6rem;padding:8px 4px}.exercise-card{padding:12px}.exercise-card .top-row{gap:10px}.exercise-card .info .name{font-size:0.85rem}.modal{padding:16px}.modal .stats{grid-template-columns:1fr 1fr}.modal .image-container{min-height:150px}.modal .image-container img{max-height:200px}.modal .gif-input-section{flex-direction:column}.modal .gif-input-section button{width:100%}}
     </style>
 </head>
 <body>
@@ -538,7 +80,6 @@
         <p>📅 Du lundi au dimanche — Clique sur un jour</p>
     </div>
 
-    <!-- JOURS DE LA SEMAINE -->
     <div class="day-selector" id="daySelector">
         <button class="day-btn" data-day="0">Lun<br><span class="sub">Poitrine</span></button>
         <button class="day-btn" data-day="1">Mar<br><span class="sub">Dos</span></button>
@@ -549,29 +90,24 @@
         <button class="day-btn" data-day="6">Dim<br><span class="sub">Jambes</span></button>
     </div>
 
-    <!-- INDICATEUR DU JOUR -->
     <div class="weekday-indicator" id="weekdayIndicator">📅 Lundi — Programme Poitrine & Triceps</div>
 
     <div class="progress">✅ <strong id="doneCount">0</strong> / <span id="totalCount">0</span> terminés</div>
 
     <div id="exercisesContainer"></div>
 
-    <!-- MODAL -->
     <div class="modal-overlay" id="detailModal">
         <div class="modal">
             <button class="close" onclick="closeDetail()">✕</button>
             <h2 id="detailTitle">🏋️ Exercice</h2>
-
             <div class="image-container" id="detailImage">
                 <div class="no-image">🏋️<br><span style="font-size:0.8rem;">Chargement...</span></div>
             </div>
-
             <div class="gif-input-section">
                 <input type="text" id="gifUrlInput" placeholder="Collez l'URL d'un GIF ici">
                 <button onclick="updateGif()">📥 Changer le GIF</button>
                 <div class="hint">💡 Utilisez Giphy.com ou Tenor.com</div>
             </div>
-
             <div class="stats" id="detailStats"></div>
             <div id="detailBody"></div>
             <div class="image-credit">📸 GIFs de Giphy.com</div>
@@ -579,17 +115,11 @@
     </div>
 
     <script>
-        // ============================================================
-        //  JOURS DE LA SEMAINE
-        // ============================================================
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-        const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps',
-            'Dos & Biceps', 'Jambes'
+        const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
+            'Jambes'
         ];
 
-        // ============================================================
-        //  LISTE DES GIFS
-        // ============================================================
         const GIFS = {
             'Développé couché': 'https://media.giphy.com/media/l2SpR8MUlJNa0y8c0/giphy.gif',
             'Développé incliné haltères': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
@@ -617,11 +147,7 @@
             'Crunch aux câbles': 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'
         };
 
-        // ============================================================
-        //  EXERCICES PAR JOUR (7 jours)
-        // ============================================================
         const DEFAULT_EXERCISES = [
-            // JOUR 0 - LUNDI (Poitrine & Triceps)
             [{
                 name: 'Développé couché',
                 muscle: 'Poitrine',
@@ -683,7 +209,6 @@
                 description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
                 tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
             }],
-            // JOUR 1 - MARDI (Dos & Biceps)
             [{
                 name: 'Soulevé de terre',
                 muscle: 'Dos',
@@ -745,7 +270,6 @@
                 description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
                 tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
             }],
-            // JOUR 2 - MERCREDI (Jambes)
             [{
                 name: 'Squat',
                 muscle: 'Jambes',
@@ -807,7 +331,6 @@
                 description: '🏋️ Debout sous les coussins.\n⬆️ Montez sur la pointe des pieds.\n💪 Contractez les mollets.\n⬇️ Redescendez en étirant.',
                 tips: '🟢 Amplitude maximale.\n🟢 Montez haut, descendez bas.\n🟢 Contractez fort en haut.'
             }],
-            // JOUR 3 - JEUDI (Épaules & Cœur)
             [{
                 name: 'Développé militaire',
                 muscle: 'Épaules',
@@ -869,7 +392,6 @@
                 description: '🏋️ À genoux face à la poulie.\n📌 Saisissez la corde derrière la tête.\n⬇️ Fléchissez le buste.\n💪 Contractez les abdominaux.',
                 tips: '🟢 Gardez les hanches fixes.\n🟢 Contractez fort les abdominaux.\n🟢 Ne tirez pas avec les bras.'
             }],
-            // JOUR 4 - VENDREDI (Poitrine & Triceps - identique à Lundi)
             [{
                 name: 'Développé couché',
                 muscle: 'Poitrine',
@@ -931,7 +453,6 @@
                 description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
                 tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
             }],
-            // JOUR 5 - SAMEDI (Dos & Biceps - identique à Mardi)
             [{
                 name: 'Soulevé de terre',
                 muscle: 'Dos',
@@ -993,7 +514,6 @@
                 description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
                 tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
             }],
-            // JOUR 6 - DIMANCHE (Jambes - identique à Mercredi)
             [{
                 name: 'Squat',
                 muscle: 'Jambes',
@@ -1057,9 +577,6 @@
             }]
         ];
 
-        // ============================================================
-        //  ÉTAT
-        // ============================================================
         let currentDay = 0;
         let completed = [];
         let logs = {};
@@ -1067,9 +584,6 @@
         let currentDetailDay = 0;
         let currentDetailIndex = 0;
 
-        // ============================================================
-        //  FONCTIONS
-        // ============================================================
         function init() {
             const saved = localStorage.getItem('sportApp_week');
             if (saved) {
@@ -1077,31 +591,19 @@
                     const data = JSON.parse(saved);
                     completed = data.completed || [];
                     logs = data.logs || {};
-                    if (data.exercises) {
-                        exercises = data.exercises;
-                    }
+                    if (data.exercises) exercises = data.exercises;
                 } catch (e) {}
             }
-
-            if (completed.length === 0) {
-                completed = exercises.map(day => day.map(() => false));
-            }
-
-            // Ajouter les GIFs manquants
+            if (completed.length === 0) completed = exercises.map(day => day.map(() => false));
             for (let day = 0; day < exercises.length; day++) {
                 for (let i = 0; i < exercises[day].length; i++) {
                     const ex = exercises[day][i];
-                    if (!ex.gif && GIFS[ex.name]) {
-                        ex.gif = GIFS[ex.name];
-                    }
+                    if (!ex.gif && GIFS[ex.name]) ex.gif = GIFS[ex.name];
                 }
             }
-
-            // Déterminer le jour actuel (0 = lundi)
             const today = new Date().getDay();
-            const currentDayIndex = today === 0 ? 6 : today - 1;
-
-            renderDays(currentDayIndex);
+            const todayIndex = today === 0 ? 6 : today - 1;
+            renderDays(todayIndex);
             renderExercises();
             updateProgress();
             updateWeekdayIndicator();
@@ -1114,29 +616,22 @@
         function renderDays(activeDay) {
             const container = document.getElementById('daySelector');
             const btns = container.querySelectorAll('.day-btn');
-
-            // Déterminer le jour actuel (0 = lundi)
             const today = new Date().getDay();
             const todayIndex = today === 0 ? 6 : today - 1;
-
             btns.forEach((btn, index) => {
                 btn.classList.toggle('active', index === activeDay);
                 btn.classList.toggle('today', index === todayIndex);
-                btn.onclick = () => {
-                    currentDay = index;
+                btn.onclick = () => { currentDay = index;
                     renderDays(index);
                     renderExercises();
                     updateProgress();
-                    updateWeekdayIndicator();
-                };
+                    updateWeekdayIndicator(); };
             });
-
             currentDay = activeDay;
         }
 
         function updateWeekdayIndicator() {
-            const indicator = document.getElementById('weekdayIndicator');
-            indicator.textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
+            document.getElementById('weekdayIndicator').textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
         }
 
         function adjustSets(day, index, delta) {
@@ -1170,36 +665,41 @@
         function renderExercises() {
             const container = document.getElementById('exercisesContainer');
             const dayEx = exercises[currentDay] || [];
-
             container.innerHTML = dayEx.map((ex, index) => {
                 const done = completed[currentDay] && completed[currentDay][index];
                 const log = logs[`${currentDay}_${index}`] || { weight: '', reps: '' };
-
                 return `
-                    <div class="exercise-card" onclick="showDetail(${currentDay}, ${index})">
-                        <div class="emoji">${ex.emoji}</div>
-                        <div class="info">
-                            <div class="name">
-                                ${ex.name}
-                                <span class="muscle">${ex.muscle}</span>
+                    <div class="exercise-card">
+                        <div class="top-row" onclick="showDetail(${currentDay}, ${index})">
+                            <div class="emoji">${ex.emoji}</div>
+                            <div class="info">
+                                <div class="name">
+                                    ${ex.name}
+                                    <span class="muscle">${ex.muscle}</span>
+                                </div>
+                                <div class="sets-reps">
+                                    <span class="label">📊 Séries</span>
+                                    <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, -1)">−</button>
+                                    <span class="value">${ex.sets}</span>
+                                    <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, 1)">+</button>
+                                    <span style="color:#8ba0b8;margin:0 4px;">|</span>
+                                    <span class="label">🔄 Reps</span>
+                                    <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, -1)">−</button>
+                                    <span class="value">${ex.reps}</span>
+                                    <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, 1)">+</button>
+                                </div>
                             </div>
-                            <div class="sets-reps">
-                                <span class="label">📊 Séries</span>
-                                <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, -1)">−</button>
-                                <span class="value">${ex.sets}</span>
-                                <button class="adj-btn" onclick="event.stopPropagation();adjustSets(${currentDay}, ${index}, 1)">+</button>
-                                <span style="color:#8ba0b8;margin:0 4px;">|</span>
-                                <span class="label">🔄 Reps</span>
-                                <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, -1)">−</button>
-                                <span class="value">${ex.reps}</span>
-                                <button class="adj-btn" onclick="event.stopPropagation();adjustReps(${currentDay}, ${index}, 1)">+</button>
+                            <div class="log">
+                                Poids <input type="number" id="weight_${currentDay}_${index}" value="${log.weight}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'weight', this.value)">
+                                Reps <input type="number" id="reps_${currentDay}_${index}" value="${log.reps}" min="0" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'reps', this.value)">
                             </div>
+                            <button class="check ${done ? 'done' : ''}" onclick="event.stopPropagation();toggleComplete(${currentDay}, ${index})">${done ? '✓' : ''}</button>
                         </div>
-                        <div class="log">
-                            Poids <input type="number" id="weight_${currentDay}_${index}" value="${log.weight}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'weight', this.value)">
-                            Reps <input type="number" id="reps_${currentDay}_${index}" value="${log.reps}" min="0" onclick="event.stopPropagation();" onchange="saveLog(${currentDay}, ${index}, 'reps', this.value)">
+                        <!-- BOUTONS TOUJOURS VISIBLES EN BAS -->
+                        <div class="card-actions">
+                            <button class="action-btn edit" onclick="event.stopPropagation();editExercise('${ex.id}')">✏️ Modifier</button>
+                            <button class="action-btn delete" onclick="event.stopPropagation();deleteExercise('${ex.id}')">🗑️ Supprimer</button>
                         </div>
-                        <button class="check ${done ? 'done' : ''}" onclick="event.stopPropagation();toggleComplete(${currentDay}, ${index})">${done ? '✓' : ''}</button>
                     </div>
                 `;
             }).join('');
@@ -1228,126 +728,147 @@
             document.getElementById('totalCount').textContent = total;
         }
 
-        // ============================================================
-        //  DÉTAIL AVEC GIF
-        // ============================================================
         function showDetail(day, index) {
             const ex = exercises[day][index];
             currentDetailDay = day;
             currentDetailIndex = index;
-
             document.getElementById('detailTitle').textContent = `🏋️ ${ex.name}`;
-
             const imageContainer = document.getElementById('detailImage');
             const gifUrl = ex.gif || '';
-
             if (gifUrl && gifUrl.trim() !== '') {
-                imageContainer.innerHTML = `
-                    <img src="${gifUrl}" alt="${ex.name}" 
-                         onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>GIF indisponible<br>Collez une nouvelle URL ci-dessous</span></div>'">
-                `;
+                imageContainer.innerHTML =
+                    `<img src="${gifUrl}" alt="${ex.name}" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>GIF indisponible<br>Collez une nouvelle URL ci-dessous</span></div>'">`;
             } else {
-                imageContainer.innerHTML = `
-                    <div class="no-image">🏋️<br><span style="font-size:0.8rem;">Aucun GIF<br>Collez une URL ci-dessous</span></div>
-                `;
+                imageContainer.innerHTML =
+                    `<div class="no-image">🏋️<br><span style="font-size:0.8rem;">Aucun GIF<br>Collez une URL ci-dessous</span></div>`;
             }
-
             document.getElementById('gifUrlInput').value = gifUrl || '';
-
-            document.getElementById('detailStats').innerHTML = `
+            document.getElementById('detailStats').innerHTML =
+                `
                 <div class="stat"><div class="value">${ex.sets}</div><div class="label">Séries</div></div>
                 <div class="stat"><div class="value" style="color:#b388ff;">${ex.reps}</div><div class="label">Répétitions</div></div>
                 <div class="stat"><div class="value" style="color:#00e676;">${ex.muscle}</div><div class="label">Groupe</div></div>
             `;
-
             const musclesList = (ex.muscles || ex.muscle || '').split(',').map(m => m.trim());
-
             document.getElementById('detailBody').innerHTML = `
-                <div class="section">
-                    <h4>🎯 Muscles ciblés</h4>
-                    <div class="muscles">
-                        ${musclesList.map(m => `<span class="pill">${m}</span>`).join('')}
-                    </div>
-                </div>
-                <div class="section">
-                    <h4>📝 Description</h4>
-                    <p>${ex.description || 'Aucune description disponible.'}</p>
-                </div>
-                <div class="section">
-                    <h4>⚠️ Conseils de sécurité</h4>
-                    <div class="tips">
-                        <p>${ex.tips || 'Aucun conseil spécifique.'}</p>
-                    </div>
-                </div>
+                <div class="section"><h4>🎯 Muscles ciblés</h4><div class="muscles">${musclesList.map(m => `<span class="pill">${m}</span>`).join('')}</div></div>
+                <div class="section"><h4>📝 Description</h4><p>${ex.description || 'Aucune description disponible.'}</p></div>
+                <div class="section"><h4>⚠️ Conseils de sécurité</h4><div class="tips"><p>${ex.tips || 'Aucun conseil spécifique.'}</p></div></div>
             `;
-
             document.getElementById('detailModal').classList.add('active');
         }
 
-        function closeDetail() {
-            document.getElementById('detailModal').classList.remove('active');
+        function closeDetail() { document.getElementById('detailModal').classList.remove('active'); }
+
+        function editExercise(exId) {
+            const ex = exercises[currentDay]?.find(e => e.id === exId);
+            if (!ex) return;
+            // Ouvrir le modal d'édition
+            showAddExercise(exId);
         }
 
-        // ============================================================
-        //  METTRE À JOUR LE GIF
-        // ============================================================
+        function showAddExercise(exId) {
+            const ex = exId ? exercises[currentDay].find(e => e.id === exId) : null;
+            document.getElementById('modalTitle').textContent = ex ? '✏️ Modifier l\'exercice' : '➕ Ajouter un exercice';
+            document.getElementById('modalSubmitBtn').textContent = ex ? 'Modifier' : 'Ajouter';
+            document.getElementById('exEditId').value = ex ? exId : '';
+            document.getElementById('exName').value = ex ? ex.name : '';
+            document.getElementById('exMuscle').value = ex ? ex.muscle : 'Poitrine';
+            document.getElementById('exSets').value = ex ? ex.sets : '3';
+            document.getElementById('exReps').value = ex ? ex.reps : '';
+            document.getElementById('exEmoji').value = ex ? ex.emoji : '🏋️';
+            document.getElementById('exDescription').value = ex ? ex.description || '' : '';
+            document.getElementById('exTips').value = ex ? ex.tips || '' : '';
+            document.getElementById('exerciseModal').classList.add('active');
+        }
+
+        function deleteExercise(exId) {
+            if (!confirm('Supprimer cet exercice ?')) return;
+            const idx = exercises[currentDay]?.findIndex(e => e.id === exId);
+            if (idx !== -1) {
+                exercises[currentDay].splice(idx, 1);
+                if (completed[currentDay]) delete completed[currentDay][exId];
+                saveData();
+                renderExercises();
+                showToast('🗑️ Exercice supprimé', 'info');
+            }
+        }
+
+        // Ajouter les fonctions manquantes pour le modal
+        function closeModal() { document.getElementById('exerciseModal').classList.remove('active'); }
+
+        function saveExercise(e) {
+            e.preventDefault();
+            const id = document.getElementById('exEditId').value;
+            const name = document.getElementById('exName').value.trim();
+            const muscle = document.getElementById('exMuscle').value;
+            const sets = parseInt(document.getElementById('exSets').value) || 3;
+            const reps = document.getElementById('exReps').value.trim();
+            const emoji = document.getElementById('exEmoji').value || '🏋️';
+            const description = document.getElementById('exDescription').value.trim();
+            const tips = document.getElementById('exTips').value.trim();
+
+            if (!name) { showToast('Veuillez entrer un nom.', 'error'); return; }
+            if (!exercises[currentDay]) exercises[currentDay] = [];
+
+            if (id) {
+                const ex = exercises[currentDay].find(e => e.id === id);
+                if (ex) {
+                    ex.name = name;
+                    ex.muscle = muscle;
+                    ex.sets = sets;
+                    ex.reps = reps;
+                    ex.emoji = emoji;
+                    ex.description = description || undefined;
+                    ex.tips = tips || undefined;
+                }
+                showToast('✅ Exercice modifié !', 'success');
+            } else {
+                exercises[currentDay].push({
+                    id: 'ex' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    name,
+                    muscle,
+                    sets,
+                    reps,
+                    emoji,
+                    description: description || undefined,
+                    tips: tips || undefined,
+                    muscles: muscle
+                });
+                showToast('✅ Exercice ajouté !', 'success');
+            }
+            saveData();
+            closeModal();
+            renderExercises();
+        }
+
         function updateGif() {
             const url = document.getElementById('gifUrlInput').value.trim();
-            if (!url) {
-                showToast('⚠️ Veuillez coller une URL de GIF');
-                return;
-            }
-
+            if (!url) { showToast('⚠️ Veuillez coller une URL de GIF'); return; }
             const imageContainer = document.getElementById('detailImage');
-            imageContainer.innerHTML = `
-                <img src="${url}" alt="GIF" 
-                     onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>Erreur de chargement</span></div>'">
-            `;
-
+            imageContainer.innerHTML =
+                `<img src="${url}" alt="GIF" onerror="this.parentElement.innerHTML='<div class=\\'no-image\\'>🏋️<br><span style=\\'font-size:0.8rem;\\'>Erreur de chargement</span></div>'">`;
             const ex = exercises[currentDetailDay][currentDetailIndex];
-            if (ex) {
-                ex.gif = url;
+            if (ex) { ex.gif = url;
                 saveData();
-                showToast('✅ GIF sauvegardé !');
-            }
+                showToast('✅ GIF sauvegardé !'); }
         }
 
-        // ============================================================
-        //  TOAST
-        // ============================================================
         function showToast(msg) {
             const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed; bottom: 20px; right: 20px;
-                background: #111827; border: 1px solid #2a3a4f;
-                border-radius: 12px; padding: 12px 20px;
-                color: #f0f4f8; font-size: 0.9rem;
-                z-index: 2000; animation: fadeIn 0.3s ease;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            `;
+            toast.style.cssText =
+                `position:fixed;bottom:20px;right:20px;background:#111827;border:1px solid #2a3a4f;border-radius:12px;padding:12px 20px;color:#f0f4f8;font-size:0.9rem;z-index:2000;animation:fadeIn 0.3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.5)`;
             toast.textContent = msg;
             document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
+            setTimeout(() => { toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
+                setTimeout(() => toast.remove(), 300); }, 2000);
         }
 
-        // ============================================================
-        //  EVENTS
-        // ============================================================
-        document.getElementById('detailModal').addEventListener('click', function(e) {
-            if (e.target === this) closeDetail();
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeDetail();
-        });
-
-        // ============================================================
-        //  LANCER
-        // ============================================================
+        document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) closeDetail(); });
+        document.getElementById('exerciseModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeDetail();
+                closeModal(); } });
         document.addEventListener('DOMContentLoaded', init);
 
         // Exposer
@@ -1358,13 +879,11 @@
         window.updateGif = updateGif;
         window.adjustSets = adjustSets;
         window.adjustReps = adjustReps;
-        window.switchDay = (day) => {
-            renderDays(day);
-            renderExercises();
-            updateProgress();
-            updateWeekdayIndicator();
-        };
+        window.editExercise = editExercise;
+        window.deleteExercise = deleteExercise;
+        window.closeModal = closeModal;
+        window.saveExercise = saveExercise;
+        window.showAddExercise = showAddExercise;
     </script>
-
 </body>
 </html>
