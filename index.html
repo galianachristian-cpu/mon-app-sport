@@ -170,7 +170,7 @@
 
     <script>
         // ============================================================
-        // CONFIGURATION FIREBASE - VOS IDENTIFIANTS
+        // CONFIGURATION FIREBASE
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyAcqFFFbRlKgnL7LQLY6YFoGV8oYSqBSWA",
@@ -182,204 +182,198 @@
             measurementId: "G-EVPMSD8YBW"
         };
 
-        // Initialiser Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch(e) {}
         const db = firebase.firestore();
 
         // ============================================================
-        // DONNÉES PAR DÉFAUT
+        // DONNÉES PAR DÉFAUT (structure compatible avec Firebase)
         // ============================================================
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
             'Jambes'
         ];
 
-        const DEFAULT_DATA = [
-            [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
-              desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux.',
-              tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Expirez en poussant, inspirez en descendant.' },
-              { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-incline-halteres.gif',
-              desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères.',
-              tips: 'Maintiens les poignets droits. Ne va pas trop bas pour protéger les épaules.' },
-              { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/ecartes-cables.gif',
-              desc: 'Debout entre deux poulies hautes. Saisissez les poignées. Ramenez les mains devant vous en croisant les poignets.',
-              tips: 'Gardez les coudes légèrement fléchis. Retour lent et contrôlé.' },
-              { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/dips.gif',
-              desc: 'Saisissez les barres parallèles. Descendez en fléchissant les coudes à 90°. Remontez en poussant.',
-              tips: 'Ne descendez pas trop bas. Pour cibler les triceps, gardez le buste vertical.' },
-              { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-poulie.gif',
-              desc: 'Face à la poulie haute. Coudes près du corps. Abaissez en tendant les bras vers le bas.',
-              tips: 'Seuls les avant-bras bougent. Contractez fort les triceps en fin de mouvement.' },
-              { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-tete.gif',
-              desc: 'Assis, haltère à deux mains derrière la tête. Abaissez derrière la tête. Remontez en tendant les bras.',
-              tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos.' }
-            ],
-            [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/souleve-de-terre.gif',
-              desc: 'Pieds largeur d\'épaules, barre au-dessus des lacets. Saisissez la barre, dos droit. Poussez dans les talons.',
-              tips: '🔴 DOS DROIT ABSOLUMENT ! Engagez la sangle abdominale. Expirez en montant.' },
-              { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/rowing-barre.gif',
-              desc: 'Penché en avant, dos droit. Tirez la barre vers le bas de la poitrine.',
-              tips: 'Gardez le dos droit ! Tirez par les coudes. Squeeze les omoplates en haut.' },
-              { n: 'Tirage vertical (Lat Pulldown)', m: 'Dos', s: 3, r: '10-12', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/lat-pulldown.gif',
-              desc: 'Assis à la poulie haute. Tirez vers la poitrine. Contractez les dorsaux en bas.',
-              tips: 'Gardez le buste stable. Tirez par les coudes. Squeeze les dorsaux en bas.' },
-              { n: 'Tirage horizontal (Cable Row)', m: 'Dos', s: 3, r: '10-12', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/cable-row.gif',
-              desc: 'Assis, pieds calés. Tirez vers le ventre. Serrez les omoplates.',
-              tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en fin de mouvement.' },
-              { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-barre.gif',
-              desc: 'Debout, barre en prise pronation. Remontez la barre vers les épaules.',
-              tips: 'Gardez les coudes près du corps. Ne balancez pas le buste.' },
-              { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-marteau.gif',
-              desc: 'Debout, haltères en prise neutre. Remontez vers les épaules.',
-              tips: 'Gardez les poignets droits. Contractez les biceps en haut.' }
-            ],
-            [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
-              desc: 'Barre sur les épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol.',
-              tips: 'Dos droit, poitrine ouverte. Poussez dans les talons.' },
-              { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/roumain-deadlift.gif',
-              desc: 'Barre dans les mains. Penchez-vous en avant. Barre le long des jambes.',
-              tips: 'Dos droit ! Sensation dans les ischio-jambiers.' },
-              { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/presse-jambes.gif',
-              desc: 'Assis sur la machine. Poussez en tendant les jambes. Revenez en contrôlant.',
-              tips: 'Dos plaqué. Ne bloquez pas les genoux.' },
-              { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/fentes.gif',
-              desc: 'Grand pas en avant. Fléchissez les genoux à 90°. Poussez pour revenir.',
-              tips: 'Genou avant ne dépasse pas les orteils. Dos droit.' },
-              { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/leg-curl.gif',
-              desc: 'Allongé sur la machine. Ramenez les talons vers les fesses.',
-              tips: 'Gardez les hanches plaquées. Mouvement contrôlé.' },
-              { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/mollets.gif',
-              desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets.',
-              tips: 'Amplitude maximale. Montez haut, descendez bas.' }
-            ],
-            [{ n: 'Développé militaire', m: 'Épaules', s: 4, r: '6-8', e: '🏋️',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-militaire.gif',
-              desc: 'Debout ou assis. Poussez au-dessus de la tête. Redescendez en contrôlant.',
-              tips: 'Gardez le buste stable. Ne poussez pas avec le dos.' },
-              { n: 'Élévations latérales', m: 'Épaules', s: 3, r: '10-12', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/elevations-laterales.gif',
-              desc: 'Debout, haltères le long du corps. Levez les bras sur les côtés.',
-              tips: 'Coudes légèrement fléchis. Ne montez pas trop haut.' },
-              { n: 'Oiseau (Rear Delt Fly)', m: 'Épaules', s: 3, r: '12-15', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/rear-delt-fly.gif',
-              desc: 'Penché en avant, dos droit. Levez les bras sur les côtés.',
-              tips: 'Dos droit ! Tirez par les coudes.' },
-              { n: 'Face Pull', m: 'Épaules', s: 3, r: '12-15', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/face-pull.gif',
-              desc: 'Face à la poulie. Tirez vers le visage. Écartez les mains.',
-              tips: 'Gardez les coudes hauts. Squeeze les omoplates.' },
-              { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥',
-              gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
-              desc: 'Suspendu à une barre. Levez les jambes à 90°. Redescendez en contrôlant.',
-              tips: 'Ne balancez pas le corps. Engagez les abdominaux.' },
-              { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/crunch-cables.gif',
-              desc: 'À genoux face à la poulie. Fléchissez le buste. Contractez les abdominaux.',
-              tips: 'Gardez les hanches fixes. Ne tirez pas avec les bras.' }
-            ],
-            [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
-              desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux.',
-              tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Expirez en poussant, inspirez en descendant.' },
-              { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-incline-halteres.gif',
-              desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères.',
-              tips: 'Maintiens les poignets droits. Ne va pas trop bas pour protéger les épaules.' },
-              { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/ecartes-cables.gif',
-              desc: 'Debout entre deux poulies hautes. Saisissez les poignées. Ramenez les mains devant vous en croisant les poignets.',
-              tips: 'Gardez les coudes légèrement fléchis. Retour lent et contrôlé.' },
-              { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/dips.gif',
-              desc: 'Saisissez les barres parallèles. Descendez en fléchissant les coudes à 90°. Remontez en poussant.',
-              tips: 'Ne descendez pas trop bas. Pour cibler les triceps, gardez le buste vertical.' },
-              { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-poulie.gif',
-              desc: 'Face à la poulie haute. Coudes près du corps. Abaissez en tendant les bras vers le bas.',
-              tips: 'Seuls les avant-bras bougent. Contractez fort les triceps en fin de mouvement.' },
-              { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-tete.gif',
-              desc: 'Assis, haltère à deux mains derrière la tête. Abaissez derrière la tête. Remontez en tendant les bras.',
-              tips: 'Gardez les coudes près des oreilles. Ne balancez pas le dos.' }
-            ],
-            [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/souleve-de-terre.gif',
-              desc: 'Pieds largeur d\'épaules, barre au-dessus des lacets. Saisissez la barre, dos droit. Poussez dans les talons.',
-              tips: '🔴 DOS DROIT ABSOLUMENT ! Engagez la sangle abdominale. Expirez en montant.' },
-              { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/rowing-barre.gif',
-              desc: 'Penché en avant, dos droit. Tirez la barre vers le bas de la poitrine.',
-              tips: 'Gardez le dos droit ! Tirez par les coudes. Squeeze les omoplates en haut.' },
-              { n: 'Tirage vertical (Lat Pulldown)', m: 'Dos', s: 3, r: '10-12', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/lat-pulldown.gif',
-              desc: 'Assis à la poulie haute. Tirez vers la poitrine. Contractez les dorsaux en bas.',
-              tips: 'Gardez le buste stable. Tirez par les coudes. Squeeze les dorsaux en bas.' },
-              { n: 'Tirage horizontal (Cable Row)', m: 'Dos', s: 3, r: '10-12', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/cable-row.gif',
-              desc: 'Assis, pieds calés. Tirez vers le ventre. Serrez les omoplates.',
-              tips: 'Dos droit ! Tirez par les coudes. Squeeze les omoplates en fin de mouvement.' },
-              { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-barre.gif',
-              desc: 'Debout, barre en prise pronation. Remontez la barre vers les épaules.',
-              tips: 'Gardez les coudes près du corps. Ne balancez pas le buste.' },
-              { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-marteau.gif',
-              desc: 'Debout, haltères en prise neutre. Remontez vers les épaules.',
-              tips: 'Gardez les poignets droits. Contractez les biceps en haut.' }
-            ],
-            [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
-              desc: 'Barre sur les épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol.',
-              tips: 'Dos droit, poitrine ouverte. Poussez dans les talons.' },
-              { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/roumain-deadlift.gif',
-              desc: 'Barre dans les mains. Penchez-vous en avant. Barre le long des jambes.',
-              tips: 'Dos droit ! Sensation dans les ischio-jambiers.' },
-              { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/presse-jambes.gif',
-              desc: 'Assis sur la machine. Poussez en tendant les jambes. Revenez en contrôlant.',
-              tips: 'Dos plaqué. Ne bloquez pas les genoux.' },
-              { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/fentes.gif',
-              desc: 'Grand pas en avant. Fléchissez les genoux à 90°. Poussez pour revenir.',
-              tips: 'Genou avant ne dépasse pas les orteils. Dos droit.' },
-              { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/leg-curl.gif',
-              desc: 'Allongé sur la machine. Ramenez les talons vers les fesses.',
-              tips: 'Gardez les hanches plaquées. Mouvement contrôlé.' },
-              { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
-              gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/mollets.gif',
-              desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets.',
-              tips: 'Amplitude maximale. Montez haut, descendez bas.' }
-            ]
-        ];
+        // Structure corrigée : les jours sont des clés, pas des tableaux imbriqués
+        const DEFAULT_DATA = {
+            day0: [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
+                    desc: 'Allongez-vous sur un banc plat...', 
+                    tips: 'Gardez les omoplates plaquées...' },
+                   { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-incline-halteres.gif',
+                    desc: 'Banc incliné à 30-45°...', 
+                    tips: 'Maintiens les poignets droits...' },
+                   { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/ecartes-cables.gif',
+                    desc: 'Debout entre deux poulies hautes...', 
+                    tips: 'Gardez les coudes légèrement fléchis...' },
+                   { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/dips.gif',
+                    desc: 'Saisissez les barres parallèles...', 
+                    tips: 'Ne descendez pas trop bas...' },
+                   { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-poulie.gif',
+                    desc: 'Face à la poulie haute...', 
+                    tips: 'Seuls les avant-bras bougent...' },
+                   { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-tete.gif',
+                    desc: 'Assis, haltère à deux mains...', 
+                    tips: 'Gardez les coudes près des oreilles...' }],
+            day1: [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/souleve-de-terre.gif',
+                    desc: 'Pieds largeur d\'épaules...', 
+                    tips: '🔴 DOS DROIT ABSOLUMENT !' },
+                   { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/rowing-barre.gif',
+                    desc: 'Penché en avant, dos droit...', 
+                    tips: 'Gardez le dos droit !' },
+                   { n: 'Tirage vertical (Lat Pulldown)', m: 'Dos', s: 3, r: '10-12', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/lat-pulldown.gif',
+                    desc: 'Assis à la poulie haute...', 
+                    tips: 'Gardez le buste stable...' },
+                   { n: 'Tirage horizontal (Cable Row)', m: 'Dos', s: 3, r: '10-12', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/cable-row.gif',
+                    desc: 'Assis, pieds calés...', 
+                    tips: 'Dos droit !' },
+                   { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-barre.gif',
+                    desc: 'Debout, barre en prise pronation...', 
+                    tips: 'Gardez les coudes près du corps...' },
+                   { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-marteau.gif',
+                    desc: 'Debout, haltères en prise neutre...', 
+                    tips: 'Gardez les poignets droits...' }],
+            day2: [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
+                    desc: 'Barre sur les épaules...', 
+                    tips: 'Dos droit, poitrine ouverte...' },
+                   { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/roumain-deadlift.gif',
+                    desc: 'Barre dans les mains...', 
+                    tips: 'Dos droit !' },
+                   { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/presse-jambes.gif',
+                    desc: 'Assis sur la machine...', 
+                    tips: 'Dos plaqué...' },
+                   { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/fentes.gif',
+                    desc: 'Grand pas en avant...', 
+                    tips: 'Genou avant ne dépasse pas...' },
+                   { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/leg-curl.gif',
+                    desc: 'Allongé sur la machine...', 
+                    tips: 'Gardez les hanches plaquées...' },
+                   { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/mollets.gif',
+                    desc: 'Debout sous les coussins...', 
+                    tips: 'Amplitude maximale...' }],
+            day3: [{ n: 'Développé militaire', m: 'Épaules', s: 4, r: '6-8', e: '🏋️',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-militaire.gif',
+                    desc: 'Debout ou assis...', 
+                    tips: 'Gardez le buste stable...' },
+                   { n: 'Élévations latérales', m: 'Épaules', s: 3, r: '10-12', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/elevations-laterales.gif',
+                    desc: 'Debout, haltères le long du corps...', 
+                    tips: 'Coudes légèrement fléchis...' },
+                   { n: 'Oiseau (Rear Delt Fly)', m: 'Épaules', s: 3, r: '12-15', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/rear-delt-fly.gif',
+                    desc: 'Penché en avant, dos droit...', 
+                    tips: 'Dos droit !' },
+                   { n: 'Face Pull', m: 'Épaules', s: 3, r: '12-15', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/face-pull.gif',
+                    desc: 'Face à la poulie...', 
+                    tips: 'Gardez les coudes hauts...' },
+                   { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥',
+                    gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
+                    desc: 'Suspendu à une barre...', 
+                    tips: 'Ne balancez pas le corps...' },
+                   { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/crunch-cables.gif',
+                    desc: 'À genoux face à la poulie...', 
+                    tips: 'Gardez les hanches fixes...' }],
+            day4: [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
+                    desc: 'Allongez-vous sur un banc plat...', 
+                    tips: 'Gardez les omoplates plaquées...' },
+                   { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-incline-halteres.gif',
+                    desc: 'Banc incliné à 30-45°...', 
+                    tips: 'Maintiens les poignets droits...' },
+                   { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/ecartes-cables.gif',
+                    desc: 'Debout entre deux poulies hautes...', 
+                    tips: 'Gardez les coudes légèrement fléchis...' },
+                   { n: 'Dips', m: 'Triceps', s: 3, r: '10-12', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/dips.gif',
+                    desc: 'Saisissez les barres parallèles...', 
+                    tips: 'Ne descendez pas trop bas...' },
+                   { n: 'Extension triceps poulie haute', m: 'Triceps', s: 3, r: '12-15', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-poulie.gif',
+                    desc: 'Face à la poulie haute...', 
+                    tips: 'Seuls les avant-bras bougent...' },
+                   { n: 'Extension triceps au-dessus tête', m: 'Triceps', s: 3, r: '10-12', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/extension-triceps-tete.gif',
+                    desc: 'Assis, haltère à deux mains...', 
+                    tips: 'Gardez les coudes près des oreilles...' }],
+            day5: [{ n: 'Soulevé de terre', m: 'Dos', s: 4, r: '5-6', e: '🏋️',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/souleve-de-terre.gif',
+                    desc: 'Pieds largeur d\'épaules...', 
+                    tips: '🔴 DOS DROIT ABSOLUMENT !' },
+                   { n: 'Rowing barre', m: 'Dos', s: 4, r: '8-10', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/rowing-barre.gif',
+                    desc: 'Penché en avant, dos droit...', 
+                    tips: 'Gardez le dos droit !' },
+                   { n: 'Tirage vertical (Lat Pulldown)', m: 'Dos', s: 3, r: '10-12', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/lat-pulldown.gif',
+                    desc: 'Assis à la poulie haute...', 
+                    tips: 'Gardez le buste stable...' },
+                   { n: 'Tirage horizontal (Cable Row)', m: 'Dos', s: 3, r: '10-12', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/cable-row.gif',
+                    desc: 'Assis, pieds calés...', 
+                    tips: 'Dos droit !' },
+                   { n: 'Curl barre', m: 'Biceps', s: 3, r: '10-12', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-barre.gif',
+                    desc: 'Debout, barre en prise pronation...', 
+                    tips: 'Gardez les coudes près du corps...' },
+                   { n: 'Curl marteau', m: 'Biceps', s: 3, r: '12-15', e: '🔥',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-marteau.gif',
+                    desc: 'Debout, haltères en prise neutre...', 
+                    tips: 'Gardez les poignets droits...' }],
+            day6: [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
+                    desc: 'Barre sur les épaules...', 
+                    tips: 'Dos droit, poitrine ouverte...' },
+                   { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/roumain-deadlift.gif',
+                    desc: 'Barre dans les mains...', 
+                    tips: 'Dos droit !' },
+                   { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/presse-jambes.gif',
+                    desc: 'Assis sur la machine...', 
+                    tips: 'Dos plaqué...' },
+                   { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/fentes.gif',
+                    desc: 'Grand pas en avant...', 
+                    tips: 'Genou avant ne dépasse pas...' },
+                   { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/leg-curl.gif',
+                    desc: 'Allongé sur la machine...', 
+                    tips: 'Gardez les hanches plaquées...' },
+                   { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                    gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/mollets.gif',
+                    desc: 'Debout sous les coussins...', 
+                    tips: 'Amplitude maximale...' }]
+        };
 
         // ============================================================
         // ÉTAT
         // ============================================================
         let currentDay = 0;
-        let data = [];
-        let done = [];
+        let data = {};
+        let done = {};
         let logs = {};
-        let userId = 'user1';
 
         // ============================================================
         // VOYANT
@@ -401,30 +395,26 @@
         async function loadFromFirebase() {
             setSaveStatus('saving', 'Chargement...');
             try {
-                const docRef = db.collection('users').doc(userId);
+                const docRef = db.collection('users').doc('user1');
                 const doc = await docRef.get();
                 
                 if (doc.exists) {
                     const firebaseData = doc.data();
-                    if (firebaseData.data && firebaseData.data.length === 7) {
-                        data = firebaseData.data;
-                    } else {
-                        data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-                    }
-                    done = firebaseData.done || data.map(day => day.map(() => false));
+                    data = firebaseData.data || JSON.parse(JSON.stringify(DEFAULT_DATA));
+                    done = firebaseData.done || {};
                     logs = firebaseData.logs || {};
                     setSaveStatus('saved', 'Données chargées ✓');
                     return true;
                 } else {
                     data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-                    done = data.map(day => day.map(() => false));
+                    done = {};
                     logs = {};
                     await saveToFirebase();
                     setSaveStatus('saved', 'Données créées ✓');
                     return true;
                 }
             } catch (e) {
-                console.warn('Erreur Firebase:', e);
+                console.error('Erreur chargement:', e);
                 setSaveStatus('error', 'Erreur chargement');
                 return false;
             }
@@ -436,7 +426,7 @@
         async function saveToFirebase() {
             setSaveStatus('saving', 'Sauvegarde...');
             try {
-                await db.collection('users').doc(userId).set({
+                await db.collection('users').doc('user1').set({
                     data: data,
                     done: done,
                     logs: logs,
@@ -445,7 +435,7 @@
                 setSaveStatus('saved', 'Sauvegardé ✓');
                 return true;
             } catch (e) {
-                console.warn('Erreur sauvegarde:', e);
+                console.error('Erreur sauvegarde:', e);
                 setSaveStatus('error', 'Erreur sauvegarde');
                 return false;
             }
@@ -458,7 +448,7 @@
             const loaded = await loadFromFirebase();
             if (!loaded) {
                 data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-                done = data.map(day => day.map(() => false));
+                done = {};
                 logs = {};
             }
             const today = new Date().getDay();
@@ -481,8 +471,9 @@
 
             document.getElementById('weekdayIndicator').textContent = `📅 ${DAY_NAMES[currentDay]} — ${DAY_SUB[currentDay]}`;
 
-            const dayData = data[currentDay] || [];
-            const doneDay = done[currentDay] || [];
+            const dayKey = `day${currentDay}`;
+            const dayData = data[dayKey] || [];
+            const doneDay = done[dayKey] || [];
             const total = dayData.length;
             const doneCount = doneDay.filter(Boolean).length;
             document.getElementById('doneCount').textContent = doneCount;
@@ -491,33 +482,33 @@
             const container = document.getElementById('exercisesContainer');
             container.innerHTML = dayData.map((ex, i) => {
                 const isDone = doneDay[i] || false;
-                const log = logs[`${currentDay}_${i}`] || { w: '', r: '' };
+                const log = logs[`${dayKey}_${i}`] || { w: '', r: '' };
                 return `
                     <div class="exercise-card">
-                        <div class="top" onclick="showDetail(${currentDay}, ${i})">
+                        <div class="top" onclick="showDetail('${dayKey}', ${i})">
                             <div class="emoji">${ex.e || '🏋️'}</div>
                             <div class="info">
                                 <div class="name">${ex.n} <span class="muscle">${ex.m}</span></div>
                                 <div class="sets-reps">
                                     <span class="label">📊</span>
-                                    <button class="adj" onclick="event.stopPropagation();adjustSet(${currentDay},${i},-1)">−</button>
+                                    <button class="adj" onclick="event.stopPropagation();adjustSet('${dayKey}',${i},-1)">−</button>
                                     <span class="val">${ex.s}</span>
-                                    <button class="adj" onclick="event.stopPropagation();adjustSet(${currentDay},${i},1)">+</button>
+                                    <button class="adj" onclick="event.stopPropagation();adjustSet('${dayKey}',${i},1)">+</button>
                                     <span style="margin:0 4px;">|</span>
-                                    <button class="adj" onclick="event.stopPropagation();adjustRep(${currentDay},${i},-1)">−</button>
+                                    <button class="adj" onclick="event.stopPropagation();adjustRep('${dayKey}',${i},-1)">−</button>
                                     <span class="val">${ex.r}</span>
-                                    <button class="adj" onclick="event.stopPropagation();adjustRep(${currentDay},${i},1)">+</button>
+                                    <button class="adj" onclick="event.stopPropagation();adjustRep('${dayKey}',${i},1)">+</button>
                                 </div>
                             </div>
                             <div class="log">
-                                Poids <input type="number" id="w_${currentDay}_${i}" value="${log.w}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog(${currentDay},${i},'w',this.value)">
-                                Reps <input type="number" id="r_${currentDay}_${i}" value="${log.r}" min="0" onclick="event.stopPropagation();" onchange="saveLog(${currentDay},${i},'r',this.value)">
+                                Poids <input type="number" id="w_${dayKey}_${i}" value="${log.w}" min="0" step="0.5" onclick="event.stopPropagation();" onchange="saveLog('${dayKey}',${i},'w',this.value)">
+                                Reps <input type="number" id="r_${dayKey}_${i}" value="${log.r}" min="0" onclick="event.stopPropagation();" onchange="saveLog('${dayKey}',${i},'r',this.value)">
                             </div>
-                            <button class="check ${isDone?'done':''}" onclick="event.stopPropagation();toggleDone(${currentDay},${i})">${isDone?'✓':''}</button>
+                            <button class="check ${isDone?'done':''}" onclick="event.stopPropagation();toggleDone('${dayKey}',${i})">${isDone?'✓':''}</button>
                         </div>
                         <div class="actions">
-                            <button class="edit" onclick="openEdit(${currentDay},${i})">✏️ Modifier</button>
-                            <button class="del" onclick="deleteEx(${currentDay},${i})">🗑️ Supprimer</button>
+                            <button class="edit" onclick="openEdit('${dayKey}',${i})">✏️ Modifier</button>
+                            <button class="del" onclick="deleteEx('${dayKey}',${i})">🗑️ Supprimer</button>
                         </div>
                     </div>
                 `;
@@ -527,30 +518,30 @@
         // ============================================================
         // ACTIONS
         // ============================================================
-        async function toggleDone(day, i) {
-            if (!done[day]) done[day] = [];
-            done[day][i] = !done[day][i];
+        async function toggleDone(dayKey, i) {
+            if (!done[dayKey]) done[dayKey] = [];
+            done[dayKey][i] = !done[dayKey][i];
             render();
             await autoSave();
         }
 
-        async function saveLog(day, i, field, val) {
-            const k = `${day}_${i}`;
+        async function saveLog(dayKey, i, field, val) {
+            const k = `${dayKey}_${i}`;
             if (!logs[k]) logs[k] = { w: '', r: '' };
             logs[k][field] = val;
             await autoSave();
         }
 
-        async function adjustSet(day, i, delta) {
-            const ex = data[day][i];
+        async function adjustSet(dayKey, i, delta) {
+            const ex = data[dayKey][i];
             if (!ex) return;
             ex.s = Math.max(1, (ex.s || 3) + delta);
             render();
             await autoSave();
         }
 
-        async function adjustRep(day, i, delta) {
-            const ex = data[day][i];
+        async function adjustRep(dayKey, i, delta) {
+            const ex = data[dayKey][i];
             if (!ex) return;
             let val = ex.r || '8-10';
             if (!isNaN(val) && val.trim() !== '') {
@@ -568,10 +559,10 @@
             await autoSave();
         }
 
-        async function deleteEx(day, i) {
+        async function deleteEx(dayKey, i) {
             if (!confirm('Supprimer ?')) return;
-            data[day].splice(i, 1);
-            if (done[day]) done[day].splice(i, 1);
+            data[dayKey].splice(i, 1);
+            if (done[dayKey]) done[dayKey].splice(i, 1);
             render();
             await autoSave();
         }
@@ -580,6 +571,7 @@
         // AJOUTER / MODIFIER
         // ============================================================
         function openAdd() {
+            const dayKey = `day${currentDay}`;
             document.getElementById('editTitle').textContent = '➕ Ajouter un exercice';
             document.getElementById('eName').value = '';
             document.getElementById('eMuscle').value = 'Poitrine';
@@ -589,18 +581,18 @@
             document.getElementById('eDesc').value = '';
             document.getElementById('eTips').value = '';
             document.getElementById('eGif').value = '';
-            document.getElementById('eDay').value = currentDay;
+            document.getElementById('eDayKey').value = dayKey;
             document.getElementById('eIndex').value = -1;
             document.getElementById('editModal').classList.add('active');
         }
 
-        let editDay = 0,
+        let editDayKey = 'day0',
             editIndex = 0;
 
-        function openEdit(day, i) {
-            editDay = day;
+        function openEdit(dayKey, i) {
+            editDayKey = dayKey;
             editIndex = i;
-            const ex = data[day][i];
+            const ex = data[dayKey][i];
             if (!ex) return;
             document.getElementById('editTitle').textContent = '✏️ Modifier ' + ex.n;
             document.getElementById('eName').value = ex.n;
@@ -611,7 +603,7 @@
             document.getElementById('eDesc').value = ex.desc || '';
             document.getElementById('eTips').value = ex.tips || '';
             document.getElementById('eGif').value = ex.gif || '';
-            document.getElementById('eDay').value = day;
+            document.getElementById('eDayKey').value = dayKey;
             document.getElementById('eIndex').value = i;
             document.getElementById('editModal').classList.add('active');
         }
@@ -622,7 +614,7 @@
 
         async function saveEdit(e) {
             e.preventDefault();
-            const day = parseInt(document.getElementById('eDay').value);
+            const dayKey = document.getElementById('eDayKey').value;
             const i = parseInt(document.getElementById('eIndex').value);
             const name = document.getElementById('eName').value.trim();
             if (!name) { alert('Entrez un nom'); return; }
@@ -638,12 +630,14 @@
                 gif: document.getElementById('eGif').value.trim() || ''
             };
 
+            if (!data[dayKey]) data[dayKey] = [];
+
             if (i === -1) {
-                data[day].push(newEx);
-                if (!done[day]) done[day] = [];
-                done[day].push(false);
+                data[dayKey].push(newEx);
+                if (!done[dayKey]) done[dayKey] = [];
+                done[dayKey].push(false);
             } else {
-                const ex = data[day][i];
+                const ex = data[dayKey][i];
                 if (ex) {
                     ex.n = newEx.n;
                     ex.m = newEx.m;
@@ -663,13 +657,13 @@
         // ============================================================
         // DETAIL
         // ============================================================
-        let detailDay = 0,
+        let detailDayKey = 'day0',
             detailIndex = 0;
 
-        function showDetail(day, i) {
-            detailDay = day;
+        function showDetail(dayKey, i) {
+            detailDayKey = dayKey;
             detailIndex = i;
-            const ex = data[day][i];
+            const ex = data[dayKey][i];
             if (!ex) return;
             document.getElementById('detailTitle').textContent = '🏋️ ' + ex.n;
 
@@ -702,7 +696,7 @@
         async function updateGif() {
             const url = document.getElementById('gifInput').value.trim();
             if (!url) return;
-            const ex = data[detailDay][detailIndex];
+            const ex = data[detailDayKey][detailIndex];
             if (ex) {
                 ex.gif = url;
                 document.getElementById('detailImage').innerHTML =
