@@ -36,7 +36,6 @@
         .exercise-card .log input{width:44px;padding:3px 4px;border-radius:6px;border:1px solid #2a3a4f;background:#0a0e17;color:#f0f4f8;font-size:0.7rem;text-align:center}
         .exercise-card .check{width:30px;height:30px;border-radius:50%;border:2px solid #2a3a4f;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:transparent;transition:all 0.3s ease;flex-shrink:0}
         .exercise-card .check.done{background:#00e676;border-color:#00e676;color:#0a0e17}
-        /* BOUTONS TOUJOURS VISIBLES */
         .exercise-card .card-actions{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #2a3a4f;padding-top:8px;margin-top:8px;flex-wrap:wrap}
         .exercise-card .card-actions .action-btn{background:transparent;border:1px solid #2a3a4f;border-radius:6px;color:#8ba0b8;cursor:pointer;padding:4px 12px;font-size:0.7rem;font-family:inherit;transition:all 0.3s ease}
         .exercise-card .card-actions .action-btn:hover{background:#2a3a4f;color:#f0f4f8}
@@ -114,6 +113,65 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="exerciseModal">
+        <div class="modal">
+            <button class="close" onclick="closeModal()">✕</button>
+            <h2 id="modalTitle">➕ Ajouter un exercice</h2>
+            <form id="exerciseForm" onsubmit="saveExercise(event)">
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="exName" placeholder="Ex: Développé couché" required>
+                </div>
+                <div class="form-group">
+                    <label>Groupe musculaire</label>
+                    <select id="exMuscle">
+                        <option value="Poitrine">Poitrine</option>
+                        <option value="Triceps">Triceps</option>
+                        <option value="Dos">Dos</option>
+                        <option value="Biceps">Biceps</option>
+                        <option value="Jambes">Jambes</option>
+                        <option value="Épaules">Épaules</option>
+                        <option value="Cœur">Cœur</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Séries</label>
+                        <input type="number" id="exSets" value="3" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Répétitions</label>
+                        <input type="text" id="exReps" placeholder="8-12">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Emoji</label>
+                    <select id="exEmoji">
+                        <option value="🏋️">🏋️ Haltère</option>
+                        <option value="💪">💪 Bras</option>
+                        <option value="🦵">🦵 Jambe</option>
+                        <option value="🔥">🔥 Intense</option>
+                        <option value="🎯">🎯 Ciblé</option>
+                        <option value="⚡">⚡ Explosif</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="exDescription" placeholder="Comment exécuter l'exercice..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Conseils de sécurité</label>
+                    <textarea id="exTips" placeholder="Points clés à surveiller..."></textarea>
+                </div>
+                <input type="hidden" id="exEditId" value="">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const DAY_NAMES = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const DAY_SUB = ['Poitrine & Triceps', 'Dos & Biceps', 'Jambes', 'Épaules & Cœur', 'Poitrine & Triceps', 'Dos & Biceps',
@@ -148,6 +206,7 @@
         };
 
         const DEFAULT_EXERCISES = [
+            // LUNDI - Poitrine & Triceps
             [{
                 name: 'Développé couché',
                 muscle: 'Poitrine',
@@ -209,6 +268,7 @@
                 description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
                 tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
             }],
+            // MARDI - Dos & Biceps
             [{
                 name: 'Soulevé de terre',
                 muscle: 'Dos',
@@ -270,6 +330,7 @@
                 description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
                 tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
             }],
+            // MERCREDI - Jambes
             [{
                 name: 'Squat',
                 muscle: 'Jambes',
@@ -331,6 +392,7 @@
                 description: '🏋️ Debout sous les coussins.\n⬆️ Montez sur la pointe des pieds.\n💪 Contractez les mollets.\n⬇️ Redescendez en étirant.',
                 tips: '🟢 Amplitude maximale.\n🟢 Montez haut, descendez bas.\n🟢 Contractez fort en haut.'
             }],
+            // JEUDI - Épaules & Cœur
             [{
                 name: 'Développé militaire',
                 muscle: 'Épaules',
@@ -392,6 +454,7 @@
                 description: '🏋️ À genoux face à la poulie.\n📌 Saisissez la corde derrière la tête.\n⬇️ Fléchissez le buste.\n💪 Contractez les abdominaux.',
                 tips: '🟢 Gardez les hanches fixes.\n🟢 Contractez fort les abdominaux.\n🟢 Ne tirez pas avec les bras.'
             }],
+            // VENDREDI - Poitrine & Triceps (identique à Lundi)
             [{
                 name: 'Développé couché',
                 muscle: 'Poitrine',
@@ -453,6 +516,7 @@
                 description: '🏋️ Assis, haltère à deux mains derrière la tête.\n📌 Coudes vers le haut, près des oreilles.\n⬇️ Abaissez derrière la tête.\n⬆️ Remontez en tendant les bras au-dessus.',
                 tips: '🟢 Gardez les coudes près des oreilles.\n🟢 Ne balancez pas le dos.\n🟢 Contrôlez la descente.'
             }],
+            // SAMEDI - Dos & Biceps (identique à Mardi)
             [{
                 name: 'Soulevé de terre',
                 muscle: 'Dos',
@@ -514,6 +578,7 @@
                 description: '🏋️ Debout, haltères en prise neutre.\n⬆️ Remontez vers les épaules.\n🚫 Ne tournez pas les poignets.\n💪 Contractez les biceps.',
                 tips: '🟢 Gardez les poignets droits.\n🟢 Contractez les biceps en haut.\n🟢 Ne balancez pas le buste.'
             }],
+            // DIMANCHE - Jambes (identique à Mercredi)
             [{
                 name: 'Squat',
                 muscle: 'Jambes',
@@ -695,7 +760,6 @@
                             </div>
                             <button class="check ${done ? 'done' : ''}" onclick="event.stopPropagation();toggleComplete(${currentDay}, ${index})">${done ? '✓' : ''}</button>
                         </div>
-                        <!-- BOUTONS TOUJOURS VISIBLES EN BAS -->
                         <div class="card-actions">
                             <button class="action-btn edit" onclick="event.stopPropagation();editExercise('${ex.id}')">✏️ Modifier</button>
                             <button class="action-btn delete" onclick="event.stopPropagation();deleteExercise('${ex.id}')">🗑️ Supprimer</button>
@@ -763,22 +827,16 @@
         function editExercise(exId) {
             const ex = exercises[currentDay]?.find(e => e.id === exId);
             if (!ex) return;
-            // Ouvrir le modal d'édition
-            showAddExercise(exId);
-        }
-
-        function showAddExercise(exId) {
-            const ex = exId ? exercises[currentDay].find(e => e.id === exId) : null;
-            document.getElementById('modalTitle').textContent = ex ? '✏️ Modifier l\'exercice' : '➕ Ajouter un exercice';
-            document.getElementById('modalSubmitBtn').textContent = ex ? 'Modifier' : 'Ajouter';
-            document.getElementById('exEditId').value = ex ? exId : '';
-            document.getElementById('exName').value = ex ? ex.name : '';
-            document.getElementById('exMuscle').value = ex ? ex.muscle : 'Poitrine';
-            document.getElementById('exSets').value = ex ? ex.sets : '3';
-            document.getElementById('exReps').value = ex ? ex.reps : '';
-            document.getElementById('exEmoji').value = ex ? ex.emoji : '🏋️';
-            document.getElementById('exDescription').value = ex ? ex.description || '' : '';
-            document.getElementById('exTips').value = ex ? ex.tips || '' : '';
+            document.getElementById('modalTitle').textContent = '✏️ Modifier l\'exercice';
+            document.getElementById('modalSubmitBtn').textContent = 'Modifier';
+            document.getElementById('exEditId').value = exId;
+            document.getElementById('exName').value = ex.name;
+            document.getElementById('exMuscle').value = ex.muscle;
+            document.getElementById('exSets').value = ex.sets;
+            document.getElementById('exReps').value = ex.reps;
+            document.getElementById('exEmoji').value = ex.emoji || '🏋️';
+            document.getElementById('exDescription').value = ex.description || '';
+            document.getElementById('exTips').value = ex.tips || '';
             document.getElementById('exerciseModal').classList.add('active');
         }
 
@@ -794,7 +852,6 @@
             }
         }
 
-        // Ajouter les fonctions manquantes pour le modal
         function closeModal() { document.getElementById('exerciseModal').classList.remove('active'); }
 
         function saveExercise(e) {
@@ -871,7 +928,6 @@
                 closeModal(); } });
         document.addEventListener('DOMContentLoaded', init);
 
-        // Exposer
         window.showDetail = showDetail;
         window.closeDetail = closeDetail;
         window.toggleComplete = toggleComplete;
@@ -883,7 +939,6 @@
         window.deleteExercise = deleteExercise;
         window.closeModal = closeModal;
         window.saveExercise = saveExercise;
-        window.showAddExercise = showAddExercise;
     </script>
 </body>
 </html>
