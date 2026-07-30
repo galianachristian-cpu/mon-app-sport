@@ -75,7 +75,6 @@
         .exercise-card .actions button:hover{background:#2a3a4f;color:#f0f4f8}
         .exercise-card .actions .edit:hover{border-color:#00d4ff;color:#00d4ff}
         .exercise-card .actions .del:hover{border-color:#f85149;color:#f85149;background:rgba(248,81,73,0.1)}
-        /* Boutons de déplacement */
         .exercise-card .actions .move-btn{padding:4px 10px;font-size:0.7rem;border:1px solid #2a3a4f;border-radius:6px;background:transparent;color:#8ba0b8;cursor:pointer;font-family:inherit;transition:all 0.3s ease}
         .exercise-card .actions .move-btn:hover{background:#2a3a4f;color:#f0f4f8}
         .exercise-card .actions .move-btn.up:hover{border-color:#00d4ff;color:#00d4ff}
@@ -188,15 +187,18 @@
             <form id="editForm" onsubmit="saveEdit(event)">
                 <div class="form-group"><label>Nom</label><input type="text" id="eName" required></div>
                 <div class="form-group">
-                    <label>Groupe</label>
+                    <label>Groupe musculaire</label>
                     <select id="eMuscle">
-                        <option value="Poitrine">Poitrine</option>
-                        <option value="Triceps">Triceps</option>
-                        <option value="Dos">Dos</option>
-                        <option value="Biceps">Biceps</option>
-                        <option value="Jambes">Jambes</option>
                         <option value="Épaules">Épaules</option>
-                        <option value="Cœur">Cœur</option>
+                        <option value="Biceps">Biceps</option>
+                        <option value="Triceps">Triceps</option>
+                        <option value="Pectoraux">Pectoraux</option>
+                        <option value="Dos">Dos</option>
+                        <option value="Abdos">Abdos</option>
+                        <option value="Fessiers">Fessiers</option>
+                        <option value="Quadriceps">Quadriceps</option>
+                        <option value="Ischio-jambiers">Ischio-jambiers</option>
+                        <option value="Mollets">Mollets</option>
                     </select>
                 </div>
                 <div class="form-row">
@@ -326,18 +328,18 @@
         ];
 
         // ============================================================
-        // DONNÉES PAR DÉFAUT (avec seulement un exercice par jour pour l'exemple)
+        // DONNÉES PAR DÉFAUT (avec les nouveaux groupes musculaires)
         // ============================================================
         const DEFAULT_DATA = {
-            day0: [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
+            day0: [{ n: 'Développé couché', m: 'Pectoraux', s: 4, r: '6-8', e: '🏋️', 
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
                     desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux.',
                     tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Expirez en poussant, inspirez en descendant.' },
-                   { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                   { n: 'Développé incliné haltères', m: 'Pectoraux', s: 3, r: '8-10', e: '💪',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-incline-halteres.gif',
                     desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères.',
                     tips: 'Maintiens les poignets droits. Ne va pas trop bas pour protéger les épaules.' },
-                   { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                   { n: 'Écartés aux câbles', m: 'Pectoraux', s: 3, r: '12-15', e: '🎯',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/ecartes-cables.gif',
                     desc: 'Debout entre deux poulies hautes. Saisissez les poignées. Ramenez les mains devant vous en croisant les poignets.',
                     tips: 'Gardez les coudes légèrement fléchis. Retour lent et contrôlé.' },
@@ -377,27 +379,27 @@
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-marteau.gif',
                     desc: 'Debout, haltères en prise neutre. Remontez vers les épaules.',
                     tips: 'Gardez les poignets droits. Contractez les biceps en haut.' }],
-            day2: [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+            day2: [{ n: 'Squat', m: 'Quadriceps', s: 4, r: '6-8', e: '🦵',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
                     desc: 'Barre sur les épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol.',
                     tips: 'Dos droit, poitrine ouverte. Poussez dans les talons.' },
-                   { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                   { n: 'Soulevé de terre roumain', m: 'Ischio-jambiers', s: 3, r: '8-10', e: '🏋️',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/roumain-deadlift.gif',
                     desc: 'Barre dans les mains. Penchez-vous en avant. Barre le long des jambes.',
                     tips: 'Dos droit ! Sensation dans les ischio-jambiers.' },
-                   { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                   { n: 'Presse à jambes', m: 'Quadriceps', s: 3, r: '10-12', e: '🦵',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/presse-jambes.gif',
                     desc: 'Assis sur la machine. Poussez en tendant les jambes. Revenez en contrôlant.',
                     tips: 'Dos plaqué. Ne bloquez pas les genoux.' },
-                   { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                   { n: 'Fentes marchées', m: 'Quadriceps', s: 3, r: '12 chaque', e: '⚡',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/fentes.gif',
                     desc: 'Grand pas en avant. Fléchissez les genoux à 90°. Poussez pour revenir.',
                     tips: 'Genou avant ne dépasse pas les orteils. Dos droit.' },
-                   { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                   { n: 'Curl jambes allongé', m: 'Ischio-jambiers', s: 3, r: '12-15', e: '🎯',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/leg-curl.gif',
                     desc: 'Allongé sur la machine. Ramenez les talons vers les fesses.',
                     tips: 'Gardez les hanches plaquées. Mouvement contrôlé.' },
-                   { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                   { n: 'Mollets debout', m: 'Mollets', s: 4, r: '15-20', e: '💪',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/mollets.gif',
                     desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets.',
                     tips: 'Amplitude maximale. Montez haut, descendez bas.' }],
@@ -417,23 +419,23 @@
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/face-pull.gif',
                     desc: 'Face à la poulie. Tirez vers le visage. Écartez les mains.',
                     tips: 'Gardez les coudes hauts. Squeeze les omoplates.' },
-                   { n: 'Relevé de jambes suspendu', m: 'Cœur', s: 3, r: '15', e: '🔥',
+                   { n: 'Relevé de jambes suspendu', m: 'Abdos', s: 3, r: '15', e: '🔥',
                     gif: 'https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif',
                     desc: 'Suspendu à une barre. Levez les jambes à 90°. Redescendez en contrôlant.',
                     tips: 'Ne balancez pas le corps. Engagez les abdominaux.' },
-                   { n: 'Crunch aux câbles', m: 'Cœur', s: 3, r: '14-20', e: '🎯',
+                   { n: 'Crunch aux câbles', m: 'Abdos', s: 3, r: '14-20', e: '🎯',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/crunch-cables.gif',
                     desc: 'À genoux face à la poulie. Fléchissez le buste. Contractez les abdominaux.',
                     tips: 'Gardez les hanches fixes. Ne tirez pas avec les bras.' }],
-            day4: [{ n: 'Développé couché', m: 'Poitrine', s: 4, r: '6-8', e: '🏋️', 
+            day4: [{ n: 'Développé couché', m: 'Pectoraux', s: 4, r: '6-8', e: '🏋️', 
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-couche.gif',
                     desc: 'Allongez-vous sur un banc plat, les pieds bien ancrés au sol. Saisissez la barre avec une prise légèrement plus large que les épaules. Abaissez la barre lentement (2-3 secondes) jusqu\'à toucher la poitrine. Poussez vers le haut en contractant fortement les pectoraux.',
                     tips: 'Gardez les omoplates plaquées contre le banc. Contrôlez la descente. Expirez en poussant, inspirez en descendant.' },
-                   { n: 'Développé incliné haltères', m: 'Poitrine', s: 3, r: '8-10', e: '💪',
+                   { n: 'Développé incliné haltères', m: 'Pectoraux', s: 3, r: '8-10', e: '💪',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/developpe-incline-halteres.gif',
                     desc: 'Banc incliné à 30-45°. Un haltère dans chaque main. Poussez vers le haut en rapprochant les haltères.',
                     tips: 'Maintiens les poignets droits. Ne va pas trop bas pour protéger les épaules.' },
-                   { n: 'Écartés aux câbles', m: 'Poitrine', s: 3, r: '12-15', e: '🎯',
+                   { n: 'Écartés aux câbles', m: 'Pectoraux', s: 3, r: '12-15', e: '🎯',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/ecartes-cables.gif',
                     desc: 'Debout entre deux poulies hautes. Saisissez les poignées. Ramenez les mains devant vous en croisant les poignets.',
                     tips: 'Gardez les coudes légèrement fléchis. Retour lent et contrôlé.' },
@@ -473,27 +475,27 @@
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/curl-marteau.gif',
                     desc: 'Debout, haltères en prise neutre. Remontez vers les épaules.',
                     tips: 'Gardez les poignets droits. Contractez les biceps en haut.' }],
-            day6: [{ n: 'Squat', m: 'Jambes', s: 4, r: '6-8', e: '🦵',
+            day6: [{ n: 'Squat', m: 'Quadriceps', s: 4, r: '6-8', e: '🦵',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/squat.gif',
                     desc: 'Barre sur les épaules. Descendez comme pour vous asseoir. Cuisses parallèles au sol.',
                     tips: 'Dos droit, poitrine ouverte. Poussez dans les talons.' },
-                   { n: 'Soulevé de terre roumain', m: 'Jambes', s: 3, r: '8-10', e: '🏋️',
+                   { n: 'Soulevé de terre roumain', m: 'Ischio-jambiers', s: 3, r: '8-10', e: '🏋️',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/roumain-deadlift.gif',
                     desc: 'Barre dans les mains. Penchez-vous en avant. Barre le long des jambes.',
                     tips: 'Dos droit ! Sensation dans les ischio-jambiers.' },
-                   { n: 'Presse à jambes', m: 'Jambes', s: 3, r: '10-12', e: '🦵',
+                   { n: 'Presse à jambes', m: 'Quadriceps', s: 3, r: '10-12', e: '🦵',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/presse-jambes.gif',
                     desc: 'Assis sur la machine. Poussez en tendant les jambes. Revenez en contrôlant.',
                     tips: 'Dos plaqué. Ne bloquez pas les genoux.' },
-                   { n: 'Fentes marchées', m: 'Jambes', s: 3, r: '12 chaque', e: '⚡',
+                   { n: 'Fentes marchées', m: 'Quadriceps', s: 3, r: '12 chaque', e: '⚡',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/fentes.gif',
                     desc: 'Grand pas en avant. Fléchissez les genoux à 90°. Poussez pour revenir.',
                     tips: 'Genou avant ne dépasse pas les orteils. Dos droit.' },
-                   { n: 'Curl jambes allongé', m: 'Jambes', s: 3, r: '12-15', e: '🎯',
+                   { n: 'Curl jambes allongé', m: 'Ischio-jambiers', s: 3, r: '12-15', e: '🎯',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/leg-curl.gif',
                     desc: 'Allongé sur la machine. Ramenez les talons vers les fesses.',
                     tips: 'Gardez les hanches plaquées. Mouvement contrôlé.' },
-                   { n: 'Mollets debout', m: 'Jambes', s: 4, r: '15-20', e: '💪',
+                   { n: 'Mollets debout', m: 'Mollets', s: 4, r: '15-20', e: '💪',
                     gif: 'https://www.docteur-fitness.com/wp-content/uploads/2019/08/mollets.gif',
                     desc: 'Debout sous les coussins. Montez sur la pointe des pieds. Contractez les mollets.',
                     tips: 'Amplitude maximale. Montez haut, descendez bas.' }]
@@ -593,7 +595,7 @@
         }
 
         // ============================================================
-        // DÉPLACER UN EXERCICE (NOUVEAU)
+        // DÉPLACER UN EXERCICE
         // ============================================================
         async function moveExercise(dayKey, index, direction) {
             const dayData = data[dayKey];
@@ -602,12 +604,10 @@
             const newIndex = index + direction;
             if (newIndex < 0 || newIndex >= dayData.length) return;
             
-            // Échanger les deux éléments
             const temp = dayData[index];
             dayData[index] = dayData[newIndex];
             dayData[newIndex] = temp;
             
-            // Échanger aussi les logs si présents
             const logKey1 = `${dayKey}_${index}`;
             const logKey2 = `${dayKey}_${newIndex}`;
             if (logs[logKey1] || logs[logKey2]) {
@@ -616,7 +616,6 @@
                 logs[logKey2] = tempLog;
             }
             
-            // Échanger aussi les états "done"
             if (done[dayKey]) {
                 const tempDone = done[dayKey][index] || false;
                 done[dayKey][index] = done[dayKey][newIndex] || false;
@@ -747,7 +746,7 @@
             const dayKey = `day${currentDay}`;
             document.getElementById('editTitle').textContent = '➕ Ajouter un exercice';
             document.getElementById('eName').value = '';
-            document.getElementById('eMuscle').value = 'Poitrine';
+            document.getElementById('eMuscle').value = 'Pectoraux';
             document.getElementById('eSets').value = '3';
             document.getElementById('eReps').value = '';
             document.getElementById('eEmoji').value = '🏋️';
@@ -908,7 +907,6 @@
 
         document.addEventListener('DOMContentLoaded', init);
 
-        // Exporter les fonctions
         window.showDetail = showDetail;
         window.closeDetail = closeDetail;
         window.updateGif = updateGif;
