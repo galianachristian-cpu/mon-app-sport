@@ -186,7 +186,7 @@ select.sel{width:100%;padding:11px 12px;border-radius:12px;background:var(--bg2)
 
 /* Navigation */
 .nav{position:fixed;bottom:0;left:0;right:0;z-index:70;background:rgba(11,15,25,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
-.nav .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:66px}
+.nav .wrap{display:grid;grid-template-columns:repeat(5,1fr);height:66px}
 .nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--muted);position:relative}
 .nav button .i{font-size:21px;transition:.2s}
 .nav button.on{color:var(--text)}
@@ -283,6 +283,33 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cmp figure{margin:0}.cmp img{width:100%;border-radius:12px;aspect-ratio:3/4;object-fit:cover;display:block}
 .cmp figcaption{text-align:center;font-size:12px;color:var(--muted);margin-top:4px;font-weight:700}
+.nav button{font-size:10.5px}
+.nav button .i{font-size:20px}
+.seg.small button{padding:7px 4px;font-size:12.5px}
+.mb{margin:6px 0}.mbh{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}.mbh span{color:var(--muted);font-weight:700}
+.meal .mlbl{font-size:11.5px;font-weight:700;color:var(--muted)}
+.ingr{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.ig{padding:6px 10px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);font-size:12.5px;color:#c9d4e6}
+.ig b{color:var(--text)}
+.ig:hover{border-color:var(--a1)}
+.tips-list p{font-size:13.5px;line-height:1.5;padding:8px 0;border-bottom:1px solid var(--line)}
+.tips-list p:last-child{border-bottom:none}
+.objs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.obj{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:16px;background:var(--card);border:2px solid var(--line);cursor:pointer;text-align:center}
+.obj input{position:absolute;opacity:0;pointer-events:none}
+.obj span{font-size:26px}.obj b{font-size:13.5px}
+.obj.on{border-color:var(--a1);background:color-mix(in srgb,var(--a1) 10%,var(--card))}
+.exg{margin-bottom:8px}.exg small{font-size:11.5px;font-weight:700;color:var(--muted)}
+.chips2.wrap{flex-wrap:wrap;overflow:visible;padding:6px 0 0}
+.chips2 button.no{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.6);color:#fecaca}
+.shop{padding:6px 14px}
+.shopit{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.shopit:last-of-type{border-bottom:none}
+.shopit input{width:20px;height:20px;accent-color:var(--ok);flex:0 0 auto}
+.shopit span{flex:1;font-size:14.5px}.shopit b{font-size:13.5px;color:#c9d4e6}
+.shopit.got span,.shopit.got b{text-decoration:line-through;opacity:.5}
+.wkday small{display:block;color:var(--muted);font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button.chip{cursor:pointer}
 </style>
 </head>
 <body>
@@ -305,6 +332,7 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 <nav class="nav" aria-label="Navigation"><div class="wrap">
   <button data-go="seance" class="on"><span class="i">🏋️</span>Séance</button>
   <button data-go="semaine"><span class="i">📅</span>Programme</button>
+  <button data-go="nutrition"><span class="i">🍽️</span>Nutrition</button>
   <button data-go="progres"><span class="i">📈</span>Progrès</button>
   <button data-go="chrono"><span class="i">⏱️</span>Chrono</button>
 </div></nav>
@@ -459,7 +487,7 @@ const BIG = ['Pectoraux','Dos','Quadriceps','Ischio-jambiers','Fessiers'];
 /* ============================================================
    ÉTAT — champs historiques (data, done, logs) gardés à l'identique
    ============================================================ */
-let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [];
+let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [], nut = null, journal = {};
 let currentDay = 0, view = 'seance', online = !!db, other = null;
 const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
@@ -481,11 +509,11 @@ const incOf = e => BIG.includes(e.m) ? 2.5 : 1;
    SAUVEGARDE (Firebase + copie sur l'appareil)
    ============================================================ */
 function setStatus(st, msg){ $('#saveDot').className = 'dot ' + st; $('#saveText').textContent = msg; $('#savePill').title = msg; }
-function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body }; }
+function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body, nut, journal }; }
 function applyDoc(src){
   data = src.data || clone(DEFAULT_DATA);
   done = src.done || {}; logs = src.logs || {}; sets = src.sets || {}; sl = src.sl || {}; hist = src.hist || [];
-  titles = src.titles || {}; sess = src.sess || {}; seances = src.seances || []; body = src.body || [];
+  titles = src.titles || {}; sess = src.sess || {}; seances = src.seances || []; body = src.body || []; nut = src.nut || null; journal = src.journal || {};
   week = src.week || null;
 }
 async function fetchDoc(id){
@@ -505,7 +533,8 @@ async function load(){
   week = w;
   if (!src.data || !src.week) save(true);
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  loadOther();
+  const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
+  loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
 }
 let saveTimer = null, pending = null;
 async function pushRemote(id, snap){
@@ -664,7 +693,7 @@ function viewSeance(){
     <div style="flex:1;min-width:0;position:relative;z-index:1">
       <h2>${DAY_NAMES[currentDay]}${currentDay === todayIdx() ? ' · aujourd’hui' : ''}</h2>
       <p>${esc(dayTitle(currentDay))}</p>
-      <div class="meta"><span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}<span class="chip">⏱️ ~${mins} min</span>${s && s.start && !s.end ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
+      <div class="meta"><span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}<span class="chip">⏱️ ~${mins} min</span>${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
       ${muscles.length ? `<div class="meta">${muscles.map(m => `<span class="mus" style="--c:${mcol(m)}">${esc(m)}</span>`).join('')}</div>` : ''}
     </div>
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
@@ -1077,15 +1106,486 @@ function confetti(){
 }
 
 /* ============================================================
+   NUTRITION — ALIMENTS (valeurs pour 100 g, poids cru / sec, moyennes type table Ciqual)
+   [id, nom, kcal, protéines, glucides, lipides, rayon, groupe de remplacement, unité {nom, g}]
+   ============================================================ */
+const FOODS = Object.fromEntries([
+  ['oeuf','Œufs',140,12.5,0.7,9.8,'cremerie','prot',{u:'œuf',g:60}],
+  ['poulet','Blanc de poulet',110,23,0,1.5,'viande','prot'],
+  ['dinde','Escalope de dinde',105,23,0,1.2,'viande','prot'],
+  ['boeuf','Bœuf haché 5 %',125,21,0,5,'viande','prot'],
+  ['jambon','Jambon blanc',115,20,1,3.5,'viande','prot'],
+  ['thon','Thon au naturel (boîte)',115,26,0,1,'epicerie','prot'],
+  ['sardine','Sardines (boîte)',210,24,0,13,'epicerie','prot'],
+  ['colin','Colin / cabillaud surgelé',80,18,0,0.8,'surgele','prot'],
+  ['saumon','Saumon surgelé',200,20,0,13,'surgele','prot'],
+  ['tofu','Tofu nature',120,12,2,7,'cremerie','prot'],
+  ['riz','Riz',350,7,77,0.6,'epicerie','fec'],
+  ['pates','Pâtes complètes',350,13,66,2.5,'epicerie','fec'],
+  ['semoule','Semoule',360,12,72,1.2,'epicerie','fec'],
+  ['pdt','Pommes de terre',80,2,17,0.1,'legumes','fec'],
+  ['patate','Patate douce',86,1.6,20,0.1,'legumes','fec'],
+  ['pain','Pain complet',245,9,44,3.3,'boulangerie','pain'],
+  ['tortilla','Tortillas de blé',300,8,50,7,'epicerie','pain',{u:'tortilla',g:60}],
+  ['galette','Galettes de riz soufflé',380,8,80,3,'epicerie','pain',{u:'galette',g:9}],
+  ['avoine','Flocons d’avoine',370,13,60,7,'epicerie','cereale'],
+  ['lentille','Lentilles vertes (sèches)',330,24,50,1.5,'epicerie','legumineuse'],
+  ['poischiche','Pois chiches (boîte égouttés)',120,7,15,2.5,'epicerie','legumineuse'],
+  ['haricotrouge','Haricots rouges (boîte égouttés)',100,7,14,0.5,'epicerie','legumineuse'],
+  ['brocoli','Brocoli (surgelé)',34,2.8,4,0.4,'surgele','legume'],
+  ['haricotvert','Haricots verts (surgelés)',30,1.8,4,0.2,'surgele','legume'],
+  ['poelee','Poêlée de légumes (surgelée)',40,2,6,0.5,'surgele','legume'],
+  ['epinard','Épinards (surgelés)',25,3,1,0.5,'surgele','legume'],
+  ['courgette','Courgettes',17,1.2,2,0.3,'legumes','legume'],
+  ['carotte','Carottes',36,0.8,7,0.3,'legumes','legume'],
+  ['tomate','Tomates',18,0.9,3,0.2,'legumes','legume'],
+  ['poivron','Poivrons',26,1,5,0.2,'legumes','legume'],
+  ['champignon','Champignons',22,3,0.5,0.3,'legumes','legume'],
+  ['chou','Chou-fleur',25,2,3,0.3,'legumes','legume'],
+  ['concombre','Concombre',12,0.6,2,0.1,'legumes','legume'],
+  ['salade','Salade verte',15,1.3,1.5,0.2,'legumes','legume'],
+  ['oignon','Oignons',35,1.2,7,0.2,'legumes','aromate'],
+  ['concassee','Tomates concassées (boîte)',25,1.2,4,0.2,'epicerie','sauce'],
+  ['banane','Bananes',90,1.1,20,0.3,'fruits','fruit',{u:'banane',g:120}],
+  ['pomme','Pommes',52,0.3,12,0.2,'fruits','fruit',{u:'pomme',g:150}],
+  ['orange','Oranges',47,0.9,10,0.1,'fruits','fruit',{u:'orange',g:150}],
+  ['fruitrouge','Fruits rouges (surgelés)',45,1,8,0.3,'surgele','fruit'],
+  ['fblanc','Fromage blanc 0 %',45,7.5,4,0.1,'cremerie','laitier'],
+  ['skyr','Skyr nature',60,10,4,0.2,'cremerie','laitier'],
+  ['yaourt','Yaourts nature',60,4,5,3,'cremerie','laitier',{u:'yaourt',g:125}],
+  ['lait','Lait demi-écrémé',46,3.2,4.8,1.6,'cremerie','lait'],
+  ['emmental','Emmental râpé',380,28,0,29,'cremerie','fromage'],
+  ['mozza','Mozzarella',250,18,2,19,'cremerie','fromage'],
+  ['feta','Feta',260,14,1,21,'cremerie','fromage'],
+  ['huile','Huile d’olive',900,0,0,100,'epicerie','gras'],
+  ['cacahuete','Beurre de cacahuète',600,25,15,50,'epicerie','noix'],
+  ['amande','Amandes',610,21,8,52,'epicerie','noix'],
+  ['miel','Miel',320,0.3,80,0,'epicerie','sucre'],
+  ['soja','Sauce soja',60,6,6,0,'epicerie','sauce']
+].map(([id, n, k, p, g, l, ray, grp, unit]) => [id, { id, n, k, p, g, l, ray, grp, unit }]));
+const RAYONS = { legumes:'🥦 Fruits & légumes frais', fruits:'🥦 Fruits & légumes frais', viande:'🥩 Boucherie & charcuterie', cremerie:'🥛 Crémerie & œufs', surgele:'🧊 Surgelés', epicerie:'🥫 Épicerie', boulangerie:'🥖 Boulangerie' };
+// remplacements possibles (même famille), dans l'ordre de préférence
+const SUBS = {
+  poulet:['dinde','jambon','oeuf','tofu'], dinde:['poulet','jambon','oeuf','tofu'], boeuf:['dinde','poulet','haricotrouge','tofu'], jambon:['dinde','poulet','oeuf'],
+  thon:['sardine','poulet','oeuf','poischiche'], sardine:['thon','oeuf','poulet'], colin:['saumon','thon','poulet','oeuf'], saumon:['colin','sardine','thon','poulet'],
+  tofu:['oeuf','poulet','poischiche'], oeuf:['jambon','tofu','fblanc'],
+  riz:['semoule','pates','pdt'], pates:['riz','semoule'], semoule:['riz','pates'], pdt:['patate','riz'], patate:['pdt','riz'],
+  pain:['tortilla','galette'], tortilla:['pain'], galette:['pain'], avoine:['pain'],
+  lentille:['poischiche','haricotrouge'], poischiche:['lentille','haricotrouge'], haricotrouge:['lentille','poischiche'],
+  brocoli:['haricotvert','chou','poelee','courgette'], haricotvert:['brocoli','poelee','courgette'], poelee:['haricotvert','brocoli','courgette'], epinard:['courgette','haricotvert','brocoli'],
+  courgette:['poelee','haricotvert','poivron'], carotte:['courgette','poivron','haricotvert'], tomate:['concombre','carotte','poivron'], poivron:['courgette','carotte','tomate'],
+  champignon:['courgette','poivron','epinard'], chou:['brocoli','haricotvert'], concombre:['tomate','carotte','salade'], salade:['concombre','tomate'], oignon:[],
+  banane:['pomme','orange','fruitrouge'], pomme:['banane','orange','fruitrouge'], orange:['pomme','banane'], fruitrouge:['pomme','banane'],
+  fblanc:['skyr','yaourt'], skyr:['fblanc','yaourt'], yaourt:['skyr','fblanc'], lait:['yaourt'],
+  emmental:['mozza','feta'], mozza:['emmental','feta'], feta:['mozza','emmental'],
+  cacahuete:['amande'], amande:['cacahuete'], miel:[], huile:[], soja:[], concassee:['tomate']
+};
+
+/* RECETTES — portions de base pour une personne (g ; unités pour les œufs et les fruits) */
+const R = (id, n, type, min, ing, steps, e) => ({ id, n, type, min, ing, steps, e });
+const RECIPES = [
+  // Petits-déjeuners
+  R('porridge','Porridge banane & cacahuète','pdj',8,[['avoine',60],['lait',200],['banane',120],['cacahuete',10]],'Faire chauffer l’avoine dans le lait 3-4 min en remuant. Ajouter la banane en rondelles et le beurre de cacahuète.','🥣'),
+  R('omelette-pain','Omelette, pain complet & tomate','pdj',10,[['oeuf',180],['pain',60],['tomate',100]],'Battre les œufs, cuire l’omelette à la poêle. Servir avec le pain et la tomate.','🍳'),
+  R('fb-granola','Fromage blanc, avoine & fruits rouges','pdj',3,[['fblanc',250],['avoine',40],['fruitrouge',100],['miel',10]],'Mélanger le fromage blanc avec l’avoine, ajouter les fruits rouges et le miel.','🫐'),
+  R('tartines-skyr','Tartines, skyr & pomme','pdj',5,[['pain',70],['skyr',150],['pomme',150],['cacahuete',10]],'Tartiner le pain de beurre de cacahuète. Servir avec le skyr et la pomme.','🍞'),
+  R('pancakes','Pancakes à l’avoine','pdj',15,[['avoine',60],['oeuf',120],['lait',100],['banane',60]],'Mixer avoine, œufs, lait et banane. Cuire de petits pancakes dans une poêle antiadhésive.','🥞'),
+  R('oeufs-jambon','Œufs brouillés, jambon & orange','pdj',8,[['oeuf',120],['jambon',50],['pain',60],['orange',150]],'Brouiller les œufs à feu doux, ajouter le jambon en dés. Servir avec le pain et l’orange.','🍳'),
+  R('overnight','Overnight oats pomme','pdj',5,[['avoine',50],['yaourt',125],['lait',100],['pomme',150]],'La veille, mélanger avoine, yaourt et lait dans un pot. Le matin, ajouter la pomme râpée.','🫙'),
+  R('smoothie','Smoothie banane-avoine','pdj',3,[['lait',250],['banane',120],['avoine',40],['cacahuete',15]],'Tout mixer jusqu’à obtenir une texture lisse.','🥤'),
+  // Collations
+  R('skyr-fruits','Skyr & fruits rouges','col',2,[['skyr',150],['fruitrouge',80]],'Mélanger le skyr et les fruits rouges.','🍓'),
+  R('banane-amandes','Banane & amandes','col',1,[['banane',120],['amande',20]],'À emporter dans le sac de sport.','🍌'),
+  R('fb-miel','Fromage blanc & miel','col',1,[['fblanc',200],['miel',10]],'Fromage blanc nature avec un filet de miel.','🍯'),
+  R('pomme-cacahuete','Pomme & beurre de cacahuète','col',2,[['pomme',150],['cacahuete',15]],'Couper la pomme en quartiers et tremper dans le beurre de cacahuète.','🍎'),
+  R('galettes-jambon','Galettes de riz & jambon','col',2,[['galette',27],['jambon',40]],'Garnir les galettes de jambon.','🍘'),
+  R('oeufs-durs','Œufs durs & pain','col',12,[['oeuf',120],['pain',30]],'Cuire les œufs 10 min dans l’eau bouillante. Se prépare à l’avance pour 3 jours.','🥚'),
+  R('yaourt-avoine','Yaourts & avoine','col',2,[['yaourt',250],['avoine',30]],'Mélanger les yaourts et les flocons.','🥄'),
+  R('shake','Shake post-séance lait-banane','col',2,[['lait',300],['banane',120]],'Mixer ou secouer. Idéal dans l’heure qui suit la séance.','🥛'),
+  // Plats (déjeuner / dîner)
+  R('poulet-riz','Poulet, riz & brocoli','plat',20,[['poulet',150],['riz',80],['brocoli',200],['huile',10]],'Cuire le riz. Faire dorer le poulet en dés dans l’huile, ajouter le brocoli 8 min. Assaisonner (paprika, ail).','🍗'),
+  R('bolo','Pâtes bolognaise','plat',20,[['pates',90],['boeuf',125],['concassee',150],['oignon',50],['emmental',15],['huile',5]],'Faire revenir l’oignon et la viande, ajouter les tomates 10 min. Servir sur les pâtes avec le fromage.','🍝'),
+  R('chili','Chili con carne','plat',25,[['boeuf',120],['haricotrouge',150],['riz',70],['concassee',150],['poivron',80],['oignon',50],['huile',5]],'Revenir oignon, poivron et viande. Ajouter tomates, haricots, cumin et paprika, mijoter 15 min. Servir avec le riz.','🌶️'),
+  R('dahl','Dahl de lentilles & épinards','plat',30,[['lentille',80],['riz',50],['concassee',150],['oignon',50],['epinard',100],['huile',10]],'Revenir l’oignon avec du curry, ajouter lentilles, tomates et 2 fois leur volume d’eau, cuire 20 min. Ajouter les épinards. Servir avec le riz.','🍛'),
+  R('tortilla-esp','Tortilla de pommes de terre & salade','plat',30,[['oeuf',180],['pdt',250],['oignon',50],['salade',50],['huile',10]],'Cuire pommes de terre et oignon en fines tranches dans l’huile, ajouter les œufs battus, cuire à couvert. Servir avec la salade.','🥔'),
+  R('colin-pdt','Colin, pommes de terre & haricots verts','plat',25,[['colin',180],['pdt',250],['haricotvert',200],['huile',10]],'Cuire les pommes de terre à l’eau. Cuire le poisson à la poêle ou au four 12 min avec les haricots. Citron et persil.','🐟'),
+  R('dinde-patate','Dinde, patate douce & courgettes','plat',30,[['dinde',150],['patate',250],['courgette',200],['huile',10]],'Rôtir patate douce et courgettes en cubes au four 25 min à 200 °C. Saisir la dinde à la poêle.','🍠'),
+  R('salade-thon','Salade de riz au thon','plat',15,[['thon',120],['riz',70],['tomate',150],['concombre',100],['huile',10]],'Cuire et refroidir le riz. Mélanger avec le thon, les légumes en dés et la vinaigrette. Parfait en boîte repas.','🥗'),
+  R('wrap-poulet','Wraps poulet crudités','plat',15,[['tortilla',120],['poulet',120],['salade',40],['tomate',80],['fblanc',50]],'Cuire le poulet en lanières. Garnir les tortillas de salade, tomate, poulet et fromage blanc aux herbes, rouler.','🌯'),
+  R('pates-thon','Pâtes au thon & tomate','plat',15,[['pates',90],['thon',100],['concassee',150],['oignon',40],['huile',5]],'Faire revenir l’oignon, ajouter tomates et thon 5 min. Mélanger avec les pâtes.','🍝'),
+  R('curry-pc','Curry de pois chiches','plat',20,[['poischiche',200],['riz',70],['concassee',150],['epinard',100],['oignon',50],['huile',10]],'Revenir l’oignon avec le curry, ajouter tomates et pois chiches 10 min, puis les épinards. Servir avec le riz.','🍛'),
+  R('sardines-pdt','Sardines, pommes de terre & salade','plat',20,[['sardine',100],['pdt',250],['salade',60],['huile',5]],'Cuire les pommes de terre à l’eau. Servir tièdes avec les sardines et la salade.','🐟'),
+  R('riz-cantonais','Riz cantonais maison','plat',20,[['riz',80],['oeuf',120],['jambon',60],['poelee',150],['soja',10],['huile',10]],'Faire sauter le riz cuit avec les légumes, ajouter le jambon en dés, puis les œufs brouillés et la sauce soja.','🍚'),
+  R('steak-puree','Steak haché, purée & haricots verts','plat',25,[['boeuf',125],['pdt',250],['lait',50],['haricotvert',200],['huile',5]],'Cuire les pommes de terre et les écraser avec le lait. Cuire le steak et les haricots.','🥩'),
+  R('gratin-courgette','Gratin de courgettes au jambon','plat',35,[['courgette',300],['jambon',80],['oeuf',60],['emmental',30],['pdt',150]],'Disposer courgettes et pommes de terre en rondelles, le jambon, napper d’œuf battu, parsemer de fromage. Four 30 min à 200 °C.','🧀'),
+  R('saumon-semoule','Saumon, semoule & légumes','plat',20,[['saumon',130],['semoule',70],['poelee',200],['huile',5]],'Cuire le saumon au four 15 min. Gonfler la semoule dans l’eau bouillante. Poêler les légumes.','🐟'),
+  R('tofu-wok','Wok de tofu & légumes','plat',20,[['tofu',150],['riz',70],['poelee',200],['soja',10],['huile',10]],'Dorer le tofu en cubes, ajouter les légumes et la sauce soja. Servir avec le riz.','🥢'),
+  R('salade-lentilles','Salade de lentilles à la feta','plat',25,[['lentille',70],['carotte',100],['tomate',100],['feta',40],['huile',10]],'Cuire les lentilles 20 min, refroidir. Mélanger avec carottes râpées, tomates, feta et vinaigrette.','🥗'),
+  R('pizza-wrap','Pizza tortilla maison','plat',15,[['tortilla',120],['concassee',60],['jambon',60],['mozza',60],['champignon',60]],'Garnir les tortillas de tomates, jambon, champignons et mozzarella. Four 10 min à 220 °C.','🍕'),
+  R('poulet-chou','Poulet au curry & chou-fleur','plat',25,[['poulet',150],['chou',250],['riz',60],['yaourt',60],['huile',10]],'Dorer le poulet avec le curry, ajouter le chou-fleur et un fond d’eau, cuire 12 min. Hors du feu, ajouter le yaourt.','🍛'),
+  R('soupe-lentilles','Soupe lentilles-carottes & pain','plat',30,[['lentille',70],['carotte',200],['oignon',50],['pain',50],['fblanc',60]],'Cuire lentilles, carottes et oignon dans 1 L d’eau 25 min, mixer. Servir avec une cuillère de fromage blanc et le pain.','🍲'),
+  R('omelette-champi','Omelette aux champignons & tartines','plat',15,[['oeuf',180],['champignon',150],['pain',70],['salade',50],['emmental',20]],'Poêler les champignons, ajouter les œufs battus et le fromage. Servir avec le pain et la salade.','🍄'),
+  R('burger','Burger maison & potatoes','plat',30,[['pain',80],['boeuf',125],['tomate',60],['salade',30],['emmental',20],['pdt',200],['huile',5]],'Pommes de terre en quartiers au four 25 min avec l’huile et le paprika. Cuire le steak, monter le burger.','🍔')
+];
+const REC_BY = Object.fromEntries(RECIPES.map(r => [r.id, r]));
+const MEALS = [['pdj','Petit-déjeuner','☀️',.25],['dej','Déjeuner','🍽️',.35],['col','Collation','🍎',.10],['din','Dîner','🌙',.30]];
+const OBJ = { perte:['Perte de poids','🔥'], maintien:['Maintien','⚖️'], muscle:['Prise de muscle','💪'], recompo:['Recomposition','🔄'] };
+const ACT = { 1.2:'Sédentaire (bureau, peu de marche)', 1.35:'Peu actif (marche, debout parfois)', 1.5:'Actif (métier physique, beaucoup debout)', 1.65:'Très actif (travail physique intense)' };
+
+/* ============================================================
+   NUTRITION — CALCULS
+   ============================================================ */
+let foyer = { plans:{}, checked:{}, extra:{}, swaps:{}, commun:true };
+let nutTab = 'jour', nutDay = null, coursesScope = 'semaine', coursesWho = 'tous';
+const FOYER_ID = 'foyer';
+function hashN(s){ let h = 2166136261; for (const c of String(s)){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed){ let a = hashN(seed); return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const curWk = () => isoWeek(new Date());
+function weekDates(wk){ const d = new Date(); d.setDate(d.getDate() - todayIdx()); return Array.from({ length: 7 }, (_, i) => { const x = new Date(d); x.setDate(d.getDate() + i); return ymd(x); }); }
+
+// contexte d'une personne : profil courant ou l'autre profil (mode duo)
+function ctxOf(pid){
+  if (pid === profile.id) return { pid, nom: profile.nom, nut: nut, body, data };
+  const p = PROFILES.find(x => x.id === pid);
+  const d = other && other.p.id === pid ? other.d : {};
+  return { pid, nom: p ? p.nom : pid, nut: (d && d.nut) || null, body: (d && d.body) || [], data: (d && d.data) || {} };
+}
+const nutReady = n => n && n.sexe && n.age && n.taille && (n.poids || n.poids === 0);
+function weightOf(c){ const B = (c.body || []).filter(b => b.p != null).sort((a, b) => a.d < b.d ? -1 : 1); return B.length ? B[B.length - 1].p : num(c.nut && c.nut.poids) || 70; }
+function sessionKcal(c, di){
+  const l = (c.data || {})['day' + di] || [];
+  return Math.round(l.reduce((a, e) => { const t = e.t || 'f'; return a + (t === 'c' ? topReps(e.r) * 8 : (+e.s || 3) * (t === 's' ? 6 : 12)); }, 0));
+}
+function targets(c, di){
+  const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
+  const bmr = Math.round(10 * w + 6.25 * n.taille - 5 * n.age + sx);
+  const act = +n.act || 1.35, sk = sessionKcal(c, di), train = sk > 0;
+  const tdee = Math.round(bmr * act + sk);
+  const f = { perte: .8, maintien: 1, muscle: 1.1, recompo: train ? 1.0 : .9 }[n.obj || 'maintien'];
+  const floor = n.sexe === 'F' ? 1300 : 1600;
+  const kcal = Math.max(floor, Math.round((tdee * f + (n.adj || 0)) / 10) * 10);
+  const pk = { perte: 2.0, maintien: 1.8, muscle: 2.0, recompo: 2.0 }[n.obj || 'maintien'];
+  const p = Math.round(w * pk), l = Math.round(Math.max(w * .8, kcal * .25 / 9)), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
+  return { kcal, p, g, l, bmr, tdee, sk, train, w };
+}
+// ajustement automatique hebdomadaire selon l'évolution du poids
+function autoAdjust(){
+  if (!nutReady(nut)) return null;
+  const wk = curWk(); if (nut.lastAdj === wk) return null;
+  const B = body.filter(b => b.p != null), now = new Date(), dd = s => (now - new Date(s + 'T12:00')) / 864e5;
+  const avg = A => A.length ? A.reduce((a, b) => a + b.p, 0) / A.length : null;
+  const a1 = avg(B.filter(b => dd(b.d) < 7)), a0 = avg(B.filter(b => dd(b.d) >= 7 && dd(b.d) < 14));
+  nut.lastAdj = wk;
+  if (a1 == null || a0 == null) { save(); return null; }
+  const pct = (a1 - a0) / a0 * 100; let delta = 0, why = '';
+  const o = nut.obj || 'maintien';
+  if (o === 'perte'){ if (pct > -0.2){ delta = -100; why = 'perte trop lente'; } else if (pct < -1){ delta = 100; why = 'perte trop rapide (préserver le muscle)'; } }
+  else if (o === 'muscle'){ if (pct < 0.1){ delta = 100; why = 'poids stable, il faut un peu plus d’énergie'; } else if (pct > 0.6){ delta = -100; why = 'prise trop rapide (limiter le gras)'; } }
+  else { if (pct > 0.5){ delta = -100; why = 'poids en hausse'; } else if (pct < -0.5){ delta = 100; why = 'poids en baisse'; } }
+  if (delta){ nut.adj = Math.max(-500, Math.min(500, (nut.adj || 0) + delta)); (nut.log = nut.log || []).push({ wk, delta, pct: +pct.toFixed(2), why }); if (nut.log.length > 30) nut.log = nut.log.slice(-30); }
+  save();
+  return delta ? { delta, pct, why } : null;
+}
+
+/* ============================================================
+   NUTRITION — MENUS ET PORTIONS
+   ============================================================ */
+const exclOf = c => (c.nut && c.nut.excl) || [];
+function subFor(fid, excl){ if (!excl.includes(fid)) return fid; for (const s of SUBS[fid] || []) if (!excl.includes(s)) return s; return null; }
+function convert(from, to, g){
+  const A = FOODS[from], B = FOODS[to];
+  if (A.grp === 'legume' && B.grp === 'legume') return g;
+  if (A.grp === 'prot' || B.grp === 'prot' || A.grp === 'legumineuse') return Math.min(g * 2.5, g * A.p / Math.max(1, B.p));
+  return g * A.k / Math.max(1, B.k);
+}
+function recipeOk(r, excls){ return r.ing.every(([fid]) => excls.every(ex => subFor(fid, ex) !== null || ['oignon','huile','soja','miel'].includes(fid))); }
+const kcalOf = ing => ing.reduce((a, [f, g]) => a + FOODS[f].k * g / 100, 0);
+const macrosOf = ing => ing.reduce((a, [f, g]) => ({ k: a.k + FOODS[f].k * g / 100, p: a.p + FOODS[f].p * g / 100, g: a.g + FOODS[f].g * g / 100, l: a.l + FOODS[f].l * g / 100 }), { k: 0, p: 0, g: 0, l: 0 });
+function roundG(f, g){
+  const F = FOODS[f];
+  if (F.unit){ const u = F.unit.g, n = f === 'oeuf' || f === 'yaourt' ? Math.max(1, Math.round(g / u)) : Math.max(.5, Math.round(g / u * 2) / 2); return n * u; }
+  if (f === 'huile') return Math.max(5, Math.min(20, Math.round(g / 5) * 5));
+  return g < 50 ? Math.max(5, Math.round(g / 5) * 5) : Math.round(g / 10) * 10;
+}
+// Ajuste les protéines du repas vers l'objectif : plus d'aliments protéinés, moins de féculents (calories gardées)
+const PROT_G = ['prot','laitier','lait','legumineuse'], CARB_G = ['fec','cereale','pain'];
+function proteinFix(m, pTarget, kTarget){
+  const P = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].p * g / 100, 0);
+  const K = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].k * g / 100, 0);
+  const prot = Object.keys(m).filter(f => PROT_G.includes(FOODS[f].grp)).sort((a, b) => FOODS[b].p / FOODS[b].k - FOODS[a].p / FOODS[a].k);
+  if (!prot.length) return;
+  const main = prot[0], orig = m[main], missing = pTarget * .95 - P();
+  if (missing > 2){ const add = Math.min(orig * 1.8, missing / (FOODS[main].p / 100)); m[main] += add; }
+  else if (missing < -pTarget * .35){ m[main] = Math.max(orig * .6, orig + missing * .5 / (FOODS[main].p / 100)); }
+  const carbs = Object.keys(m).filter(f => CARB_G.includes(FOODS[f].grp)), over = K() - kTarget;
+  if (over > 20 && carbs.length){ const ck = carbs.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); const r = Math.max(.4, 1 - over / Math.max(1, ck)); carbs.forEach(f => { m[f] *= r; }); }
+  const over2 = K() - kTarget, fats = Object.keys(m).filter(f => ['gras','noix','fromage'].includes(FOODS[f].grp));
+  if (over2 > 30 && fats.length){ const fk = fats.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); const r = Math.max(.5, 1 - over2 / Math.max(1, fk)); fats.forEach(f => { m[f] *= r; }); }
+  else if (over < -60 && carbs.length){ const ck = carbs.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); const r = Math.min(1.6, 1 - over / Math.max(1, ck)); carbs.forEach(f => { m[f] *= r; }); }
+}
+// portion d'une recette pour une personne et un repas, avec remplacements et calories du repas
+function portion(rid, pid, meal, di, wk){
+  const r = REC_BY[rid]; if (!r) return null;
+  const c = ctxOf(pid), excl = exclOf(c), sw = foyer.swaps[[wk, di, meal, pid].join('|')] || {};
+  let ing = [], subs = [];
+  r.ing.forEach(([f, g]) => {
+    let to = sw[f] || subFor(f, excl);
+    if (to === null){ if (['oignon','huile','soja','miel'].includes(f)) return; to = f; }
+    if (to !== f) subs.push([f, to]);
+    ing.push([to, to === f ? g : convert(f, to, g)]);
+  });
+  const share = (MEALS.find(m => m[0] === meal) || [0,0,0,.3])[3];
+  let factor = 1, t = null;
+  if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, t.kcal * share / Math.max(1, kcalOf(ing)))); }
+  const merged = {}; ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g * factor; });
+  if (t) proteinFix(merged, t.p * share, t.kcal * share);
+  ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
+  return { r, ing, m: macrosOf(ing), subs };
+}
+function pickFrom(list, rnd, avoid){ const fresh = list.filter(r => !avoid.includes(r.id)), L = fresh.length ? fresh : list; return L.length ? L[Math.floor(rnd() * L.length)].id : null; }
+function genPlan(wk){
+  const pids = PROFILES.map(p => p.id), excls = pids.map(id => exclOf(ctxOf(id))), S = wk + '#' + (foyer.salt || 0);
+  const days = [], used = [];
+  for (let d = 0; d < 7; d++){
+    const day = {};
+    ['pdj','col'].forEach(meal => { day[meal] = {}; pids.forEach((pid, k) => {
+      const c = ctxOf(pid), train = sessionKcal(c, d) > 0, rnd = rng(S + meal + d + pid);
+      let L = RECIPES.filter(r => r.type === meal && recipeOk(r, [excls[k]]));
+      if (meal === 'col' && train){ const pre = L.filter(r => ['shake','banane-amandes','yaourt-avoine','fb-miel'].includes(r.id)); if (pre.length) L = pre; }
+      else if (meal === 'col' && c.nut && (c.nut.obj === 'perte' || c.nut.obj === 'recompo')){ const hp = L.filter(r => ['skyr-fruits','fb-miel','oeufs-durs','galettes-jambon'].includes(r.id)); if (hp.length) L = hp; }
+      if (meal === 'pdj' && c.nut && c.nut.obj === 'perte'){ const hp = L.filter(r => ['omelette-pain','fb-granola','oeufs-jambon','tartines-skyr','pancakes'].includes(r.id)); if (hp.length) L = hp; }
+      const prev = d ? [days[d - 1][meal][pid]] : [];
+      day[meal][pid] = pickFrom(L, rnd, prev);
+    }); });
+    ['dej','din'].forEach(meal => {
+      if (foyer.commun){ const L = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls)); const id = pickFrom(L, rng(S + meal + d), used); used.push(id); day[meal] = id; }
+      else { day[meal] = {}; pids.forEach((pid, k) => { const L = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, [excls[k]])); const id = pickFrom(L, rng(S + meal + d + pid), used); used.push(id); day[meal][pid] = id; }); }
+    });
+    days.push(day);
+  }
+  return { days, commun: foyer.commun };
+}
+const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
+function planOf(wk){
+  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -3).forEach(k => delete foyer.plans[k]); saveFoyer(); }
+  return foyer.plans[wk];
+}
+function dayPortions(pid, d, wk){ const plan = planOf(wk); return MEALS.map(([meal]) => { const rid = ridOf(plan, d, meal, pid); return { meal, rid, por: rid ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
+
+/* Sauvegarde du « foyer » (menus et liste de courses communs) */
+let foyerTimer = null;
+async function loadFoyer(){
+  let src = null;
+  if (db){ try{ const doc = await Promise.race([DOC(FOYER_ID).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 8000))]); src = doc.exists ? doc.data() : {}; }catch(e){ src = null; } }
+  if (!src) src = safeGet('mp_foyer', {});
+  foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, commun:true }, src || {});
+}
+function saveFoyer(){
+  safeSet('mp_foyer', foyer); clearTimeout(foyerTimer);
+  foyerTimer = setTimeout(async () => { if (!db) return; try{ await DOC(FOYER_ID).set(Object.assign(clone(foyer), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })); }catch(e){} }, 700);
+}
+
+/* ============================================================
+   NUTRITION — VUES
+   ============================================================ */
+const kc = v => Math.round(v).toLocaleString('fr-FR');
+function qty(f, g){ const F = FOODS[f]; if (F.unit){ const n = g / F.unit.g; return `${String(+n.toFixed(1)).replace('.', ',')} ${F.unit.u}${n > 1 ? 's' : ''}`; } return f === 'lait' ? `${Math.round(g)} ml` : `${Math.round(g)} g`; }
+function viewNutrition(){
+  if (nutDay == null) nutDay = todayIdx();
+  const tabs = [['jour','🍽️ Repas'],['semaine','📅 Semaine'],['courses','🛒 Courses'],['profil','⚙️ Profil']];
+  if (!nutReady(nut) && nutTab !== 'profil') nutTab = 'profil';
+  $('#app').innerHTML = `<div class="fade">
+  <div class="seg" role="tablist" style="margin-top:16px">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${nutTab === k}" class="${nutTab === k ? 'on' : ''}" data-ntab="${k}">${l}</button>`).join('')}</div>
+  <div id="ntab">${{ jour: nutJour, semaine: nutSemaine, courses: nutCourses, profil: nutProfil }[nutTab]()}</div></div>`;
+  ({ jour: bindJour, semaine: () => {}, courses: bindCourses, profil: bindProfil })[nutTab]();
+}
+function journalOf(date){ return (journal[date] = journal[date] || {}); }
+function eatenTotals(date, ports){
+  const J = journal[date] || {}; const t = { k: 0, p: 0, g: 0, l: 0 };
+  ports.forEach(x => { const st = J[x.meal]; let m = null; if (st === 'ok' && x.por) m = x.por.m; else if (st && st.items) m = macrosOf(st.items); if (m){ t.k += m.k; t.p += m.p; t.g += m.g; t.l += m.l; } });
+  return t;
+}
+function tipsFor(t, eaten, isToday, ports){
+  const T = [], w = t.w;
+  if (t.train) T.push(`🏋️ Jour d’entraînement : <b>+${t.sk} kcal</b> et plus de glucides. Prends ta collation 1 à 2 h avant ou juste après la séance.`);
+  else T.push('😴 Jour de repos : un peu moins de glucides, garde bien tes protéines pour récupérer.');
+  T.push(`💧 Bois environ <b>${String(+(w * .035 + (t.train ? .5 : 0)).toFixed(1)).replace('.', ',')} L</b> d’eau aujourd’hui.`);
+  T.push(`🥩 Vise <b>${Math.round(t.p / 4)} g de protéines par repas</b> environ, c’est ce qui protège et construit le muscle.`);
+  if (isToday){ const h = new Date().getHours(); if (h >= 18 && eaten.p < t.p * .6) T.push(`⚠️ Il te manque environ <b>${Math.round(t.p - eaten.p)} g de protéines</b> : un fromage blanc ou un skyr ce soir aide.`); }
+  const lg = (nut.log || []).slice(-1)[0]; if (lg && lg.wk === curWk()) T.push(`🤖 Ajustement auto cette semaine : <b>${lg.delta > 0 ? '+' : ''}${lg.delta} kcal</b> (${esc(lg.why)}).`);
+  return T;
+}
+function macroBar(lbl, v, t, col){ const p = Math.min(100, t ? v * 100 / t : 0); return `<div class="mb"><div class="mbh"><span>${lbl}</span><b>${Math.round(v)} / ${Math.round(t)} g</b></div><div class="bar"><i style="width:${p}%;background:${col}"></i></div></div>`; }
+function nutJour(){
+  const wk = curWk(), dates = weekDates(wk), date = dates[nutDay], c = ctxOf(profile.id), t = targets(c, nutDay);
+  const ports = dayPortions(profile.id, nutDay, wk), plan = ports.reduce((a, x) => { if (x.por){ a.k += x.por.m.k; a.p += x.por.m.p; } return a; }, { k: 0, p: 0 });
+  const eaten = eatenTotals(date, ports), J = journal[date] || {}, isToday = nutDay === todayIdx();
+  const sess = (data['day' + nutDay] || []).length ? dayTitle(nutDay) : null;
+  return `<div class="days">${DAY_SHORT.map((d, i) => `<button class="day ${i === nutDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''}" data-nday="${i}"><b>${d}</b><span>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : 'Repos'}</span></button>`).join('')}</div>
+  <section class="hero"><div style="flex:1;min-width:0;position:relative;z-index:1">
+    <h2>${kc(t.kcal)} kcal</h2><p>${OBJ[nut.obj][1]} ${OBJ[nut.obj][0]} · ${sess ? '🏋️ ' + esc(sess) : '😴 Repos'}</p>
+    <div class="meta"><span class="chip">🥩 ${t.p} g prot.</span><span class="chip">🍚 ${t.g} g gluc.</span><span class="chip">🥑 ${t.l} g lip.</span></div>
+    <p class="muted" style="font-size:12px;margin-top:8px">Menu prévu : ${kc(plan.k)} kcal · ${Math.round(plan.p)} g de protéines</p></div>
+    <div class="ring">${ring(t.kcal ? eaten.k / t.kcal : 0, 86, 9, 'rn')}<div class="v">${kc(eaten.k)}<small>mangées</small></div></div></section>
+  <div class="card" style="margin-top:12px">${macroBar('Protéines', eaten.p, t.p, '#f472b6')}${macroBar('Glucides', eaten.g, t.g, '#22d3ee')}${macroBar('Lipides', eaten.l, t.l, '#fbbf24')}</div>
+  <div class="list">${ports.map(x => mealCard(x, J[x.meal], date)).join('')}</div>
+  <h3 class="sec">Conseils du jour</h3><div class="card tips-list">${tipsFor(t, eaten, isToday, ports).map(s => `<p>${s}</p>`).join('')}</div>`;
+}
+function mealCard(x, st, date){
+  const [, lbl, ico] = MEALS.find(m => m[0] === x.meal);
+  if (!x.por) return `<article class="ex meal"><div class="row1"><span class="emo">${ico}</span><div class="name"><b>${lbl}</b><span class="sub muted">Aucune recette compatible</span></div></div></article>`;
+  const p = x.por, okd = st === 'ok', other2 = st && st.items, skip = st === 'skip';
+  return `<article class="ex meal ${okd || other2 ? 'done' : ''}">
+    <div class="row1"><button class="emo" data-act="recette" data-meal="${x.meal}">${p.r.e}</button>
+      <button class="name" data-act="recette" data-meal="${x.meal}"><b>${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · ${Math.round(p.m.p)} g prot.</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
+      <button class="check" data-act="mok" data-meal="${x.meal}" aria-label="${okd ? 'Annuler' : 'Mangé comme prévu'}" aria-pressed="${okd}">✓</button></div>
+    <div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}</button>`).join('')}</div>
+    ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
+    ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ J’ai mangé autre chose</button><button class="btn sm" data-act="mchange" data-meal="${x.meal}">🔄 Autre plat</button></div>
+  </article>`;
+}
+function bindJour(){
+  document.querySelectorAll('[data-nday]').forEach(b => b.onclick = () => { nutDay = +b.dataset.nday; viewNutrition(); });
+}
+function sheetRecette(meal){
+  const wk = curWk(), rid = ridOf(planOf(wk), nutDay, meal, profile.id), p = portion(rid, profile.id, meal, nutDay, wk);
+  openSheet(`<h2>${p.r.e} ${esc(p.r.n)}</h2>
+    <div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
+    <div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p>${p.ing.map(([f, g]) => `• ${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}`).join('\n')}</p></div>
+    <div class="box"><h4>👩‍🍳 Préparation</h4><p>${esc(p.r.steps)}</p></div>
+    <p class="muted" style="font-size:12px">Glucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
+}
+function sheetSwap(meal, f){
+  const wk = curWk(), key = [wk, nutDay, meal, profile.id].join('|'), alts = (SUBS[f] || []).filter(x => !(nut.excl || []).includes(x));
+  openSheet(`<h2>Remplacer : ${esc(FOODS[f].n)}</h2>
+    ${alts.length ? `<p class="muted" style="font-size:13px;margin-bottom:10px">Les quantités sont recalculées automatiquement.</p><div class="list" style="margin-top:0">${alts.map(a => `<button class="libit" data-to="${a}"><span class="t"><b>${esc(FOODS[a].n)}</b><small>${FOODS[a].k} kcal · ${FOODS[a].p} g prot. / 100 g</small></span><span class="plus">⇄</span></button>`).join('')}</div>` : '<p class="muted">Pas de remplacement prévu pour cet aliment.</p>'}
+    <div class="row" style="margin-top:14px"><button class="btn danger" id="noLike">🚫 Je n’aime pas, ne plus le proposer</button></div>`);
+  $('#sheet').querySelectorAll('[data-to]').forEach(b => b.onclick = () => { foyer.swaps[key] = Object.assign(foyer.swaps[key] || {}, { [f]: b.dataset.to }); saveFoyer(); closeSheet(); viewNutrition(); toast('🔁 Remplacé, portions recalculées'); });
+  $('#noLike').onclick = () => { nut.excl = [...new Set([...(nut.excl || []), f])]; delete foyer.plans[wk]; save(); saveFoyer(); closeSheet(); viewNutrition(); toast('🚫 ' + FOODS[f].n + ' retiré de tes menus'); };
+}
+function changeMeal(meal){
+  const wk = curWk(), plan = planOf(wk), cur = ridOf(plan, nutDay, meal, profile.id), shared = typeof plan.days[nutDay][meal] === 'string';
+  const type = meal === 'pdj' || meal === 'col' ? meal : 'plat', ex = shared ? PROFILES.map(p => exclOf(ctxOf(p.id))) : [exclOf(ctxOf(profile.id))];
+  const L = RECIPES.filter(r => r.type === type && r.id !== cur && recipeOk(r, ex));
+  openSheet(`<h2>Choisir un autre plat</h2>${shared ? '<p class="muted" style="font-size:13px;margin-bottom:8px">👫 Repas en commun : le changement vaut pour vous deux.</p>' : ''}
+    <div>${L.map(r => { const k2 = kcalOf(r.ing); return `<button class="libit" data-rid="${r.id}"><span class="emo">${r.e}</span><span class="t"><b>${esc(r.n)}</b><small>${r.min} min · base ${kc(k2)} kcal</small></span><span class="plus">＋</span></button>`; }).join('')}</div>`);
+  $('#sheet').querySelectorAll('[data-rid]').forEach(b => b.onclick = () => { const v = plan.days[nutDay][meal]; if (typeof v === 'string') plan.days[nutDay][meal] = b.dataset.rid; else v[profile.id] = b.dataset.rid; saveFoyer(); closeSheet(); viewNutrition(); toast('🔄 Plat changé'); });
+}
+function sheetOther(meal){
+  const date = weekDates(curWk())[nutDay], J = journalOf(date), items = (J[meal] && J[meal].items) ? clone(J[meal].items) : [];
+  const foods = Object.values(FOODS).sort((a, b) => a.n.localeCompare(b.n, 'fr'));
+  const paint = () => {
+    const m = macrosOf(items);
+    $('#oth').innerHTML = items.length ? items.map(([f, g], i) => `<div class="rec"><div class="t"><b>${esc(FOODS[f].n)}</b><small>${qty(f, g)} · ${kc(FOODS[f].k * g / 100)} kcal</small></div><button class="btn sm" data-rm="${i}" aria-label="Retirer">✕</button></div>`).join('') + `<p style="margin-top:8px"><b>Total : ${kc(m.k)} kcal · ${Math.round(m.p)} g prot.</b></p>` : '<p class="muted" style="font-size:13px">Ajoute ce que tu as mangé.</p>';
+    $('#oth').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { items.splice(+b.dataset.rm, 1); paint(); });
+  };
+  openSheet(`<h2>✏️ Ce que j’ai mangé</h2>
+    <div class="two"><div class="fg"><label for="oF">Aliment</label><select id="oF">${foods.map(f => `<option value="${f.id}">${esc(f.n)}</option>`).join('')}</select></div><div class="fg"><label for="oG">Quantité (g)</label><input id="oG" inputmode="numeric" value="100"></div></div>
+    <button class="btn block" id="oAdd">➕ Ajouter</button><div id="oth" style="margin-top:12px"></div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="oSkip">⏭️ Repas sauté</button><span class="spacer"></span><button class="btn pri" id="oOk">Enregistrer</button></div>`);
+  $('#oF').onchange = () => { const F = FOODS[$('#oF').value]; $('#oG').value = F.unit ? F.unit.g : 100; };
+  $('#oAdd').onclick = () => { const g = num($('#oG').value); if (!g) return; items.push([$('#oF').value, g]); paint(); };
+  $('#oSkip').onclick = () => { J[meal] = 'skip'; save(); closeSheet(); viewNutrition(); };
+  $('#oOk').onclick = () => { if (items.length) J[meal] = { items }; else delete J[meal]; trimJournal(); save(); closeSheet(); viewNutrition(); toast('🍽️ Repas noté'); };
+  paint();
+}
+function trimJournal(){ const ks = Object.keys(journal).sort(); ks.slice(0, Math.max(0, ks.length - 60)).forEach(k => delete journal[k]); }
+function nutSemaine(){
+  const wk = curWk(), plan = planOf(wk);
+  return `<div class="card" style="margin-top:14px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div></div>
+  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>`;
+}
+function coursesList(){
+  const wk = curWk(), dates = weekDates(wk), from = coursesScope === 'semaine' ? 0 : todayIdx();
+  const pids = coursesWho === 'moi' ? [profile.id] : PROFILES.map(p => p.id), tot = {};
+  for (let d = from; d < 7; d++) pids.forEach(pid => dayPortions(pid, d, wk).forEach(x => { if (x.por) x.por.ing.forEach(([f, g]) => { tot[f] = (tot[f] || 0) + g; }); }));
+  const fmt = (f, g) => { const F = FOODS[f]; if (F.unit){ const n = Math.ceil(g / F.unit.g - .01); return `${n} ${F.unit.u}${n > 1 ? 's' : ''}`; } if (f === 'lait'){ const l = Math.ceil(g / 500) / 2; return String(l).replace('.', ',') + ' L'; } if (g >= 1000) return String(Math.ceil(g / 100) / 10).replace('.', ',') + ' kg'; return Math.ceil(g / 50) * 50 + ' g'; };
+  const groups = {}; Object.entries(tot).forEach(([f, g]) => { const r = RAYONS[FOODS[f].ray]; (groups[r] = groups[r] || []).push({ f, n: FOODS[f].n, q: fmt(f, g) }); });
+  Object.values(groups).forEach(L => L.sort((a, b) => a.n.localeCompare(b.n, 'fr')));
+  return { groups, dates, from, pids };
+}
+function nutCourses(){
+  const wk = curWk(), { groups, dates, from, pids } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
+  const missing = pids.filter(pid => !nutReady(ctxOf(pid).nut)).map(pid => ctxOf(pid).nom);
+  return `<div class="card" style="margin-top:14px">
+    <div class="seg small">${[['semaine','Toute la semaine'],['reste','À partir d’aujourd’hui']].map(([k, l]) => `<button class="${coursesScope === k ? 'on' : ''}" data-cs="${k}">${l}</button>`).join('')}</div>
+    <div class="seg small" style="margin-top:8px">${[['tous','Pour nous 2'],['moi','Pour moi']].map(([k, l]) => `<button class="${coursesWho === k ? 'on' : ''}" data-cw="${k}">${l}</button>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
+  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g}</h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''}><span>${esc(x.n)}</span><b>${x.q}</b></label>`).join('')}</div>`).join('')}
+  <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
+    <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
+  <div class="row" style="margin-top:16px"><button class="btn pri" id="mailBtn">✉️ Envoyer par mail</button>${navigator.share ? '<button class="btn" id="shareBtn">📤 Partager</button>' : ''}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
+}
+function coursesText(){
+  const wk = curWk(), { groups, dates, from } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
+  let s = `Liste de courses du ${fmtD(dates[from])} au ${fmtD(dates[6])}\n`;
+  Object.entries(groups).sort().forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q}`).join('\n') + '\n'; });
+  const E = ex.filter((_, i) => !ck['x' + i]); if (E.length) s += '\n➕ Autres\n' + E.map(x => '- ' + x).join('\n') + '\n';
+  return s + '\nEnvoyé depuis Mon Programme 🏋️';
+}
+function bindCourses(){
+  const wk = curWk();
+  document.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { coursesScope = b.dataset.cs; viewNutrition(); });
+  document.querySelectorAll('[data-cw]').forEach(b => b.onclick = () => { coursesWho = b.dataset.cw; viewNutrition(); });
+  document.querySelectorAll('[data-ck]').forEach(c => c.onchange = () => { const ck = foyer.checked[wk] = foyer.checked[wk] || {}; if (c.checked) ck[c.dataset.ck] = 1; else delete ck[c.dataset.ck]; c.closest('.shopit').classList.toggle('got', c.checked); saveFoyer(); });
+  document.querySelectorAll('[data-exrm]').forEach(b => b.onclick = ev => { ev.preventDefault(); (foyer.extra[wk] || []).splice(+b.dataset.exrm, 1); saveFoyer(); viewNutrition(); });
+  $('#exf').onsubmit = ev => { ev.preventDefault(); const v = $('#exIn').value.trim(); if (!v) return; (foyer.extra[wk] = foyer.extra[wk] || []).push(v); saveFoyer(); viewNutrition(); };
+  $('#mailBtn').onclick = () => { location.href = 'mailto:?subject=' + encodeURIComponent('🛒 Liste de courses') + '&body=' + encodeURIComponent(coursesText()); };
+  const sh = $('#shareBtn'); if (sh) sh.onclick = () => navigator.share({ title: 'Liste de courses', text: coursesText() }).catch(() => {});
+  $('#copyBtn').onclick = () => { const t = coursesText(); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('📋 Liste copiée'), () => toast('Copie impossible ici')); };
+}
+function nutProfil(){
+  const n = nut || {}, w = body.filter(b => b.p != null).slice(-1)[0];
+  const ready = nutReady(n), t = ready ? targets(ctxOf(profile.id), todayIdx()) : null;
+  const groupsF = {}; Object.values(FOODS).forEach(f => { (groupsF[RAYONS[f.ray]] = groupsF[RAYONS[f.ray]] || []).push(f); });
+  return `${ready ? '' : `<div class="card" style="margin-top:14px"><b>👋 Bienvenue dans la nutrition, ${esc(profile.nom)} !</b><p class="muted" style="font-size:13.5px;margin-top:6px">Remplis ces infos une fois : l’appli calcule tes besoins, adapte les menus à tes séances et ajuste chaque semaine selon ton poids.</p></div>`}
+  <form id="nf"><h3 class="sec">Ton objectif</h3>
+  <div class="objs">${Object.entries(OBJ).map(([k, [l, ic]]) => `<label class="obj ${n.obj === k ? 'on' : ''}"><input type="radio" name="obj" value="${k}" ${n.obj === k || (!n.obj && k === 'maintien') ? 'checked' : ''}><span>${ic}</span><b>${l}</b></label>`).join('')}</div>
+  <h3 class="sec">Toi</h3><div class="card">
+    <div class="two"><div class="fg"><label for="nS">Formule de calcul</label><select id="nS"><option value="">Choisir…</option><option value="H" ${n.sexe === 'H' ? 'selected' : ''}>Homme</option><option value="F" ${n.sexe === 'F' ? 'selected' : ''}>Femme</option></select></div>
+    <div class="fg"><label for="nA">Âge</label><input id="nA" inputmode="numeric" value="${esc(n.age || '')}" placeholder="35"></div></div>
+    <div class="two"><div class="fg"><label for="nT">Taille (cm)</label><input id="nT" inputmode="numeric" value="${esc(n.taille || '')}" placeholder="175"></div>
+    <div class="fg"><label for="nP">Poids (kg)</label><input id="nP" inputmode="decimal" value="${esc(w ? w.p : n.poids || '')}" placeholder="75"></div></div>
+    <div class="fg"><label for="nAc">Activité en dehors du sport</label><select id="nAc">${Object.entries(ACT).map(([v, l]) => `<option value="${v}" ${String(n.act || 1.35) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <p class="muted" style="font-size:12px">Le poids se met aussi à jour depuis Progrès → Corps. Les séances du programme sont ajoutées automatiquement aux jours d’entraînement.</p></div>
+  <h3 class="sec">Aliments que tu n’aimes pas</h3><div class="card"><p class="muted" style="font-size:12.5px;margin-bottom:8px">Ils sont remplacés automatiquement par un équivalent, et les quantités sont recalculées.</p>
+    ${Object.entries(groupsF).map(([g, L]) => `<div class="exg"><small>${g}</small><div class="chips2 wrap">${L.map(f => `<button type="button" class="${(n.excl || []).includes(f.id) ? 'on no' : ''}" data-ex="${f.id}">${(n.excl || []).includes(f.id) ? '🚫 ' : ''}${esc(f.n)}</button>`).join('')}</div></div>`).join('')}</div>
+  <h3 class="sec">Repas</h3><div class="card"><div class="toggle"><span>Déjeuner et dîner en commun<small>Même plat pour vous deux, portions adaptées à chacun</small></span><button type="button" class="sw ${foyer.commun ? 'on' : ''}" id="nCom" role="switch" aria-checked="${foyer.commun}"></button></div></div>
+  <button class="btn pri block" type="submit" style="margin-top:16px">💾 Enregistrer et calculer</button></form>
+  ${t ? `<h3 class="sec">Tes besoins calculés</h3><div class="card"><div class="three"><div><b>${kc(t.bmr)}</b><small>Métabolisme</small></div><div><b>${kc(Math.round(t.bmr * (+n.act || 1.35)))}</b><small>Jour de repos</small></div><div><b>${kc(t.kcal)}</b><small>Objectif aujourd’hui</small></div></div>
+    <p class="muted" style="font-size:12.5px">Formule de Mifflin-St Jeor, + énergie des séances du programme, ${({ perte: '−20 % pour perdre environ 0,5 à 1 % du poids par semaine', maintien: 'sans ajustement', muscle: '+10 % pour une prise de muscle propre', recompo: '−10 % les jours de repos, maintien les jours de séance' })[n.obj || 'maintien']}.${n.adj ? ` Ajustement automatique cumulé : <b>${n.adj > 0 ? '+' : ''}${n.adj} kcal</b>.` : ''}</p>
+    ${(n.log || []).length ? `<table class="tbl"><thead><tr><th>Semaine</th><th>Poids</th><th>Ajustement</th></tr></thead><tbody>${n.log.slice(-5).reverse().map(l => `<tr><td>${esc(l.wk.slice(5))}</td><td>${l.pct > 0 ? '+' : ''}${String(l.pct).replace('.', ',')} %</td><td>${l.delta > 0 ? '+' : ''}${l.delta} kcal</td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="font-size:12.5px;margin-top:6px">🤖 Pèse-toi 2 à 3 fois par semaine (Progrès → Corps) : chaque lundi, l’appli ajuste tes calories selon ton évolution.</p>'}</div>` : ''}
+  <p class="muted" style="font-size:11.5px;margin:14px 2px">Ces calculs sont des estimations générales et ne remplacent pas l’avis d’un médecin ou d’un diététicien, surtout en cas de problème de santé.</p>`;
+}
+function bindProfil(){
+  document.querySelectorAll('.obj input').forEach(r => r.onchange = () => document.querySelectorAll('.obj').forEach(l => l.classList.toggle('on', l.querySelector('input').checked)));
+  document.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => { b.classList.toggle('on'); b.classList.toggle('no'); const on = b.classList.contains('on'); b.textContent = (on ? '🚫 ' : '') + FOODS[b.dataset.ex].n; });
+  $('#nCom').onclick = () => { const b = $('#nCom'); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); };
+  $('#nf').onsubmit = ev => {
+    ev.preventDefault();
+    const sexe = $('#nS').value, age = parseInt($('#nA').value), taille = parseInt($('#nT').value), poids = num($('#nP').value);
+    if (!sexe || !age || !taille || !poids) return toast('Remplis la formule, l’âge, la taille et le poids.');
+    const excl = [...document.querySelectorAll('[data-ex].on')].map(b => b.dataset.ex);
+    const oldExcl = JSON.stringify((nut || {}).excl || []), commun = $('#nCom').classList.contains('on');
+    nut = Object.assign(nut || {}, { sexe, age, taille, poids, act: +$('#nAc').value, obj: (document.querySelector('.obj input:checked') || {}).value || 'maintien', excl });
+    const lastW = body.filter(b => b.p != null).slice(-1)[0];
+    if (!lastW || lastW.p !== poids){ const d = ymd(new Date()); body = body.filter(b => b.d !== d); body.push({ d, p: poids, t: (lastW && lastW.d === d) ? lastW.t : null }); }
+    if (oldExcl !== JSON.stringify(excl) || commun !== foyer.commun){ foyer.commun = commun; delete foyer.plans[curWk()]; saveFoyer(); }
+    save(); nutTab = 'jour'; viewNutrition(); toast('✅ Profil nutrition enregistré');
+  };
+}
+
+/* ============================================================
    RENDU ET ÉVÉNEMENTS
    ============================================================ */
 function render(){
   document.querySelectorAll('.nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view));
-  $('#subTitle').textContent = profile.nom + ' · ' + { seance: DAY_NAMES[currentDay] + ' · ' + dayTitle(currentDay), semaine: 'Ma semaine', progres: 'Mes progrès', chrono: 'Chrono de repos' }[view];
-  ({ seance: viewSeance, semaine: viewSemaine, progres: viewProgres, chrono: viewChrono })[view]();
+  $('#subTitle').textContent = profile.nom + ' · ' + { seance: DAY_NAMES[currentDay] + ' · ' + dayTitle(currentDay), semaine: 'Ma semaine', nutrition: 'Nutrition', progres: 'Mes progrès', chrono: 'Chrono de repos' }[view];
+  ({ seance: viewSeance, semaine: viewSemaine, nutrition: viewNutrition, progres: viewProgres, chrono: viewChrono })[view]();
   paintTimer();
 }
-function go(v){ view = v; render(); window.scrollTo({ top: 0 }); if (v === 'progres') loadOther(); }
+function go(v){ view = v; render(); window.scrollTo({ top: 0 }); if (v === 'progres' || v === 'nutrition') loadOther(); }
 document.querySelectorAll('.nav [data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
 $('#ov').onclick = closeSheet;
 $('#miniStop').onclick = () => { resetTimer(); $('#mini').classList.remove('show'); };
@@ -1095,7 +1595,8 @@ $('#profBtn').onclick = sheetProfiles;
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
 document.addEventListener('click', e => {
-  const g2 = e.target.closest('[data-go2]'); if (g2){ go(g2.dataset.go2); return; }
+  const g2 = e.target.closest('[data-go2]'); if (g2){ if (g2.dataset.nd != null){ nutDay = +g2.dataset.nd; nutTab = 'jour'; } go(g2.dataset.go2); return; }
+  const nt = e.target.closest('[data-ntab]'); if (nt){ nutTab = nt.dataset.ntab; viewNutrition(); return; }
   const pt = e.target.closest('[data-ptab]'); if (pt){ progTab = pt.dataset.ptab; viewProgres(); return; }
   const b = e.target.closest('[data-act],[data-day]'); if (!b || b.closest('#sheet [data-prof]')) return;
   const a = b.dataset.act, i = +b.dataset.i, k = 'day' + currentDay;
@@ -1111,6 +1612,13 @@ document.addEventListener('click', e => {
     case 'goday': currentDay = +b.dataset.day; go('seance'); break;
     case 'title': sheetTitle(+b.dataset.day); break;
     case 'bilan': sheetBilan(k, false); break;
+    case 'recette': sheetRecette(b.dataset.meal); break;
+    case 'swap': sheetSwap(b.dataset.meal, b.dataset.f); break;
+    case 'mchange': changeMeal(b.dataset.meal); break;
+    case 'mother': sheetOther(b.dataset.meal); break;
+    case 'mok': { const date = weekDates(curWk())[nutDay], J = journalOf(date); if (J[b.dataset.meal] === 'ok') delete J[b.dataset.meal]; else J[b.dataset.meal] = 'ok'; trimJournal(); save(); viewNutrition(); break; }
+    case 'regen': foyer.salt = (foyer.salt || 0) + 1; delete foyer.plans[curWk()]; saveFoyer(); viewNutrition(); toast('🎲 Nouveaux menus générés'); break;
+    case 'nday': nutDay = +b.dataset.day2; nutTab = 'jour'; viewNutrition(); window.scrollTo({ top: 0 }); break;
     case 'done': {
       const now = !(done[k] || [])[i], e2 = data[k][i], key = keyOf(k, i);
       if (now && typ(e2) !== 'c'){ const S = setsOf(k, i).slice(), lg = logs[key] || {}; while (S.length < +e2.s) S.push({ w: typ(e2) === 'f' ? String(num(lg.w) ?? (advice(e2) || {}).w ?? '') : '', r: String(num(lg.r) ?? topReps(e2.r)) }); sl[key] = S; }
