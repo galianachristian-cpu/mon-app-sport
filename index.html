@@ -320,6 +320,8 @@ button.chip{cursor:pointer}
 .dpick button.on{background:var(--grad);color:#0b0f19;border-color:transparent}
 .fg .obj{text-transform:none;letter-spacing:0;color:var(--text);font-size:inherit}
 .fg .obj b{font-size:13.5px}
+.ph{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:#c9d4e6}
+.ph-plyo{color:#f0abfc;border-color:rgba(232,121,249,.45)}.ph-warm,.ph-mob{color:#7dd3fc;border-color:rgba(56,189,248,.45)}.ph-cool{color:#c4b5fd;border-color:rgba(167,139,250,.45)}
 </style>
 </head>
 <body>
@@ -470,7 +472,29 @@ const LIB = [
   ['Natation','Cardio','c','🏊',1,'30 min','Longueurs à allure régulière.','Alterne les nages.'],
   ['Corde à sauter','Cardio','s','🪢',5,'60 s','Petits sauts sur la pointe des pieds.','Poignets qui tournent, pas les bras.'],
   ['Burpees','Cardio','p','💥',3,'12','Squat, mains au sol, jambes en arrière, pompe, retour et saut.','Garde un rythme régulier.'],
-  ['HIIT 30/30','Cardio','s','⚡',8,'30 s','30 s à fond (sprint, vélo, burpees…) puis 30 s de récupération.','Échauffe-toi bien avant.']
+  ['HIIT 30/30','Cardio','s','⚡',8,'30 s','30 s à fond (sprint, vélo, burpees…) puis 30 s de récupération.','Échauffe-toi bien avant.'],
+  // Pliométrie
+  ['Box jump','Pliométrie','p','📦',4,'5','Face à une box stable, sauter à pieds joints, atterrir en douceur genoux fléchis, puis redescendre en marchant.','Qualité avant quantité : réception silencieuse et 90 s de récupération.'],
+  ['Squat sauté','Pliométrie','p','🦘',3,'6','Descendre en squat puis sauter le plus haut possible, amortir à la réception et enchaîner.','Genoux dans l’axe des pieds à la réception.'],
+  ['Fentes sautées','Pliométrie','p','⚡',3,'6 chaque','En fente, sauter et changer de jambe en l’air, réception en fente.','Buste droit, réception souple.'],
+  ['Sauts latéraux (skater)','Pliométrie','p','⛸️',3,'8 chaque','Sauter latéralement d’une jambe à l’autre comme un patineur, tenir 1 s l’équilibre.','Excellent pour les chevilles et la stabilité.'],
+  ['Saut en longueur sans élan','Pliométrie','p','🐸',4,'4','Pieds largeur de hanches, balancer les bras et sauter le plus loin possible, réception stable.','Reviens en marchant : chaque saut doit être maximal.'],
+  ['Sauts groupés','Pliométrie','p','🔥',3,'6','Sauter en ramenant les genoux vers la poitrine, réception souple.','Pour les niveaux intermédiaire et confirmé.'],
+  ['Pompes explosives','Pliométrie','p','💥',3,'5','Pompe classique, pousser fort pour décoller les mains du sol, réception bras légèrement fléchis.','Commence sur les genoux si besoin.'],
+  ['Slam médecine-ball','Pliométrie','p','🏐',3,'8','Lever le médecine-ball au-dessus de la tête et le lancer au sol de toutes ses forces.','Ballon sans rebond, dos gainé.'],
+  // Mobilité
+  ['World’s greatest stretch','Mobilité','p','🧘',2,'5 chaque','Grande fente avant, main au sol à l’intérieur du pied, rotation du buste bras vers le ciel.','Mouvement lent, souffle long.'],
+  ['Mobilité de hanches 90/90','Mobilité','p','🧘',2,'8','Assis, jambes pliées à 90°, basculer les genoux d’un côté à l’autre en gardant le buste droit.','Sans les mains quand tu peux.'],
+  ['Mobilité cheville genou au mur','Mobilité','p','🦶',2,'10 chaque','Pied à 10 cm du mur, amener le genou au mur sans décoller le talon.','Recule le pied quand ça devient facile.'],
+  ['Rotation thoracique (open book)','Mobilité','p','📖',2,'8 chaque','Allongé sur le côté genoux pliés, ouvrir le bras du dessus vers l’arrière en suivant la main du regard.','Genoux collés au sol.'],
+  ['Dislocations d’épaules (bâton)','Mobilité','p','🦯',2,'10','Bâton ou élastique en prise large, passer bras tendus de devant à derrière la tête.','Prise large au début, sans forcer.'],
+  ['Chat-vache','Mobilité','p','🐈',2,'10','À quatre pattes, alterner dos rond et dos creux en suivant la respiration.','Lent et contrôlé.'],
+  ['Squat profond tenu','Mobilité','s','🧘',2,'45 s','Tenir le bas du squat, talons au sol, coudes qui poussent les genoux vers l’extérieur.','Tiens un support si besoin.'],
+  ['Étirement du psoas','Mobilité','s','🧘',2,'30 s','En fente, genou arrière au sol, avancer le bassin en serrant le fessier. Changer de côté.','Ne cambre pas.'],
+  ['Pigeon (fessiers)','Mobilité','s','🕊️',2,'45 s','Jambe avant pliée devant soi, jambe arrière tendue, descendre le buste vers le sol. Changer de côté.','Un coussin sous la hanche si besoin.'],
+  ['Étirement des ischios','Mobilité','s','🧘',2,'30 s','Jambe tendue sur un support bas, pencher le buste dos droit. Changer de côté.','Pas d’à-coups.'],
+  ['Étirement des pectoraux au mur','Mobilité','s','🧱',2,'30 s','Avant-bras contre un mur, tourner le buste à l’opposé. Changer de côté.','Épaule basse.'],
+  ['Posture de l’enfant','Mobilité','s','🧎',2,'45 s','À genoux, fesses sur les talons, bras allongés devant, respirer dans le dos.','Idéal en fin de séance.']
 ].map(([n, m, t, e, s, r, desc, tips, g]) => ({ n, m, t, e, s, r, desc, tips, gif: g ? (g.startsWith('http') ? g : G + g) : '' }));
 const LIB_BY = Object.fromEntries(LIB.map(x => [x.n, x]));
 const pick = names => names.map(n => { const x = LIB_BY[n]; const o = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') o.t = x.t; return o; });
@@ -488,7 +512,7 @@ const DAY_NAMES = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Diman
 const DAY_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const DAY_SUB = ['Poitrine & Triceps','Dos & Biceps','Jambes','Épaules & Abdos','Poitrine & Triceps','Dos & Biceps','Jambes'];
 const BYDAY = ['MO','TU','WE','TH','FR','SA','SU'];
-const MUSCLES = { 'Pectoraux':'#22d3ee','Triceps':'#a78bfa','Dos':'#60a5fa','Biceps':'#f472b6','Quadriceps':'#34d399','Ischio-jambiers':'#2dd4bf','Fessiers':'#fb7185','Mollets':'#a3e635','Épaules':'#fbbf24','Abdos':'#f97316','Cardio':'#ef4444' };
+const MUSCLES = { 'Pectoraux':'#22d3ee','Triceps':'#a78bfa','Dos':'#60a5fa','Biceps':'#f472b6','Quadriceps':'#34d399','Ischio-jambiers':'#2dd4bf','Fessiers':'#fb7185','Mollets':'#a3e635','Épaules':'#fbbf24','Abdos':'#f97316','Cardio':'#ef4444','Pliométrie':'#e879f9','Mobilité':'#38bdf8' };
 const EMOJIS = ['🏋️','💪','🔥','🎯','🦵','⚡','🏃','🚴','🧘','🤸','🥊','❤️'];
 const TYPES = { f:'Charge (kg × reps)', p:'Poids du corps (reps)', s:'Temps (secondes)', c:'Cardio (minutes + km)' };
 const FEELS = [['😫','Difficile'],['😕','Bof'],['🙂','Correct'],['😀','Bien'],['🔥','Au top']];
@@ -739,7 +763,7 @@ function exCard(k, e, i){
   return `<article class="ex ${isDone ? 'done' : ''}" data-i="${i}">
     <div class="row1">
       <button class="emo" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${esc(e.e || '🏋️')}</button>
-      <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${esc(e.s)} × ${esc(e.r)}`}</span></span></button>
+      <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${esc(e.s)} × ${esc(e.r)}`}</span>${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button>
     </div>
     ${adv && adv.up && !isDone ? `<div class="advice up"><span>📈 Tu as réussi 2 séances de suite : passe à <b>${fr(adv.w)} kg</b> !</span><button class="btn sm pri" data-act="apply" data-i="${i}" data-w="${adv.w}">Appliquer</button></div>` : adv && adv.txt && !isDone ? `<div class="advice">💡 ${esc(adv.txt)}</div>` : ''}
@@ -1612,6 +1636,11 @@ const SLOTS = {
   cardio: { salle:['Rameur','Elliptique','Vélo'], halt:['HIIT 30/30','Corde à sauter','Burpees'], pdc:['HIIT 30/30','Burpees','Mountain climbers'] }
 };
 const COMPOUND = ['squat','hinge','pushH','pushV','pullV','pullH'];
+const PLYO = { low: { deb:['Squat sauté','Sauts latéraux (skater)'], inter:['Box jump','Fentes sautées','Saut en longueur sans élan'], conf:['Box jump','Sauts groupés','Saut en longueur sans élan'] }, up: { deb:[], inter:['Pompes explosives'], conf:['Pompes explosives','Slam médecine-ball'] } };
+const MOB = { warmLow:['World’s greatest stretch','Mobilité de hanches 90/90','Mobilité cheville genou au mur'], warmUp:['Rotation thoracique (open book)','Dislocations d’épaules (bâton)','Chat-vache'],
+  coolLow:['Étirement du psoas','Pigeon (fessiers)','Étirement des ischios'], coolUp:['Étirement des pectoraux au mur','Posture de l’enfant'],
+  day:['Chat-vache','World’s greatest stretch','Mobilité de hanches 90/90','Rotation thoracique (open book)','Mobilité cheville genou au mur','Squat profond tenu','Pigeon (fessiers)','Étirement du psoas','Posture de l’enfant'] };
+const KIND = { FBA:'full', FBB:'full', FBC:'full', PUSH:'up', PULL:'up', LEGS:'low', UP:'up', LOW:'low', UP2:'up', LOW2:'low' };
 // Séances types : familles dans l'ordre de priorité (":1" = deuxième variante)
 const TPL = {
   FBA:{ t:'Full body A', s:['squat','pushH','pullV','hinge','epaule','core','biceps'] },
@@ -1642,11 +1671,11 @@ function exFromLib(name, extra){ const x = LIB_BY[name]; if (!x) return null; co
 function buildProgram(cfg){
   const n = cfg.days.length, [keys, splitName] = SPLITS[n] || SPLITS[3];
   const tplKeys = n === 3 && cfg.niv !== 'deb' && cfg.mat === 'salle' ? ['PUSH','PULL','LEGS'] : keys;
-  const nEx = Math.max(4, Math.min(7, ({ 45: 4, 60: 5, 75: 6, 90: 7 })[cfg.dur] + (cfg.niv === 'deb' ? -1 : cfg.niv === 'conf' ? 1 : 0)));
+  const nEx = Math.max(4, Math.min(7, ({ 45: 4, 60: 5, 75: 6, 90: 7 })[cfg.dur] + (cfg.niv === 'deb' ? -1 : cfg.niv === 'conf' ? 1 : 0) - (cfg.plyo ? 1 : 0)));
   const out = {}, titles2 = {};
   for (let d = 0; d < 7; d++){ out['day' + d] = []; }
   cfg.days.slice().sort((a, b) => a - b).forEach((day, i) => {
-    const tpl = TPL[tplKeys[i % tplKeys.length]], list = [];
+    const tk = tplKeys[i % tplKeys.length], tpl = TPL[tk], kind = KIND[tk], list = [];
     let compIdx = 0;
     for (const slotRef of tpl.s){
       if (list.length >= nEx) break;
@@ -1667,7 +1696,20 @@ function buildProgram(cfg){
       if (cx.t === 'c') cx.r = cfg.mat === 'salle' ? '15 min' : '20 min'; if (cx.t === 's' && cx.n === 'HIIT 30/30') cx.s = 6;
       cx.bs = cx.s; cx.cmp = 0; cx.fin = 1; list.push(cx);
     }
-    out['day' + day] = list; titles2['day' + day] = tpl.t + (cfg.obj === 'perte' ? ' + cardio' : '');
+    // pliométrie : après l'échauffement, avant la musculation (on est frais)
+    const pre = [], post = [];
+    if (cfg.plyo){
+      const lo = PLYO.low[cfg.niv] || [], hi = PLYO.up[cfg.niv] || [], pick2 = (L, n) => L.filter(x => cfg.mat === 'salle' || x !== 'Slam médecine-ball' && x !== 'Box jump').slice(0, n);
+      let names = kind === 'low' ? pick2(lo, cfg.niv === 'deb' ? 1 : 2) : kind === 'up' ? pick2(hi, 1) : [...pick2(lo, 1), ...pick2(hi, cfg.niv === 'deb' ? 0 : 1)];
+      if (!names.length && kind !== 'up') names = ['Squat sauté'];
+      names.forEach((nm, j) => { const x = exFromLib(nm, { slot: 'plyo', vi: j, ph: 'plyo' }); if (cfg.niv === 'deb'){ x.s = 2; } x.bs = x.s; x.cmp = 0; x.fx = 1; pre.push(x); });
+    }
+    if (cfg.mob){
+      const w = kind === 'up' ? MOB.warmUp : kind === 'low' ? MOB.warmLow : [MOB.warmLow[0], MOB.warmUp[0]], cl = kind === 'up' ? MOB.coolUp : kind === 'low' ? MOB.coolLow : [MOB.coolLow[0], MOB.coolUp[1]];
+      pre.unshift(...w.slice(0, 2).map((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'warm', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; return x; }));
+      cl.slice(0, 2).forEach((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'cool', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; post.push(x); });
+    }
+    out['day' + day] = [...pre, ...list, ...post]; titles2['day' + day] = tpl.t + (cfg.plyo && pre.some(x => x.ph === 'plyo') ? ' + pliométrie' : '') + (cfg.obj === 'perte' ? ' + cardio' : '');
   });
   // jours de cardio léger sur les jours de repos
   const rest = [0,1,2,3,4,5,6].filter(d => !cfg.days.includes(d)), nCardio = { perte: 2, recompo: 1, maintien: 1, muscle: 0 }[cfg.obj] || 0;
@@ -1676,6 +1718,13 @@ function buildProgram(cfg){
     if (cfg.obj !== 'perte') cx.r = name === 'Marche rapide' ? '40 min' : '30 min';
     cx.bs = 1; cx.cmp = 0; out['day' + d] = [cx]; titles2['day' + d] = 'Cardio léger';
   });
+  // séance mobilité sur un jour de repos libre
+  if (cfg.mob){
+    const free = [0,1,2,3,4,5,6].filter(d => !out['day' + d].length), d = free.includes(6) ? 6 : free[free.length - 1];
+    const mk = n => MOB.day.slice(0, n).map((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'mob' }); x.bs = x.s; x.cmp = 0; x.fx = 1; return x; });
+    if (d != null){ out['day' + d] = mk(cfg.dur >= 60 ? 8 : 6); titles2['day' + d] = 'Mobilité & souplesse'; }
+    else { const cd = [0,1,2,3,4,5,6].filter(x => titles2['day' + x] === 'Cardio léger').pop(); if (cd != null){ out['day' + cd] = [...out['day' + cd], ...mk(5)]; titles2['day' + cd] = 'Cardio léger + mobilité'; } }
+  }
   return { data: out, titles: titles2, split: tplKeys === keys ? splitName : 'Push / Pull / Legs', nEx };
 }
 const cycleIdx = p => { if (!p || !p.start) return 0; const a = p.start.split('-W'), b = curWk().split('-W'); const w = (+b[0] - +a[0]) * 52 + (+b[1] - +a[1]); return ((w % 4) + 4) % 4; };
@@ -1684,6 +1733,7 @@ function applyCycle(){
   const ci = cycleIdx(prog);
   Object.values(data).forEach(L => (L || []).forEach(e => {
     if (e.bs == null) return;
+    if (e.fx){ e.s = ci === 3 && e.ph === 'plyo' ? Math.max(2, e.bs - 1) : e.bs; return; }
     if (ci === 1) e.s = e.bs + (e.cmp ? 1 : 0);
     else if (ci === 2) e.s = e.bs + 1;
     else if (ci === 3) e.s = Math.max(e.fin ? 3 : 2, Math.round(e.bs * .6));
@@ -1709,7 +1759,7 @@ function coachWeekly(prevDone){
   if (prog.lastWk){ (prog.adh = prog.adh || []).push({ wk: prog.lastWk, rate: +rate.toFixed(2) }); if (prog.adh.length > 12) prog.adh = prog.adh.slice(-12); }
   // plateaux → variante (hors semaine de décharge)
   if (cycleIdx(prog) !== 3) Object.entries(data).forEach(([k, L]) => (L || []).forEach((e, i) => {
-    if (!e.slot || e.slot === 'cardio' || e.slot === 'core' || !stalled(e.n)) return;
+    if (!e.slot || ['cardio','core','mob','plyo'].includes(e.slot) || !stalled(e.n)) return;
     const opts = (SLOTS[e.slot] || {})[prog.mat] || [], used = new Set(L.map(x => x.n));
     const nxt = opts.find((o, j) => j !== e.vi && !used.has(o)); if (!nxt) return;
     const nx = exFromLib(nxt, { s: e.bs, r: e.r, slot: e.slot, vi: opts.indexOf(nxt), bs: e.bs, cmp: e.cmp });
@@ -1732,7 +1782,7 @@ function coachCard(){
     <button class="btn pri block" data-act="coach" style="margin-top:12px">🧠 Créer mon programme</button></div>`;
   const ci = cycleIdx(prog), c = CYCLE[ci], last = (prog.log || []).slice(-1)[0], adh = (prog.adh || []).slice(-1)[0];
   return `<div class="card coach">
-    <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s</small></div></div>
+    <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s${prog.plyo ? ' · ⚡ pliométrie' : ''}${prog.mob ? ' · 🧘 mobilité' : ''}</small></div></div>
     <div class="cycle">${CYCLE.map((x, i) => `<div class="${i === ci ? 'on' : i < ci ? 'past' : ''}"><span>${x[1]}</span><small>S${i + 1}</small></div>`).join('')}</div>
     <p style="font-size:13.5px"><b>${c[1]} Semaine ${ci + 1} : ${c[0]}.</b> ${c[2]}${ci < 3 ? ` <span class="muted">La semaine prochaine : ${CYCLE[ci + 1][0].toLowerCase()}.</span>` : ' <span class="muted">Ensuite, un nouveau cycle repart, avec des charges plus lourdes.</span>'}</p>
     ${adh ? `<p class="muted" style="font-size:12.5px;margin-top:6px">Semaine dernière : ${Math.round(adh.rate * 100)} % des exercices faits.</p>` : ''}
@@ -1749,19 +1799,23 @@ function sheetCoach(){
     <div class="two"><div class="fg"><label for="cDur">Durée d’une séance</label><select id="cDur">${[45, 60, 75, 90].map(m => `<option value="${m}" ${(p.dur || 60) === m ? 'selected' : ''}>${m} min</option>`).join('')}</select></div>
     <div class="fg"><label for="cNiv">Niveau</label><select id="cNiv">${Object.entries(NIV).map(([k, l]) => `<option value="${k}" ${(p.niv || 'inter') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
     <div class="fg"><label for="cMat">Matériel</label><select id="cMat">${Object.entries(MAT).map(([k, l]) => `<option value="${k}" ${(p.mat || 'salle') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="card" style="padding:4px 14px;margin-bottom:12px">
+      <div class="toggle"><span>⚡ Pliométrie<small>Sauts explosifs en début de séance : puissance, détente, cardio</small></span><button type="button" class="sw ${p.plyo ? 'on' : ''}" id="cPly" role="switch" aria-checked="${!!p.plyo}"></button></div>
+      <div class="toggle"><span>🧘 Mobilité<small>Échauffement ciblé, étirements au retour au calme et une séance souplesse le jour de repos</small></span><button type="button" class="sw ${p.mob ? 'on' : ''}" id="cMob" role="switch" aria-checked="${!!p.mob}"></button></div></div>
     <div id="cPrev" class="box"></div>
     <p class="muted" style="font-size:12px;margin-bottom:12px">⚠️ Le programme remplace tes séances actuelles (elles restent récupérables avec « Ancien programme »). Ton historique, tes records et tes poids sont gardés.</p>
     <div class="row"><button type="button" class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn pri" type="submit">✅ Appliquer</button></div></form>`);
-  const cfg = () => ({ obj: (document.querySelector('#cf input[name=cobj]:checked') || {}).value || obj, days: days.slice().sort((a, b) => a - b), dur: +$('#cDur').value, niv: $('#cNiv').value, mat: $('#cMat').value });
+  const cfg = () => ({ obj: (document.querySelector('#cf input[name=cobj]:checked') || {}).value || obj, days: days.slice().sort((a, b) => a - b), dur: +$('#cDur').value, niv: $('#cNiv').value, mat: $('#cMat').value, plyo: $('#cPly').classList.contains('on'), mob: $('#cMob').classList.contains('on') });
   const prev = () => {
     $('#dpn').textContent = days.length < 2 ? 'Choisis au moins 2 jours.' : days.length > 6 ? 'Maximum 6 jours : garde au moins un jour de repos.' : `${days.length} jours par semaine`;
     if (days.length < 2 || days.length > 6){ $('#cPrev').innerHTML = ''; return; }
     const b = buildProgram(cfg());
-    $('#cPrev').innerHTML = `<h4>Aperçu · ${esc(b.split)}</h4><p>${DAY_NAMES.map((d, i) => { const L = b.data['day' + i]; return L.length ? `<b>${d}</b> · ${esc(b.titles['day' + i])}\n  ${L.map(e => `${e.n} ${typ(e) === 'c' ? e.r : e.s + '×' + e.r}`).map(esc).join(' · ')}` : `<b>${d}</b> · Repos`; }).join('\n')}</p>`;
+    $('#cPrev').innerHTML = `<h4>Aperçu · ${esc(b.split)}</h4><p>${DAY_NAMES.map((d, i) => { const L = b.data['day' + i]; return L.length ? `<b>${d}</b> · ${esc(b.titles['day' + i])}\n  ${L.map(e => `${e.ph === 'warm' ? '🧘 ' : e.ph === 'cool' ? '🌙 ' : e.ph === 'plyo' ? '⚡ ' : ''}${e.n} ${typ(e) === 'c' ? e.r : e.s + '×' + e.r}`).map(esc).join(' · ')}` : `<b>${d}</b> · Repos`; }).join('\n')}</p>`;
   };
   $('#sheet').querySelectorAll('.obj input').forEach(r => r.onchange = () => { $('#sheet').querySelectorAll('.obj').forEach(l => l.classList.toggle('on', l.querySelector('input').checked)); prev(); });
   $('#sheet').querySelectorAll('[data-dp]').forEach(b => b.onclick = () => { const i = +b.dataset.dp; days = days.includes(i) ? days.filter(x => x !== i) : [...days, i]; b.classList.toggle('on'); prev(); });
   ['#cDur','#cNiv','#cMat'].forEach(s => $(s).onchange = prev);
+  ['#cPly','#cMob'].forEach(s => $(s).onclick = () => { const b = $(s); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); prev(); });
   $('#cf').onsubmit = ev => {
     ev.preventDefault(); if (days.length < 2 || days.length > 6) return toast('Choisis entre 2 et 6 jours.');
     const c = cfg(), b = buildProgram(c);
