@@ -134,8 +134,8 @@ h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--m
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:250px;margin:0 auto}
 @media(max-width:430px){#saveText{display:none}.pill{padding:9px}}
 .heat .h{aspect-ratio:1;border-radius:6px;background:var(--bg2);border:1px solid var(--line)}
-.heat .h.l1{background:rgba(34,211,238,.35);border-color:transparent}
-.heat .h.l2{background:rgba(34,211,238,.65);border-color:transparent}
+.heat .h.l1{background:color-mix(in srgb,var(--a1) 35%,transparent);border-color:transparent}
+.heat .h.l2{background:color-mix(in srgb,var(--a1) 65%,transparent);border-color:transparent}
 .heat .h.l3{background:var(--a1);border-color:transparent}
 .heat .h.now{outline:2px solid var(--warn);outline-offset:1px}
 .heat .hd{font-size:10.5px;color:var(--muted);text-align:center;font-weight:700}
@@ -229,12 +229,22 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 :focus-visible{outline:2px solid var(--a1);outline-offset:2px}
+.profbtn{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:13px;max-width:120px}
+.profbtn .pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{width:28px;height:28px;border-radius:50%;background:var(--grad);color:#0b0f19;display:grid;place-items:center;font-weight:900;font-size:13px;flex:0 0 auto}
+.av.big{width:58px;height:58px;font-size:24px;background:linear-gradient(135deg,var(--p1),var(--p2))}
+.profs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prof{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 10px;border-radius:18px;background:var(--bg2);border:2px solid var(--line)}
+.prof b{font-size:16px}.prof small{color:var(--muted);font-size:12px}
+.prof.on{border-color:var(--p1);box-shadow:0 0 0 3px color-mix(in srgb,var(--p1) 25%,transparent)}
+@media(max-width:430px){.top h1 small{display:none}.profbtn .pn{display:none}.profbtn{padding:4px}}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <div class="logo">🏋️</div>
   <h1>Mon Programme<small id="subTitle">Entraînement de la semaine</small></h1>
+  <button class="profbtn" id="profBtn" aria-label="Changer de profil"><span class="av">M</span><span class="pn">Moi</span></button>
   <span class="pill" id="savePill" title="État de la sauvegarde"><span class="dot" id="saveDot"></span><span id="saveText">Connexion…</span></span>
 </div></header>
 
@@ -274,7 +284,17 @@ const firebaseConfig = {
 };
 let db = null;
 try { if (window.firebase) { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); } } catch (e) { db = null; }
-const DOC = () => db.collection('users').doc('user1');
+/* Profils : chacun a son propre document Firebase. « user1 » = ton document d'origine. */
+const PROFILES = [
+  { id:'user1', nom:'Moi', a1:'#22d3ee', a2:'#a78bfa' },
+  { id:'bea',   nom:'Béa', a1:'#f472b6', a2:'#fb923c' }
+];
+let profile = PROFILES.find(p => p.id === localStorage.getItem('mp_profile')) || PROFILES[0];
+(function(){ try{ const n = JSON.parse(localStorage.getItem('mp_names') || '{}'); PROFILES.forEach(p => { if (n[p.id]) p.nom = n[p.id]; }); }catch(e){} })();
+const DOC = (id) => db.collection('users').doc(id || profile.id);
+const backupKey = id => 'mp_backup_' + (id || profile.id);
+// ancienne sauvegarde locale (avant les profils) → profil d'origine
+try{ if (localStorage.getItem('mp_backup') && !localStorage.getItem('mp_backup_user1')){ localStorage.setItem('mp_backup_user1', localStorage.getItem('mp_backup')); } }catch(e){}
 
 /* ============================================================
    DONNÉES PAR DÉFAUT
@@ -349,7 +369,7 @@ async function load(){
       online = true;
     }catch(e){ online = false; }
   }
-  if (!src) src = safeGet('mp_backup', {});
+  if (!src) src = safeGet(backupKey(), {});
   data = src.data || clone(DEFAULT_DATA);
   done = src.done || {}; logs = src.logs || {}; sets = src.sets || {}; hist = src.hist || []; titles = src.titles || {};
   week = src.week || null;
@@ -359,18 +379,52 @@ async function load(){
   if (!src.data || !src.week) save(true);
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
 }
-let saveTimer = null;
+let saveTimer = null, pending = null;
+async function pushRemote(id, snap){
+  if (!db){ setStatus('local', 'Sur cet appareil'); return; }
+  try{
+    await DOC(id).set(Object.assign(snap, { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }));
+    online = true; setStatus('saved', 'Sauvegardé ✓');
+  }catch(e){ online = false; setStatus('error', 'Hors ligne · gardé ici'); }
+}
 function save(now){
-  safeSet('mp_backup', snapshot());
+  const id = profile.id, snap = snapshot();
+  safeSet(backupKey(id), snap);
   clearTimeout(saveTimer);
   setStatus('saving', 'Sauvegarde…');
-  saveTimer = setTimeout(async () => {
-    if (!db){ setStatus('local', 'Sur cet appareil'); return; }
-    try{
-      await DOC().set(Object.assign(snapshot(), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }));
-      online = true; setStatus('saved', 'Sauvegardé ✓');
-    }catch(e){ online = false; setStatus('error', 'Hors ligne · gardé ici'); }
-  }, now ? 0 : 600);
+  pending = { id };
+  saveTimer = setTimeout(() => { pending = null; pushRemote(id, clone(snapshot())); }, now ? 0 : 600);
+}
+// envoie tout de suite une sauvegarde en attente (avant de changer de profil)
+async function flushSave(){
+  if (!pending) return;
+  clearTimeout(saveTimer); const id = pending.id; pending = null;
+  await pushRemote(id, clone(snapshot()));
+}
+function applyProfileTheme(){
+  const r = document.documentElement.style; r.setProperty('--a1', profile.a1); r.setProperty('--a2', profile.a2);
+  const b = $('#profBtn'); if (b){ b.querySelector('.av').textContent = profile.nom.slice(0, 1).toUpperCase(); b.querySelector('.pn').textContent = profile.nom; }
+}
+async function switchProfile(id){
+  if (id === profile.id){ closeSheet(); return; }
+  await flushSave();
+  profile = PROFILES.find(p => p.id === id) || PROFILES[0];
+  try{ localStorage.setItem('mp_profile', profile.id); }catch(e){}
+  closeSheet(); applyProfileTheme(); progEx = null;
+  data = {}; done = {}; logs = {}; sets = {}; hist = []; titles = {};
+  currentDay = todayIdx(); view = 'seance'; render();
+  await load(); render();
+  toast('👋 Profil de ' + profile.nom);
+}
+function sheetProfiles(){
+  openSheet(`<h2>Qui s’entraîne ?</h2>
+    <div class="profs">${PROFILES.map(p => `<button class="prof ${p.id === profile.id ? 'on' : ''}" data-prof="${p.id}" style="--p1:${p.a1};--p2:${p.a2}"><span class="av big">${esc(p.nom.slice(0, 1).toUpperCase())}</span><b>${esc(p.nom)}</b>${p.id === profile.id ? '<small>Profil actuel</small>' : '<small>Changer</small>'}</button>`).join('')}</div>
+    <p style="color:var(--muted);font-size:13px;margin:14px 0 10px">Chaque profil a son programme, ses charges et ses progrès.</p>
+    <form id="pf" class="row"><input id="pName" value="${esc(profile.nom)}" maxlength="16" aria-label="Nom du profil actuel" style="flex:1;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2)"><button class="btn" type="submit">✏️ Renommer</button></form>`);
+  $('#sheet').querySelectorAll('[data-prof]').forEach(b => b.onclick = () => switchProfile(b.dataset.prof));
+  $('#pf').onsubmit = ev => { ev.preventDefault(); const v = $('#pName').value.trim(); if (!v) return; profile.nom = v;
+    try{ const n = JSON.parse(localStorage.getItem('mp_names') || '{}'); n[profile.id] = v; localStorage.setItem('mp_names', JSON.stringify(n)); }catch(e){}
+    applyProfileTheme(); sheetProfiles(); toast('Profil renommé ✓'); };
 }
 
 /* ============================================================
@@ -380,7 +434,7 @@ let toastT = null;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
 function ring(p, size, stroke, id){
   const r = (size - stroke) / 2, c = 2 * Math.PI * r;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><defs><linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><defs><linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a1)"/><stop offset="1" style="stop-color:var(--a2)"/></linearGradient></defs>
     <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#24304a" stroke-width="${stroke}"/>
     <circle id="${id}" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#g${id})" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.max(0, Math.min(1, p)))}" style="transition:stroke-dashoffset .5s"/></svg>`;
 }
@@ -512,10 +566,10 @@ function chart(name){
   const x = i => P + i * (W - 2 * P) / (pts.length - 1), y = v => H - P - (v - mn) * (H - 2 * P) / rg;
   const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.w).toFixed(1)}`).join(' ');
   const area = line + ` L${x(pts.length - 1).toFixed(1)} ${H - P} L${P} ${H - P} Z`;
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du poids : ${esc(name)}"><defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".35"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></linearGradient><linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du poids : ${esc(name)}"><defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--a1)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--a1)" stop-opacity="0"/></linearGradient><linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--a1)"/><stop offset="1" style="stop-color:var(--a2)"/></linearGradient></defs>
     ${[0, .5, 1].map(f => `<line x1="${P}" x2="${W - P}" y1="${(P + f * (H - 2 * P)).toFixed(1)}" y2="${(P + f * (H - 2 * P)).toFixed(1)}" stroke="#24304a" stroke-dasharray="4 5"/><text x="${P - 6}" y="${(P + f * (H - 2 * P) + 4).toFixed(1)}" fill="#8b9ab4" font-size="12" text-anchor="end">${+(mx - f * rg).toFixed(1)}</text>`).join('')}
     <path d="${area}" fill="url(#ga)"/><path d="${line}" fill="none" stroke="url(#gl)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
-    ${pts.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.w).toFixed(1)}" r="${p.w === mx ? 6 : 4}" fill="${p.w === mx ? '#fbbf24' : '#0b0f19'}" stroke="${p.w === mx ? '#fbbf24' : '#22d3ee'}" stroke-width="2.5"/>`).join('')}
+    ${pts.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.w).toFixed(1)}" r="${p.w === mx ? 6 : 4}" fill="${p.w === mx ? '#fbbf24' : '#0b0f19'}" style="stroke:${p.w === mx ? '#fbbf24' : 'var(--a1)'}" stroke-width="2.5"/>`).join('')}
     <text x="${P}" y="${H - 8}" fill="#8b9ab4" font-size="12">${fmtD(pts[0].d)}</text><text x="${W - P}" y="${H - 8}" fill="#8b9ab4" font-size="12" text-anchor="end">${fmtD(pts[pts.length - 1].d)}</text></svg>`;
 }
 function histTable(name){
@@ -659,7 +713,7 @@ function confetti(){
    ============================================================ */
 function render(){
   document.querySelectorAll('.nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view));
-  $('#subTitle').textContent = { seance: DAY_NAMES[currentDay] + ' · ' + dayTitle(currentDay), semaine: 'Ma semaine', progres: 'Mes progrès', chrono: 'Chrono de repos' }[view];
+  $('#subTitle').textContent = profile.nom + ' · ' + { seance: DAY_NAMES[currentDay] + ' · ' + dayTitle(currentDay), semaine: 'Ma semaine', progres: 'Mes progrès', chrono: 'Chrono de repos' }[view];
   ({ seance: viewSeance, semaine: viewSemaine, progres: viewProgres, chrono: viewChrono })[view]();
   paintTimer();
 }
@@ -724,7 +778,10 @@ let sx = null, sy = null;
 $('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 $('#app').addEventListener('touchend', e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){ currentDay = (currentDay + (dx < 0 ? 1 : 6)) % 7; render(); } sx = null; }, { passive: true });
 
+$('#profBtn').onclick = sheetProfiles;
+window.addEventListener('pagehide', () => { flushSave(); });
 (async function init(){
+  applyProfileTheme();
   T.total = T.left = settings.preset;
   currentDay = todayIdx();
   render();
