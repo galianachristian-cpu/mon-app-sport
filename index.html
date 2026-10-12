@@ -441,13 +441,22 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 
 /* Pictogrammes animés */
 .pk{display:block;width:100%;height:100%}
-.pk polyline,.pk path{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:5}
-.pk .pk-n{stroke:var(--a1)}.pk .pk-f{stroke:var(--a2);opacity:.6}.pk .pk-h{fill:var(--a1)}
-.pk .pk-gr{stroke:var(--line);stroke-width:2}.pk .pk-p{stroke:var(--muted);stroke-width:3;stroke-linecap:round}.pk .pk-pf{fill:var(--muted)}.pk .pk-pl{fill:none;stroke:var(--soft);stroke-width:3}.pk .pk-c{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:2 2}
+.pk polyline,.pk path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pk .pk-o{stroke:#6b7486}.pk .pk-b{stroke:#dde1e7}.pk .pk-bf{stroke:#b4bcc8}.pk .pk-r{stroke:#e5484d}.pk .pk-rf{stroke:#b93a3e}
+.pk .pk-hd{fill:#dde1e7;stroke:#6b7486;stroke-width:1.2}.pk .pk-sh{fill:rgba(20,30,50,.16)}
+.pk .pk-p{stroke:#4f586a;stroke-width:3;stroke-linecap:round}.pk .pk-pf{fill:#59627a}.pk .pk-pl{fill:#2c3240;stroke:#59627a;stroke-width:1.6}.pk .pk-c{stroke:#7f889a;stroke-width:1.3;stroke-dasharray:2 2;fill:none}
+.emo.pkb,.pkbig,.g-emo.pkg{background:radial-gradient(circle at 50% 35%,#ffffff,#dfe4ec)!important;border-color:#c9d0db}
 .emo.pkb{padding:3px;overflow:hidden}
 .pkbig{width:180px;height:180px;margin:0 auto 12px;background:var(--bg2);border:1px solid var(--line);border-radius:22px;padding:8px}
 .g-emo.pkg{width:min(52vw,220px);height:min(52vw,220px);background:var(--card);border:1px solid var(--line);border-radius:26px;padding:10px}
 .duov .g-emo.pkg{width:min(34vw,150px);height:min(34vw,150px)}
+
+.exgif{display:block;width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff}
+.emo.pkb .exgif{border-radius:10px}
+.pkbig.big{width:100%;max-width:360px;height:auto;aspect-ratio:1;padding:0;overflow:hidden;background:#fff}
+.g-emo.pkg:has(.exgif){padding:0;overflow:hidden;background:#fff;width:min(70vw,300px);height:min(70vw,300px)}
+.duov .g-emo.pkg:has(.exgif){width:min(40vw,170px);height:min(40vw,170px)}
+.emo.pkb:has(.exgif){padding:0;background:#fff}
 </style>
 </head>
 <body>
@@ -626,6 +635,103 @@ const LIB = [
   ['Posture de l’enfant','Mobilité','s','🧎',2,'45 s','À genoux, fesses sur les talons, bras allongés devant, respirer dans le dos.','Idéal en fin de séance.']
 ].map(([n, m, t, e, s, r, desc, tips, g]) => ({ n, m, t, e, s, r, desc, tips, gif: g ? (g.startsWith('http') ? g : GIFB + g) : '' }));
 const LIB_BY = Object.fromEntries(LIB.map(x => [x.n, x]));
+// Animations 3D Docteur Fitness (hébergées sur leur site, affichées depuis leur adresse)
+const DF_GIF_BASE = 'https://www.docteur-fitness.com/wp-content/uploads/';
+const DF_GIF = {
+  "Développé couché": '2019/08/developpe-couche.gif',
+  "Développé incliné haltères": '2000/06/developpe-incline-halteres-exercice-musculation.gif',
+  "Développé couché haltères": '2000/05/developpe-couche-halteres-exercice-musculation.gif',
+  "Développé décliné": '2021/12/developpe-decline-barre.gif',
+  "Écartés aux câbles": '2022/04/ecartes-poulie-vis-a-vis.gif',
+  "Écartés haltères": '2022/09/ecarte-couche-haltere.gif',
+  "Pec deck": '2000/06/pec-deck-butterfly-exercice-musculation.gif',
+  "Pompes": '2020/10/pompe-musculation.gif',
+  "Pompes inclinées": '2023/07/pompes-inclinees-sur-smith-machine.gif',
+  "Soulevé de terre": '2021/12/souleve-de-terre.gif',
+  "Rowing barre": '2021/09/rowing-barre.gif',
+  "Tirage vertical (Lat Pulldown)": '2021/11/tirage-vertical-poitrine.gif',
+  "Tirage horizontal (Cable Row)": '2022/02/tirage-horizontal-poulie.gif',
+  "Tractions": '2022/02/traction-musculation-dos.gif',
+  "Rowing haltère un bras": '2021/08/rowing-haltere-un-bras.gif',
+  "Pull-over poulie": '2022/02/pull-over-poulie.gif',
+  "Shrugs (trapèzes)": '2022/11/shrugs-avec-halteres.gif',
+  "Superman": '2022/02/superman.gif',
+  "Développé militaire": '2000/08/developpe-militaire-exercice-musculation.gif',
+  "Développé haltères assis": '2022/02/developpe-epaule-halteres.gif',
+  "Élévations latérales": '2000/08/elevations-laterales-exercice-musculation.gif',
+  "Élévations frontales": '2000/08/elevations-frontales-exercice-musculation.gif',
+  "Oiseau (Rear Delt Fly)": '2021/12/oiseau-assis-sur-banc.gif',
+  "Face Pull": '2022/01/face-pull.gif',
+  "Arnold press": '2000/08/developpe-arnold-exercice-musculation.gif',
+  "Curl marteau": '2022/09/curl-haltere-prise-neutre.gif',
+  "Curl haltères alterné": '2022/08/curl-biceps-avec-halteres-alterne.gif',
+  "Curl pupitre": '2022/01/curl-au-pupitre-barre-ez-larry-scott.gif',
+  "Curl poulie basse": '2021/10/curl-biceps-poulie-basse.gif',
+  "Dips": '2022/10/dips-aux-anneaux.gif',
+  "Extension triceps poulie haute": '2021/10/extension-triceps-poulie-haute-corde.gif',
+  "Extension triceps au-dessus tête": '2022/12/extensions-des-triceps-assis-avec-haltere.gif',
+  "Barre au front": '2000/09/barre-front.gif',
+  "Kickback haltère": '2021/09/kickback.gif',
+  "Pompes diamant": '2020/10/pompe-mains-serrees.gif',
+  "Dips sur banc": '2021/09/dips-sur-banc.gif',
+  "Squat": '2021/11/homme-faisant-un-squat-avec-barre.gif',
+  "Presse à jambes": '2022/08/presse-a-cuisses-inclinee.gif',
+  "Fentes marchées": '2000/06/fentes-avant-exercice-musculation.gif',
+  "Leg extension": '2000/06/leg-extension-exercice-musculation.gif',
+  "Squat goblet": '2000/06/squat-goblet-exercice-musculation.gif',
+  "Squat bulgare": '2000/06/squat-bulgare-halteres-exercice-musculation.gif',
+  "Squat poids du corps": '2022/08/air-squat.gif',
+  "Chaise": '2021/12/squat-statique-contre-mur-exercice-chaise.gif',
+  "Soulevé de terre roumain": '2022/04/souleve-de-terre-roumain.gif',
+  "Curl jambes allongé": '2021/10/leg-curl-allonge.gif',
+  "Curl jambes assis": '2022/02/leg-curl-assis-machine.gif',
+  "Good morning": '2022/01/good-morning-exercice.gif',
+  "Hip thrust": '2021/12/hips-thrust.gif',
+  "Pont fessier": '2022/08/setu-bandhasana-posture-du-pont.gif',
+  "Kickback poulie": '2022/05/extension-hanche-poulie-basse.gif',
+  "Step-up": '2000/06/montees-sur-banc-exercice-musculation.gif',
+  "Mollets debout": '2021/10/extension-mollets-debout-machine.gif',
+  "Mollets assis": '2021/10/extension-mollets-assis-machine.gif',
+  "Mollets à la presse": '2021/10/extension-mollets-presse-45.gif',
+  "Relevé de jambes suspendu": '2022/02/releve-de-jambes-suspendu.gif',
+  "Crunch aux câbles": '2000/06/crunch-poulie-haute-exercice-musculation.gif',
+  "Crunch": '2000/07/crunch-au-sol-exercice-musculation.gif',
+  "Gainage": '2022/05/planche-abdos.gif',
+  "Gainage latéral": '2022/01/planche-laterale-obliques.gif',
+  "Roue abdominale": '2022/02/roulette-abdominaux.gif',
+  "Mountain climbers": '2000/06/mountain-climber-exercice-musculation.gif',
+  "Course à pied": '2022/08/tapis-de-course.gif',
+  "Rameur": '2022/07/rameur.gif',
+  "Elliptique": '2022/08/velo-elliptique.gif',
+  "Marche rapide": '2025/11/marche-lestee-rucking.gif',
+  "Natation": '2026/02/natation-muscle-travaille-cardio.gif',
+  "Corde à sauter": '2022/07/corde-a-sauter.gif',
+  "Burpees": '2019/08/burpee-muscle-sollicites.gif',
+  "HIIT 30/30": '2022/07/jumping-jack.gif',
+  "Box jump": '2022/09/jump-box.gif',
+  "Squat sauté": '2022/04/squat-saute-exercice-musculation-jambes.gif',
+  "Sauts latéraux (skater)": '2022/07/skater-hops.gif',
+  "Pompes explosives": '2020/10/pompes-claquees.gif',
+  "World’s greatest stretch": '2025/11/etirement-du-lezard-avec-rotation.gif',
+  "Mobilité de hanches 90/90": '2025/11/rotation-dynamique-des-hanches-90-90.gif',
+  "Rotation thoracique (open book)": '2025/11/rotation-du-buste-allonge.gif',
+  "Dislocations d’épaules (bâton)": '2024/05/passage-depaule-avec-elastique.gif',
+  "Chat-vache": '2022/07/marjaryasana-posture-du-chat.gif',
+  "Squat profond tenu": '2025/12/squat-profond-mobilite.gif',
+  "Étirement du psoas": '2025/11/etirement-du-psoas.gif',
+  "Étirement des ischios": '2025/11/etirement-ischios-jambiers-allonge.gif',
+  "Étirement des pectoraux au mur": '2025/11/etirement-des-pectoraux-en-arriere.gif',
+  "Posture de l’enfant": '2022/08/balasana-posture-de-l-enfant.gif'
+};
+LIB.forEach(x => { x.gif = DF_GIF[x.n] ? DF_GIF_BASE + DF_GIF[x.n] : ''; });
+const gifOf = e => !e ? '' : LIB_BY[e.n] ? LIB_BY[e.n].gif : (e.gif || '');
+function exVis(e, still){
+  const g = gifOf(e);
+  if (!g) return picto(e, still);
+  return `<img class="exgif" src="${esc(g)}" alt="Démonstration : ${esc(e.n)}" loading="lazy" decoding="async" data-n="${esc(e.n)}" data-m="${esc(e.m || '')}" onerror="gifFail(this)">`;
+}
+function gifFail(img){ const sp = document.createElement('span'); sp.innerHTML = picto({ n: img.dataset.n, m: img.dataset.m }); img.replaceWith(sp.firstElementChild || sp); }
+
 const pick = names => names.map(n => { const x = LIB_BY[n]; const o = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') o.t = x.t; return o; });
 const PEC = ['Développé couché','Développé incliné haltères','Écartés aux câbles','Dips','Extension triceps poulie haute','Extension triceps au-dessus tête'];
 const DOS = ['Soulevé de terre','Rowing barre','Tirage vertical (Lat Pulldown)','Tirage horizontal (Cable Row)','Curl barre','Curl marteau'];
@@ -893,10 +999,10 @@ function exCard(k, e, i){
   const setBtns = t === 'c' ? '' : `<div class="sets"><span class="lbl">Séries</span>${Array.from({ length: effS(e) }, (_, j) => { const x = S[j];
     const lbl = x ? (t === 'f' ? `<b>${num(x.w) ? fr(num(x.w)) : 'PC'}</b><small>×${esc(x.r)}</small>` : `<b>${esc(x.r)}</b><small>${t === 's' ? 's' : 'reps'}</small>`) : j + 1;
     return `<button class="set ${x ? 'on' : ''}" data-act="set" data-i="${i}" data-j="${j}" aria-label="Série ${j+1}${x ? ' faite' : ''}">${lbl}</button>`; }).join('')}</div>`;
-  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="emo pkb">${picto(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">⏭️ Mis de côté aujourd’hui (douleur)</span></span></div></div></article>`;
+  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">⏭️ Mis de côté aujourd’hui (douleur)</span></span></div></div></article>`;
   return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">🩺 Remplace « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1">
-      <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${picto(e)}</button>
+      <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${esc(e.s)} × ${esc(e.r)}`}</span>${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button>
     </div>
@@ -1194,8 +1300,7 @@ function sheetDetail(i){
   const k = 'day' + currentDay, e = data[k][i]; if (!e) return;
   const last = lastOf(e.n), best = bestOf(e.n), n = data[k].length, t = typ(e);
   openSheet(`<h2>${esc(e.n)}</h2>
-    <div class="pkbig">${picto(e)}</div>
-    <div class="gif">${e.gif ? `<img src="${esc(e.gif)}" alt="Démonstration : ${esc(e.n)}" onerror="this.parentElement.innerHTML='<div class=no>${esc(e.e || '🏋️')}</div>'">` : `<div class="no">${esc(e.e || '🏋️')}</div>`}</div>
+    <div class="pkbig${gifOf(e) ? ' big' : ''}">${exVis(e)}</div>
     <div class="three"><div><b>${t === 'c' ? 1 : esc(e.s)}</b><small>Séries</small></div><div><b>${esc(e.r)}</b><small>${t === 's' ? 'Durée' : t === 'c' ? 'Objectif' : 'Reps'}</small></div><div><b style="color:${mcol(e.m)};font-size:14px">${esc(e.m)}</b><small>Muscle</small></div></div>
     ${best ? `<div class="box"><h4>🏆 Ton record</h4><p><b>${fr(best)} ${unitOf(t, last)}</b>${last ? ` · dernière fois ${esc(lastTxt(last))} (${fmtD(last.d)})` : ''}</p></div>` : ''}
     ${barBox(e)}
@@ -1241,7 +1346,7 @@ function sheetLib(){
   const paint = () => {
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
-    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${picto(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
+    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
     $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
   };
   $('#lq').oninput = () => { libQ = $('#lq').value; paint(); };
@@ -2121,7 +2226,7 @@ function guideRender(){
     const big = (f, v, d, u) => `<div class="g-step"><button data-g="adj" data-f="${f}" data-d="${-d}" aria-label="moins">−</button><div><b>${v != null ? fr(v) : '–'}</b><small>${u}</small></div><button data-g="adj" data-f="${f}" data-d="${d}" aria-label="plus">+</button></div>`;
     const inputs = t === 'f' ? big('w', w, 2.5, 'kg') + big('r', r, 1, 'reps') : t === 'p' ? big('r', r, 1, 'reps') : t === 's' ? big('r', r, 5, 'secondes') : big('r', num(lg.r) ?? topReps(e.r), 5, 'minutes') + big('w', num(lg.w), .5, 'km');
     const wu = t === 'f' && S.length === 0 && e.cmp ? warmup(w) : [];
-    body = `<div class="g-ex"><div class="g-emo pkg">${picto(e)}</div><h2>${esc(e.n)}</h2>
+    body = `<div class="g-ex"><div class="g-emo pkg">${exVis(e)}</div><h2>${esc(e.n)}</h2>
       <p class="g-sub">${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span> ` : ''}<span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span></p>
       ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < S.length ? 'on' : j === S.length ? 'cur' : ''}">${j < S.length ? (t === 'f' ? fr(num(S[j].w) || 0) + '×' + S[j].r : S[j].r) : j + 1}</span>`).join('')}</div><p class="g-lbl">Série ${n} sur ${tot}</p>` : ''}
       <div class="g-inputs">${inputs}</div>
@@ -2616,7 +2721,7 @@ function duoRender(){
     <div class="dustep"><button data-x="duadj" data-who="${who}" data-f="r" data-d="-1">−</button><span><b>${fr(r)}</b><small>${t === 's' ? 's' : 'reps'}</small></span><button data-x="duadj" data-who="${who}" data-f="r" data-d="1">+</button></div>
     <button class="btn ${Sx.length >= tot ? '' : 'pri'} block" data-x="duset" data-who="${who}" ${Sx.length >= tot ? 'disabled' : ''}>${Sx.length >= tot ? '✓ Fini' : '✓ Série ' + (Sx.length + 1)}</button>` : `<button class="btn ${Sx.length ? '' : 'pri'} block" data-x="duset" data-who="${who}" ${Sx.length ? 'disabled' : ''}>${Sx.length ? '✓ Fait' : '✓ Terminé'}</button>`}</div>`;
   openFull(`<div class="duov"><div class="g-top"><button data-x="duprev" aria-label="Exercice précédent">‹</button><div><b>👫 Séance duo</b><small>${L.filter((x, j) => !isSkip(x) && j <= DU.i).length}/${L.filter(x => !isSkip(x)).length}</small></div><button data-x="dunext" aria-label="Exercice suivant">›</button><span class="spacer"></span><button data-x="duend" aria-label="Terminer">✕</button></div>
-    <div class="g-ex"><div class="g-emo pkg">${picto(e)}</div><h2>${esc(e.n)}</h2><p class="g-sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span> · ${t === 'c' ? esc(e.r) : tot + ' × ' + esc(e.r)}</p></div>
+    <div class="g-ex"><div class="g-emo pkg">${exVis(e)}</div><h2>${esc(e.n)}</h2><p class="g-sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span> · ${t === 'c' ? esc(e.r) : tot + ' × ' + esc(e.r)}</p></div>
     <div class="ducols">${col('me', profile.nom, profile, S, myW, myR)}${col('op', other.p.nom, other.p, O, oL.w, oL.r)}</div>
     <div class="durest ${T.run ? 'on' : ''}"><span>⏱️ Repos</span><b id="duT">${fmtT(T.left)}</b><button class="btn sm" data-x="duplus">+15 s</button></div>
     <button class="btn block" data-x="duend" style="margin-top:12px">🏁 Terminer et enregistrer pour ${esc(other.p.nom)}</button></div>`);
@@ -2832,7 +2937,7 @@ const PK_CACHE = {};
 function pkSvg(key, opt){
   opt = opt || {};
   const def = PK[key] || PK.stand, front = !!def.front, still = opt.still || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const ck = key + (still ? ':s' + (opt.frame ?? '') : ':a'); if (PK_CACHE[ck]) return PK_CACHE[ck];
+  const mus = opt.mus || '', ck = key + '|' + mus + (still ? ':s' + (opt.frame ?? '') : ':a'); if (PK_CACHE[ck]) return PK_CACHE[ck];
   const A = pkFull(def.a), B = pkFull(def.b || def.a), N = 8;
   const ease = s => .5 - Math.cos(Math.PI * s) / 2;
   const fr = []; for (let i = 0; i <= N; i++) { const P = pkLerp(A, B, ease(i / N)); fr.push(pkPlace(P, pkJoints(P, front))); }
@@ -2847,6 +2952,7 @@ function pkSvg(key, opt){
   const neck = poly(f => [f.sh, [f.sh[0] + (f.head[0] - f.sh[0]) * .35, f.sh[1] + (f.head[1] - f.sh[1]) * .35]], 'pk-n');
   const head = `<circle r="5.6" class="pk-h" cx="${(seq[0].head[0] + sx).toFixed(1)}" cy="${seq[0].head[1].toFixed(1)}">${anim('cx', seq.map(f => (f.head[0] + sx).toFixed(1)))}${anim('cy', seq.map(f => f.head[1].toFixed(1)))}</circle>`;
   const J = (f, j) => j === 'h1' ? f.arms[1][2] : j === 'h0' ? f.arms[0][2] : j === 'f1' ? f.legs[1][2] : j === 'f0' ? f.legs[0][2] : j === 'k1' ? f.legs[1][1] : j === 'hip' ? f.hip : f.sh;
+  const BACKP = ['line', 'rect', 'circ', 'cable', 'rope'], pList = (def.p || []).map(p => [p, BACKP.includes(p.k)]);
   const props = (def.p || []).map(p => {
     if (p.k === 'line') return `<line x1="${p.p[0] + sx}" y1="${p.p[1]}" x2="${p.p[2] + sx}" y2="${p.p[3]}" class="pk-p"/>`;
     if (p.k === 'rect') return `<rect x="${p.p[0] + sx}" y="${p.p[1]}" width="${p.p[2]}" height="${p.p[3]}" rx="2" class="pk-pf"/>`;
@@ -2856,12 +2962,29 @@ function pkSvg(key, opt){
     if (p.k === 'rope') return el('path', 'd', seq.map((f, i) => { const k = seq.length > 1 ? i / (seq.length - 1) : 0, y = PK_G + 6 - Math.sin(Math.PI * k) * (PK_G + 6 - f.head[1] + 14), h0 = f.arms[0][2], h1 = f.arms[1][2]; return `M${f2(h0)} C${(h0[0] - 16 + sx).toFixed(1)},${y.toFixed(1)} ${(h1[0] + 16 + sx).toFixed(1)},${y.toFixed(1)} ${f2(h1)}`; }), 'class="pk-c" fill="none"');
     const r = { bar:6.5, plate:6.5, db:3.2, kb:4.2, ball:5, wheel:4, pad:3 }[p.k] || 3;
     return `<circle r="${r}" class="${p.k === 'bar' || p.k === 'plate' ? 'pk-pl' : 'pk-pf'}" cx="${cx[0]}" cy="${cy[0]}">${anim('cx', cx)}${anim('cy', cy)}</circle>`;
-  }).join('');
-  const far = front ? 'pk-n' : 'pk-f';
-  const ys = fr.flatMap(f => f.pts.map(p => p[1])).concat(fr.map(f => f.head[1] - 6)), xs2 = xs.map(x => x + sx);
+  });
+  const propsB = props.filter((_, i) => pList[i][1]).join(''), propsF = props.filter((_, i) => !pList[i][1]).join('');
+  const lerp2 = (p, q, k) => [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
+  const tseg = (f, k0, k1, off) => { const u = [f.sh[0] - f.hip[0], f.sh[1] - f.hip[1]], L = Math.hypot(u[0], u[1]) || 1, n = front ? [0, 0] : [-u[1] / L * off, u[0] / L * off]; const p = lerp2(f.hip, f.sh, k0), q = lerp2(f.hip, f.sh, k1); return [[p[0] + n[0], p[1] + n[1]], [q[0] + n[0], q[1] + n[1]]]; };
+  const limb = (get, w, cls) => poly(get, cls + '" style="stroke-width:' + w);
+  const body = (side) => { const fa = side === 0, c = fa && !front ? 'pk-bf' : 'pk-b';
+    return limb(f => f.legs[side], 9.6, 'pk-o') + limb(f => f.legs[side], 7.4, c) + limb(f => f.arms[side], 7.6, 'pk-o') + limb(f => f.arms[side], 5.6, c) + hl(side); };
+  const M = { 'Quadriceps':['thigh'], 'Ischio-jambiers':['thigh'], 'Fessiers':['glute', 'thigh0'], 'Mollets':['shin'], 'Pectoraux':['chest'], 'Dos':['back'], 'Épaules':['delt'], 'Biceps':['upper'], 'Triceps':['upper'], 'Abdos':['abs'], 'Cardio':['thigh', 'shin'], 'Pliométrie':['thigh', 'shin', 'glute'] }[mus] || [];
+  const red = (get, w, side) => poly(get, (side === 0 && !front ? 'pk-rf' : 'pk-r') + '" style="stroke-width:' + w);
+  function hl(side){ return M.map(m => m === 'thigh' ? red(f => [lerp2(f.legs[side][0], f.legs[side][1], .12), lerp2(f.legs[side][0], f.legs[side][1], .85)], 5.2, side)
+      : m === 'thigh0' ? red(f => [lerp2(f.legs[side][0], f.legs[side][1], .1), lerp2(f.legs[side][0], f.legs[side][1], .45)], 5.2, side)
+      : m === 'shin' ? red(f => [lerp2(f.legs[side][1], f.legs[side][2], .15), lerp2(f.legs[side][1], f.legs[side][2], .6)], 4.6, side)
+      : m === 'upper' ? red(f => [lerp2(f.arms[side][0], f.arms[side][1], .25), lerp2(f.arms[side][0], f.arms[side][1], .85)], 3.8, side)
+      : m === 'delt' ? red(f => [f.arms[side][0], lerp2(f.arms[side][0], f.arms[side][1], .3)], 6.4, side) : '').join(''); }
+  const thl = M.map(m => m === 'chest' ? red(f => tseg(f, .58, .9, 3.2), 6.5) : m === 'back' ? red(f => tseg(f, .35, .9, -3.2), 6.5) : m === 'abs' ? red(f => tseg(f, .12, .55, 3.4), 5.5) : m === 'glute' ? red(f => tseg(f, -.02, .16, -3.4), 7) : '').join('');
+  const trunk = el('path', 'd', seq.map(f => `M${f2(f.hip)} Q${f2([f.mid[0] + (f.mid[0] - (f.hip[0] + f.sh[0]) / 2), f.mid[1] + (f.mid[1] - (f.hip[1] + f.sh[1]) / 2)])} ${f2(f.sh)}`), 'class="pk-o" style="stroke-width:15.4"') + torso.replace('class="pk-n"', 'class="pk-b" style="stroke-width:13"');
+  const neck2 = poly(f => [f.sh, [f.sh[0] + (f.head[0] - f.sh[0]) * .5, f.sh[1] + (f.head[1] - f.sh[1]) * .5]], 'pk-b" style="stroke-width:5');
+  const head2 = head.replace('r="5.6" class="pk-h"', 'r="6" class="pk-hd"');
+  const ys = fr.flatMap(f => f.pts.map(p => p[1])).concat(fr.map(f => f.head[1] - 7)), xs2 = xs.map(x => x + sx);
   (def.p || []).forEach(p => { if (p.p){ xs2.push(p.p[0] + sx); ys.push(p.p[1]); if (p.k === 'line'){ xs2.push(p.p[2] + sx); ys.push(p.p[3]); } if (p.k === 'rect'){ xs2.push(p.p[0] + p.p[2] + sx); } if (p.k === 'circ'){ xs2.push(p.p[0] - p.p[2] + sx, p.p[0] + p.p[2] + sx); ys.push(p.p[1] - p.p[2]); } } });
-  const x0 = Math.min(...xs2), x1 = Math.max(...xs2), y0 = Math.max(0, Math.min(...ys)), y1 = PK_G + 3, side = Math.max(x1 - x0, y1 - y0) + 12, vx = (x0 + x1) / 2 - side / 2, vy = y1 + 3 - side;
-  const svg = `<svg class="pk" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${side.toFixed(1)} ${side.toFixed(1)}" role="img" aria-hidden="true"><line x1="${(vx + 3).toFixed(1)}" y1="${PK_G + 2.5}" x2="${(vx + side - 3).toFixed(1)}" y2="${PK_G + 2.5}" class="pk-gr"/>${props}${poly(f => f.legs[0], far)}${poly(f => f.arms[0], far)}${torso}${neck}${head}${poly(f => f.legs[1], 'pk-n')}${poly(f => f.arms[1], 'pk-n')}</svg>`;
+  const x0 = Math.min(...xs2) - 3, x1 = Math.max(...xs2) + 3, y0 = Math.max(0, Math.min(...ys)), y1 = PK_G + 3, side = Math.max(x1 - x0, y1 - y0) + 12, vx = (x0 + x1) / 2 - side / 2, vy = y1 + 3 - side;
+  const fx = fr[0].legs.flat().map(p => p[0] + sx), shx = (Math.min(...fx) + Math.max(...fx)) / 2, shw = Math.max(12, (Math.max(...fx) - Math.min(...fx)) / 2 + 8);
+  const svg = `<svg class="pk" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${side.toFixed(1)} ${side.toFixed(1)}" role="img" aria-hidden="true"><ellipse cx="${shx.toFixed(1)}" cy="${PK_G + 2.5}" rx="${shw.toFixed(1)}" ry="2.6" class="pk-sh"/>${propsB}${body(0)}${trunk}${thl}${neck2}${head2}${body(1)}${propsF}</svg>`;
   return (PK_CACHE[ck] = svg);
 }
 
@@ -2996,7 +3119,7 @@ function pkKey(e){
   const n = String(e.n || '').toLowerCase(); for (const [re, k] of PK_KW) if (re.test(n)) return k;
   return PK_MUS[e.m] || 'stand';
 }
-const picto = (e, still) => pkSvg(pkKey(e), { still });
+const picto = (e, still) => pkSvg(pkKey(e), { still, mus: e && e.m });
 
 /* ============================================================
    RENDU ET ÉVÉNEMENTS
