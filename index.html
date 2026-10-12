@@ -438,6 +438,16 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 .step{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:var(--bg2);border:1px solid var(--line);font-size:13.5px;line-height:1.45;cursor:pointer}
 .step input{margin-top:3px;width:18px;height:18px;accent-color:var(--a1);flex:0 0 auto}.step .t{font-weight:900;color:var(--a1);min-width:34px;font-variant-numeric:tabular-nums}
 .step.ok{opacity:.55}.step.ok span:last-child{text-decoration:line-through}
+
+/* Pictogrammes animés */
+.pk{display:block;width:100%;height:100%}
+.pk polyline,.pk path{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:5}
+.pk .pk-n{stroke:var(--a1)}.pk .pk-f{stroke:var(--a2);opacity:.6}.pk .pk-h{fill:var(--a1)}
+.pk .pk-gr{stroke:var(--line);stroke-width:2}.pk .pk-p{stroke:var(--muted);stroke-width:3;stroke-linecap:round}.pk .pk-pf{fill:var(--muted)}.pk .pk-pl{fill:none;stroke:var(--soft);stroke-width:3}.pk .pk-c{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:2 2}
+.emo.pkb{padding:3px;overflow:hidden}
+.pkbig{width:180px;height:180px;margin:0 auto 12px;background:var(--bg2);border:1px solid var(--line);border-radius:22px;padding:8px}
+.g-emo.pkg{width:min(52vw,220px);height:min(52vw,220px);background:var(--card);border:1px solid var(--line);border-radius:26px;padding:10px}
+.duov .g-emo.pkg{width:min(34vw,150px);height:min(34vw,150px)}
 </style>
 </head>
 <body>
@@ -883,10 +893,10 @@ function exCard(k, e, i){
   const setBtns = t === 'c' ? '' : `<div class="sets"><span class="lbl">Séries</span>${Array.from({ length: effS(e) }, (_, j) => { const x = S[j];
     const lbl = x ? (t === 'f' ? `<b>${num(x.w) ? fr(num(x.w)) : 'PC'}</b><small>×${esc(x.r)}</small>` : `<b>${esc(x.r)}</b><small>${t === 's' ? 's' : 'reps'}</small>`) : j + 1;
     return `<button class="set ${x ? 'on' : ''}" data-act="set" data-i="${i}" data-j="${j}" aria-label="Série ${j+1}${x ? ' faite' : ''}">${lbl}</button>`; }).join('')}</div>`;
-  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="emo">${esc(e.e || '🏋️')}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">⏭️ Mis de côté aujourd’hui (douleur)</span></span></div></div></article>`;
+  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="emo pkb">${picto(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">⏭️ Mis de côté aujourd’hui (douleur)</span></span></div></div></article>`;
   return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">🩺 Remplace « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1">
-      <button class="emo" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${esc(e.e || '🏋️')}</button>
+      <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${picto(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${esc(e.s)} × ${esc(e.r)}`}</span>${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button>
     </div>
@@ -1183,7 +1193,8 @@ function closeSheet(){ $('#sheet').classList.remove('show'); $('#ov').classList.
 function sheetDetail(i){
   const k = 'day' + currentDay, e = data[k][i]; if (!e) return;
   const last = lastOf(e.n), best = bestOf(e.n), n = data[k].length, t = typ(e);
-  openSheet(`<h2>${esc(e.e || '🏋️')} ${esc(e.n)}</h2>
+  openSheet(`<h2>${esc(e.n)}</h2>
+    <div class="pkbig">${picto(e)}</div>
     <div class="gif">${e.gif ? `<img src="${esc(e.gif)}" alt="Démonstration : ${esc(e.n)}" onerror="this.parentElement.innerHTML='<div class=no>${esc(e.e || '🏋️')}</div>'">` : `<div class="no">${esc(e.e || '🏋️')}</div>`}</div>
     <div class="three"><div><b>${t === 'c' ? 1 : esc(e.s)}</b><small>Séries</small></div><div><b>${esc(e.r)}</b><small>${t === 's' ? 'Durée' : t === 'c' ? 'Objectif' : 'Reps'}</small></div><div><b style="color:${mcol(e.m)};font-size:14px">${esc(e.m)}</b><small>Muscle</small></div></div>
     ${best ? `<div class="box"><h4>🏆 Ton record</h4><p><b>${fr(best)} ${unitOf(t, last)}</b>${last ? ` · dernière fois ${esc(lastTxt(last))} (${fmtD(last.d)})` : ''}</p></div>` : ''}
@@ -1230,7 +1241,7 @@ function sheetLib(){
   const paint = () => {
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
-    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo">${esc(x.e)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
+    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${picto(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
     $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
   };
   $('#lq').oninput = () => { libQ = $('#lq').value; paint(); };
@@ -2110,7 +2121,7 @@ function guideRender(){
     const big = (f, v, d, u) => `<div class="g-step"><button data-g="adj" data-f="${f}" data-d="${-d}" aria-label="moins">−</button><div><b>${v != null ? fr(v) : '–'}</b><small>${u}</small></div><button data-g="adj" data-f="${f}" data-d="${d}" aria-label="plus">+</button></div>`;
     const inputs = t === 'f' ? big('w', w, 2.5, 'kg') + big('r', r, 1, 'reps') : t === 'p' ? big('r', r, 1, 'reps') : t === 's' ? big('r', r, 5, 'secondes') : big('r', num(lg.r) ?? topReps(e.r), 5, 'minutes') + big('w', num(lg.w), .5, 'km');
     const wu = t === 'f' && S.length === 0 && e.cmp ? warmup(w) : [];
-    body = `<div class="g-ex"><div class="g-emo">${esc(e.e || '🏋️')}</div><h2>${esc(e.n)}</h2>
+    body = `<div class="g-ex"><div class="g-emo pkg">${picto(e)}</div><h2>${esc(e.n)}</h2>
       <p class="g-sub">${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span> ` : ''}<span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span></p>
       ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < S.length ? 'on' : j === S.length ? 'cur' : ''}">${j < S.length ? (t === 'f' ? fr(num(S[j].w) || 0) + '×' + S[j].r : S[j].r) : j + 1}</span>`).join('')}</div><p class="g-lbl">Série ${n} sur ${tot}</p>` : ''}
       <div class="g-inputs">${inputs}</div>
@@ -2605,7 +2616,7 @@ function duoRender(){
     <div class="dustep"><button data-x="duadj" data-who="${who}" data-f="r" data-d="-1">−</button><span><b>${fr(r)}</b><small>${t === 's' ? 's' : 'reps'}</small></span><button data-x="duadj" data-who="${who}" data-f="r" data-d="1">+</button></div>
     <button class="btn ${Sx.length >= tot ? '' : 'pri'} block" data-x="duset" data-who="${who}" ${Sx.length >= tot ? 'disabled' : ''}>${Sx.length >= tot ? '✓ Fini' : '✓ Série ' + (Sx.length + 1)}</button>` : `<button class="btn ${Sx.length ? '' : 'pri'} block" data-x="duset" data-who="${who}" ${Sx.length ? 'disabled' : ''}>${Sx.length ? '✓ Fait' : '✓ Terminé'}</button>`}</div>`;
   openFull(`<div class="duov"><div class="g-top"><button data-x="duprev" aria-label="Exercice précédent">‹</button><div><b>👫 Séance duo</b><small>${L.filter((x, j) => !isSkip(x) && j <= DU.i).length}/${L.filter(x => !isSkip(x)).length}</small></div><button data-x="dunext" aria-label="Exercice suivant">›</button><span class="spacer"></span><button data-x="duend" aria-label="Terminer">✕</button></div>
-    <div class="g-ex"><div class="g-emo">${esc(e.e || '🏋️')}</div><h2>${esc(e.n)}</h2><p class="g-sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span> · ${t === 'c' ? esc(e.r) : tot + ' × ' + esc(e.r)}</p></div>
+    <div class="g-ex"><div class="g-emo pkg">${picto(e)}</div><h2>${esc(e.n)}</h2><p class="g-sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span> · ${t === 'c' ? esc(e.r) : tot + ' × ' + esc(e.r)}</p></div>
     <div class="ducols">${col('me', profile.nom, profile, S, myW, myR)}${col('op', other.p.nom, other.p, O, oL.w, oL.r)}</div>
     <div class="durest ${T.run ? 'on' : ''}"><span>⏱️ Repos</span><b id="duT">${fmtT(T.left)}</b><button class="btn sm" data-x="duplus">+15 s</button></div>
     <button class="btn block" data-x="duend" style="margin-top:12px">🏁 Terminer et enregistrer pour ${esc(other.p.nom)}</button></div>`);
@@ -2779,6 +2790,213 @@ function evoAct(a, b){
   }
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-x]'); if (!b || b.disabled) return; evoAct(b.dataset.x, b); });
+
+/* ============================================================
+   PICTOGRAMMES ANIMÉS : un personnage qui fait l'exercice
+   ============================================================ */
+// Pose : x, y = point d'ancrage (r) ; t = inclinaison du buste (0 debout, 90 penché en avant, −90 allongé tête à gauche)
+// L = jambes [[cuisse, tibia, pied], …] (loin, près) ; A = bras [[bras, avant-bras], …] (loin, près) ; angles en degrés depuis la verticale basse, + = vers l'avant
+// r : 'g' (point le plus bas posé au sol), 'h' (main), 'sh' (épaule), 'hip' (hanche) ; ar : bras relatifs au buste ; cv : courbure du dos ; dy : décalage vertical ; arc : saut
+const PK_G = 92, PK_LEN = { T:26, U:13, F:12, TH:19, SH:19, FT:6 };
+const PK_D = { x:50, y:PK_G, r:'g', t:0, L:[[0, 0, 0], [0, 0, 0]], A:[[0, 0], [0, 0]], ar:0, cv:0, dy:0, arc:0, shr:0 };
+function pkJoints(P, front){
+  const R = Math.PI / 180, dn = (a, l) => [Math.sin(a * R) * l, Math.cos(a * R) * l], add = (a, b) => [a[0] + b[0], a[1] + b[1]];
+  const hip = [0, 0], u = [Math.sin(P.t * R), -Math.cos(P.t * R)];
+  const sh = [u[0] * (PK_LEN.T + P.shr), u[1] * (PK_LEN.T + P.shr)], head = [u[0] * (PK_LEN.T + 9 + P.shr), u[1] * (PK_LEN.T + 9 + P.shr)];
+  const side = front ? [-u[1], u[0]] : [0, 0];
+  const legs = P.L.map((l, k) => { const s = front ? (k ? 1 : -1) : 0, h0 = [hip[0] + side[0] * 5 * s, hip[1] + side[1] * 5 * s], th = front ? l[0] * (k ? 1 : -1) : l[0], sk = front ? l[1] * (k ? 1 : -1) : l[1];
+    const kn = add(h0, dn(th, PK_LEN.TH)), an = add(kn, dn(sk, PK_LEN.SH)), fo = front ? [0, 0] : [Math.cos((l[2] || 0) * R) * PK_LEN.FT, Math.sin((l[2] || 0) * R) * PK_LEN.FT]; return [h0, kn, an, add(an, fo)]; });
+  const arms = P.A.map((a, k) => { const s = front ? (k ? 1 : -1) : 0, s0 = [sh[0] + side[0] * 8 * s, sh[1] + side[1] * 8 * s], off = P.ar ? P.t : 0, ua = (front ? a[0] * (k ? 1 : -1) : a[0]) + off, fa = (front ? a[1] * (k ? 1 : -1) : a[1]) + off;
+    const el = add(s0, dn(ua, PK_LEN.U)), ha = add(el, dn(fa, PK_LEN.F)); return [s0, el, ha]; });
+  const n = [-u[1], u[0]], mid = [sh[0] / 2 + n[0] * P.cv, sh[1] / 2 + n[1] * P.cv];
+  return { hip, sh, head, mid, legs, arms, front };
+}
+function pkPlace(P, J){
+  let ox, oy;
+  if (P.r === 'g'){ const low = Math.max(...[...J.legs.flat(), ...J.arms.flat(), [J.head[0], J.head[1] + 5.6], J.hip].map(p => p[1])); ox = P.x; oy = (P.gy || PK_G) - low; }
+  else { const ref = P.r === 'h' ? J.arms[1][2] : P.r === 'sh' ? J.sh : P.r === 'f' ? J.legs[1][2] : J.hip; ox = P.x - ref[0]; oy = P.y - ref[1]; }
+  oy += P.dy;
+  const mv = p => [p[0] + ox, p[1] + oy];
+  const legs = J.legs.map(l => l.map(mv)), arms = J.arms.map(a => a.map(mv)), head = mv(J.head);
+  return { hip: mv(J.hip), sh: mv(J.sh), head, mid: mv(J.mid), legs, arms, pts: [mv(J.hip), head, ...legs.flat(), ...arms.flat()] };
+}
+function pkLerp(A, B, s){
+  const l = (a, b) => typeof a === 'number' && typeof b === 'number' ? a + (b - a) * s : (s < .5 ? a : b);
+  const o = {}; Object.keys(A).forEach(k => { const a = A[k], b = B[k];
+    if (Array.isArray(a)) o[k] = a.map((x, i) => Array.isArray(x) ? x.map((y, j) => l(y, (b[i] || [])[j] ?? y)) : l(x, b[i])); else o[k] = l(a, b); });
+  o.dy = l(A.dy, B.dy) - Math.sin(Math.PI * s) * Math.max(A.arc || 0, B.arc || 0);
+  return o;
+}
+const pkFull = p => { const o = Object.assign({}, PK_D, p); o.L = (p.L || PK_D.L).map(l => [l[0] || 0, l[1] || 0, l[2] || 0]); o.A = p.A || PK_D.A; return o; };
+const PK_CACHE = {};
+function pkSvg(key, opt){
+  opt = opt || {};
+  const def = PK[key] || PK.stand, front = !!def.front, still = opt.still || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const ck = key + (still ? ':s' + (opt.frame ?? '') : ':a'); if (PK_CACHE[ck]) return PK_CACHE[ck];
+  const A = pkFull(def.a), B = pkFull(def.b || def.a), N = 8;
+  const ease = s => .5 - Math.cos(Math.PI * s) / 2;
+  const fr = []; for (let i = 0; i <= N; i++) { const P = pkLerp(A, B, ease(i / N)); fr.push(pkPlace(P, pkJoints(P, front))); }
+  const seq = still ? [fr[opt.frame != null ? opt.frame : N]] : [...fr, ...fr.slice(0, -1).reverse()];
+  const xs = fr.flatMap(f => f.pts.map(p => p[0])), sx = 50 - (Math.min(...xs) + Math.max(...xs)) / 2 + (def.dx || 0);
+  const f2 = (p) => (p[0] + sx).toFixed(1) + ',' + p[1].toFixed(1);
+  const dur = (def.dur || 1.8) + 's', kt = seq.map((_, i) => (i / (seq.length - 1)).toFixed(3)).join(';');
+  const anim = (attr, vals) => still || vals.every(v => v === vals[0]) ? '' : `<animate attributeName="${attr}" values="${vals.join(';')}" keyTimes="${kt}" dur="${dur}" repeatCount="indefinite"/>`;
+  const el = (tag, attr, vals, extra) => `<${tag} ${attr}="${vals[0]}" ${extra || ''}>${anim(attr, vals)}</${tag}>`;
+  const poly = (get, cls) => el('polyline', 'points', seq.map(f => get(f).map(f2).join(' ')), `class="${cls}"`);
+  const torso = el('path', 'd', seq.map(f => `M${f2(f.hip)} Q${f2([f.mid[0] + (f.mid[0] - (f.hip[0] + f.sh[0]) / 2), f.mid[1] + (f.mid[1] - (f.hip[1] + f.sh[1]) / 2)])} ${f2(f.sh)}`), 'class="pk-n"');
+  const neck = poly(f => [f.sh, [f.sh[0] + (f.head[0] - f.sh[0]) * .35, f.sh[1] + (f.head[1] - f.sh[1]) * .35]], 'pk-n');
+  const head = `<circle r="5.6" class="pk-h" cx="${(seq[0].head[0] + sx).toFixed(1)}" cy="${seq[0].head[1].toFixed(1)}">${anim('cx', seq.map(f => (f.head[0] + sx).toFixed(1)))}${anim('cy', seq.map(f => f.head[1].toFixed(1)))}</circle>`;
+  const J = (f, j) => j === 'h1' ? f.arms[1][2] : j === 'h0' ? f.arms[0][2] : j === 'f1' ? f.legs[1][2] : j === 'f0' ? f.legs[0][2] : j === 'k1' ? f.legs[1][1] : j === 'hip' ? f.hip : f.sh;
+  const props = (def.p || []).map(p => {
+    if (p.k === 'line') return `<line x1="${p.p[0] + sx}" y1="${p.p[1]}" x2="${p.p[2] + sx}" y2="${p.p[3]}" class="pk-p"/>`;
+    if (p.k === 'rect') return `<rect x="${p.p[0] + sx}" y="${p.p[1]}" width="${p.p[2]}" height="${p.p[3]}" rx="2" class="pk-pf"/>`;
+    if (p.k === 'circ') return `<circle cx="${p.p[0] + sx}" cy="${p.p[1]}" r="${p.p[2]}" class="pk-p" fill="none"/>`;
+    const at = seq.map(f => J(f, p.j || 'h1')), cx = at.map(q => (q[0] + sx + (p.ox || 0)).toFixed(1)), cy = at.map(q => (q[1] + (p.oy || 0)).toFixed(1));
+    if (p.k === 'cable') return `<line x1="${p.from[0] + sx}" y1="${p.from[1]}" x2="${cx[0]}" y2="${cy[0]}" class="pk-c">${anim('x2', cx)}${anim('y2', cy)}</line>`;
+    if (p.k === 'rope') return el('path', 'd', seq.map((f, i) => { const k = seq.length > 1 ? i / (seq.length - 1) : 0, y = PK_G + 6 - Math.sin(Math.PI * k) * (PK_G + 6 - f.head[1] + 14), h0 = f.arms[0][2], h1 = f.arms[1][2]; return `M${f2(h0)} C${(h0[0] - 16 + sx).toFixed(1)},${y.toFixed(1)} ${(h1[0] + 16 + sx).toFixed(1)},${y.toFixed(1)} ${f2(h1)}`; }), 'class="pk-c" fill="none"');
+    const r = { bar:6.5, plate:6.5, db:3.2, kb:4.2, ball:5, wheel:4, pad:3 }[p.k] || 3;
+    return `<circle r="${r}" class="${p.k === 'bar' || p.k === 'plate' ? 'pk-pl' : 'pk-pf'}" cx="${cx[0]}" cy="${cy[0]}">${anim('cx', cx)}${anim('cy', cy)}</circle>`;
+  }).join('');
+  const far = front ? 'pk-n' : 'pk-f';
+  const ys = fr.flatMap(f => f.pts.map(p => p[1])).concat(fr.map(f => f.head[1] - 6)), xs2 = xs.map(x => x + sx);
+  (def.p || []).forEach(p => { if (p.p){ xs2.push(p.p[0] + sx); ys.push(p.p[1]); if (p.k === 'line'){ xs2.push(p.p[2] + sx); ys.push(p.p[3]); } if (p.k === 'rect'){ xs2.push(p.p[0] + p.p[2] + sx); } if (p.k === 'circ'){ xs2.push(p.p[0] - p.p[2] + sx, p.p[0] + p.p[2] + sx); ys.push(p.p[1] - p.p[2]); } } });
+  const x0 = Math.min(...xs2), x1 = Math.max(...xs2), y0 = Math.max(0, Math.min(...ys)), y1 = PK_G + 3, side = Math.max(x1 - x0, y1 - y0) + 12, vx = (x0 + x1) / 2 - side / 2, vy = y1 + 3 - side;
+  const svg = `<svg class="pk" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${side.toFixed(1)} ${side.toFixed(1)}" role="img" aria-hidden="true"><line x1="${(vx + 3).toFixed(1)}" y1="${PK_G + 2.5}" x2="${(vx + side - 3).toFixed(1)}" y2="${PK_G + 2.5}" class="pk-gr"/>${props}${poly(f => f.legs[0], far)}${poly(f => f.arms[0], far)}${torso}${neck}${head}${poly(f => f.legs[1], 'pk-n')}${poly(f => f.arms[1], 'pk-n')}</svg>`;
+  return (PK_CACHE[ck] = svg);
+}
+
+// Bibliothèque des mouvements (A ⇄ B). Vue de profil, tourné vers la droite, sauf front:1 (vue de face).
+const BENCH = (x1, x2, y) => ({ k:'rect', p:[x1, y, x2 - x1, 4] });
+const PK = {
+  stand:{ a:{ A:[[2, 0], [-2, 0]] }, b:{ A:[[4, 0], [-4, 0]] } },
+  // ---- Jambes
+  squat:{ a:{ t:8, ar:1, A:[[-40, 150], [-40, 150]] }, b:{ t:40, ar:1, L:[[95, -35], [95, -35]], A:[[-40, 150], [-40, 150]] }, p:[{ k:'bar' }] },
+  goblet:{ a:{ t:5, A:[[25, 170], [25, 170]] }, b:{ t:25, L:[[100, -38], [100, -38]], A:[[45, 175], [45, 175]] }, p:[{ k:'kb', oy:2 }] },
+  squatpdc:{ a:{ t:4, A:[[90, 90], [90, 90]] }, b:{ t:35, L:[[95, -35], [95, -35]], A:[[90, 90], [90, 90]] } },
+  chaise:{ a:{ x:44, t:0, L:[[90, 0], [90, 0]], A:[[60, 90], [60, 90]] }, b:{ x:44, t:-2, L:[[90, 0], [90, 0]], A:[[62, 92], [62, 92]] }, p:[{ k:'line', p:[37, 30, 37, 94] }], dur:3 },
+  deepsquat:{ a:{ t:30, L:[[110, -45], [110, -45]], A:[[70, 80], [70, 80]] }, b:{ t:24, L:[[112, -46], [112, -46]], A:[[75, 85], [75, 85]] }, dur:3 },
+  presse:{ a:{ r:'hip', x:38, y:74, t:-50, L:[[170, 80], [165, 75]], A:[[30, 60], [30, 60]] }, b:{ r:'hip', x:38, y:74, t:-50, L:[[135, 130], [132, 128]], A:[[30, 60], [30, 60]] }, p:[{ k:'line', p:[16, 60, 40, 80] }, { k:'pad', j:'f1', ox:3 }] },
+  fente:{ a:{ L:[[-5, -5], [5, 5]], A:[[0, 0], [0, 0]] }, b:{ L:[[-25, -95], [80, -5]], A:[[0, 0], [0, 0]] }, p:[{ k:'db' }] },
+  bulgare:{ a:{ x:44, L:[[-40, -95], [15, -5]], A:[[0, 0], [0, 0]] }, b:{ x:44, L:[[-10, -100], [80, -12]], A:[[0, 0], [0, 0]] }, p:[BENCH(12, 30, 72), { k:'db' }] },
+  stepup:{ a:{ x:38, L:[[0, 0], [80, -5]], A:[[0, 0], [0, 0]] }, b:{ x:50, gy:74, L:[[30, -40], [0, 0]], A:[[0, 0], [0, 0]] }, p:[{ k:'rect', p:[46, 74, 26, 20] }, { k:'db' }] },
+  legext:{ a:{ r:'hip', x:42, y:66, t:-5, L:[[90, 0], [90, 0]], A:[[10, 30], [10, 30]] }, b:{ r:'hip', x:42, y:66, t:-5, L:[[90, 85], [90, 85]], A:[[10, 30], [10, 30]] }, p:[BENCH(28, 54, 68), { k:'line', p:[30, 72, 30, 94] }, { k:'pad', j:'f1', oy:-2 }] },
+  legcurl:{ a:{ r:'hip', x:46, y:70, t:90, L:[[-90, -90], [-90, -90]], A:[[150, 160], [150, 160]] }, b:{ r:'hip', x:46, y:70, t:90, L:[[-90, 170], [-90, 170]], A:[[150, 160], [150, 160]] }, p:[BENCH(30, 78, 73), { k:'line', p:[54, 77, 54, 94] }, { k:'pad', j:'f1' }] },
+  legcurlassis:{ a:{ r:'hip', x:42, y:66, t:-5, L:[[90, 80], [90, 80]], A:[[10, 30], [10, 30]] }, b:{ r:'hip', x:42, y:66, t:-5, L:[[90, -15], [90, -15]], A:[[10, 30], [10, 30]] }, p:[BENCH(28, 54, 68), { k:'line', p:[30, 72, 30, 94] }, { k:'pad', j:'f1', oy:-2 }] },
+  rdl:{ a:{ t:3, L:[[2, 0], [2, 0]], A:[[0, 0], [0, 0]] }, b:{ t:78, L:[[18, -6], [18, -6]], A:[[0, 0], [0, 0]] }, p:[{ k:'bar' }] },
+  deadlift:{ a:{ t:62, L:[[60, -25], [60, -25]], A:[[0, 0], [0, 0]] }, b:{ t:2, L:[[2, 0], [2, 0]], A:[[0, 0], [0, 0]] }, p:[{ k:'bar' }] },
+  goodmorning:{ a:{ t:4, ar:1, A:[[-40, 150], [-40, 150]] }, b:{ t:75, ar:1, L:[[15, -5], [15, -5]], A:[[-40, 150], [-40, 150]] }, p:[{ k:'bar' }] },
+  hipthrust:{ a:{ r:'sh', x:30, y:66, t:-55, L:[[125, -5], [125, -5]], A:[[55, 75], [55, 75]] }, b:{ r:'sh', x:30, y:66, t:-84, L:[[96, -2], [96, -2]], A:[[80, 95], [80, 95]] }, p:[{ k:'rect', p:[14, 68, 20, 26] }, { k:'bar', j:'hip', oy:-6 }] },
+  pont:{ a:{ r:'sh', x:28, y:88, t:-88, L:[[125, -10], [125, -10]], A:[[95, 95], [95, 95]] }, b:{ r:'sh', x:28, y:88, t:-112, L:[[88, -12], [88, -12]], A:[[95, 95], [95, 95]] } },
+  abduction:{ front:1, a:{ L:[[10, -10], [10, -10]], A:[[25, 30], [25, 30]] }, b:{ L:[[38, 5], [38, 5]], A:[[25, 30], [25, 30]] }, p:[{ k:'pad', j:'hip', oy:3 }] },
+  kickglute:{ a:{ t:20, L:[[0, 0], [5, 5]], A:[[70, 80], [70, 80]] }, b:{ t:25, L:[[0, 0], [-55, -55]], A:[[70, 80], [70, 80]] }, p:[{ k:'cable', j:'f1', from:[4, 90] }] },
+  mollets:{ a:{ A:[[0, 0], [0, 0]] }, b:{ L:[[0, 0, 50], [0, 0, 50]], A:[[0, 0], [0, 0]] }, p:[{ k:'db' }], dur:1.4 },
+  mollassis:{ a:{ r:'hip', x:40, y:68, t:0, L:[[90, 0, 0], [90, 0, 0]], A:[[30, 100], [30, 100]] }, b:{ r:'hip', x:40, y:63, t:0, L:[[90, 0, 50], [90, 0, 50]], A:[[30, 100], [30, 100]] }, p:[BENCH(26, 48, 70)], dur:1.4 },
+  // ---- Pectoraux / triceps
+  bench:{ a:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[15, 175], [15, 175]] }, b:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[178, 180], [178, 180]] }, p:[BENCH(26, 66, 68), { k:'line', p:[36, 72, 36, 94] }, { k:'line', p:[58, 72, 58, 94] }, { k:'bar' }] },
+  benchdb:{ a:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[15, 175], [15, 175]] }, b:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[178, 180], [178, 180]] }, p:[BENCH(26, 66, 68), { k:'line', p:[36, 72, 36, 94] }, { k:'line', p:[58, 72, 58, 94] }, { k:'db' }] },
+  incline:{ a:{ r:'hip', x:56, y:70, t:-55, L:[[80, -5], [80, -5]], A:[[5, 165], [5, 165]] }, b:{ r:'hip', x:56, y:70, t:-55, L:[[80, -5], [80, -5]], A:[[150, 150], [150, 150]] }, p:[{ k:'line', p:[56, 73, 36, 44] }, { k:'line', p:[46, 73, 62, 73] }, { k:'line', p:[54, 73, 54, 94] }, { k:'db' }] },
+  decline:{ a:{ r:'hip', x:56, y:62, t:-108, L:[[70, 10], [70, 10]], A:[[20, 180], [20, 180]] }, b:{ r:'hip', x:56, y:62, t:-108, L:[[70, 10], [70, 10]], A:[[185, 185], [185, 185]] }, p:[{ k:'line', p:[24, 74, 60, 64] }, { k:'line', p:[44, 70, 44, 94] }, { k:'bar' }] },
+  flyes:{ a:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[95, 110], [95, 110]] }, b:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[175, 185], [175, 185]] }, p:[BENCH(26, 66, 68), { k:'line', p:[36, 72, 36, 94] }, { k:'line', p:[58, 72, 58, 94] }, { k:'db' }] },
+  cablefly:{ front:1, a:{ t:0, L:[[12, 12], [12, 12]], A:[[110, 100], [110, 100]] }, b:{ t:0, L:[[12, 12], [12, 12]], A:[[25, 10], [25, 10]] }, p:[{ k:'cable', j:'h1', from:[96, 10] }, { k:'cable', j:'h0', from:[4, 10] }] },
+  pecdeck:{ front:1, a:{ r:'hip', x:50, y:66, L:[[30, 5], [30, 5]], A:[[95, 175], [95, 175]] }, b:{ r:'hip', x:50, y:66, L:[[30, 5], [30, 5]], A:[[40, 150], [40, 150]] }, p:[{ k:'rect', p:[40, 68, 20, 4] }] },
+  pompes:{ a:{ r:'h', x:72, y:PK_G, t:65, L:[[-65, -65, 80], [-65, -65, 80]], A:[[0, 0], [0, 0]] }, b:{ r:'h', x:72, y:PK_G, t:83, L:[[-83, -83, 80], [-83, -83, 80]], A:[[-62, 88], [-62, 88]] } },
+  pompesinc:{ a:{ r:'h', x:72, y:72, t:55, L:[[-55, -55, 70], [-55, -55, 70]], A:[[0, 0], [0, 0]] }, b:{ r:'h', x:72, y:72, t:72, L:[[-72, -72, 70], [-72, -72, 70]], A:[[-62, 88], [-62, 88]] }, p:[{ k:'rect', p:[64, 72, 22, 22] }] },
+  dips:{ a:{ r:'h', x:52, y:56, t:8, L:[[10, -70], [10, -70]], A:[[0, 0], [0, 0]] }, b:{ r:'h', x:52, y:56, t:25, L:[[15, -70], [15, -70]], A:[[-75, 30], [-75, 30]] }, p:[{ k:'line', p:[40, 56, 64, 56] }, { k:'line', p:[60, 56, 60, 94] }] },
+  dipsbanc:{ a:{ r:'h', x:34, y:68, t:-5, L:[[80, 70], [80, 70]], A:[[-15, -15], [-15, -15]] }, b:{ r:'h', x:34, y:68, t:-5, L:[[65, 75], [65, 75]], A:[[-95, 5], [-95, 5]] }, p:[BENCH(18, 38, 68), { k:'line', p:[22, 72, 22, 94] }] },
+  // ---- Dos
+  row:{ a:{ t:70, L:[[22, -8], [22, -8]], A:[[0, 0], [0, 0]] }, b:{ t:70, L:[[22, -8], [22, -8]], A:[[-70, 20], [-70, 20]] }, p:[{ k:'bar' }] },
+  rowdb:{ a:{ x:48, t:80, L:[[5, -90], [0, 0]], A:[[0, 0], [0, 0]] }, b:{ x:48, t:80, L:[[5, -90], [0, 0]], A:[[0, 0], [-70, 20]] }, p:[BENCH(34, 64, 72), { k:'db' }] },
+  pulldown:{ a:{ r:'hip', x:46, y:68, t:-8, L:[[90, 0], [90, 0]], A:[[172, 175], [172, 175]] }, b:{ r:'hip', x:46, y:68, t:-12, L:[[90, 0], [90, 0]], A:[[-25, 165], [-25, 165]] }, p:[BENCH(32, 58, 70), { k:'cable', from:[54, 2] }] },
+  cablerow:{ a:{ r:'hip', x:40, y:84, t:10, L:[[85, 90], [85, 90]], A:[[90, 90], [90, 90]] }, b:{ r:'hip', x:40, y:84, t:-12, L:[[85, 90], [85, 90]], A:[[-35, 95], [-35, 95]] }, p:[{ k:'cable', from:[96, 76] }] },
+  traction:{ a:{ r:'h', x:52, y:6, t:0, L:[[0, -40], [0, -40]], A:[[180, 180], [180, 180]] }, b:{ r:'h', x:52, y:6, t:4, L:[[0, -40], [0, -40]], A:[[-35, 160], [-35, 160]] }, p:[{ k:'line', p:[20, 6, 84, 6] }] },
+  pullover:{ a:{ t:30, L:[[10, 0], [10, 0]], A:[[165, 165], [165, 165]] }, b:{ t:30, L:[[10, 0], [10, 0]], A:[[10, 10], [10, 10]] }, p:[{ k:'cable', from:[94, 8] }] },
+  shrugs:{ front:1, a:{ L:[[8, 8], [8, 8]], A:[[12, 8], [12, 8]] }, b:{ shr:-4, L:[[8, 8], [8, 8]], A:[[12, 8], [12, 8]] }, p:[{ k:'db' }, { k:'db', j:'h0' }], dur:1.2 },
+  superman:{ a:{ r:'hip', x:50, y:88, t:92, L:[[-92, -92, 90], [-92, -92, 90]], A:[[92, 92], [92, 92]] }, b:{ r:'hip', x:50, y:88, t:76, L:[[-78, -78, 90], [-78, -78, 90]], A:[[105, 105], [105, 105]] }, dur:2 },
+  // ---- Épaules / bras
+  ohp:{ a:{ A:[[25, 170], [25, 170]] }, b:{ A:[[178, 180], [178, 180]] }, p:[{ k:'bar' }] },
+  ohpdb:{ a:{ r:'hip', x:48, y:68, L:[[90, 0], [90, 0]], A:[[20, 170], [20, 170]] }, b:{ r:'hip', x:48, y:68, L:[[90, 0], [90, 0]], A:[[178, 180], [178, 180]] }, p:[BENCH(34, 58, 70), { k:'line', p:[36, 70, 30, 40] }, { k:'db' }] },
+  latraise:{ front:1, a:{ L:[[6, 6], [6, 6]], A:[[10, 12], [10, 12]] }, b:{ L:[[6, 6], [6, 6]], A:[[88, 92], [88, 92]] }, p:[{ k:'db' }, { k:'db', j:'h0' }] },
+  frontraise:{ a:{ A:[[0, 0], [5, 5]] }, b:{ A:[[0, 0], [90, 90]] }, p:[{ k:'db' }] },
+  reardelt:{ front:1, a:{ L:[[10, 10], [10, 10]], A:[[10, 15], [10, 15]] }, b:{ L:[[10, 10], [10, 10]], A:[[85, 95], [85, 95]] }, p:[{ k:'db' }, { k:'db', j:'h0' }] },
+  facepull:{ a:{ t:-5, L:[[8, 0], [-8, 0]], A:[[90, 90], [90, 90]] }, b:{ t:-5, L:[[8, 0], [-8, 0]], A:[[100, 175], [100, 175]] }, p:[{ k:'cable', from:[96, 20] }] },
+  curl:{ a:{ A:[[0, 0], [0, 5]] }, b:{ A:[[5, 155], [5, 155]] }, p:[{ k:'bar' }] },
+  curldb:{ a:{ A:[[0, 0], [0, 5]] }, b:{ A:[[0, 0], [5, 155]] }, p:[{ k:'db' }] },
+  curlpupitre:{ a:{ r:'hip', x:40, y:70, t:20, L:[[90, 0], [90, 0]], A:[[55, 60], [55, 60]] }, b:{ r:'hip', x:40, y:70, t:20, L:[[90, 0], [90, 0]], A:[[55, 165], [55, 165]] }, p:[{ k:'line', p:[52, 52, 68, 66] }, BENCH(28, 50, 72), { k:'bar' }] },
+  curlpoulie:{ a:{ A:[[0, 10], [0, 10]] }, b:{ A:[[5, 155], [5, 155]] }, p:[{ k:'cable', from:[96, 92] }] },
+  pushdown:{ a:{ t:12, L:[[5, 0], [-5, 0]], A:[[-5, 160], [-5, 160]] }, b:{ t:12, L:[[5, 0], [-5, 0]], A:[[-5, 5], [-5, 5]] }, p:[{ k:'cable', from:[70, 4] }] },
+  overhead:{ a:{ A:[[170, -15], [170, -15]] }, b:{ A:[[170, 175], [170, 175]] }, p:[{ k:'db' }] },
+  skull:{ a:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[-168, -95], [-168, -95]] }, b:{ r:'hip', x:60, y:66, t:-90, L:[[50, -5], [50, -5]], A:[[-168, -172], [-168, -172]] }, p:[BENCH(26, 66, 68), { k:'line', p:[36, 72, 36, 94] }, { k:'line', p:[58, 72, 58, 94] }, { k:'bar' }] },
+  kickback:{ a:{ t:70, L:[[22, -8], [22, -8]], A:[[0, 0], [-80, 5]] }, b:{ t:70, L:[[22, -8], [22, -8]], A:[[0, 0], [-80, -95]] }, p:[{ k:'db' }] },
+  // ---- Abdos
+  plank:{ a:{ r:'g', t:76, L:[[-76, -76, 80], [-76, -76, 80]], A:[[0, 90], [0, 90]] }, b:{ r:'g', t:77, L:[[-77, -77, 80], [-77, -77, 80]], A:[[0, 90], [0, 90]] }, dur:3 },
+  sideplank:{ a:{ r:'g', t:72, L:[[-72, -72, 80], [-72, -72, 80]], A:[[0, 90], [150, 120]] }, b:{ r:'g', t:72, L:[[-72, -72, 80], [-72, -72, 80]], A:[[0, 90], [180, 180]] }, dur:2.4 },
+  crunch:{ a:{ r:'hip', x:52, y:88, t:-90, L:[[135, 10], [135, 10]], A:[[-160, -20], [-160, -20]], ar:1 }, b:{ r:'hip', x:52, y:88, t:-55, cv:-3, L:[[135, 10], [135, 10]], A:[[-160, -20], [-160, -20]], ar:1 } },
+  cablecrunch:{ a:{ t:5, L:[[0, -90], [0, -90]], A:[[160, -150], [160, -150]], ar:1 }, b:{ t:85, cv:-3, L:[[0, -90], [0, -90]], A:[[160, -150], [160, -150]], ar:1 }, p:[{ k:'cable', from:[60, 4] }] },
+  hangraise:{ a:{ r:'h', x:52, y:6, L:[[0, -30], [0, -30]], A:[[180, 180], [180, 180]] }, b:{ r:'h', x:52, y:6, t:-8, L:[[95, 95], [95, 95]], A:[[180, 180], [180, 180]] }, p:[{ k:'line', p:[20, 6, 84, 6] }] },
+  legraise:{ a:{ r:'hip', x:55, y:88, t:-90, L:[[88, 88, 0], [88, 88, 0]], A:[[-85, -85], [-85, -85]] }, b:{ r:'hip', x:55, y:88, t:-90, L:[[175, 175, 0], [175, 175, 0]], A:[[-85, -85], [-85, -85]] } },
+  twist:{ a:{ r:'hip', x:48, y:88, t:-40, L:[[70, 20], [70, 20]], A:[[60, 80], [80, 100]] }, b:{ r:'hip', x:48, y:88, t:-40, L:[[70, 20], [70, 20]], A:[[100, 120], [40, 60]] }, p:[{ k:'ball' }], dur:1.2 },
+  wheel:{ a:{ r:'g', t:40, L:[[0, -90], [0, -90]], A:[[5, 5], [5, 5]] }, b:{ r:'g', t:78, L:[[-45, -90], [-45, -90]], A:[[150, 150], [150, 150]] }, p:[{ k:'wheel' }] },
+  climbers:{ a:{ r:'h', x:72, y:PK_G, t:65, L:[[-65, -65, 80], [30, -60, 80]], A:[[0, 0], [0, 0]] }, b:{ r:'h', x:72, y:PK_G, t:65, L:[[30, -60, 80], [-65, -65, 80]], A:[[0, 0], [0, 0]] }, dur:.7 },
+  // ---- Cardio / pliométrie
+  run:{ a:{ t:12, L:[[-35, -85], [55, -10]], A:[[60, 150], [-40, 60]] }, b:{ t:12, L:[[55, -10], [-35, -85]], A:[[-40, 60], [60, 150]] }, dur:.7 },
+  walk:{ a:{ t:3, L:[[-20, -25], [25, 5]], A:[[25, 40], [-25, -10]] }, b:{ t:3, L:[[25, 5], [-20, -25]], A:[[-25, -10], [25, 40]] }, dur:1.1 },
+  bike:{ a:{ r:'hip', x:40, y:52, t:45, L:[[85, -20], [20, -10]], A:[[55, 70], [55, 70]] }, b:{ r:'hip', x:40, y:52, t:45, L:[[20, -10], [85, -20]], A:[[55, 70], [55, 70]] }, p:[{ k:'circ', p:[30, 82, 11] }, { k:'circ', p:[74, 82, 11] }, { k:'line', p:[30, 82, 46, 60] }, { k:'line', p:[46, 60, 66, 60] }, { k:'line', p:[66, 60, 74, 82] }], dur:.9 },
+  rameur:{ a:{ r:'hip', x:38, y:84, t:30, L:[[150, 40], [150, 40]], A:[[95, 95], [95, 95]] }, b:{ r:'hip', x:52, y:84, t:-25, L:[[95, 92], [95, 92]], A:[[-30, 100], [-30, 100]] }, p:[{ k:'line', p:[14, 90, 92, 90] }, { k:'cable', from:[90, 78] }], dur:1.6 },
+  elliptique:{ a:{ t:5, L:[[-15, -20], [20, 0]], A:[[60, 100], [20, 80]] }, b:{ t:5, L:[[20, 0], [-15, -20]], A:[[20, 80], [60, 100]] }, dur:1.1 },
+  nage:{ a:{ r:'hip', x:46, y:70, t:90, L:[[-95, -95, 90], [-85, -85, 90]], A:[[90, 90], [-10, -40]] }, b:{ r:'hip', x:46, y:70, t:90, L:[[-85, -85, 90], [-95, -95, 90]], A:[[-10, -40], [90, 90]] }, p:[{ k:'line', p:[4, 66, 96, 66] }], dur:1.2 },
+  corde:{ a:{ A:[[25, 50], [25, 50]], L:[[0, 0, 10], [0, 0, 10]] }, b:{ dy:-6, A:[[25, 50], [25, 50]], L:[[0, 0, 40], [0, 0, 40]] }, p:[{ k:'rope' }], dur:.55 },
+  burpee:{ a:{ A:[[160, 165], [160, 165]] }, b:{ t:65, L:[[-65, -65, 80], [-65, -65, 80]], A:[[0, 0], [0, 0]], x:40 }, dur:1.6 },
+  boxjump:{ a:{ x:26, t:35, L:[[70, -30], [70, -30]], A:[[-60, -60], [-60, -60]] }, b:{ x:66, gy:70, t:20, arc:16, L:[[60, -25], [60, -25]], A:[[100, 110], [100, 110]] }, p:[{ k:'rect', p:[54, 70, 28, 24] }], dur:1.5 },
+  sautsquat:{ a:{ t:35, L:[[90, -35], [90, -35]], A:[[-40, -40], [-40, -40]] }, b:{ t:2, dy:-8, L:[[0, 0, 50], [0, 0, 50]], A:[[120, 125], [120, 125]] }, dur:1.1 },
+  fentesaut:{ a:{ L:[[-25, -95], [80, -5]], A:[[30, 60], [-30, -10]] }, b:{ arc:10, L:[[80, -5], [-25, -95]], A:[[-30, -10], [30, 60]] }, dur:1.2 },
+  skater:{ front:1, a:{ x:36, t:-15, L:[[60, -20], [20, 30]], A:[[40, 50], [40, 50]] }, b:{ x:64, t:15, L:[[20, 30], [60, -20]], A:[[40, 50], [40, 50]] }, dur:1.2 },
+  longueur:{ a:{ x:28, t:45, L:[[75, -30], [75, -30]], A:[[-70, -70], [-70, -70]] }, b:{ x:72, t:30, arc:14, L:[[80, -30], [80, -30]], A:[[90, 90], [90, 90]] }, dur:1.5 },
+  tuck:{ a:{ t:20, L:[[60, -25], [60, -25]], A:[[-40, -40], [-40, -40]] }, b:{ dy:-20, t:10, L:[[110, -40], [110, -40]], A:[[70, 100], [70, 100]] }, dur:1.1 },
+  pompesexp:{ a:{ r:'h', x:72, y:PK_G, t:80, L:[[-80, -80, 80], [-80, -80, 80]], A:[[-55, 85], [-55, 85]] }, b:{ r:'h', x:72, y:PK_G - 8, t:62, L:[[-62, -62, 80], [-62, -62, 80]], A:[[20, 20], [20, 20]] }, dur:1 },
+  slam:{ a:{ L:[[0, 0, 30], [0, 0, 30]], A:[[178, 180], [178, 180]] }, b:{ t:55, L:[[70, -30], [70, -30]], A:[[40, 40], [40, 40]] }, p:[{ k:'ball' }], dur:1.1 },
+  // ---- Mobilité / étirements
+  wgs:{ a:{ t:60, L:[[-40, -90], [85, -15]], A:[[0, 0], [10, 10]] }, b:{ t:60, L:[[-40, -90], [85, -15]], A:[[0, 0], [150, 160]] }, dur:2.6 },
+  hanches9090:{ a:{ r:'hip', x:50, y:86, t:0, L:[[90, 10], [-90, -170]], A:[[20, 60], [20, 60]] }, b:{ r:'hip', x:50, y:86, t:40, L:[[90, 10], [-90, -170]], A:[[60, 90], [60, 90]] }, dur:2.6 },
+  cheville:{ a:{ x:44, t:5, L:[[0, -90], [80, 0]], A:[[60, 100], [60, 100]] }, b:{ x:47, t:5, L:[[10, -90], [95, -25]], A:[[60, 100], [60, 100]] }, p:[{ k:'line', p:[84, 40, 84, 94] }], dur:2 },
+  openbook:{ a:{ r:'hip', x:56, y:86, t:-90, L:[[70, -20], [70, -20]], A:[[5, 5], [5, 5]] }, b:{ r:'hip', x:56, y:86, t:-90, L:[[70, -20], [70, -20]], A:[[5, 5], [175, 175]] }, dur:2.6 },
+  dislo:{ a:{ A:[[25, 25], [25, 25]] }, b:{ A:[[205, 205], [205, 205]] }, p:[{ k:'pad' }], dur:2.4 },
+  chatvache:{ a:{ r:'g', t:90, cv:4, L:[[0, -90, 0], [0, -90, 0]], A:[[0, 0], [0, 0]] }, b:{ r:'g', t:90, cv:-4, L:[[0, -90, 0], [0, -90, 0]], A:[[0, 0], [0, 0]] }, dur:2.6 },
+  psoas:{ a:{ x:44, t:0, L:[[-5, -90], [80, -5]], A:[[175, 175], [175, 175]] }, b:{ x:47, t:-6, L:[[-25, -90], [92, -20]], A:[[178, 178], [178, 178]] }, dur:2.6 },
+  pigeon:{ a:{ r:'hip', x:50, y:84, t:0, L:[[-90, -90, 90], [70, -100]], A:[[30, 30], [30, 30]] }, b:{ r:'hip', x:50, y:84, t:70, L:[[-90, -90, 90], [70, -100]], A:[[95, 95], [95, 95]] }, dur:2.6 },
+  ischios:{ a:{ r:'hip', x:38, y:88, t:0, L:[[90, 90, -90], [90, 90, -90]], A:[[170, 175], [170, 175]] }, b:{ r:'hip', x:38, y:88, t:62, L:[[90, 90, -90], [90, 90, -90]], A:[[95, 95], [95, 95]] }, dur:2.6 },
+  pecmur:{ a:{ x:56, t:0, A:[[0, 0], [-90, -180]] }, b:{ x:56, t:12, A:[[0, 0], [-100, -185]] }, p:[{ k:'line', p:[28, 30, 28, 94] }], dur:2.4 },
+  enfant:{ a:{ r:'g', t:95, cv:6, L:[[78, -90, 0], [78, -90, 0]], A:[[95, 92], [95, 92]] }, b:{ r:'g', t:98, cv:7, L:[[80, -90, 0], [80, -90, 0]], A:[[96, 93], [96, 93]] }, dur:3 },
+};
+// exercice → mouvement
+const PK_MAP = {
+  'Développé couché':'bench', 'Développé incliné haltères':'incline', 'Développé couché haltères':'benchdb', 'Développé décliné':'decline', 'Écartés aux câbles':'cablefly', 'Écartés haltères':'flyes', 'Pec deck':'pecdeck', 'Pompes':'pompes', 'Pompes inclinées':'pompesinc',
+  'Soulevé de terre':'deadlift', 'Rowing barre':'row', 'Tirage vertical (Lat Pulldown)':'pulldown', 'Tirage horizontal (Cable Row)':'cablerow', 'Tractions':'traction', 'Rowing haltère un bras':'rowdb', 'Pull-over poulie':'pullover', 'Shrugs (trapèzes)':'shrugs', 'Superman':'superman',
+  'Développé militaire':'ohp', 'Développé haltères assis':'ohpdb', 'Élévations latérales':'latraise', 'Élévations frontales':'frontraise', 'Oiseau (Rear Delt Fly)':'reardelt', 'Face Pull':'facepull', 'Arnold press':'ohpdb',
+  'Curl barre':'curl', 'Curl marteau':'curldb', 'Curl haltères alterné':'curldb', 'Curl pupitre':'curlpupitre', 'Curl poulie basse':'curlpoulie',
+  'Dips':'dips', 'Extension triceps poulie haute':'pushdown', 'Extension triceps au-dessus tête':'overhead', 'Barre au front':'skull', 'Kickback haltère':'kickback', 'Pompes diamant':'pompes', 'Dips sur banc':'dipsbanc',
+  'Squat':'squat', 'Presse à jambes':'presse', 'Fentes marchées':'fente', 'Leg extension':'legext', 'Squat goblet':'goblet', 'Squat bulgare':'bulgare', 'Squat poids du corps':'squatpdc', 'Chaise':'chaise',
+  'Soulevé de terre roumain':'rdl', 'Curl jambes allongé':'legcurl', 'Curl jambes assis':'legcurlassis', 'Good morning':'goodmorning',
+  'Hip thrust':'hipthrust', 'Pont fessier':'pont', 'Abduction machine':'abduction', 'Kickback poulie':'kickglute', 'Step-up':'stepup',
+  'Mollets debout':'mollets', 'Mollets assis':'mollassis', 'Mollets à la presse':'presse',
+  'Relevé de jambes suspendu':'hangraise', 'Crunch aux câbles':'cablecrunch', 'Crunch':'crunch', 'Gainage':'plank', 'Gainage latéral':'sideplank', 'Russian twist':'twist', 'Roue abdominale':'wheel', 'Relevé de jambes au sol':'legraise', 'Mountain climbers':'climbers',
+  'Course à pied':'run', 'Vélo':'bike', 'Rameur':'rameur', 'Elliptique':'elliptique', 'Marche rapide':'walk', 'Natation':'nage', 'Corde à sauter':'corde', 'Burpees':'burpee', 'HIIT 30/30':'sautsquat',
+  'Box jump':'boxjump', 'Squat sauté':'sautsquat', 'Fentes sautées':'fentesaut', 'Sauts latéraux (skater)':'skater', 'Saut en longueur sans élan':'longueur', 'Sauts groupés':'tuck', 'Pompes explosives':'pompesexp', 'Slam médecine-ball':'slam',
+  'World’s greatest stretch':'wgs', 'Mobilité de hanches 90/90':'hanches9090', 'Mobilité cheville genou au mur':'cheville', 'Rotation thoracique (open book)':'openbook', 'Dislocations d’épaules (bâton)':'dislo', 'Chat-vache':'chatvache', 'Squat profond tenu':'deepsquat', 'Étirement du psoas':'psoas', 'Pigeon (fessiers)':'pigeon', 'Étirement des ischios':'ischios', 'Étirement des pectoraux au mur':'pecmur', 'Posture de l’enfant':'enfant',
+  'Course (minuteur)':'run', 'Tabata (minuteur)':'sautsquat', 'HIIT (minuteur)':'sautsquat', 'EMOM (minuteur)':'burpee', 'Circuit (minuteur)':'burpee', 'Marche':'walk'
+};
+// exercices perso : mots-clés, puis groupe musculaire
+const PK_KW = [[/traction|pull.?up|chin/, 'traction'], [/pompe|push.?up/, 'pompes'], [/dips/, 'dips'], [/squat saut|jump squat/, 'sautsquat'], [/box/, 'boxjump'], [/squat|goblet/, 'squat'], [/fente|lunge/, 'fente'], [/presse/, 'presse'], [/soulev|deadlift/, 'deadlift'], [/roumain|rdl/, 'rdl'],
+  [/hip thrust|pont/, 'hipthrust'], [/mollet|calf/, 'mollets'], [/d.velopp. couch|bench/, 'bench'], [/inclin/, 'incline'], [/militaire|overhead press|d.velopp. (halt|.paule)/, 'ohp'], [/.l.vation lat/, 'latraise'], [/.cart/, 'flyes'], [/rowing|row/, 'row'], [/tirage/, 'pulldown'],
+  [/curl jambe|leg curl/, 'legcurl'], [/leg ext/, 'legext'], [/curl/, 'curl'], [/triceps|extension/, 'pushdown'], [/gainage|planche|plank/, 'plank'], [/crunch|abdo/, 'crunch'], [/course|run|footing|tapis/, 'run'], [/v.lo|bike|spinning/, 'bike'], [/rameur|row/, 'rameur'], [/marche|walk/, 'walk'],
+  [/natation|nage|swim/, 'nage'], [/corde|rope/, 'corde'], [/burpee/, 'burpee'], [/saut|jump/, 'tuck'], [/.tirement|stretch|mobilit/, 'ischios'], [/yoga/, 'enfant']];
+const PK_MUS = { 'Pectoraux':'bench', 'Dos':'row', 'Épaules':'ohp', 'Biceps':'curl', 'Triceps':'pushdown', 'Quadriceps':'squat', 'Ischio-jambiers':'rdl', 'Fessiers':'hipthrust', 'Mollets':'mollets', 'Abdos':'crunch', 'Cardio':'run', 'Pliométrie':'sautsquat', 'Mobilité':'ischios' };
+function pkKey(e){
+  if (!e) return 'stand';
+  if (PK_MAP[e.n]) return PK_MAP[e.n];
+  const n = String(e.n || '').toLowerCase(); for (const [re, k] of PK_KW) if (re.test(n)) return k;
+  return PK_MUS[e.m] || 'stand';
+}
+const picto = (e, still) => pkSvg(pkKey(e), { still });
 
 /* ============================================================
    RENDU ET ÉVÉNEMENTS
