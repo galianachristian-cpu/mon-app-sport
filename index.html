@@ -441,9 +441,11 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 
 /* Pictogrammes animés */
 .pk{display:block;width:100%;height:100%}
-.pk polyline,.pk path{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:5}
-.pk .pk-n{stroke:var(--a1)}.pk .pk-f{stroke:var(--a2);opacity:.6}.pk .pk-h{fill:var(--a1)}
-.pk .pk-gr{stroke:var(--line);stroke-width:2}.pk .pk-p{stroke:var(--muted);stroke-width:3;stroke-linecap:round}.pk .pk-pf{fill:var(--muted)}.pk .pk-pl{fill:none;stroke:var(--soft);stroke-width:3}.pk .pk-c{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:2 2}
+.pk polyline,.pk path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pk .pk-o{stroke:#6b7486}.pk .pk-b{stroke:#dde1e7}.pk .pk-bf{stroke:#b4bcc8}.pk .pk-r{stroke:#e5484d}.pk .pk-rf{stroke:#b93a3e}
+.pk .pk-hd{fill:#dde1e7;stroke:#6b7486;stroke-width:1.2}.pk .pk-sh{fill:rgba(20,30,50,.16)}
+.pk .pk-p{stroke:#4f586a;stroke-width:3;stroke-linecap:round}.pk .pk-pf{fill:#59627a}.pk .pk-pl{fill:#2c3240;stroke:#59627a;stroke-width:1.6}.pk .pk-c{stroke:#7f889a;stroke-width:1.3;stroke-dasharray:2 2;fill:none}
+.emo.pkb,.pkbig,.g-emo.pkg{background:radial-gradient(circle at 50% 35%,#ffffff,#dfe4ec)!important;border-color:#c9d0db}
 .emo.pkb{padding:3px;overflow:hidden}
 .pkbig{width:180px;height:180px;margin:0 auto 12px;background:var(--bg2);border:1px solid var(--line);border-radius:22px;padding:8px}
 .g-emo.pkg{width:min(52vw,220px);height:min(52vw,220px);background:var(--card);border:1px solid var(--line);border-radius:26px;padding:10px}
@@ -2832,7 +2834,7 @@ const PK_CACHE = {};
 function pkSvg(key, opt){
   opt = opt || {};
   const def = PK[key] || PK.stand, front = !!def.front, still = opt.still || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const ck = key + (still ? ':s' + (opt.frame ?? '') : ':a'); if (PK_CACHE[ck]) return PK_CACHE[ck];
+  const mus = opt.mus || '', ck = key + '|' + mus + (still ? ':s' + (opt.frame ?? '') : ':a'); if (PK_CACHE[ck]) return PK_CACHE[ck];
   const A = pkFull(def.a), B = pkFull(def.b || def.a), N = 8;
   const ease = s => .5 - Math.cos(Math.PI * s) / 2;
   const fr = []; for (let i = 0; i <= N; i++) { const P = pkLerp(A, B, ease(i / N)); fr.push(pkPlace(P, pkJoints(P, front))); }
@@ -2847,6 +2849,7 @@ function pkSvg(key, opt){
   const neck = poly(f => [f.sh, [f.sh[0] + (f.head[0] - f.sh[0]) * .35, f.sh[1] + (f.head[1] - f.sh[1]) * .35]], 'pk-n');
   const head = `<circle r="5.6" class="pk-h" cx="${(seq[0].head[0] + sx).toFixed(1)}" cy="${seq[0].head[1].toFixed(1)}">${anim('cx', seq.map(f => (f.head[0] + sx).toFixed(1)))}${anim('cy', seq.map(f => f.head[1].toFixed(1)))}</circle>`;
   const J = (f, j) => j === 'h1' ? f.arms[1][2] : j === 'h0' ? f.arms[0][2] : j === 'f1' ? f.legs[1][2] : j === 'f0' ? f.legs[0][2] : j === 'k1' ? f.legs[1][1] : j === 'hip' ? f.hip : f.sh;
+  const BACKP = ['line', 'rect', 'circ', 'cable', 'rope'], pList = (def.p || []).map(p => [p, BACKP.includes(p.k)]);
   const props = (def.p || []).map(p => {
     if (p.k === 'line') return `<line x1="${p.p[0] + sx}" y1="${p.p[1]}" x2="${p.p[2] + sx}" y2="${p.p[3]}" class="pk-p"/>`;
     if (p.k === 'rect') return `<rect x="${p.p[0] + sx}" y="${p.p[1]}" width="${p.p[2]}" height="${p.p[3]}" rx="2" class="pk-pf"/>`;
@@ -2856,12 +2859,29 @@ function pkSvg(key, opt){
     if (p.k === 'rope') return el('path', 'd', seq.map((f, i) => { const k = seq.length > 1 ? i / (seq.length - 1) : 0, y = PK_G + 6 - Math.sin(Math.PI * k) * (PK_G + 6 - f.head[1] + 14), h0 = f.arms[0][2], h1 = f.arms[1][2]; return `M${f2(h0)} C${(h0[0] - 16 + sx).toFixed(1)},${y.toFixed(1)} ${(h1[0] + 16 + sx).toFixed(1)},${y.toFixed(1)} ${f2(h1)}`; }), 'class="pk-c" fill="none"');
     const r = { bar:6.5, plate:6.5, db:3.2, kb:4.2, ball:5, wheel:4, pad:3 }[p.k] || 3;
     return `<circle r="${r}" class="${p.k === 'bar' || p.k === 'plate' ? 'pk-pl' : 'pk-pf'}" cx="${cx[0]}" cy="${cy[0]}">${anim('cx', cx)}${anim('cy', cy)}</circle>`;
-  }).join('');
-  const far = front ? 'pk-n' : 'pk-f';
-  const ys = fr.flatMap(f => f.pts.map(p => p[1])).concat(fr.map(f => f.head[1] - 6)), xs2 = xs.map(x => x + sx);
+  });
+  const propsB = props.filter((_, i) => pList[i][1]).join(''), propsF = props.filter((_, i) => !pList[i][1]).join('');
+  const lerp2 = (p, q, k) => [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
+  const tseg = (f, k0, k1, off) => { const u = [f.sh[0] - f.hip[0], f.sh[1] - f.hip[1]], L = Math.hypot(u[0], u[1]) || 1, n = front ? [0, 0] : [-u[1] / L * off, u[0] / L * off]; const p = lerp2(f.hip, f.sh, k0), q = lerp2(f.hip, f.sh, k1); return [[p[0] + n[0], p[1] + n[1]], [q[0] + n[0], q[1] + n[1]]]; };
+  const limb = (get, w, cls) => poly(get, cls + '" style="stroke-width:' + w);
+  const body = (side) => { const fa = side === 0, c = fa && !front ? 'pk-bf' : 'pk-b';
+    return limb(f => f.legs[side], 9.6, 'pk-o') + limb(f => f.legs[side], 7.4, c) + limb(f => f.arms[side], 7.6, 'pk-o') + limb(f => f.arms[side], 5.6, c) + hl(side); };
+  const M = { 'Quadriceps':['thigh'], 'Ischio-jambiers':['thigh'], 'Fessiers':['glute', 'thigh0'], 'Mollets':['shin'], 'Pectoraux':['chest'], 'Dos':['back'], 'Épaules':['delt'], 'Biceps':['upper'], 'Triceps':['upper'], 'Abdos':['abs'], 'Cardio':['thigh', 'shin'], 'Pliométrie':['thigh', 'shin', 'glute'] }[mus] || [];
+  const red = (get, w, side) => poly(get, (side === 0 && !front ? 'pk-rf' : 'pk-r') + '" style="stroke-width:' + w);
+  function hl(side){ return M.map(m => m === 'thigh' ? red(f => [lerp2(f.legs[side][0], f.legs[side][1], .12), lerp2(f.legs[side][0], f.legs[side][1], .85)], 5.2, side)
+      : m === 'thigh0' ? red(f => [lerp2(f.legs[side][0], f.legs[side][1], .1), lerp2(f.legs[side][0], f.legs[side][1], .45)], 5.2, side)
+      : m === 'shin' ? red(f => [lerp2(f.legs[side][1], f.legs[side][2], .15), lerp2(f.legs[side][1], f.legs[side][2], .6)], 4.6, side)
+      : m === 'upper' ? red(f => [lerp2(f.arms[side][0], f.arms[side][1], .25), lerp2(f.arms[side][0], f.arms[side][1], .85)], 3.8, side)
+      : m === 'delt' ? red(f => [f.arms[side][0], lerp2(f.arms[side][0], f.arms[side][1], .3)], 6.4, side) : '').join(''); }
+  const thl = M.map(m => m === 'chest' ? red(f => tseg(f, .58, .9, 3.2), 6.5) : m === 'back' ? red(f => tseg(f, .35, .9, -3.2), 6.5) : m === 'abs' ? red(f => tseg(f, .12, .55, 3.4), 5.5) : m === 'glute' ? red(f => tseg(f, -.02, .16, -3.4), 7) : '').join('');
+  const trunk = el('path', 'd', seq.map(f => `M${f2(f.hip)} Q${f2([f.mid[0] + (f.mid[0] - (f.hip[0] + f.sh[0]) / 2), f.mid[1] + (f.mid[1] - (f.hip[1] + f.sh[1]) / 2)])} ${f2(f.sh)}`), 'class="pk-o" style="stroke-width:15.4"') + torso.replace('class="pk-n"', 'class="pk-b" style="stroke-width:13"');
+  const neck2 = poly(f => [f.sh, [f.sh[0] + (f.head[0] - f.sh[0]) * .5, f.sh[1] + (f.head[1] - f.sh[1]) * .5]], 'pk-b" style="stroke-width:5');
+  const head2 = head.replace('r="5.6" class="pk-h"', 'r="6" class="pk-hd"');
+  const ys = fr.flatMap(f => f.pts.map(p => p[1])).concat(fr.map(f => f.head[1] - 7)), xs2 = xs.map(x => x + sx);
   (def.p || []).forEach(p => { if (p.p){ xs2.push(p.p[0] + sx); ys.push(p.p[1]); if (p.k === 'line'){ xs2.push(p.p[2] + sx); ys.push(p.p[3]); } if (p.k === 'rect'){ xs2.push(p.p[0] + p.p[2] + sx); } if (p.k === 'circ'){ xs2.push(p.p[0] - p.p[2] + sx, p.p[0] + p.p[2] + sx); ys.push(p.p[1] - p.p[2]); } } });
-  const x0 = Math.min(...xs2), x1 = Math.max(...xs2), y0 = Math.max(0, Math.min(...ys)), y1 = PK_G + 3, side = Math.max(x1 - x0, y1 - y0) + 12, vx = (x0 + x1) / 2 - side / 2, vy = y1 + 3 - side;
-  const svg = `<svg class="pk" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${side.toFixed(1)} ${side.toFixed(1)}" role="img" aria-hidden="true"><line x1="${(vx + 3).toFixed(1)}" y1="${PK_G + 2.5}" x2="${(vx + side - 3).toFixed(1)}" y2="${PK_G + 2.5}" class="pk-gr"/>${props}${poly(f => f.legs[0], far)}${poly(f => f.arms[0], far)}${torso}${neck}${head}${poly(f => f.legs[1], 'pk-n')}${poly(f => f.arms[1], 'pk-n')}</svg>`;
+  const x0 = Math.min(...xs2) - 3, x1 = Math.max(...xs2) + 3, y0 = Math.max(0, Math.min(...ys)), y1 = PK_G + 3, side = Math.max(x1 - x0, y1 - y0) + 12, vx = (x0 + x1) / 2 - side / 2, vy = y1 + 3 - side;
+  const fx = fr[0].legs.flat().map(p => p[0] + sx), shx = (Math.min(...fx) + Math.max(...fx)) / 2, shw = Math.max(12, (Math.max(...fx) - Math.min(...fx)) / 2 + 8);
+  const svg = `<svg class="pk" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${side.toFixed(1)} ${side.toFixed(1)}" role="img" aria-hidden="true"><ellipse cx="${shx.toFixed(1)}" cy="${PK_G + 2.5}" rx="${shw.toFixed(1)}" ry="2.6" class="pk-sh"/>${propsB}${body(0)}${trunk}${thl}${neck2}${head2}${body(1)}${propsF}</svg>`;
   return (PK_CACHE[ck] = svg);
 }
 
@@ -2996,7 +3016,7 @@ function pkKey(e){
   const n = String(e.n || '').toLowerCase(); for (const [re, k] of PK_KW) if (re.test(n)) return k;
   return PK_MUS[e.m] || 'stand';
 }
-const picto = (e, still) => pkSvg(pkKey(e), { still });
+const picto = (e, still) => pkSvg(pkKey(e), { still, mus: e && e.m });
 
 /* ============================================================
    RENDU ET ÉVÉNEMENTS
