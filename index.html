@@ -457,6 +457,10 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 .g-emo.pkg:has(.exgif){padding:0;overflow:hidden;background:#fff;width:min(70vw,300px);height:min(70vw,300px)}
 .duov .g-emo.pkg:has(.exgif){width:min(40vw,170px);height:min(40vw,170px)}
 .emo.pkb:has(.exgif){padding:0;background:#fff}
+
+.itvis{width:min(62vw,260px);height:min(62vw,260px);border-radius:24px;overflow:hidden;background:#fff;margin:4px auto 6px;border:1px solid var(--line)}
+.itvis.sm{width:min(36vw,140px);height:min(36vw,140px);opacity:.85}
+.itv:has(.itvis) .itmain>b{font-size:min(20vw,96px)}
 </style>
 </head>
 <body>
@@ -632,12 +636,84 @@ const LIB = [
   ['Pigeon (fessiers)','Mobilité','s','🕊️',2,'45 s','Jambe avant pliée devant soi, jambe arrière tendue, descendre le buste vers le sol. Changer de côté.','Un coussin sous la hanche si besoin.'],
   ['Étirement des ischios','Mobilité','s','🧘',2,'30 s','Jambe tendue sur un support bas, pencher le buste dos droit. Changer de côté.','Pas d’à-coups.'],
   ['Étirement des pectoraux au mur','Mobilité','s','🧱',2,'30 s','Avant-bras contre un mur, tourner le buste à l’opposé. Changer de côté.','Épaule basse.'],
-  ['Posture de l’enfant','Mobilité','s','🧎',2,'45 s','À genoux, fesses sur les talons, bras allongés devant, respirer dans le dos.','Idéal en fin de séance.']
+  ['Posture de l’enfant','Mobilité','s','🧎',2,'45 s','À genoux, fesses sur les talons, bras allongés devant, respirer dans le dos.','Idéal en fin de séance.'],
+  ['Cercles de hanches','Étirements','s','🔄',2,'30 s','Debout, pieds largeur de hanches, mains sur les hanches. Dessiner lentement de grands cercles avec le bassin, puis changer de sens.','Buste droit, mouvement ample mais sans à-coups.'],
+  ['Étirement des bras à deux','Étirements','s','👫',2,'30 s','Allongé sur le dos, bras tendus au-dessus de la tête. Le partenaire tient les poignets et tire doucement dans l’axe du corps.','Le partenaire va progressivement ; dire stop dès que ça tire fort.'],
+  ['Étirement des ischios à deux','Étirements','s','👫',2,'30 s par côté','Allongé sur le dos, une jambe au sol. Le partenaire soulève l’autre jambe tendue et la pousse lentement vers la tête.','Genou tendu, bassin collé au sol. Jamais dans la douleur.'],
+  ['Étirement des pectoraux à deux','Étirements','s','👫',2,'30 s','À plat ventre, bras tendus derrière soi. Le partenaire, debout au-dessus, remonte doucement les bras vers le haut.','Front posé au sol, épaules relâchées. Monter très progressivement.'],
+  ['Étirement du fessier à deux','Étirements','s','👫',2,'30 s par côté','Allongé sur le dos, genou plié ramené vers la poitrine. Le partenaire le pousse doucement vers l’épaule opposée.','Les deux épaules restent au sol.'],
+  ['Étirement du mollet à deux','Étirements','s','👫',2,'30 s par côté','Allongé sur le dos, jambe tendue. Le partenaire soulève la jambe et pousse la pointe du pied vers le tibia.','Genou bien tendu pour cibler le mollet.'],
+  ['Étirement de l’avant-bras','Étirements','s','✋',2,'30 s par côté','Bras tendu devant soi, coude verrouillé. Avec l’autre main, tirer doucement les doigts vers soi.','Idéal après les tractions, le rowing et les curls.'],
+  ['Étirement de l’épaule bras croisé','Étirements','s','💪',2,'30 s par côté','Passer un bras tendu devant la poitrine et le maintenir contre soi avec l’autre bras.','Épaule basse, loin de l’oreille.'],
+  ['Étirement de l’épaule bras fléchi','Étirements','s','💪',2,'30 s par côté','Bras plié à 90° devant la poitrine. L’autre main tire doucement le coude en travers du corps.','Buste immobile, ne pas tourner le tronc.'],
+  ['Étirement de la colonne','Étirements','s','🧘',2,'30 s','Assis, jambes tendues et écartées, bras devant. Grandir le dos en inspirant, puis s’enrouler vers l’avant en expirant, menton rentré.','Descendre vertèbre par vertèbre, sans forcer.'],
+  ['Croix de fer','Étirements','s','✝️',2,'30 s par côté','Allongé sur le dos, bras en T. Lever une jambe tendue puis l’amener vers la main opposée.','Les deux épaules restent collées au sol.'],
+  ['Étirement de hanche 90/90','Étirements','s','🦵',2,'30 s par côté','Assis, jambe avant pliée à 90° devant, jambe arrière pliée à 90° sur le côté. Se pencher doucement au-dessus du tibia avant.','Dos long ; changer de côté à mi-temps.'],
+  ['Adducteurs allongé sur le dos','Étirements','s','🦵',2,'30 s','Allongé, jambes tendues à la verticale. Les laisser s’ouvrir lentement sur les côtés.','Bas du dos collé au sol ; plier un peu les genoux si besoin.'],
+  ['Adducteurs en fente latérale','Étirements','s','🦵',2,'30 s par côté','Pieds très écartés, descendre le bassin vers une jambe pliée, l’autre jambe tendue, pointe du pied vers le haut.','Talon de la jambe pliée au sol, dos droit.'],
+  ['Étirement des chevilles assis','Étirements','s','🦶',2,'30 s','À genoux, s’asseoir sur les talons, dessus des pieds au sol. Peser doucement vers l’arrière.','Dos droit ; réduire si les genoux tirent.'],
+  ['Épaules et dos enroulé','Étirements','s','🙇',2,'30 s','Debout, genoux souples, enrouler le buste vers l’avant et attraper l’arrière des genoux bras croisés, tête relâchée.','Remonter très lentement en déroulant le dos.'],
+  ['Fléchisseurs de hanche à genoux','Étirements','s','🧎',2,'30 s par côté','En fente, genou arrière au sol. Serrer le fessier arrière et avancer légèrement le bassin.','Buste droit, ne pas creuser le dos.'],
+  ['Pectoraux à genoux sur banc','Étirements','s','🧎',2,'30 s','À genoux face à un banc, avant-bras posés dessus. Laisser descendre la poitrine vers le sol.','Idéal après le développé couché.'],
+  ['Quadriceps en arrière','Étirements','s','🦵',2,'30 s','À genoux, s’asseoir entre les talons puis s’incliner en arrière sur les mains.','À éviter en cas de douleur aux genoux.'],
+  ['Étirement du dos à la barre','Étirements','s','🧗',2,'30 s','Tenir une barre ou un poteau bras tendus, reculer les hanches et laisser descendre la poitrine.','Dos plat, sentir l’étirement sous les aisselles.'],
+  ['Mollet sur une marche','Étirements','s','🪜',2,'30 s par côté','Avant du pied sur le bord d’une marche, talon dans le vide. Laisser descendre le talon doucement.','Se tenir à une rampe pour l’équilibre.'],
+  ['Quadriceps à quatre pattes','Étirements','s','🐾',2,'30 s par côté','À quatre pattes, attraper le pied d’une jambe pliée avec la main opposée et le rapprocher du fessier.','Dos neutre, abdos légèrement gainés.'],
+  ['Quadriceps debout','Étirements','s','🦩',2,'30 s par côté','Debout, attraper un pied derrière soi et ramener le talon vers le fessier.','Genoux serrés, bassin droit ; se tenir à un mur si besoin.'],
+  ['Le scorpion','Étirements','s','🦂',2,'30 s par côté','À plat ventre, bras en T. Soulever une jambe pliée et l’amener vers la main opposée.','Épaules au sol, mouvement lent.'],
+  ['Prière à genoux','Étirements','s','🙏',2,'30 s','À genoux, fesses vers les talons, enrouler le buste vers l’avant et poser le front au sol, bras allongés.','Respirer dans le dos et relâcher.'],
+  ['Rotation du dos à genoux','Étirements','s','🔄',2,'30 s par côté','À quatre pattes, passer un bras sous le corps et tourner le buste en posant l’épaule au sol.','Hanches au-dessus des genoux.'],
+  ['Jambe tendue sur banc','Étirements','s','🦵',2,'30 s par côté','Talon posé sur un banc, genou tendu. Pencher le buste vers l’avant, dos droit.','Bascule depuis les hanches, pas en arrondissant le dos.'],
+  ['Étirement latéral debout','Étirements','s','🌙',2,'30 s par côté','Debout, bras levés, doigts croisés. S’incliner sur le côté en gardant les hanches fixes.','Ne pas pencher vers l’avant.'],
+  ['Pectoraux bras levés','Étirements','s','🙌',2,'30 s','Debout, doigts croisés au-dessus de la tête, pousser doucement les bras vers l’arrière.','Abdos gainés pour ne pas cambrer.'],
+  ['Quadriceps en fente à genoux','Étirements','s','🧎',2,'30 s par côté','En fente genou au sol, attraper le pied arrière et le rapprocher du fessier.','Bassin en avant, buste droit.'],
+  ['Étirement vertical des bras','Étirements','s','🙆',2,'30 s','Debout, doigts croisés, monter les mains au-dessus de la tête paumes vers le plafond et grandir le corps.','Respirer profondément.'],
+  ['Fente profonde ischios','Étirements','s','🧎',2,'30 s par côté','Depuis une fente genou au sol, reculer les hanches et tendre la jambe avant, mains au sol.','Pointe du pied avant vers le plafond.'],
+  ['Flexion avant (toucher les orteils)','Étirements','s','🙇',2,'30 s','Debout, genoux souples, basculer le buste depuis les hanches et descendre les mains vers les pieds.','Remonter lentement ; aller seulement jusqu’où c’est confortable.'],
+  ['Flexion-extension de la colonne','Étirements','s','🐈',2,'30 s','Alterner lentement dos rond et dos creux pour mobiliser toute la colonne.','Suivre la respiration : expirer en arrondissant.'],
+  ['Mollet contre le mur','Étirements','s','🧱',2,'30 s par côté','Mains au mur, une jambe tendue en arrière talon au sol. Avancer le bassin vers le mur.','Pointe du pied arrière vers le mur.'],
+  ['Rotation assise genou relevé','Étirements','s','🔄',2,'30 s par côté','Assis, une jambe tendue, l’autre pliée par-dessus. Tourner le buste en poussant le genou avec le coude.','Dos bien droit, grandir avant de tourner.'],
+  ['Rotation des genoux','Étirements','s','🔄',2,'30 s','Pieds joints, genoux fléchis, mains sur les genoux. Dessiner des cercles avec les genoux dans les deux sens.','Talons au sol, mouvement doux.']
 ].map(([n, m, t, e, s, r, desc, tips, g]) => ({ n, m, t, e, s, r, desc, tips, gif: g ? (g.startsWith('http') ? g : GIFB + g) : '' }));
 const LIB_BY = Object.fromEntries(LIB.map(x => [x.n, x]));
 // Animations 3D Docteur Fitness (hébergées sur leur site, affichées depuis leur adresse)
 const DF_GIF_BASE = 'https://www.docteur-fitness.com/wp-content/uploads/';
 const DF_GIF = {
+  "Cercles de hanches": '2025/11/cercles-de-hanches.gif',
+  "Étirement des bras à deux": '2025/11/etirement-assiste-des-bras.gif',
+  "Étirement des ischios à deux": '2025/11/etirement-assiste-des-ischio-jambiers.gif',
+  "Étirement des pectoraux à deux": '2025/11/etirement-assiste-des-pectoraux.gif',
+  "Étirement du fessier à deux": '2025/11/etirement-assiste-du-grand-fessier.gif',
+  "Étirement du mollet à deux": '2025/11/etirement-assiste-du-jumeau-gastrocnemien.gif',
+  "Étirement de l’avant-bras": '2025/11/etirement-avant-bras-coude-tendu.gif',
+  "Étirement de l’épaule bras croisé": '2025/11/etirement-epaule-bras-croise.gif',
+  "Étirement de l’épaule bras fléchi": '2025/11/etirement-epaule-bras-flechi.gif',
+  "Étirement de la colonne": '2025/12/etirement-de-la-colonne-vertebrale.gif',
+  "Croix de fer": '2025/12/etirement-de-la-croix-de-fer.gif',
+  "Étirement de hanche 90/90": '2025/11/etirement-de-la-hanche-90-90.gif',
+  "Adducteurs allongé sur le dos": '2025/11/etirement-des-adducteurs-allonge-sur-le-dos.gif',
+  "Adducteurs en fente latérale": '2025/11/etirement-des-adducteurs-en-fente-laterale.gif',
+  "Étirement des chevilles assis": '2025/12/etirement-des-chevilles-assis.gif',
+  "Épaules et dos enroulé": '2025/11/etirement-des-epaules-bras-croise.gif',
+  "Fléchisseurs de hanche à genoux": '2025/11/etirement-des-flechisseurs-de-hanche-a-genoux.gif',
+  "Pectoraux à genoux sur banc": '2025/11/etirement-des-pectoraux-a-genoux.gif',
+  "Quadriceps en arrière": '2025/11/etirement-des-quadriceps-en-arriere.gif',
+  "Étirement du dos à la barre": '2025/11/etirement-du-dos-a-la-barre-fixe.gif',
+  "Mollet sur une marche": '2025/11/etirement-du-mollet-sur-marche.gif',
+  "Quadriceps à quatre pattes": '2025/11/etirement-du-quadriceps-a-quatre-pattes.gif',
+  "Quadriceps debout": '2025/12/etirement-du-quadriceps-debout.gif',
+  "Le scorpion": '2025/11/etirement-du-scorpion.gif',
+  "Prière à genoux": '2025/11/etirement-en-priere-sans-appui.gif',
+  "Rotation du dos à genoux": '2024/09/etirement-rotation-dos-genoux-posture-flexibilite-mobilite-tensions-musculaires.gif',
+  "Jambe tendue sur banc": '2025/11/etirement-jambe-tendue-surelevee.gif',
+  "Pectoraux bras levés": '2025/11/etirement-pectoral-bras-leves.gif',
+  "Quadriceps en fente à genoux": '2025/11/etirement-quadriceps-en-fente-a-genoux.gif',
+  "Fente profonde ischios": '2025/11/fente-profonde-avec-etirement-des-ischios.gif',
+  "Flexion avant (toucher les orteils)": '2025/11/flexion-avant-pour-toucher-les-orteils.gif',
+  "Flexion-extension de la colonne": '2025/11/flexion-et-extension-de-la-colonne.gif',
+  "Mollet contre le mur": '2025/11/poussee-sur-les-talons.gif',
+  "Rotation assise genou relevé": '2025/12/rotation-assise-genou-releve.gif',
+  "Rotation des genoux": '2025/11/rotation-des-genoux-debout.gif',
   "Développé couché": '2019/08/developpe-couche.gif',
   "Développé incliné haltères": '2000/06/developpe-incline-halteres-exercice-musculation.gif',
   "Développé couché haltères": '2000/05/developpe-couche-halteres-exercice-musculation.gif',
@@ -747,7 +823,7 @@ const DAY_NAMES = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Diman
 const DAY_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const DAY_SUB = ['Poitrine & Triceps','Dos & Biceps','Jambes','Épaules & Abdos','Poitrine & Triceps','Dos & Biceps','Jambes'];
 const BYDAY = ['MO','TU','WE','TH','FR','SA','SU'];
-const MUSCLES = { 'Pectoraux':'#22d3ee','Triceps':'#a78bfa','Dos':'#60a5fa','Biceps':'#f472b6','Quadriceps':'#34d399','Ischio-jambiers':'#2dd4bf','Fessiers':'#fb7185','Mollets':'#a3e635','Épaules':'#fbbf24','Abdos':'#f97316','Cardio':'#ef4444','Pliométrie':'#e879f9','Mobilité':'#38bdf8' };
+const MUSCLES = { 'Pectoraux':'#22d3ee','Triceps':'#a78bfa','Dos':'#60a5fa','Biceps':'#f472b6','Quadriceps':'#34d399','Ischio-jambiers':'#2dd4bf','Fessiers':'#fb7185','Mollets':'#a3e635','Épaules':'#fbbf24','Abdos':'#f97316','Cardio':'#ef4444','Pliométrie':'#e879f9','Mobilité':'#38bdf8','Étirements':'#c4b5fd' };
 const EMOJIS = ['🏋️','💪','🔥','🎯','🦵','⚡','🏃','🚴','🧘','🤸','🥊','❤️'];
 const TYPES = { f:'Charge (kg × reps)', p:'Poids du corps (reps)', s:'Temps (secondes)', c:'Cardio (minutes + km)' };
 const FEELS = [['😫','Difficile'],['😕','Bof'],['🙂','Correct'],['😀','Bien'],['🔥','Au top']];
@@ -977,7 +1053,7 @@ function viewSeance(){
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" data-act="guide" style="flex:1">▶️ Séance guidée</button><button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}</div>` : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px">${fm.ico} <b>${fm.t}</b> · ${fm.d}</div>` : ''}
   ${currentDay === todayIdx() ? duoLine() + reportBanner() : ''}
-  ${s && s.end ? `<button class="btn block" data-act="bilan" style="margin-top:12px">🏁 Voir le bilan de la séance</button>` : ''}
+  ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
   </div>`;
@@ -2545,12 +2621,14 @@ function sheetReport(wk){
 /* ============================================================
    MINUTEURS D'ENTRAÎNEMENT (HIIT, Tabata, EMOM, circuit)
    ============================================================ */
-const ITM = { tabata:['Tabata','⚡','20 s d’effort, 10 s de repos, 8 tours'], hiit:['HIIT','🔥','Effort et repos à régler'], emom:['EMOM','⏰','Une série au début de chaque minute'], circuit:['Circuit','🔁','Plusieurs exercices enchaînés'] };
-const itCfg = () => (settings.it = Object.assign({ mode:'tabata', tRounds:8, work:30, rest:30, rounds:10, emom:10, emomEx:'10 burpees', circ:'Pompes\nSquats sautés\nMountain climbers\nGainage', cWork:40, cRest:20, cRounds:3, cPause:60 }, settings.it || {}));
+const ITM = { etir:['Étirements','🧘','Routine guidée, 30 s par étirement'], tabata:['Tabata','⚡','20 s d’effort, 10 s de repos, 8 tours'], hiit:['HIIT','🔥','Effort et repos à régler'], emom:['EMOM','⏰','Une série au début de chaque minute'], circuit:['Circuit','🔁','Plusieurs exercices enchaînés'] };
+const itCfg = () => (settings.it = Object.assign({ eZone:'auto', eSec:30, eN:8, eDuo:false, mode:'tabata', tRounds:8, work:30, rest:30, rounds:10, emom:10, emomEx:'10 burpees', circ:'Pompes\nSquats sautés\nMountain climbers\nGainage', cWork:40, cRest:20, cRounds:3, cPause:60 }, settings.it || {}));
 function itSeq(c){
   const S = [{ k:'prep', l:'Prépare-toi', s:10 }];
   if (c.mode === 'tabata' || c.mode === 'hiit'){ const n = c.mode === 'tabata' ? c.tRounds : c.rounds, w = c.mode === 'tabata' ? 20 : c.work, r = c.mode === 'tabata' ? 10 : c.rest;
     for (let i = 1; i <= n; i++){ S.push({ k:'work', l:'Effort', s:w, tour:i, n }); if (i < n && r) S.push({ k:'rest', l:'Repos', s:r, tour:i, n }); } }
+  else if (c.mode === 'etir'){ const L = stretchList(c.eZone || 'auto', c.eN || 8, !c.eDuo);
+    L.forEach((nm, j) => { const sides = STRETCH[nm] && STRETCH[nm][1] ? [' · côté gauche', ' · côté droit'] : ['']; sides.forEach((sd, q) => { S.push({ k:'work', l:nm + sd, nm, s:c.eSec || 30, tour:j + 1, n:L.length }); const nx = q === 0 && sides.length > 1 ? nm + sides[1] : L[j + 1]; if (nx) S.push({ k:'rest', l: q === 0 && sides.length > 1 ? 'Change de côté' : 'On enchaîne', s:5, next:nx }); }); }); }
   else if (c.mode === 'emom'){ for (let i = 1; i <= c.emom; i++) S.push({ k:'work', l:c.emomEx || 'Minute ' + i, s:60, tour:i, n:c.emom }); }
   else { const ex = String(c.circ || '').split('\n').map(x => x.trim()).filter(Boolean); if (!ex.length) ex.push('Exercice');
     for (let t = 1; t <= c.cRounds; t++){ ex.forEach((x, j) => { S.push({ k:'work', l:x, s:c.cWork, tour:t, n:c.cRounds, ex:j + 1, ne:ex.length }); if (j < ex.length - 1 && c.cRest) S.push({ k:'rest', l:'Repos', s:c.cRest, tour:t, n:c.cRounds, next:ex[j + 1] }); });
@@ -2561,7 +2639,8 @@ let IT = null;
 function viewIT(){
   const c = itCfg(), S = itSeq(c), tot = S.reduce((a, x) => a + x.s, 0);
   const f = (id, l, v, u) => `<div class="fg"><label for="${id}">${l}</label><div class="row"><input id="${id}" class="inp" inputmode="numeric" value="${v}" style="flex:1">${u ? `<span class="muted" style="font-size:13px">${u}</span>` : ''}</div></div>`;
-  const form = c.mode === 'tabata' ? `<div class="two">${f('iTR', 'Tours', c.tRounds, '× 20 s / 10 s')}</div>`
+  const form = c.mode === 'etir' ? `<div class="chips2 wrap" style="margin-bottom:10px">${Object.entries(EZ).map(([k, l]) => `<button type="button" class="${(c.eZone || 'auto') === k ? 'on' : ''}" data-x="ezone" data-z="${k}">${l}</button>`).join('')}</div><div class="two">${f('iES', 'Par étirement', c.eSec, 's')}${f('iEN', 'Nombre', c.eN)}</div><div class="toggle"><span>Inclure les étirements à deux<small>Avec l’aide de ton/ta partenaire</small></span><button type="button" class="sw ${c.eDuo ? 'on' : ''}" data-x="eduo" role="switch" aria-checked="${!!c.eDuo}"></button></div><p class="muted" style="font-size:12.5px">${stretchList(c.eZone || 'auto', c.eN || 8, !c.eDuo).map(esc).join(' · ')}</p>`
+    : c.mode === 'tabata' ? `<div class="two">${f('iTR', 'Tours', c.tRounds, '× 20 s / 10 s')}</div>`
     : c.mode === 'hiit' ? `<div class="three2">${f('iW', 'Effort', c.work, 's')}${f('iR', 'Repos', c.rest, 's')}${f('iN', 'Tours', c.rounds)}</div>`
     : c.mode === 'emom' ? `<div class="two">${f('iE', 'Durée', c.emom, 'min')}<div class="fg"><label for="iEx">À faire chaque minute</label><input id="iEx" class="inp" value="${esc(c.emomEx)}"></div></div>`
     : `<div class="fg"><label for="iC">Exercices (un par ligne)</label><textarea id="iC" class="inp" rows="5">${esc(c.circ)}</textarea></div><div class="two">${f('iCW', 'Effort', c.cWork, 's')}${f('iCR', 'Repos', c.cRest, 's')}</div><div class="two">${f('iCN', 'Tours', c.cRounds)}${f('iCP', 'Pause entre tours', c.cPause, 's')}</div>`;
@@ -2570,18 +2649,18 @@ function viewIT(){
     <div class="card" style="margin-top:12px"><form id="itF">${form}</form><p class="muted" style="font-size:12.5px;margin-top:6px">Durée totale : <b id="itTot">${fmtDur(tot)}</b> · 10 s de préparation au début. Bips sur les 3 dernières secondes${settings.voice ? ', annonces vocales' : ''}.</p></div>
     <button class="btn pri block" data-x="itgo" style="margin-top:14px;padding:16px;font-size:17px">▶️ Démarrer ${ITM[c.mode][0]}</button></div>`;
   const F = $('#itF'); F.oninput = () => { const g = (id, k, mn, mx) => { const el = $('#' + id); if (el){ const v = parseInt(el.value); if (v >= mn && v <= mx) c[k] = v; } };
-    g('iTR', 'tRounds', 1, 30); g('iW', 'work', 5, 600); g('iR', 'rest', 0, 600); g('iN', 'rounds', 1, 60); g('iE', 'emom', 1, 60); g('iCW', 'cWork', 5, 600); g('iCR', 'cRest', 0, 600); g('iCN', 'cRounds', 1, 20); g('iCP', 'cPause', 0, 600);
+    g('iTR', 'tRounds', 1, 30); g('iW', 'work', 5, 600); g('iR', 'rest', 0, 600); g('iN', 'rounds', 1, 60); g('iE', 'emom', 1, 60); g('iCW', 'cWork', 5, 600); g('iCR', 'cRest', 0, 600); g('iCN', 'cRounds', 1, 20); g('iCP', 'cPause', 0, 600); g('iES', 'eSec', 10, 180); g('iEN', 'eN', 3, 15);
     if ($('#iEx')) c.emomEx = $('#iEx').value; if ($('#iC')) c.circ = $('#iC').value; safeSet('mp_settings', settings); $('#itTot').textContent = fmtDur(itSeq(c).reduce((a, x) => a + x.s, 0)); };
   F.onsubmit = ev => ev.preventDefault();
 }
-function itStart(){
-  const c = itCfg(); IT = { c, S: itSeq(c), i: 0, end: 0, paused: false, left: 0, beeped: -1, t0: Date.now(), iv: null };
+function itStart(cOver){
+  const c = cOver || itCfg(); IT = { c, S: itSeq(c), i: 0, end: 0, paused: false, left: 0, beeped: -1, t0: Date.now(), iv: null };
   beep(660, .05, .01); itEnter(0); IT.iv = setInterval(itTick, 200);
 }
 function itEnter(i, over){
   IT.i = i; const s = IT.S[i]; IT.end = Date.now() + (s.s - (over || 0)) * 1000; IT.left = s.s - (over || 0); IT.beeped = -1;
   if (i){ beep(s.k === 'work' ? 1175 : 660, .45, .35); if (navigator.vibrate && settings.vibe) navigator.vibrate(s.k === 'work' ? [250] : [120, 80, 120]); }
-  speak(s.k === 'work' ? (IT.c.mode === 'emom' ? 'Minute ' + s.tour + ', ' + s.l : IT.c.mode === 'circuit' ? s.l : 'Go !') : s.k === 'rest' ? (s.next ? 'Repos. Ensuite, ' + s.next : 'Repos') : 'Prépare-toi');
+  speak(s.k === 'work' ? (IT.c.mode === 'emom' ? 'Minute ' + s.tour + ', ' + s.l : (IT.c.mode === 'circuit' || IT.c.mode === 'etir') ? s.l : 'Go !') : s.k === 'rest' ? (s.next ? 'Repos. Ensuite, ' + s.next : 'Repos') : 'Prépare-toi');
   itRender();
 }
 function itTick(){
@@ -2597,6 +2676,7 @@ function itRender(){
   const s = IT.S[IT.i], nx = IT.S[IT.i + 1];
   openFull(`<div class="itv ${s.k}"><div class="g-top"><div><b>${ITM[IT.c.mode][1]} ${ITM[IT.c.mode][0]}</b><small>reste <span id="itRem">${fmtDur(IT.S.slice(IT.i).reduce((a, x) => a + x.s, 0))}</span></small></div><span class="spacer"></span><button data-x="itvoice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-x="itstop" aria-label="Arrêter">✕</button></div>
     <div class="itmain"><small>${s.k === 'work' ? (s.tour ? (IT.c.mode === 'circuit' ? `Tour ${s.tour}/${s.n} · exercice ${s.ex}/${s.ne}` : `${IT.c.mode === 'emom' ? 'Minute' : 'Tour'} ${s.tour}/${s.n}`) : '') : s.k === 'rest' ? 'Récupère' : 'Ça commence'}</small>
+      ${s.nm && LIB_BY[s.nm] && s.k === 'work' ? `<div class="itvis">${exVis(LIB_BY[s.nm])}</div>` : s.k === 'rest' && s.next && LIB_BY[String(s.next).split(' · ')[0]] ? `<div class="itvis sm">${exVis(LIB_BY[String(s.next).split(' · ')[0]], true)}</div>` : ''}
       <h2>${esc(s.l)}</h2><b id="itT">${fmtT(IT.left)}</b><div class="bar"><i id="itB" style="width:0%"></i></div>
       <p>${nx ? `Ensuite : <b>${esc(nx.k === 'rest' ? nx.l : nx.l)}</b> · ${nx.s} s` : 'Dernier effort, à fond ! 💥'}</p></div>
     <div class="row itctl"><button class="btn" data-x="itprev">⏮</button><button class="btn pri" data-x="itpause">${IT.paused ? '▶️ Reprendre' : '⏸ Pause'}</button><button class="btn" data-x="itnext">⏭</button></div></div>`);
@@ -2611,7 +2691,7 @@ function itAct(a){
 }
 function itLog(sec){
   const n = ITM[IT ? IT.c.mode : itCfg().mode][0], d = today(), min = Math.max(1, Math.round(sec / 60));
-  hist.push({ d, k:'it', n: n + ' (minuteur)', m:'Cardio', t:'c', s:1, r:String(min), w:null }); save();
+  hist.push({ d, k:'it', n: n + ' (minuteur)', m: n === 'Étirements' ? 'Mobilité' : 'Cardio', t:'c', s:1, r:String(min), w:null }); save();
   toast('✅ ' + n + ' : ' + min + ' min enregistrées');
 }
 function itFinish(){
@@ -2892,6 +2972,9 @@ function evoAct(a, b){
     case 'ctab': chronoTab = b.dataset.t; render(); break;
     case 'itmode': itCfg().mode = b.dataset.m; safeSet('mp_settings', settings); viewIT(); break;
     case 'itgo': itStart(); break;
+    case 'ezone': itCfg().eZone = b.dataset.z; safeSet('mp_settings', settings); viewIT(); break;
+    case 'eduo': itCfg().eDuo = !itCfg().eDuo; safeSet('mp_settings', settings); viewIT(); break;
+    case 'stretch': startStretch(b.dataset.z || 'auto'); break;
     case 'itclose': closeFull(); render(); break;
     case 'runtype': runType = b.dataset.t; viewRun(); break;
     case 'rungo': runStart(); break;
@@ -3130,7 +3213,7 @@ const PK_KW = [[/traction|pull.?up|chin/, 'traction'], [/pompe|push.?up/, 'pompe
   [/hip thrust|pont/, 'hipthrust'], [/mollet|calf/, 'mollets'], [/d.velopp. couch|bench/, 'bench'], [/inclin/, 'incline'], [/militaire|overhead press|d.velopp. (halt|.paule)/, 'ohp'], [/.l.vation lat/, 'latraise'], [/.cart/, 'flyes'], [/rowing|row/, 'row'], [/tirage/, 'pulldown'],
   [/curl jambe|leg curl/, 'legcurl'], [/leg ext/, 'legext'], [/curl/, 'curl'], [/triceps|extension/, 'pushdown'], [/gainage|planche|plank/, 'plank'], [/crunch|abdo/, 'crunch'], [/course|run|footing|tapis/, 'run'], [/v.lo|bike|spinning/, 'bike'], [/rameur|row/, 'rameur'], [/marche|walk/, 'walk'],
   [/natation|nage|swim/, 'nage'], [/corde|rope/, 'corde'], [/burpee/, 'burpee'], [/saut|jump/, 'tuck'], [/.tirement|stretch|mobilit/, 'ischios'], [/yoga/, 'enfant']];
-const PK_MUS = { 'Pectoraux':'bench', 'Dos':'row', 'Épaules':'ohp', 'Biceps':'curl', 'Triceps':'pushdown', 'Quadriceps':'squat', 'Ischio-jambiers':'rdl', 'Fessiers':'hipthrust', 'Mollets':'mollets', 'Abdos':'crunch', 'Cardio':'run', 'Pliométrie':'sautsquat', 'Mobilité':'ischios' };
+const PK_MUS = { 'Étirements':'ischios', 'Pectoraux':'bench', 'Dos':'row', 'Épaules':'ohp', 'Biceps':'curl', 'Triceps':'pushdown', 'Quadriceps':'squat', 'Ischio-jambiers':'rdl', 'Fessiers':'hipthrust', 'Mollets':'mollets', 'Abdos':'crunch', 'Cardio':'run', 'Pliométrie':'sautsquat', 'Mobilité':'ischios' };
 function pkKey(e){
   if (!e) return 'stand';
   if (PK_MAP[e.n]) return PK_MAP[e.n];
@@ -3139,6 +3222,22 @@ function pkKey(e){
 }
 const picto = (e, still) => pkSvg(pkKey(e), { still, mus: e && e.m });
 
+
+/* ============================================================
+   ÉTIREMENTS : routine guidée selon les muscles travaillés
+   ============================================================ */
+const STRETCH = {"Cercles de hanches": ["hanches", 0], "Étirement des bras à deux": ["haut", 0], "Étirement des ischios à deux": ["bas", 1], "Étirement des pectoraux à deux": ["haut", 0], "Étirement du fessier à deux": ["hanches", 1], "Étirement du mollet à deux": ["bas", 1], "Étirement de l’avant-bras": ["haut", 1], "Étirement de l’épaule bras croisé": ["haut", 1], "Étirement de l’épaule bras fléchi": ["haut", 1], "Étirement de la colonne": ["dos", 0], "Croix de fer": ["dos", 1], "Étirement de hanche 90/90": ["hanches", 1], "Adducteurs allongé sur le dos": ["hanches", 0], "Adducteurs en fente latérale": ["hanches", 1], "Étirement des chevilles assis": ["bas", 0], "Épaules et dos enroulé": ["dos", 0], "Fléchisseurs de hanche à genoux": ["hanches", 1], "Pectoraux à genoux sur banc": ["haut", 0], "Quadriceps en arrière": ["bas", 0], "Étirement du dos à la barre": ["dos", 0], "Mollet sur une marche": ["bas", 1], "Quadriceps à quatre pattes": ["bas", 1], "Quadriceps debout": ["bas", 1], "Le scorpion": ["dos", 1], "Prière à genoux": ["dos", 0], "Rotation du dos à genoux": ["dos", 1], "Jambe tendue sur banc": ["bas", 1], "Étirement latéral debout": ["dos", 1], "Pectoraux bras levés": ["haut", 0], "Quadriceps en fente à genoux": ["bas", 1], "Étirement vertical des bras": ["haut", 0], "Fente profonde ischios": ["bas", 1], "Flexion avant (toucher les orteils)": ["bas", 0], "Flexion-extension de la colonne": ["dos", 0], "Mollet contre le mur": ["bas", 1], "Rotation assise genou relevé": ["dos", 1], "Rotation des genoux": ["bas", 0], "Étirement du psoas": ["hanches", 1], "Pigeon (fessiers)": ["hanches", 1], "Étirement des ischios": ["bas", 1], "Étirement des pectoraux au mur": ["haut", 1], "Posture de l’enfant": ["dos", 0], "Chat-vache": ["dos", 0], "Rotation thoracique (open book)": ["dos", 1], "World’s greatest stretch": ["hanches", 1]};
+const ZONE_OF_M = { 'Quadriceps':['bas','hanches'], 'Ischio-jambiers':['bas','hanches'], 'Fessiers':['hanches','bas'], 'Mollets':['bas'], 'Pectoraux':['haut'], 'Épaules':['haut'], 'Biceps':['haut'], 'Triceps':['haut'], 'Dos':['dos','haut'], 'Abdos':['dos'], 'Cardio':['bas','hanches'], 'Pliométrie':['bas','hanches'] };
+const EZ = { auto:'🎯 Séance du jour', tout:'🧍 Tout le corps', bas:'🦵 Jambes', hanches:'🍑 Hanches', haut:'💪 Haut du corps', dos:'🧘 Dos' };
+function stretchList(zone, n, solo){
+  let zs = zone === 'tout' ? ['bas', 'hanches', 'haut', 'dos'] : zone === 'auto' ? null : [zone];
+  if (!zs){ const ms = (data['day' + todayIdx()] || []).map(e => e.m); const c = {}; ms.forEach(m => (ZONE_OF_M[m] || []).forEach((z, k) => { c[z] = (c[z] || 0) + (k ? 1 : 2); })); zs = Object.keys(c).sort((a, b) => c[b] - c[a]); if (!zs.length) zs = ['bas', 'hanches', 'haut', 'dos']; }
+  const seed = hashN(today() + zone), pools = zs.map(z => Object.keys(STRETCH).filter(k => STRETCH[k][0] === z && LIB_BY[k] && (!solo || !/à deux/.test(k))));
+  pools.forEach((p, i) => { const r = rng(seed + i); for (let j = p.length - 1; j > 0; j--){ const q = Math.floor(r() * (j + 1)); [p[j], p[q]] = [p[q], p[j]]; } });
+  const out = []; for (let i = 0; out.length < n && i < 40; i++){ const p = pools[i % pools.length]; const x = p.shift(); if (x) out.push(x); if (pools.every(q => !q.length)) break; }
+  return out;
+}
+function startStretch(zone){ const c = Object.assign({}, itCfg(), { mode:'etir', eZone: zone || 'auto' }); itStart(c); }
 /* ============================================================
    RENDU ET ÉVÉNEMENTS
    ============================================================ */
