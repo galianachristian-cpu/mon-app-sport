@@ -539,6 +539,17 @@ const LIB = [
   ['Pec deck','Pectoraux','f','🎯',3,'12-15','Assis à la machine, ramener les bras devant soi en serrant les pectoraux.','Garde le dos contre le dossier.'],
   ['Pompes','Pectoraux','p','🤸',3,'15','En appui sur les mains et les pointes de pieds, corps gainé. Descendre la poitrine près du sol puis pousser.','Corps bien aligné, ne creuse pas le dos.'],
   ['Pompes inclinées','Pectoraux','p','🤸',3,'12','Mains sur un banc ou une marche. Plus facile que les pompes au sol.','Bon exercice pour débuter.'],
+  ['Développé incliné barre','Pectoraux','f','🏋️',3,'8-10','Banc incliné à 30°. Descendre la barre vers le haut de la poitrine puis pousser à la verticale.','Omoplates serrées, coudes un peu sous la barre.'],
+  ['Développé serré haltères','Pectoraux','f','💪',3,'10-12','Allongé, haltères collés l’un à l’autre en prise neutre au-dessus de la poitrine. Descendre ensemble puis pousser.','Les haltères restent en contact pendant tout le mouvement.'],
+  ['Écartés inclinés haltères','Pectoraux','f','🎯',3,'12','Banc incliné à 30°, bras au-dessus de la poitrine. Ouvrir en arc de cercle puis refermer.','Cible le haut des pectoraux ; coudes légèrement fléchis.'],
+  ['Pull-over haltère','Pectoraux','f','💪',3,'12','Allongé sur un banc, haltère tenu à deux mains au-dessus de la poitrine. Descendre bras presque tendus derrière la tête puis revenir.','Bassin bas, descends seulement jusqu’où l’épaule est à l’aise.'],
+  ['Écartés poulie haute','Pectoraux','f','🎯',3,'12-15','Entre deux poulies hautes, un pas en avant, ramener les mains vers le bas et devant les hanches.','Cible le bas des pectoraux ; serre 1 s en fin de mouvement.'],
+  ['Chest press machine','Pectoraux','f','🎯',3,'10-12','Assis à la machine, poignées à hauteur de poitrine. Pousser vers l’avant sans verrouiller les coudes.','Dos collé au dossier. Idéal pour débuter.'],
+  ['Développé couché Smith machine','Pectoraux','f','🏋️',3,'8-10','Allongé sous la barre guidée, la descendre vers le milieu de la poitrine puis pousser.','Règle le banc pour que la barre arrive sur les pectoraux, pas sur le cou.'],
+  ['Svend press','Pectoraux','f','🤲',3,'12-15','Debout, un disque serré entre les paumes devant la poitrine. Tendre les bras devant soi en serrant fort, puis revenir.','Serre le disque pendant toute la série.'],
+  ['Développé couché élastique','Pectoraux','p','🎗️',3,'15','Allongé, élastique passé derrière le dos, une extrémité dans chaque main. Pousser vers le haut puis revenir lentement.','Raccourcis l’élastique pour augmenter la résistance.'],
+  ['Écartés élastique','Pectoraux','p','🎗️',3,'15','Élastique accroché derrière soi à hauteur de poitrine. Ramener les bras devant en arc de cercle.','Retour lent, sans laisser l’élastique tirer les bras.'],
+  ['Développé au sol kettlebell','Pectoraux','f','🔔',3,'10','Allongé au sol, kettlebell en main, coude posé au sol. Pousser vers le plafond puis redescendre jusqu’à ce que le coude touche le sol.','Poignet droit, la kettlebell repose sur l’avant-bras.'],
   // Dos
   ['Soulevé de terre','Dos','f','🏋️',4,'5-6','Pieds largeur de hanches, barre au-dessus des lacets. Dos droit, pousser dans les talons pour se redresser.','🔴 DOS DROIT ABSOLUMENT ! Sangle abdominale engagée.','souleve-de-terre.gif'],
   ['Rowing barre','Dos','f','💪',4,'8-10','Penché en avant, dos droit. Tirer la barre vers le bas de la poitrine.','Tire avec les coudes, serre les omoplates en haut.','rowing-barre.gif'],
@@ -549,6 +560,24 @@ const LIB = [
   ['Pull-over poulie','Dos','f','🎯',3,'12-15','Debout face à la poulie haute, bras tendus. Ramener la barre vers les cuisses.','Bras presque tendus pendant tout le mouvement.'],
   ['Shrugs (trapèzes)','Dos','f','🏋️',3,'12-15','Debout, haltères ou barre en mains. Hausser les épaules vers les oreilles.','Pas de rotation des épaules.'],
   ['Superman','Dos','p','🦸',3,'15','Allongé sur le ventre, lever en même temps bras et jambes, tenir 2 s.','Regard vers le sol pour protéger la nuque.'],
+  ['Rowing haltères banc incliné','Dos','f','💪',3,'10-12','À plat ventre sur un banc incliné, haltères en mains. Tirer les coudes vers l’arrière en serrant les omoplates.','Le banc supprime l’élan : idéal pour protéger le bas du dos.'],
+  ['Renegade row','Dos','f','💪',3,'8 chaque','En position de pompe sur deux haltères, tirer un haltère vers la hanche, le reposer puis changer de côté.','Pieds écartés, bassin immobile.'],
+  ['Tirage vertical prise serrée','Dos','f','🎯',3,'10-12','Poulie haute avec poignée triangle. Tirer vers le haut de la poitrine en gardant les coudes près du corps.','Buste légèrement incliné, pas de balancier.'],
+  ['Rowing T-bar','Dos','f','🏋️',3,'8-10','Penché au-dessus de la barre en T, dos droit. Tirer la poignée vers la poitrine.','Genoux fléchis, dos plat.'],
+  ['Extension lombaire banc 45°','Dos','p','🦸',3,'15','Hanches calées sur le banc à 45°, descendre le buste dos droit puis remonter jusqu’à l’alignement.','Ne remonte pas plus haut que l’alignement du corps.'],
+  ['Tractions supination','Dos','p','🧗',3,'6-10','Suspendu à la barre, paumes vers soi. Monter le menton au-dessus de la barre puis redescendre bras tendus.','Plus facile que la prise pronation, les biceps aident.'],
+  ['Tractions prise neutre','Dos','p','🧗',3,'6-10','Suspendu aux poignées parallèles, paumes face à face. Monter la poitrine vers les poignées.','Prise douce pour les épaules et les coudes.'],
+  ['Tractions australiennes','Dos','p','🧗',3,'10-12','Sous une barre basse, corps tendu, talons au sol. Tirer la poitrine vers la barre.','Plus les pieds sont avancés, plus c’est dur.'],
+  ['Rowing inversé sous une table','Dos','p','🪑',3,'10','Allongé sous une table solide, mains au bord. Tirer la poitrine vers la table, corps gainé.','Vérifie que la table est stable avant de commencer.'],
+  ['Tractions négatives','Dos','p','🧗',3,'5','Partir menton au-dessus de la barre (avec un saut ou une chaise) et redescendre le plus lentement possible.','Vise 4 à 5 secondes de descente : parfait pour réussir sa première traction.'],
+  ['Tractions avec élastique','Dos','p','🎗️',3,'8','Élastique accroché à la barre, un pied ou un genou dedans. Faire la traction aidé par l’élastique.','Prends un élastique plus fin au fil des semaines.'],
+  ['Tractions assistées machine','Dos','f','🎯',3,'8-10','Genoux sur la plateforme, choisir le contrepoids. Faire la traction jusqu’au menton au-dessus de la poignée.','Plus le poids affiché est lourd, plus l’aide est grande.'],
+  ['Bird dog','Dos','p','🐕',3,'10 chaque','À quatre pattes, tendre en même temps un bras devant et la jambe opposée derrière, tenir 2 s puis changer.','Dos plat, comme si un verre était posé dessus.'],
+  ['Suspension à la barre','Dos','s','🧗',3,'30 s','Suspendu à la barre bras tendus, épaules relâchées, respirer calmement.','Bon pour la poigne et la décompression du dos.'],
+  ['Muscle-up','Dos','p','🦍',3,'3-5','Traction explosive jusqu’à la taille, basculer le buste au-dessus de la barre puis pousser bras tendus.','Exercice avancé : maîtrise d’abord 10 tractions strictes.'],
+  ['Rowing unilatéral élastique','Dos','p','🎗️',3,'12 chaque','Élastique fixé devant soi. Tirer une poignée vers la hanche en serrant l’omoplate, puis changer.','Buste immobile, ne tourne pas les épaules.'],
+  ['Tirage horizontal élastique','Dos','p','🎗️',3,'15','Assis jambes tendues, élastique autour des pieds. Tirer les mains vers le ventre en serrant les omoplates.','Dos droit, coudes près du corps.'],
+  ['Rowing penché élastique','Dos','p','🎗️',3,'15','Debout sur l’élastique, buste penché dos droit. Tirer les poignées vers le ventre.','Comme le rowing barre, version maison.'],
   // Épaules
   ['Développé militaire','Épaules','f','🏋️',4,'6-8','Debout ou assis, pousser la barre au-dessus de la tête.','Buste stable, ne cambre pas.','developpe-militaire.gif'],
   ['Développé haltères assis','Épaules','f','💪',3,'8-10','Assis dos calé, pousser les haltères au-dessus de la tête.','Ne verrouille pas les coudes en haut.'],
@@ -557,12 +586,34 @@ const LIB = [
   ['Oiseau (Rear Delt Fly)','Épaules','f','🔥',3,'12-15','Penché en avant, dos droit, lever les bras sur les côtés.','Dos droit ! Tire avec les coudes.','rear-delt-fly.gif'],
   ['Face Pull','Épaules','f','💪',3,'12-15','Face à la poulie, tirer la corde vers le visage en écartant les mains.','Coudes hauts.','face-pull.gif'],
   ['Arnold press','Épaules','f','💪',3,'10','Assis, haltères devant le visage paumes vers soi. Pousser en tournant les paumes vers l’avant.','Mouvement lent et contrôlé.'],
+  ['Pompes piquées','Épaules','p','🔺',3,'8-10','Bassin haut en V inversé, mains au sol. Descendre la tête entre les mains puis pousser.','Pieds sur un banc pour augmenter la difficulté.'],
+  ['Pompes en équilibre (HSPU)','Épaules','p','🤸',3,'3-6','En appui renversé contre un mur, descendre la tête vers le sol puis pousser bras tendus.','Exercice avancé : commence par les pompes piquées.'],
+  ['Thruster','Épaules','f','🔥',3,'10','Barre devant les épaules, faire un squat puis, en remontant, pousser la barre au-dessus de la tête d’un seul mouvement.','Utilise l’élan des jambes pour pousser la barre.'],
+  ['Pec deck inversé','Épaules','f','🎯',3,'12-15','Assis face à la machine, bras tendus devant. Ouvrir les bras vers l’arrière en serrant les omoplates.','Cible l’arrière des épaules ; charge légère.'],
+  ['Élévations latérales poulie','Épaules','f','🎯',3,'12-15','De profil à la poulie basse, poignée dans la main opposée. Lever le bras sur le côté jusqu’à l’horizontale.','Tension constante, meilleure qu’avec haltère en bas du mouvement.'],
+  ['Développé épaules machine','Épaules','f','🎯',3,'10-12','Assis à la machine, pousser les poignées au-dessus de la tête puis redescendre à hauteur d’oreilles.','Dos collé au dossier.'],
+  ['Rotation externe poulie','Épaules','f','🔄',3,'15','Coude collé au corps plié à 90°, tirer la poignée vers l’extérieur en tournant l’avant-bras.','Charge très légère : c’est un exercice de prévention.'],
+  ['Rotation externe élastique','Épaules','p','🎗️',3,'15','Coude au corps plié à 90°, écarter l’avant-bras vers l’extérieur contre l’élastique.','Idéal en échauffement avant le développé.'],
+  ['Développé épaules élastique','Épaules','p','🎗️',3,'12-15','Debout sur l’élastique, poignées aux épaules. Pousser au-dessus de la tête puis revenir.','Abdos serrés pour ne pas cambrer.'],
+  ['Élévations latérales kettlebell','Épaules','f','🔔',3,'12','Une kettlebell dans chaque main, lever les bras sur les côtés jusqu’à l’horizontale.','Charge légère, coudes un peu fléchis.'],
+  ['Oiseau élastique','Épaules','p','🎗️',3,'15','Élastique tenu devant soi bras tendus à hauteur d’épaules. Écarter les bras en serrant les omoplates.','Super pour la posture.'],
+  ['Développé épaule kettlebell','Épaules','f','🔔',3,'8 chaque','Kettlebell en appui sur l’avant-bras à l’épaule. La pousser au-dessus de la tête puis redescendre.','Fessiers et abdos serrés.'],
+  ['Tirage menton kettlebell','Épaules','f','🔔',3,'12','Kettlebell à deux mains devant les cuisses. Monter les coudes vers le haut jusqu’à la poitrine.','Ne monte pas les coudes au-dessus des épaules.'],
   // Biceps
   ['Curl barre','Biceps','f','💪',3,'10-12','Debout, barre en mains, monter la barre vers les épaules.','Coudes collés au corps, pas de balancier.','curl-barre.gif'],
   ['Curl marteau','Biceps','f','🔥',3,'12-15','Haltères en prise neutre (pouces vers le haut), monter vers les épaules.','Poignets droits.','curl-marteau.gif'],
   ['Curl haltères alterné','Biceps','f','💪',3,'10-12','Monter un haltère après l’autre en tournant la paume vers le haut.','Contracte en haut 1 seconde.'],
   ['Curl pupitre','Biceps','f','🎯',3,'10-12','Bras posés sur le pupitre, monter la barre ou l’haltère.','Descends jusqu’en bas sans verrouiller.'],
   ['Curl poulie basse','Biceps','f','🎯',3,'12-15','Face à la poulie basse, monter la barre vers les épaules.','Tension constante, idéal en finition.'],
+  ['Curl concentré','Biceps','f','🎯',3,'10-12','Assis, coude calé contre l’intérieur de la cuisse. Monter l’haltère vers l’épaule puis redescendre lentement.','Le haut du bras ne bouge pas.'],
+  ['Curl spider','Biceps','f','🕷️',3,'10-12','À plat ventre sur un banc incliné, bras pendants. Monter les haltères ou la barre vers les épaules.','Aucun élan possible : isolation parfaite.'],
+  ['Curl inversé barre','Biceps','f','🔄',3,'12','Barre en prise pronation (paumes vers le bas), monter vers les épaules.','Travaille aussi les avant-bras. Charge légère.'],
+  ['Curl Zottman','Biceps','f','🔄',3,'10','Monter les haltères paumes vers le haut, tourner les paumes vers le bas en haut, puis redescendre lentement.','Descente lente pour les avant-bras.'],
+  ['Drag curl','Biceps','f','💪',3,'10','Monter la barre en la faisant glisser le long du corps, coudes qui reculent.','La barre frôle le ventre pendant tout le mouvement.'],
+  ['Curl incliné haltères','Biceps','f','💪',3,'10-12','Assis sur un banc incliné, bras pendants. Monter un haltère après l’autre paume vers le haut.','Étirement maximal du biceps en bas.'],
+  ['Curl machine','Biceps','f','🎯',3,'12','Assis, bras posés sur le pupitre de la machine. Plier les coudes puis revenir lentement.','Ne décolle pas les coudes du pupitre.'],
+  ['Curl élastique','Biceps','p','🎗️',3,'15','Debout sur l’élastique, monter les poignées vers les épaules.','Coudes collés au corps.'],
+  ['Curl marteau élastique','Biceps','p','🎗️',3,'15','Debout sur l’élastique, pouces vers le haut, monter les mains vers les épaules.','Poignets droits.'],
   // Triceps
   ['Dips','Triceps','p','💪',3,'10-12','Aux barres parallèles, descendre en pliant les coudes à 90° puis remonter.','Buste vertical pour cibler les triceps.','dips.gif'],
   ['Extension triceps poulie haute','Triceps','f','🎯',3,'12-15','Face à la poulie haute, coudes au corps, tendre les bras vers le bas.','Seuls les avant-bras bougent.','extension-triceps-poulie.gif'],
@@ -571,6 +622,13 @@ const LIB = [
   ['Kickback haltère','Triceps','f','🎯',3,'12','Penché en avant, coude au corps, tendre le bras vers l’arrière.','Bras parallèle au sol.'],
   ['Pompes diamant','Triceps','p','💎',3,'10','Pompes mains rapprochées sous la poitrine (index et pouces se touchent).','Coudes le long du corps.'],
   ['Dips sur banc','Triceps','p','🪑',3,'15','Mains sur un banc derrière soi, descendre les fesses puis remonter.','Épaules basses, loin des oreilles.'],
+  ['Extension triceps poulie au-dessus tête','Triceps','f','🎯',3,'12','Dos à la poulie haute, corde derrière la tête. Tendre les bras vers l’avant et le haut.','Coudes fixes, près de la tête.'],
+  ['Extension triceps couché haltères','Triceps','f','💪',3,'10-12','Allongé, haltères au-dessus de la poitrine. Plier les coudes pour descendre près des tempes puis tendre.','Seuls les avant-bras bougent.'],
+  ['Tate press','Triceps','f','💪',3,'10 chaque','Allongé, haltère au-dessus de la poitrine. Plier le coude vers l’intérieur pour poser l’haltère sur la poitrine puis tendre.','Charge légère, coude qui pointe vers l’extérieur.'],
+  ['Dips assistés machine','Triceps','f','🎯',3,'10','Genoux sur la plateforme, mains sur les poignées. Descendre jusqu’à 90° aux coudes puis remonter.','Plus le poids est lourd, plus l’aide est grande.'],
+  ['Extension triceps élastique','Triceps','p','🎗️',3,'15','Pied sur l’élastique, poignée derrière la tête. Tendre le bras vers le plafond.','Coude pointé vers le haut.'],
+  ['Extension triceps élastique vers le bas','Triceps','p','🎗️',3,'15','Élastique accroché en hauteur. Coudes au corps, tendre les bras vers le bas.','Version maison de la poulie haute.'],
+  ['Extension triceps en planche','Triceps','p','🧱',3,'10','En planche sur les avant-bras, pousser pour monter sur les mains en tendant les bras, puis revenir sur les avant-bras.','Bassin stable, abdos serrés.'],
   // Quadriceps
   ['Squat','Quadriceps','f','🦵',4,'6-8','Barre sur les épaules, descendre comme pour s’asseoir, cuisses parallèles au sol.','Dos droit, pousse dans les talons.','squat.gif'],
   ['Presse à jambes','Quadriceps','f','🦵',3,'10-12','Assis à la machine, pousser la plateforme en tendant les jambes.','Ne verrouille pas les genoux.','presse-jambes.gif'],
@@ -580,21 +638,58 @@ const LIB = [
   ['Squat bulgare','Quadriceps','f','🦵',3,'10 chaque','Pied arrière posé sur un banc, descendre sur la jambe avant.','Buste droit, genou avant stable.'],
   ['Squat poids du corps','Quadriceps','p','🦵',3,'20','Squat sans charge, bras tendus devant pour l’équilibre.','Talons au sol.'],
   ['Chaise','Quadriceps','s','🪑',3,'45 s','Dos contre le mur, cuisses à l’horizontale, tenir la position.','Respire calmement, genoux au-dessus des chevilles.'],
+  ['Front squat','Quadriceps','f','🏋️',4,'6-8','Barre posée sur l’avant des épaules, coudes hauts. Descendre en squat buste bien droit puis remonter.','Coudes vers l’avant pour que la barre ne glisse pas.'],
+  ['Hack squat','Quadriceps','f','🦵',3,'10','Dos contre le dossier de la machine, épaules sous les boudins. Descendre en pliant les genoux puis pousser.','Pieds au milieu de la plateforme, talons au sol.'],
+  ['Sissy squat','Quadriceps','p','🦵',3,'10','Debout, une main sur un support. Monter sur les pointes, avancer les genoux et pencher le buste en arrière, puis remonter.','Commence avec une petite amplitude.'],
+  ['Pistol squat','Quadriceps','p','🔫',3,'5 chaque','Sur une jambe, l’autre tendue devant. Descendre en squat complet puis remonter.','Commence en t’asseyant sur un banc ou en te tenant.'],
+  ['Squat sumo haltère','Quadriceps','f','🏋️',3,'12','Pieds très écartés, pointes vers l’extérieur, haltère tenu à deux mains entre les jambes. Descendre puis remonter.','Genoux dans l’axe des pieds. Travaille aussi les adducteurs.'],
+  ['Squat cosaque','Quadriceps','p','🦵',3,'8 chaque','Pieds très écartés, descendre sur une jambe pliée, l’autre reste tendue pointe vers le haut. Changer de côté.','Talon de la jambe pliée au sol.'],
+  ['Fentes croisées','Quadriceps','p','⚡',3,'10 chaque','Croiser une jambe derrière l’autre en diagonale et descendre le genou arrière près du sol.','Cible aussi le moyen fessier.'],
+  ['Squat Smith machine','Quadriceps','f','🏋️',3,'10','Barre guidée sur les épaules, pieds légèrement en avant. Descendre en squat puis pousser.','Bon pour apprendre le mouvement en sécurité.'],
+  ['Squat élastique','Quadriceps','p','🎗️',3,'15','Debout sur l’élastique, poignées aux épaules. Squat profond puis remonter.','La résistance augmente en haut du mouvement.'],
+  ['Fente bulgare élastique','Quadriceps','p','🎗️',3,'10 chaque','Pied arrière sur un banc, élastique sous le pied avant. Descendre sur la jambe avant puis remonter.','Buste droit.'],
+  ['Leg extension élastique','Quadriceps','p','🎗️',3,'15','Assis, élastique fixé derrière et passé autour de la cheville. Tendre la jambe.','Contracte 1 s jambe tendue.'],
+  ['Marche du fermier','Quadriceps','s','🧺',3,'40 s','Une kettlebell lourde dans chaque main, marcher à petits pas, buste droit.','Épaules basses, abdos serrés. Excellent pour la poigne.'],
+  ['Squat goblet kettlebell','Quadriceps','f','🔔',3,'12','Kettlebell tenue par les anses contre la poitrine, squat profond puis remonter.','Coudes entre les genoux en bas.'],
+  ['Poussée de traîneau','Quadriceps','s','🛷',4,'20 s','Mains sur les poignées du traîneau, buste penché, pousser en courant à petits pas.','Bras tendus, pousse avec les jambes.'],
+  ['Overhead squat','Quadriceps','f','🏋️',3,'8','Barre tenue bras tendus au-dessus de la tête, prise large. Descendre en squat en gardant la barre au-dessus des talons.','Demande de la mobilité : commence avec un bâton.'],
   // Ischio-jambiers
   ['Soulevé de terre roumain','Ischio-jambiers','f','🏋️',3,'8-10','Jambes presque tendues, descendre la barre le long des jambes en reculant les fesses.','Dos droit ! Tu dois sentir l’arrière des cuisses.','roumain-deadlift.gif'],
   ['Curl jambes allongé','Ischio-jambiers','f','🎯',3,'12-15','Allongé à la machine, ramener les talons vers les fesses.','Hanches plaquées.','leg-curl.gif'],
   ['Curl jambes assis','Ischio-jambiers','f','🎯',3,'12','Assis à la machine, plier les genoux en poussant le boudin vers le bas.','Retour lent.'],
   ['Good morning','Ischio-jambiers','f','🌅',3,'10','Barre sur les épaules, pencher le buste en avant en reculant les fesses.','Charge légère, dos bien droit.'],
+  ['Soulevé de terre sumo','Ischio-jambiers','f','🏋️',4,'5-6','Pieds très écartés, mains entre les jambes. Dos droit, pousser dans le sol pour se redresser.','Genoux poussés vers l’extérieur.'],
+  ['Soulevé de terre jambes tendues','Ischio-jambiers','f','🏋️',3,'8-10','Jambes presque tendues, descendre la barre devant les tibias en gardant le dos plat puis remonter.','Charge modérée, dos plat obligatoire.'],
+  ['Soulevé de terre trap bar','Ischio-jambiers','f','🏋️',4,'6','Au centre de la barre hexagonale, poignées de chaque côté. Pousser dans le sol pour se redresser.','Plus facile pour le dos que la barre droite.'],
+  ['Rack pull','Ischio-jambiers','f','🏋️',3,'5','Barre posée sur les crochets à hauteur des genoux. Se redresser en poussant les hanches vers l’avant.','Permet de travailler lourd la fin du soulevé.'],
+  ['Kettlebell swing','Ischio-jambiers','f','🔔',4,'15','Kettlebell à deux mains, reculer les fesses puis lancer les hanches vers l’avant pour monter la kettlebell à hauteur des épaules.','Ce sont les hanches qui travaillent, pas les bras.'],
+  ['Soulevé roumain kettlebell','Ischio-jambiers','f','🔔',3,'12','Kettlebell devant les cuisses, reculer les fesses en descendant le long des jambes, dos droit.','Tu dois sentir l’arrière des cuisses.'],
+  ['Leg curl au swiss ball','Ischio-jambiers','p','⚽',3,'10','Allongé sur le dos, talons sur le ballon, bassin levé. Ramener les talons vers les fesses.','Bassin haut pendant toute la série.'],
+  ['Nordic curl','Ischio-jambiers','p','🎗️',3,'5','À genoux, talons bloqués, élastique accroché devant. Se pencher lentement vers l’avant en résistant avec l’arrière des cuisses.','Très efficace contre les blessures, descente lente.'],
+  ['Leg curl élastique','Ischio-jambiers','p','🎗️',3,'15','Allongé sur le ventre, élastique autour de la cheville. Ramener le talon vers la fesse.','Hanches plaquées au sol.'],
+  ['Good morning élastique','Ischio-jambiers','p','🎗️',3,'15','Debout sur l’élastique passé derrière la nuque. Pencher le buste en reculant les fesses puis se redresser.','Dos droit pendant tout le mouvement.'],
   // Fessiers
   ['Hip thrust','Fessiers','f','🍑',4,'10','Haut du dos sur un banc, barre sur les hanches. Monter le bassin et serrer les fessiers.','Menton rentré, pas de cambrure.'],
   ['Pont fessier','Fessiers','p','🍑',3,'20','Allongé sur le dos, genoux pliés, monter le bassin et serrer.','Tiens 2 s en haut.'],
   ['Abduction machine','Fessiers','f','🎯',3,'15','Assis à la machine, écarter les jambes contre la résistance.','Mouvement lent.'],
   ['Kickback poulie','Fessiers','f','🔥',3,'12 chaque','Cheville attachée à la poulie basse, tendre la jambe vers l’arrière.','Bassin fixe.'],
   ['Step-up','Fessiers','f','📦',3,'10 chaque','Monter sur un banc ou une box en poussant sur la jambe avant.','Pousse dans le talon.'],
+  ['Hip thrust unilatéral','Fessiers','p','🍑',3,'10 chaque','Haut du dos sur un banc, un pied au sol, l’autre jambe levée. Monter le bassin et serrer le fessier.','Bassin bien horizontal.'],
+  ['Hip thrust machine','Fessiers','f','🍑',3,'12','Assis dans la machine, coussin sur les hanches. Monter le bassin et serrer les fessiers.','Pause 1 s en haut.'],
+  ['Donkey kick','Fessiers','p','🫏',3,'15 chaque','À quatre pattes, genou plié à 90°, pousser le talon vers le plafond.','Ne cambre pas, seul le fessier travaille.'],
+  ['Fire hydrant','Fessiers','p','🚒',3,'15 chaque','À quatre pattes, lever un genou plié sur le côté jusqu’à hauteur de hanche.','Bassin immobile. Cible le moyen fessier.'],
+  ['Pull through poulie','Fessiers','f','🎯',3,'12','Dos à la poulie basse, corde entre les jambes. Reculer les fesses puis se redresser en poussant les hanches.','Bras tendus, ce sont les hanches qui tirent.'],
+  ['Reverse hyperextension','Fessiers','f','🦸',3,'12','Buste allongé sur la machine ou un banc, jambes dans le vide. Monter les jambes jusqu’à l’alignement.','Bon pour le bas du dos.'],
+  ['Abduction élastique','Fessiers','p','🎗️',3,'20','Assis, mini-bande au-dessus des genoux. Écarter les genoux puis revenir lentement.','Version maison de la machine à abduction.'],
+  ['Marche latérale élastique','Fessiers','s','🎗️',3,'30 s','Mini-bande autour des chevilles ou des genoux, demi-squat, marcher de côté à petits pas.','Garde la tension sur la bande en permanence.'],
+  ['Hip thrust à genoux élastique','Fessiers','p','🎗️',3,'15','À genoux, élastique fixé derrière et passé sur les hanches. Pousser le bassin vers l’avant en serrant les fessiers.','Buste droit en fin de mouvement.'],
   // Mollets
   ['Mollets debout','Mollets','f','💪',4,'15-20','Monter sur la pointe des pieds puis redescendre lentement.','Amplitude maximale.','mollets.gif'],
   ['Mollets assis','Mollets','f','🎯',3,'15-20','Assis à la machine, genoux pliés, monter sur les pointes.','Pause en bas pour étirer.'],
   ['Mollets à la presse','Mollets','f','🦵',3,'15','À la presse, pousser la plateforme avec la pointe des pieds.','Jambes presque tendues.'],
+  ['Mollets sur une marche','Mollets','p','🪜',3,'20','Avant du pied sur une marche, monter sur la pointe puis descendre le talon sous la marche.','Une jambe à la fois pour corser.'],
+  ['Mollets au Donkey','Mollets','f','🫏',3,'15','Buste penché en avant, charge sur les hanches. Monter sur la pointe des pieds puis redescendre.','Grande amplitude.'],
+  ['Mollets debout barre','Mollets','f','🏋️',3,'15','Barre sur les épaules, monter sur la pointe des pieds puis redescendre.','Cale l’avant des pieds sur un disque pour plus d’amplitude.'],
   // Abdos
   ['Relevé de jambes suspendu','Abdos','p','🔥',3,'15','Suspendu à une barre, lever les jambes à 90° puis redescendre.','Pas de balancier.','https://media.giphy.com/media/3o7abKhOpu0N9H2lUc/giphy.gif'],
   ['Crunch aux câbles','Abdos','f','🎯',3,'14-20','À genoux face à la poulie, enrouler le buste vers le bas.','Hanches fixes, ne tire pas avec les bras.','crunch-cables.gif'],
@@ -605,6 +700,23 @@ const LIB = [
   ['Roue abdominale','Abdos','p','☸️',3,'10','À genoux, rouler vers l’avant puis revenir en contractant les abdos.','Ne va pas trop loin au début.'],
   ['Relevé de jambes au sol','Abdos','p','🔥',3,'15','Allongé, jambes tendues, les lever à la verticale puis redescendre sans toucher le sol.','Bas du dos plaqué.'],
   ['Mountain climbers','Abdos','s','⛰️',3,'30 s','En position de pompe, ramener les genoux vers la poitrine en alternant, vite.','Hanches basses.'],
+  ['Crunch bicyclette','Abdos','p','🚲',3,'20','Allongé, mains derrière la tête. Ramener un coude vers le genou opposé en pédalant.','Mouvement lent, épaules décollées.'],
+  ['Dead bug','Abdos','p','🐞',3,'10 chaque','Sur le dos, bras vers le plafond, genoux à 90°. Descendre un bras et la jambe opposée sans décoller le bas du dos.','Bas du dos plaqué au sol en permanence.'],
+  ['Hollow hold','Abdos','s','🍌',3,'30 s','Sur le dos, bras et jambes tendus décollés du sol, le corps forme une banane. Tenir.','Bas du dos collé au sol. Plie les genoux si besoin.'],
+  ['V-ups','Abdos','p','✌️',3,'12','Allongé bras tendus derrière la tête. Lever en même temps buste et jambes pour toucher les pieds.','Redescends lentement.'],
+  ['Ciseaux','Abdos','s','✂️',3,'30 s','Allongé, jambes tendues un peu décollées du sol. Croiser les jambes l’une au-dessus de l’autre.','Mains sous les fesses pour protéger le dos.'],
+  ['Dragon flag','Abdos','p','🐉',3,'5','Allongé sur un banc, mains agrippées derrière la tête. Lever le corps tendu sur les épaules puis redescendre lentement.','Exercice avancé : commence jambes pliées.'],
+  ['Planche de l’ours','Abdos','s','🐻',3,'30 s','À quatre pattes, décoller les genoux de 5 cm et tenir, dos plat.','Respire calmement, genoux sous les hanches.'],
+  ['Relevé de genoux suspendu','Abdos','p','🔥',3,'12','Suspendu à la barre, ramener les genoux vers la poitrine puis redescendre.','Plus facile que jambes tendues. Pas de balancier.'],
+  ['Sit-up décliné','Abdos','p','📐',3,'12','Sur un banc décliné, pieds calés. Remonter le buste jusqu’aux genoux puis redescendre.','Descente lente, sans tirer sur la nuque.'],
+  ['Crunch machine','Abdos','f','🎯',3,'15','Assis à la machine, enrouler le buste vers l’avant contre la résistance.','Expire en enroulant.'],
+  ['Flexions latérales haltère','Abdos','f','🧍',3,'15 chaque','Debout, haltère dans une main. Pencher le buste sur le côté puis remonter.','Un côté à la fois ; ne te penche pas en avant.'],
+  ['Windmill kettlebell','Abdos','f','🌬️',3,'6 chaque','Kettlebell tenue bras tendu au-dessus de la tête, pencher le buste sur le côté pour toucher le pied opposé, le regard sur la kettlebell.','Charge légère, mouvement lent.'],
+  ['Touche talons','Abdos','p','👟',3,'20','Allongé, genoux pliés, épaules décollées. Toucher un talon puis l’autre en se penchant sur le côté.','Cible les obliques.'],
+  ['Rotation du buste poulie','Abdos','f','🌀',3,'12 chaque','De profil à la poulie, bras tendus. Tourner le buste en tirant la poignée en diagonale.','Bassin fixe, les abdos font tourner.'],
+  ['Planche latérale avec rotation','Abdos','p','🧱',3,'10 chaque','En planche latérale, passer le bras du dessus sous le corps puis l’ouvrir vers le ciel.','Hanches hautes pendant tout le mouvement.'],
+  ['Crunch swiss ball','Abdos','p','⚽',3,'15','Bas du dos sur le ballon, pieds au sol. Enrouler le buste vers le haut.','Plus d’amplitude qu’au sol.'],
+  ['Pallof press élastique','Abdos','p','🎗️',3,'12 chaque','De profil à l’élastique fixé à hauteur de poitrine. Tendre les bras devant soi sans laisser le buste tourner.','Exercice anti-rotation : résiste à l’élastique.'],
   // Cardio
   ['Course à pied','Cardio','c','🏃',1,'30 min','Footing à allure confortable (tu peux parler).','Augmente la durée de 10 % par semaine maximum.'],
   ['Vélo','Cardio','c','🚴',1,'40 min','Sortie vélo ou vélo d’appartement.','Bonne hydratation.'],
@@ -615,6 +727,13 @@ const LIB = [
   ['Corde à sauter','Cardio','s','🪢',5,'60 s','Petits sauts sur la pointe des pieds.','Poignets qui tournent, pas les bras.'],
   ['Burpees','Cardio','p','💥',3,'12','Squat, mains au sol, jambes en arrière, pompe, retour et saut.','Garde un rythme régulier.'],
   ['HIIT 30/30','Cardio','s','⚡',8,'30 s','30 s à fond (sprint, vélo, burpees…) puis 30 s de récupération.','Échauffe-toi bien avant.'],
+  ['Jumping jacks','Cardio','s','⭐',3,'45 s','Sauter en écartant bras et jambes, puis revenir pieds joints bras le long du corps.','Atterris sur la pointe des pieds.'],
+  ['Marche de l’ours','Cardio','s','🐻',3,'30 s','À quatre pattes, genoux décollés, avancer en bougeant main et pied opposés.','Dos plat, hanches basses.'],
+  ['Wall ball','Cardio','p','🏐',3,'15','Médecine-ball contre la poitrine, squat puis lancer le ballon contre le mur en remontant. Rattraper et enchaîner.','Vise une cible à environ 3 m de haut.'],
+  ['Assault bike','Cardio','c','🚴',1,'10 min','Vélo à air avec bras mobiles : pédaler en poussant et tirant les poignées.','Parfait pour le fractionné : 20 s à fond, 40 s calme.'],
+  ['Machine à escaliers','Cardio','c','🪜',1,'15 min','Monter les marches à rythme régulier, buste droit.','Ne t’appuie pas sur les barres.'],
+  ['SkiErg','Cardio','c','⛷️',1,'10 min','Debout face à la machine, tirer les poignées vers le bas en fléchissant hanches et genoux.','Ce sont les abdos et le dos qui tirent.'],
+  ['Vélo spinning','Cardio','c','🚴',1,'30 min','Vélo de biking, alterner phases assises et en danseuse avec la résistance.','Règle la selle à hauteur de hanche.'],
   // Pliométrie
   ['Box jump','Pliométrie','p','📦',4,'5','Face à une box stable, sauter à pieds joints, atterrir en douceur genoux fléchis, puis redescendre en marchant.','Qualité avant quantité : réception silencieuse et 90 s de récupération.'],
   ['Squat sauté','Pliométrie','p','🦘',3,'6','Descendre en squat puis sauter le plus haut possible, amortir à la réception et enchaîner.','Genoux dans l’axe des pieds à la réception.'],
@@ -676,6 +795,22 @@ const LIB = [
   ['Rotation des genoux','Étirements','s','🔄',2,'30 s','Pieds joints, genoux fléchis, mains sur les genoux. Dessiner des cercles avec les genoux dans les deux sens.','Talons au sol, mouvement doux.']
 ].map(([n, m, t, e, s, r, desc, tips, g]) => ({ n, m, t, e, s, r, desc, tips, gif: g ? (g.startsWith('http') ? g : GIFB + g) : '' }));
 const LIB_BY = Object.fromEntries(LIB.map(x => [x.n, x]));
+// Matériel de chaque exercice (filtre de la bibliothèque) : déduit du nom, avec quelques exceptions
+const EQUIP = ['Barre','Haltères','Machine & poulie','Kettlebell','Élastique','Poids du corps'];
+const EQ_FIX = { 'Développé couché':'Barre', 'Développé décliné':'Barre', 'Soulevé de terre':'Barre', 'Développé militaire':'Barre', 'Squat':'Barre', 'Front squat':'Barre', 'Overhead squat':'Barre', 'Soulevé de terre roumain':'Barre', 'Soulevé de terre sumo':'Barre', 'Soulevé de terre jambes tendues':'Barre', 'Rack pull':'Barre', 'Good morning':'Barre', 'Hip thrust':'Barre', 'Thruster':'Barre', 'Shrugs (trapèzes)':'Haltères', 'Drag curl':'Barre', 'Mollets debout':'Machine & poulie', 'Svend press':'Haltères',
+  'Développé haltères assis':'Haltères', 'Élévations latérales':'Haltères', 'Élévations frontales':'Haltères', 'Oiseau (Rear Delt Fly)':'Haltères', 'Arnold press':'Haltères', 'Curl marteau':'Haltères', 'Curl pupitre':'Barre', 'Extension triceps au-dessus tête':'Haltères', 'Squat goblet':'Haltères', 'Squat bulgare':'Haltères', 'Fentes marchées':'Haltères', 'Step-up':'Haltères', 'Russian twist':'Poids du corps', 'Curl concentré':'Haltères', 'Curl spider':'Haltères', 'Curl Zottman':'Haltères', 'Renegade row':'Haltères', 'Tate press':'Haltères', 'Pull-over haltère':'Haltères',
+  'Marche du fermier':'Kettlebell', 'Kettlebell swing':'Kettlebell', 'Windmill kettlebell':'Kettlebell', 'Marche latérale élastique':'Élastique', 'Abduction élastique':'Élastique', 'Pallof press élastique':'Élastique', 'Tractions avec élastique':'Élastique', 'Nordic curl':'Élastique',
+  'Rowing T-bar':'Machine & poulie', 'Poussée de traîneau':'Machine & poulie', 'Reverse hyperextension':'Machine & poulie', 'Mollets au Donkey':'Machine & poulie', 'Leg extension':'Machine & poulie', 'Pec deck':'Machine & poulie', 'Pec deck inversé':'Machine & poulie', 'Hack squat':'Machine & poulie', 'Face Pull':'Machine & poulie', 'Abduction machine':'Machine & poulie', 'Kickback poulie':'Machine & poulie', 'Mollets assis':'Machine & poulie', 'Suspension à la barre':'Poids du corps', 'Wall ball':'Poids du corps', 'Slam médecine-ball':'Poids du corps' };
+function eqOf(x){
+  if (EQ_FIX[x.n]) return EQ_FIX[x.n];
+  const n = x.n.toLowerCase();
+  if (/lastique/.test(n)) return 'Élastique';
+  if (/kettlebell/.test(n)) return 'Kettlebell';
+  if (/machine|poulie|c[aâ]bles|smith|presse|curl jambes|tirage|rameur|elliptique|escaliers|assault|skierg|^v[ée]lo|chest press/.test(n)) return 'Machine & poulie';
+  if (/halt[eè]re/.test(n)) return 'Haltères';
+  if (/barre|trap bar/.test(n)) return 'Barre';
+  return 'Poids du corps';
+}
 // Animations 3D Docteur Fitness (hébergées sur leur site, affichées depuis leur adresse)
 const DF_GIF_BASE = 'https://www.docteur-fitness.com/wp-content/uploads/';
 const DF_GIF = {
@@ -797,7 +932,126 @@ const DF_GIF = {
   "Étirement du psoas": '2025/11/etirement-du-psoas.gif',
   "Étirement des ischios": '2025/11/etirement-ischios-jambiers-allonge.gif',
   "Étirement des pectoraux au mur": '2025/11/etirement-des-pectoraux-en-arriere.gif',
-  "Posture de l’enfant": '2022/08/balasana-posture-de-l-enfant.gif'
+  "Posture de l’enfant": '2022/08/balasana-posture-de-l-enfant.gif',
+  "Développé incliné barre": '2021/10/developpe-incline-barre.gif',
+  "Développé serré haltères": '2022/08/developpe-couche-serre-avec-halteres.gif',
+  "Écartés inclinés haltères": '2022/09/ecartes-incline-avec-halteres.gif',
+  "Pull-over haltère": '2021/12/pullover-haltere.gif',
+  "Écartés poulie haute": '2000/06/ecarte-poulie-vis-a-vis-exercice-musculation.gif',
+  "Chest press machine": '2022/11/developpe-machine-assis-pectoraux.gif',
+  "Développé couché Smith machine": '2022/08/developpe-couche-smith-machine.gif',
+  "Svend press": '2022/04/svend-press.gif',
+  "Développé couché élastique": '2023/07/developpe-couche-avec-elastique.gif',
+  "Écartés élastique": '2000/02/ecartes-bande-elastique-bilateral.gif',
+  "Développé au sol kettlebell": '2021/12/developpe-couche-au-sol-kettlebell.gif',
+  "Rowing haltères banc incliné": '2022/02/rowing-halteres-banc-incline-prise-neutre.gif',
+  "Renegade row": '2022/04/renegade-row.gif',
+  "Tirage vertical prise serrée": '2021/08/tirage-vertical-prise-serree.gif',
+  "Rowing T-bar": '2021/08/rowing-barre-t-landmine.gif',
+  "Extension lombaire banc 45°": '2021/08/extension-lombaire-au-banc-45.gif',
+  "Tractions supination": '2021/08/chin-up-traction-supination.gif',
+  "Tractions prise neutre": '2022/10/traction-prise-neutre.gif',
+  "Tractions australiennes": '2022/01/traction-australienne-rowing-poids-du-corps.gif',
+  "Rowing inversé sous une table": '2022/10/rowing-inverse-sous-une-table.gif',
+  "Tractions négatives": '2024/09/traction-negative-musculation-dos-biceps-force-progression-technique-exercice.gif',
+  "Tractions avec élastique": '2021/12/traction-assiste-elastique.gif',
+  "Tractions assistées machine": '2022/02/traction-assistee-machine.gif',
+  "Bird dog": '2022/04/bird-dog.gif',
+  "Suspension à la barre": '2025/11/dead-hang-suspension-passive.gif',
+  "Muscle-up": '2022/08/muscle-up-calisthenics-street-workout-dos.gif',
+  "Rowing unilatéral élastique": '2022/10/rowing-unilateral-avec-elastique.gif',
+  "Tirage horizontal élastique": '2022/02/rowing-horizontal-bande-elastique.gif',
+  "Rowing penché élastique": '2022/09/rowing-buste-penche-avec-elastique.gif',
+  "Pompes piquées": '2022/06/pike-push-up.gif',
+  "Pompes en équilibre (HSPU)": '2022/04/handstand-push-up.gif',
+  "Thruster": '2022/04/thruster.gif',
+  "Pec deck inversé": '2021/12/pec-deck-inverse.gif',
+  "Élévations latérales poulie": '2022/02/elevations-laterales-poulie.gif',
+  "Développé épaules machine": '2022/11/developpe-epaules-a-la-machine-shoulder-press.gif',
+  "Rotation externe poulie": '2022/04/rotation-externe-epaule-poulie.gif',
+  "Rotation externe élastique": '2024/05/rotation-externe-epaule-exercice-renforcement-elastique.gif',
+  "Développé épaules élastique": '2022/08/developpe-epaules-avec-elastique.gif',
+  "Élévations latérales kettlebell": '2021/12/elevation-laterales-avec-kettlebell.gif',
+  "Oiseau élastique": '2022/09/oiseau-avec-elastique.gif',
+  "Développé épaule kettlebell": '2021/12/developpe-epaule-avec-kettlebell.gif',
+  "Tirage menton kettlebell": '2021/12/tirage-menton-avec-kettlebell.gif',
+  "Curl concentré": '2021/09/curl-concentre.gif',
+  "Curl spider": '2022/01/spider-curl.gif',
+  "Curl inversé barre": '2022/04/curl-inverse-barre.gif',
+  "Curl Zottman": '2022/01/curl-zottman.gif',
+  "Drag curl": '2022/06/drag-curl.gif',
+  "Curl incliné haltères": '2022/09/curl-biceps-alterne-sur-banc-incline.gif',
+  "Curl machine": '2022/01/curl-pupitre-machine-prechargee.gif',
+  "Curl élastique": '2023/07/curl-biceps-prise-pronation-bande-elastique.gif',
+  "Curl marteau élastique": '2022/01/curl-avec-elastique.gif',
+  "Extension triceps poulie au-dessus tête": '2022/04/extension-triceps-poulie-haute.gif',
+  "Extension triceps couché haltères": '2022/12/extensions-triceps-couche-halteres.gif',
+  "Tate press": '2022/01/tate-press.gif',
+  "Dips assistés machine": '2022/04/dips-assiste-machine.gif',
+  "Extension triceps élastique": '2022/02/extension-triceps-derriere-tete-avec-elastique.gif',
+  "Extension triceps élastique vers le bas": '2022/02/extension-triceps-verticale-elastique.gif',
+  "Extension triceps en planche": '2023/07/extensions-triceps-planche.gif',
+  "Front squat": '2021/11/squat-barre-devant-front.gif',
+  "Hack squat": '2022/01/hack-squat.gif',
+  "Sissy squat": '2022/02/sissy-squat.gif',
+  "Pistol squat": '2021/12/squat-pistol.gif',
+  "Squat sumo haltère": '2022/12/squat-sumo-avec-haltere.gif',
+  "Squat cosaque": '2022/01/cossack-squat.gif',
+  "Fentes croisées": '2023/08/fentes-croisees.gif',
+  "Squat Smith machine": '2022/04/squat-smith-machine-exercice-musculation.gif',
+  "Squat élastique": '2022/08/squat-bande-elastique.gif',
+  "Fente bulgare élastique": '2025/11/fente-bulgare-a-elastique.gif',
+  "Leg extension élastique": '2023/08/leg-extension-avec-elastique.gif',
+  "Marche du fermier": '2025/11/marche-du-fermier-avec-kettlebells.gif',
+  "Squat goblet kettlebell": '2021/12/squat-goblet-kettlebell.gif',
+  "Poussée de traîneau": '2025/11/sled-push-hyrox.gif',
+  "Overhead squat": '2021/12/overhead-squat.gif',
+  "Soulevé de terre sumo": '2021/10/souleve-de-terre-sumo.gif',
+  "Soulevé de terre jambes tendues": '2022/04/souleve-de-terre-jambes-tendues.gif',
+  "Soulevé de terre trap bar": '2021/10/souleve-de-terre-a-la-trap-bar.gif',
+  "Rack pull": '2022/01/rack-pull.gif',
+  "Kettlebell swing": '2021/12/kettlebell-swing.gif',
+  "Soulevé roumain kettlebell": '2021/12/souleve-de-terre-roumain-kettlebell.gif',
+  "Leg curl au swiss ball": '2000/12/leg-curl-ballon-gym.gif',
+  "Nordic curl": '2022/09/nordic-hamstring-curl-avec-elastique.gif',
+  "Leg curl élastique": '2023/08/leg-curl-avec-elastique-musculation.gif',
+  "Good morning élastique": '2022/02/good-morning-elastique.gif',
+  "Hip thrust unilatéral": '2021/10/hip-thrust-barre-unilateral.gif',
+  "Hip thrust machine": '2022/08/hip-thrust-a-la-machine.gif',
+  "Donkey kick": '2022/04/donkey-kick.gif',
+  "Fire hydrant": '2022/04/fire-hydratant.gif',
+  "Pull through poulie": '2022/05/pull-through-a-la-poulie.gif',
+  "Reverse hyperextension": '2022/02/reverse-hyperextension.gif',
+  "Abduction élastique": '2024/07/abduction-de-la-hanche-assis-avec-elastique.gif',
+  "Marche latérale élastique": '2022/08/marche-avec-elastique.gif',
+  "Hip thrust à genoux élastique": '2022/09/hip-thrusts-a-genoux-avec-elastique.gif',
+  "Mollets sur une marche": '2021/10/extension-mollets-sur-marche.gif',
+  "Mollets au Donkey": '2022/02/extension-des-mollets-donkey.gif',
+  "Mollets debout barre": '2021/10/extension-mollets-barre-debout.gif',
+  "Crunch bicyclette": '2022/05/exercice-abdos-bicyclette.gif',
+  "Dead bug": '2022/11/dead-bug.gif',
+  "Hollow hold": '2022/04/hollow-hold.gif',
+  "V-ups": '2024/05/exercice-v-ups-gainage-renforcement-core-abdominaux.gif',
+  "Ciseaux": '2022/05/ciseaux.gif',
+  "Dragon flag": '2022/07/dragon-flag.gif',
+  "Planche de l’ours": '2022/04/gainage-ours-bear-plank.gif',
+  "Relevé de genoux suspendu": '2000/07/releve-de-genoux-suspendu-exercice-musculation.gif',
+  "Sit-up décliné": '2022/02/sit-up-decline.gif',
+  "Crunch machine": '2022/04/crunch-machine-abdos.gif',
+  "Flexions latérales haltère": '2022/07/flexions-laterales-haltere.gif',
+  "Windmill kettlebell": '2022/04/windmill.gif',
+  "Touche talons": '2022/08/touche-talon-alternes.gif',
+  "Rotation du buste poulie": '2022/02/rotation-buste-debout-poulie.gif',
+  "Planche latérale avec rotation": '2022/08/planche-laterale-avec-rotation.gif',
+  "Crunch swiss ball": '2000/07/crunch-swiss-ball-exercice-musculation.gif',
+  "Pallof press élastique": '2022/02/rotation-buste-elastique-pallof-press.gif',
+  "Jumping jacks": '2022/07/jumping-jack.gif',
+  "Marche de l’ours": '2023/05/marche-ours-bear-crawl-exercice-cardiovasculaire-cardio-aerobie-abdominaux.gif',
+  "Wall ball": '2022/09/wall-ball-squat.gif',
+  "Assault bike": '2022/07/assault-air-bike.gif',
+  "Machine à escaliers": '2022/10/machine-a-escaliers.gif',
+  "SkiErg": '2021/12/ergometre-de-ski.gif',
+  "Vélo spinning": '2022/11/velo-stationnaire.gif'
 };
 LIB.forEach(x => { x.gif = DF_GIF[x.n] ? DF_GIF_BASE + DF_GIF[x.n] : ''; });
 const gifOf = e => !e ? '' : LIB_BY[e.n] ? LIB_BY[e.n].gif : (e.gif || '');
@@ -1412,21 +1666,25 @@ function sheetEdit(i, preset){
     closeSheet(); render(); save(); toast(i >= 0 ? 'Exercice modifié ✓' : '✅ ' + ne.n + ' ajouté');
   };
 }
-let libQ = '', libM = 'Tous';
+let libQ = '', libM = 'Tous', libE = 'Tout';
 function sheetLib(){
   const ms = ['Tous', ...Object.keys(MUSCLES)];
   openSheet(`<h2>📚 Bibliothèque</h2>
     <input id="lq" class="inp" type="search" placeholder="Rechercher : squat, gainage, vélo…" value="${esc(libQ)}" style="width:100%" aria-label="Rechercher un exercice">
     <div class="chips2">${ms.map(m => `<button data-lm="${m}" class="${libM === m ? 'on' : ''}" style="--c:${mcol(m)}">${m}</button>`).join('')}</div>
+    <div class="chips2" aria-label="Matériel">${['Tout', ...EQUIP].map(q => `<button data-le="${q}" class="${libE === q ? 'on' : ''}" style="--c:#94a3b8">${q === 'Tout' ? '🧰 Tout matériel' : q}</button>`).join('')}</div>
+    <p class="muted" id="lcnt" style="margin:4px 0 8px;font-size:.8rem"></p>
     <div id="lres"></div>`);
   const paint = () => {
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
+    const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || eqOf(x) === libE) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
     $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
+    $('#lcnt').textContent = R.length + (R.length > 1 ? ' exercices' : ' exercice');
     $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
   };
   $('#lq').oninput = () => { libQ = $('#lq').value; paint(); };
   $('#sheet').querySelectorAll('[data-lm]').forEach(b => b.onclick = () => { libM = b.dataset.lm; $('#sheet').querySelectorAll('[data-lm]').forEach(x => x.classList.toggle('on', x === b)); paint(); });
+  $('#sheet').querySelectorAll('[data-le]').forEach(b => b.onclick = () => { libE = b.dataset.le; $('#sheet').querySelectorAll('[data-le]').forEach(x => x.classList.toggle('on', x === b)); paint(); });
   paint();
 }
 function sheetConfirm(msg, label, fn){
@@ -1977,19 +2235,19 @@ function bindProfil(){
    ============================================================ */
 // Familles de mouvements → exercices de la bibliothèque, selon le matériel (ordre = variantes)
 const SLOTS = {
-  squat:  { salle:['Squat','Presse à jambes','Squat bulgare'], halt:['Squat goblet','Squat bulgare','Fentes marchées'], pdc:['Squat poids du corps','Chaise'] },
-  hinge:  { salle:['Soulevé de terre roumain','Hip thrust','Soulevé de terre'], halt:['Soulevé de terre roumain','Hip thrust','Good morning'], pdc:['Pont fessier','Superman'] },
-  pushH:  { salle:['Développé couché','Développé couché haltères','Développé incliné haltères'], halt:['Développé couché haltères','Développé incliné haltères','Pompes'], pdc:['Pompes','Pompes inclinées'] },
-  pushV:  { salle:['Développé militaire','Développé haltères assis','Arnold press'], halt:['Développé haltères assis','Arnold press'], pdc:['Pompes diamant','Dips sur banc'] },
-  pullV:  { salle:['Tirage vertical (Lat Pulldown)','Tractions'], halt:['Tractions','Rowing haltère un bras'], pdc:['Tractions','Superman'] },
-  pullH:  { salle:['Rowing barre','Tirage horizontal (Cable Row)','Rowing haltère un bras'], halt:['Rowing haltère un bras','Shrugs (trapèzes)'], pdc:['Superman','Tractions'] },
-  epaule: { salle:['Élévations latérales','Face Pull','Oiseau (Rear Delt Fly)'], halt:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations frontales'], pdc:['Gainage latéral'] },
-  biceps: { salle:['Curl barre','Curl poulie basse','Curl marteau'], halt:['Curl haltères alterné','Curl marteau'], pdc:[] },
-  triceps:{ salle:['Extension triceps poulie haute','Barre au front','Dips'], halt:['Extension triceps au-dessus tête','Kickback haltère'], pdc:['Dips sur banc','Pompes diamant'] },
-  cuisse: { salle:['Leg extension','Curl jambes allongé','Curl jambes assis'], halt:['Fentes marchées','Step-up'], pdc:['Chaise','Squat poids du corps'] },
-  mollet: { salle:['Mollets debout','Mollets assis'], halt:['Mollets debout'], pdc:['Mollets debout'] },
-  core:   { salle:['Gainage','Relevé de jambes suspendu','Crunch aux câbles','Roue abdominale'], halt:['Gainage','Russian twist','Gainage latéral','Crunch'], pdc:['Gainage','Relevé de jambes au sol','Russian twist','Mountain climbers'] },
-  cardio: { salle:['Rameur','Elliptique','Vélo'], halt:['HIIT 30/30','Corde à sauter','Burpees'], pdc:['HIIT 30/30','Burpees','Mountain climbers'] }
+  squat:  { salle:['Squat','Presse à jambes','Squat bulgare'], halt:['Squat goblet','Squat bulgare','Fentes marchées'], elas:['Squat élastique','Fente bulgare élastique','Squat cosaque'], pdc:['Squat poids du corps','Chaise'] },
+  hinge:  { salle:['Soulevé de terre roumain','Hip thrust','Soulevé de terre'], halt:['Soulevé de terre roumain','Hip thrust','Good morning'], elas:['Good morning élastique','Hip thrust à genoux élastique','Pont fessier'], pdc:['Pont fessier','Superman'] },
+  pushH:  { salle:['Développé couché','Développé couché haltères','Développé incliné haltères'], halt:['Développé couché haltères','Développé incliné haltères','Pompes'], elas:['Développé couché élastique','Pompes','Écartés élastique'], pdc:['Pompes','Pompes inclinées'] },
+  pushV:  { salle:['Développé militaire','Développé haltères assis','Arnold press'], halt:['Développé haltères assis','Arnold press'], elas:['Développé épaules élastique','Pompes piquées'], pdc:['Pompes piquées','Pompes diamant','Dips sur banc'] },
+  pullV:  { salle:['Tirage vertical (Lat Pulldown)','Tractions'], halt:['Tractions','Rowing haltère un bras'], elas:['Rowing penché élastique','Rowing inversé sous une table'], pdc:['Tractions','Superman'] },
+  pullH:  { salle:['Rowing barre','Tirage horizontal (Cable Row)','Rowing haltère un bras','Rowing T-bar'], halt:['Rowing haltère un bras','Rowing haltères banc incliné','Shrugs (trapèzes)'], elas:['Tirage horizontal élastique','Rowing unilatéral élastique'], pdc:['Rowing inversé sous une table','Superman','Tractions'] },
+  epaule: { salle:['Élévations latérales','Face Pull','Oiseau (Rear Delt Fly)'], halt:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations frontales'], elas:['Oiseau élastique','Rotation externe élastique'], pdc:['Gainage latéral'] },
+  biceps: { salle:['Curl barre','Curl poulie basse','Curl marteau'], halt:['Curl haltères alterné','Curl marteau'], elas:['Curl élastique','Curl marteau élastique'], pdc:[] },
+  triceps:{ salle:['Extension triceps poulie haute','Barre au front','Dips'], halt:['Extension triceps au-dessus tête','Kickback haltère'], elas:['Extension triceps élastique vers le bas','Extension triceps élastique'], pdc:['Dips sur banc','Pompes diamant'] },
+  cuisse: { salle:['Leg extension','Curl jambes allongé','Curl jambes assis'], halt:['Fentes marchées','Step-up'], elas:['Leg curl élastique','Leg extension élastique','Marche latérale élastique'], pdc:['Chaise','Squat poids du corps'] },
+  mollet: { salle:['Mollets debout','Mollets assis'], halt:['Mollets debout'], elas:['Mollets sur une marche'], pdc:['Mollets sur une marche','Mollets debout'] },
+  core:   { salle:['Gainage','Relevé de jambes suspendu','Crunch aux câbles','Roue abdominale'], halt:['Gainage','Russian twist','Gainage latéral','Crunch'], elas:['Gainage','Pallof press élastique','Dead bug','Crunch bicyclette'], pdc:['Gainage','Relevé de jambes au sol','Russian twist','Mountain climbers','Dead bug'] },
+  cardio: { salle:['Rameur','Elliptique','Vélo'], halt:['HIIT 30/30','Corde à sauter','Burpees'], elas:['HIIT 30/30','Jumping jacks','Burpees'], pdc:['HIIT 30/30','Burpees','Mountain climbers'] }
 };
 const COMPOUND = ['squat','hinge','pushH','pushV','pullV','pullH'];
 const PLYO = { low: { deb:['Squat sauté','Sauts latéraux (skater)'], inter:['Box jump','Fentes sautées','Saut en longueur sans élan'], conf:['Box jump','Sauts groupés','Saut en longueur sans élan'] }, up: { deb:[], inter:['Pompes explosives'], conf:['Pompes explosives','Slam médecine-ball'] } };
@@ -2014,7 +2272,7 @@ const SPLITS = { 2:[['FBA','FBB'],'Full body ×2'], 3:[['FBA','FBB','FBC'],'Full
 const DEF_DAYS = { 2:[0,3], 3:[0,2,4], 4:[0,1,3,4], 5:[0,1,2,3,4], 6:[0,1,2,3,4,5] };
 const CYCLE = [['Prise en main','🧭','Séries de base, on trouve les bonnes charges.'],['Volume en hausse','📈','+1 série sur les exercices principaux.'],['Intensité','🔥','+1 série partout : la semaine la plus dure du cycle.'],['Décharge','🪶','Moins de séries et charges −10 % pour récupérer et repartir plus fort.']];
 const NIV = { deb:'Débutant (moins de 6 mois)', inter:'Intermédiaire', conf:'Confirmé (plus de 2 ans)' };
-const MAT = { salle:'Salle de sport complète', halt:'Haltères à la maison', pdc:'Sans matériel (poids du corps)' };
+const MAT = { salle:'Salle de sport complète', halt:'Haltères à la maison', elas:'Élastiques à la maison', pdc:'Sans matériel (poids du corps)' };
 const REST = { muscle:120, perte:60, recompo:90, maintien:90 };
 
 function scheme(obj, niv, comp, first){
@@ -2195,13 +2453,13 @@ function coachUndo(){
    ============================================================ */
 const ZONES = ['Épaule','Coude','Poignet','Dos','Hanche','Genou','Cheville'];
 const PAIN = {
-  'Épaule':{ avoid:['Développé militaire','Développé haltères assis','Arnold press','Élévations latérales','Élévations frontales','Dips','Dips sur banc','Développé couché','Développé incliné haltères','Développé décliné','Développé couché haltères','Pompes','Pompes explosives','Pompes diamant','Slam médecine-ball','Dislocations d’épaules (bâton)','Tractions','Barre au front','Pull-over poulie','Écartés haltères'], alt:{} },
-  'Coude':{ avoid:['Barre au front','Extension triceps poulie haute','Extension triceps au-dessus tête','Kickback haltère','Dips','Dips sur banc','Curl barre','Curl pupitre','Pompes diamant'], alt:{ 'Curl barre':'Curl marteau' } },
-  'Poignet':{ avoid:['Pompes','Pompes inclinées','Pompes diamant','Pompes explosives','Curl barre','Barre au front','Développé couché','Développé militaire','Roue abdominale','Burpees','Mountain climbers'], alt:{ 'Développé couché':'Développé couché haltères','Curl barre':'Curl marteau','Développé militaire':'Développé haltères assis','Pompes':'Pec deck' } },
-  'Dos':{ avoid:['Soulevé de terre','Soulevé de terre roumain','Rowing barre','Good morning','Squat','Superman','Roue abdominale','Relevé de jambes au sol','Russian twist','Shrugs (trapèzes)'], alt:{ 'Squat':'Presse à jambes','Rowing barre':'Tirage horizontal (Cable Row)','Soulevé de terre roumain':'Curl jambes allongé','Soulevé de terre':'Curl jambes allongé','Good morning':'Curl jambes assis' } },
-  'Hanche':{ avoid:['Squat','Squat bulgare','Fentes marchées','Fentes sautées','Hip thrust','Squat profond tenu','Pigeon (fessiers)','Box jump','Sauts groupés','Saut en longueur sans élan','Squat goblet','Course à pied'], alt:{ 'Squat':'Leg extension','Course à pied':'Vélo' } },
-  'Genou':{ avoid:['Squat','Squat goblet','Squat bulgare','Fentes marchées','Leg extension','Presse à jambes','Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Chaise','Squat poids du corps','Step-up','Course à pied','Corde à sauter','Burpees','Squat profond tenu'], alt:{ 'Squat':'Hip thrust','Presse à jambes':'Pont fessier','Leg extension':'Curl jambes allongé','Course à pied':'Natation','Squat goblet':'Hip thrust' } },
-  'Cheville':{ avoid:['Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Corde à sauter','Burpees','Course à pied','Mollets debout','Mollets à la presse','Fentes marchées','Step-up'], alt:{ 'Course à pied':'Vélo','Corde à sauter':'Rameur' } }
+  'Épaule':{ avoid:['Pompes piquées','Pompes en équilibre (HSPU)','Thruster','Muscle-up','Développé incliné barre','Développé épaules élastique','Développé épaules machine','Développé couché élastique','Développé épaule kettlebell','Chest press machine','Développé militaire','Développé haltères assis','Arnold press','Élévations latérales','Élévations frontales','Dips','Dips sur banc','Développé couché','Développé incliné haltères','Développé décliné','Développé couché haltères','Pompes','Pompes explosives','Pompes diamant','Slam médecine-ball','Dislocations d’épaules (bâton)','Tractions','Barre au front','Pull-over poulie','Écartés haltères'], alt:{} },
+  'Coude':{ avoid:['Extension triceps élastique','Extension triceps élastique vers le bas','Extension triceps couché haltères','Tate press','Curl élastique','Barre au front','Extension triceps poulie haute','Extension triceps au-dessus tête','Kickback haltère','Dips','Dips sur banc','Curl barre','Curl pupitre','Pompes diamant'], alt:{ 'Curl barre':'Curl marteau' } },
+  'Poignet':{ avoid:['Pompes piquées','Pompes en équilibre (HSPU)','Renegade row','Extension triceps en planche','Pompes','Pompes inclinées','Pompes diamant','Pompes explosives','Curl barre','Barre au front','Développé couché','Développé militaire','Roue abdominale','Burpees','Mountain climbers'], alt:{ 'Développé couché':'Développé couché haltères','Curl barre':'Curl marteau','Développé militaire':'Développé haltères assis','Pompes':'Pec deck' } },
+  'Dos':{ avoid:['Good morning élastique','Soulevé de terre sumo','Soulevé de terre jambes tendues','Rack pull','Kettlebell swing','Soulevé de terre','Soulevé de terre roumain','Rowing barre','Good morning','Squat','Superman','Roue abdominale','Relevé de jambes au sol','Russian twist','Shrugs (trapèzes)'], alt:{ 'Squat':'Presse à jambes','Rowing barre':'Tirage horizontal (Cable Row)','Soulevé de terre roumain':'Curl jambes allongé','Soulevé de terre':'Curl jambes allongé','Good morning':'Curl jambes assis' } },
+  'Hanche':{ avoid:['Squat cosaque','Fente bulgare élastique','Hip thrust à genoux élastique','Squat','Squat bulgare','Fentes marchées','Fentes sautées','Hip thrust','Squat profond tenu','Pigeon (fessiers)','Box jump','Sauts groupés','Saut en longueur sans élan','Squat goblet','Course à pied'], alt:{ 'Squat':'Leg extension','Course à pied':'Vélo' } },
+  'Genou':{ avoid:['Squat élastique','Fente bulgare élastique','Leg extension élastique','Squat cosaque','Pistol squat','Jumping jacks','Squat','Squat goblet','Squat bulgare','Fentes marchées','Leg extension','Presse à jambes','Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Chaise','Squat poids du corps','Step-up','Course à pied','Corde à sauter','Burpees','Squat profond tenu'], alt:{ 'Squat':'Hip thrust','Presse à jambes':'Pont fessier','Leg extension':'Curl jambes allongé','Course à pied':'Natation','Squat goblet':'Hip thrust' } },
+  'Cheville':{ avoid:['Jumping jacks','Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Corde à sauter','Burpees','Course à pied','Mollets debout','Mollets à la presse','Fentes marchées','Step-up'], alt:{ 'Course à pied':'Vélo','Corde à sauter':'Rameur' } }
 };
 const today = () => ymd(new Date());
 const formeOf = d => forme[d || today()] || null;
