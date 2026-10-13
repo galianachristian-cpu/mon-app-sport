@@ -264,6 +264,15 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 .seg{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
 .seg button{flex:1;padding:9px 6px;border-radius:10px;font-weight:700;font-size:13.5px;color:var(--muted)}
 .seg button.on{background:var(--grad);color:#0b0f19}
+.awrow{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.awrow:last-child{border-bottom:0}
+.awday{display:flex;flex-direction:column;align-items:flex-start;font-weight:800;font-size:13px;text-align:left}
+.awday small{font-weight:600;font-size:11px;color:var(--muted)}
+.awday.all{color:#fb923c}
+.awm{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.awm button{padding:8px 2px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--soft);line-height:1.15}
+.awm button.on{background:color-mix(in srgb,#fb923c 22%,transparent);border-color:#fb923c;color:var(--text)}
+.awm button small{display:block;font-size:10px;font-weight:600;color:var(--muted)}
 .bilan .big{font-size:48px;text-align:center;margin-top:-4px}
 .feels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .feels button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 2px;border-radius:14px;background:var(--bg2);border:1.5px solid var(--line)}
@@ -1858,7 +1867,7 @@ const ACT = { 1.2:'Sédentaire (bureau, peu de marche)', 1.35:'Peu actif (marche
 /* ============================================================
    NUTRITION — CALCULS
    ============================================================ */
-let foyer = { plans:{}, checked:{}, extra:{}, swaps:{}, commun:true };
+let foyer = { plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true };
 let nutTab = 'jour', nutDay = null, coursesScope = 'semaine', coursesWho = 'tous';
 const FOYER_ID = 'foyer';
 function hashN(s){ let h = 2166136261; for (const c of String(s)){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -1994,7 +2003,38 @@ function planOf(wk){
   if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -3).forEach(k => delete foyer.plans[k]); saveFoyer(); }
   return foyer.plans[wk];
 }
-function dayPortions(pid, d, wk){ const plan = planOf(wk); return MEALS.map(([meal]) => { const rid = ridOf(plan, d, meal, pid); return { meal, rid, por: rid ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
+function dayPortions(pid, d, wk){ const plan = planOf(wk); return MEALS.map(([meal]) => { const rid = ridOf(plan, d, meal, pid), away = isAway(pid, d, meal, wk); return { meal, rid, away, por: rid && !away ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
+
+/* Absences : repas pris hors de la maison (par personne, pour une semaine ou toutes les semaines) */
+const awayRecOf = (pid, d, meal) => !!((foyer.awayRec || {})[pid] || {})[d + meal];
+function isAway(pid, d, meal, wk){ const w = (((foyer.away || {})[wk] || {})[pid]) || {}; return d + meal in w ? !!w[d + meal] : awayRecOf(pid, d, meal); }
+function setAway(pid, d, meal, wk, on){
+  const k = d + meal;
+  if (!wk){ const R = ((foyer.awayRec = foyer.awayRec || {})[pid] = foyer.awayRec[pid] || {}); if (on) R[k] = 1; else delete R[k]; return; }
+  const W = (((foyer.away = foyer.away || {})[wk] = foyer.away[wk] || {})[pid] = foyer.away[wk][pid] || {});
+  if (on === awayRecOf(pid, d, meal)) delete W[k]; else W[k] = on ? 1 : 0;
+  Object.keys(foyer.away).sort().slice(0, -4).forEach(x => delete foyer.away[x]);
+}
+const awayCount = (wk, pids, from = 0) => { let n = 0; for (let d = from; d < 7; d++) pids.forEach(pid => MEALS.forEach(([m]) => { if (isAway(pid, d, m, wk)) n++; })); return n; };
+let awayWho = null, awayWk = null;
+function sheetAway(){
+  if (!awayWho) awayWho = profile.id; if (awayWk === null) awayWk = curWk();
+  const nx = wkShift(curWk(), 1), wk = awayWk, dates = wk ? wkDates(wk) : null;
+  const tabs = [[curWk(), 'Cette semaine'], [nx, 'Semaine prochaine'], ['', '🔁 Toutes les semaines']];
+  const on = (d, m) => wk ? isAway(awayWho, d, m, wk) : awayRecOf(awayWho, d, m);
+  const n = wk ? awayCount(wk, [awayWho]) : DAY_NAMES.reduce((a, _, d) => a + MEALS.filter(([m]) => awayRecOf(awayWho, d, m)).length, 0);
+  const nom = esc((PROFILES.find(p => p.id === awayWho) || {}).nom || '');
+  openSheet(`<h2>🧳 Repas hors de la maison</h2>
+    <p class="muted" style="font-size:13px;margin:-4px 0 10px">Touche les repas que tu ne prends pas à la maison : ils sortent de la liste de courses, des menus et du batch cooking.</p>
+    <div class="seg small">${PROFILES.map(p => `<button class="${awayWho === p.id ? 'on' : ''}" data-x="awho" data-pid="${p.id}">${esc(p.nom)}</button>`).join('')}</div>
+    <div class="seg small" style="margin-top:8px">${tabs.map(([w, l]) => `<button class="${wk === w ? 'on' : ''}" data-x="awk" data-wk="${w}">${l}</button>`).join('')}</div>
+    <div class="card" style="margin-top:12px;padding:6px 12px">${DAY_NAMES.map((dn, d) => { const all = MEALS.every(([m]) => on(d, m));
+      return `<div class="awrow"><button class="awday ${all ? 'all' : ''}" data-x="awday" data-d="${d}" aria-label="${dn} : toute la journée">${DAY_SHORT[d]}<small>${dates ? fmtD(dates[d]) : 'chaque sem.'}</small><small>${all ? '🧳 absent' : 'journée'}</small></button>
+        <div class="awm">${MEALS.map(([m, l, ico]) => { const o = on(d, m), rec = wk && awayRecOf(awayWho, d, m); return `<button class="${o ? 'on' : ''}" data-x="away" data-d="${d}" data-m="${m}" aria-pressed="${o}" aria-label="${dn} ${l}">${ico}<small>${o ? 'absent' : l.replace('Petit-déjeuner', 'Petit-déj')}${rec ? ' 🔁' : ''}</small></button>`; }).join('')}</div></div>`; }).join('')}</div>
+    <p class="muted" style="font-size:12.5px;margin-top:10px">${n ? `${nom} : <b>${n} repas</b> hors de la maison ${wk ? (wk === curWk() ? 'cette semaine' : 'la semaine prochaine') : 'chaque semaine'}.` : `${nom} est à la maison pour tous les repas${wk ? '' : ' (rien de régulier)'}.`}${wk ? ' 🔁 = absence de toutes les semaines (touche pour l’annuler juste cette fois).' : ' Exemple : déjeuner au travail tous les mardis.'}</p>
+    <button class="btn pri block" data-act="close" style="margin-top:6px">OK</button>`);
+}
+function awayChanged(){ saveFoyer(); sheetAway(); if (view === 'nutrition') viewNutrition(); }
 
 /* Sauvegarde du « foyer » (menus et liste de courses communs) */
 let foyerTimer = null;
@@ -2002,7 +2042,7 @@ async function loadFoyer(){
   let src = null;
   if (db){ try{ const doc = await Promise.race([DOC(FOYER_ID).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 8000))]); src = doc.exists ? doc.data() : {}; }catch(e){ src = null; } }
   if (!src) src = safeGet('mp_foyer', {});
-  foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, commun:true }, src || {});
+  foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true }, src || {});
   mergeFoyerExtras();
 }
 function saveFoyer(){
@@ -2059,6 +2099,8 @@ function nutJour(){
 }
 function mealCard(x, st, date){
   const [, lbl, ico] = MEALS.find(m => m[0] === x.meal);
+  if (x.away){ const o = st && st.items; return `<article class="ex meal ${o ? 'done' : ''}"><div class="row1"><span class="emo">🧳</span><div class="name"><b>${lbl} hors de la maison</b><span class="sub muted">Retiré de la liste de courses${o ? ` · noté : ${kc(macrosOf(st.items).k)} kcal` : ''}</span></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ Noter ce que j’ai mangé</button><button class="btn sm" data-x="mout" data-meal="${x.meal}">🏠 Je suis là finalement</button></div></article>`; }
   if (!x.por) return `<article class="ex meal"><div class="row1"><span class="emo">${ico}</span><div class="name"><b>${lbl}</b><span class="sub muted">Aucune recette compatible</span></div></div></article>`;
   const p = x.por, okd = st === 'ok', other2 = st && st.items, skip = st === 'skip';
   return `<article class="ex meal ${okd || other2 ? 'done' : ''}">
@@ -2068,7 +2110,7 @@ function mealCard(x, st, date){
     <div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}</button>`).join('')}</div>
     ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
     ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
-    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ J’ai mangé autre chose</button><button class="btn sm" data-act="mchange" data-meal="${x.meal}">🔄 Autre plat</button></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ J’ai mangé autre chose</button><button class="btn sm" data-act="mchange" data-meal="${x.meal}">🔄 Autre plat</button><button class="btn sm" data-x="mout" data-meal="${x.meal}">🧳 Pas à la maison</button></div>
   </article>`;
 }
 function bindJour(){
@@ -2130,8 +2172,8 @@ function sheetOther(meal){
 function trimJournal(){ const ks = Object.keys(journal).sort(); ks.slice(0, Math.max(0, ks.length - 60)).forEach(k => delete journal[k]); }
 function nutSemaine(){
   const wk = curWk(), plan = planOf(wk);
-  return `<div class="card" style="margin-top:14px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><button class="btn pri block" data-x="batch" style="margin-top:10px">🥘 Batch cooking du dimanche</button></div>
-  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
+  return `<div class="card" style="margin-top:14px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div></div>
+  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
 }
 function coursesList(){
   const wk = curWk(), dates = weekDates(wk), from = coursesScope === 'semaine' ? 0 : todayIdx();
@@ -2143,12 +2185,13 @@ function coursesList(){
   return { groups, dates, from, pids };
 }
 function nutCourses(){
-  const wk = curWk(), { groups, dates, from, pids } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
+  const wk = curWk(), { groups, dates, from, pids } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [], nAway = awayCount(wk, pids, from);
   const missing = pids.filter(pid => !nutReady(ctxOf(pid).nut)).map(pid => ctxOf(pid).nom);
   return `<div class="card" style="margin-top:14px">
     <div class="seg small">${[['semaine','Toute la semaine'],['reste','À partir d’aujourd’hui']].map(([k, l]) => `<button class="${coursesScope === k ? 'on' : ''}" data-cs="${k}">${l}</button>`).join('')}</div>
     <div class="seg small" style="margin-top:8px">${[['tous','Pour nous 2'],['moi','Pour moi']].map(([k, l]) => `<button class="${coursesWho === k ? 'on' : ''}" data-cw="${k}">${l}</button>`).join('')}</div>
-    <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
+    <button class="btn block" data-x="awaysheet" style="margin-top:8px">🧳 Absences : ${nAway ? `${nAway} repas hors de la maison` : 'aucune'}</button>
+    <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
   ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g}</h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''}><span>${esc(x.n)}</span><b>${x.q}</b></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
@@ -2156,7 +2199,8 @@ function nutCourses(){
 }
 function coursesText(){
   const wk = curWk(), { groups, dates, from } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
-  let s = `Liste de courses du ${fmtD(dates[from])} au ${fmtD(dates[6])}\n`;
+  const nAway = awayCount(wk, coursesList().pids, from);
+  let s = `Liste de courses du ${fmtD(dates[from])} au ${fmtD(dates[6])}${nAway ? ` (sans les ${nAway} repas hors de la maison)` : ''}\n`;
   Object.entries(groups).sort().forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q}`).join('\n') + '\n'; });
   const E = ex.filter((_, i) => !ck['x' + i]); if (E.length) s += '\n➕ Autres\n' + E.map(x => '- ' + x).join('\n') + '\n';
   return s + '\nEnvoyé depuis Mon Programme 🏋️';
@@ -3143,7 +3187,7 @@ function batchData(){
   const nextW = todayIdx() >= 5, wk = batchScope ? batchScope.wk : (nextW ? wkShift(curWk(), 1) : curWk()), days = batchScope ? batchScope.days : 4;
   const from = wk === curWk() ? Math.min(todayIdx(), 7 - days) : 0, D = Array.from({ length: days }, (_, j) => from + j).filter(d => d < 7);
   const tot = {}, boxes = []; let nBox = 0;
-  D.forEach(d => { ['dej','din'].forEach(meal => { const names = new Set(); PROFILES.forEach(p => { const x = dayPortions(p.id, d, wk).find(z => z.meal === meal); if (!x || !x.por) return; names.add(x.por.r.n); nBox++; x.por.ing.forEach(([f, g]) => { tot[f] = (tot[f] || 0) + g; }); }); boxes.push([d, meal, [...names]]); }); });
+  D.forEach(d => { ['dej','din'].forEach(meal => { const names = new Set(); PROFILES.forEach(p => { const x = dayPortions(p.id, d, wk).find(z => z.meal === meal); if (!x || !x.por) return; names.add(x.por.r.n); nBox++; x.por.ing.forEach(([f, g]) => { tot[f] = (tot[f] || 0) + g; }); }); if (names.size) boxes.push([d, meal, [...names]]); }); });
   return { wk, D, tot, boxes, nBox, days };
 }
 function batchSteps(b){
@@ -3168,6 +3212,7 @@ function sheetBatch(){
     <div class="seg">${[[curWk(), 'Cette semaine'], [wkShift(curWk(), 1), 'Semaine prochaine']].map(([w, l]) => `<button class="${b.wk === w ? 'on' : ''}" data-x="bwk" data-wk="${w}">${l}</button>`).join('')}</div>
     <div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>
     <h3 class="sec">Les étapes</h3><div class="steps">${S.map(([t, x], j) => `<label class="step ${st[j] ? 'ok' : ''}"><input type="checkbox" data-bstep="${j}" ${st[j] ? 'checked' : ''}><span class="t">${t}</span><span>${x}</span></label>`).join('')}</div>
+    ${awayCount(b.wk, PROFILES.map(p => p.id)) ? '<p class="muted" style="font-size:12.5px;margin-top:10px">🧳 Les repas hors de la maison sont déjà retirés.</p>' : ''}
     <h3 class="sec">Les boîtes</h3><div class="card"><table class="tbl"><tbody>${b.boxes.map(([d, m, n]) => `<tr><td>${DAY_SHORT[d]} ${m === 'dej' ? '🍽️' : '🌙'}</td><td>${n.map(esc).join(' / ') || '–'}</td></tr>`).join('')}</tbody></table></div>
     <p class="muted" style="font-size:12px;margin-top:10px">${nx ? 'Menus de la semaine prochaine : la liste de courses correspondante sera dans l’onglet Courses à partir de lundi.' : 'Les quantités sont celles des menus (vous deux). Les ingrédients sont dans l’onglet Courses.'} Un plat cuisiné se garde 3 jours au frigo.</p>`);
   $('#sheet').querySelectorAll('[data-bstep]').forEach(c => c.onchange = () => { const s2 = safeGet('mp_batch_' + b.wk, {}); s2[c.dataset.bstep] = c.checked; safeSet('mp_batch_' + b.wk, s2); c.closest('.step').classList.toggle('ok', c.checked); if (S.every((_, j) => s2[j])){ confetti(); toast('🥘 Batch cooking terminé, bravo !'); } });
@@ -3244,6 +3289,12 @@ function evoAct(a, b){
     case 'rundel': sheetConfirm('Supprimer cette sortie ?', 'Supprimer', () => { const r = runs.find(x => x.id === b.dataset.id); runs = runs.filter(x => x.id !== b.dataset.id); if (r) { const i = hist.findIndex(h => h.k === 'run' && h.d === r.d && h.w === r.km); if (i >= 0) hist.splice(i, 1); } save(); closeSheet(); viewRun(); }); break;
     case 'duo': startDuo(); break;
     case 'batch': batchScope = null; sheetBatch(); break;
+    case 'awaysheet': awayWk = null; sheetAway(); break;
+    case 'awho': awayWho = b.dataset.pid; sheetAway(); break;
+    case 'awk': awayWk = b.dataset.wk; sheetAway(); break;
+    case 'away': { const d = +b.dataset.d, m = b.dataset.m, cur = awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m); setAway(awayWho, d, m, awayWk, !cur); awayChanged(); break; }
+    case 'awday': { const d = +b.dataset.d, on = (m) => awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m), all = MEALS.every(([m]) => on(m)); MEALS.forEach(([m]) => setAway(awayWho, d, m, awayWk, !all)); awayChanged(); break; }
+    case 'mout': { const d = nutDay, m = b.dataset.meal, wk = curWk(); setAway(profile.id, d, m, wk, !isAway(profile.id, d, m, wk)); saveFoyer(); viewNutrition(); toast(isAway(profile.id, d, m, wk) ? '🧳 Repas retiré des courses' : '🏠 Repas remis au menu'); break; }
     case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: b0.days }; sheetBatch(); break; }
     case 'bdays': { const b0 = batchData(); batchScope = { wk: b0.wk, days: +b.dataset.n }; sheetBatch(); break; }
     case 'remopt': { const r = remCfg(); r[b.dataset.k] = !r[b.dataset.k]; safeSet('mp_settings', settings); viewSemaine(); break; }
