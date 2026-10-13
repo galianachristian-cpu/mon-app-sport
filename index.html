@@ -1912,7 +1912,8 @@ function targets(c, di){
   const man = num(n.kcalMan), auto = Math.max(floor, Math.round((tdee * f + (n.adj || 0)) / 10) * 10);
   const kcal = man ? Math.max(1000, Math.round((man + (train && n.kcalSeance !== false ? sk : 0)) / 10) * 10) : auto;
   const pk = { perte: 2.0, maintien: 1.8, muscle: 2.0, recompo: 2.0 }[n.obj || 'maintien'];
-  const p = Math.round(w * pk), l = Math.round(Math.max(w * .8, kcal * .25 / 9)), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
+  // protéines : g/kg selon l'objectif, sans dépasser 30 % des calories (au moins 1,2 g/kg)
+  const p = Math.round(Math.max(w * 1.2, Math.min(w * pk, kcal * .30 / 4))), l = Math.round(Math.max(w * .8, kcal * .25 / 9)), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
   return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor };
 }
 // ajustement automatique hebdomadaire selon l'évolution du poids
@@ -1957,7 +1958,7 @@ function roundG(f, g){
 // Ajuste les protéines du repas vers l'objectif : plus d'aliments protéinés, moins de féculents (calories gardées)
 const PROT_G = ['prot','laitier','lait','legumineuse'], CARB_G = ['fec','cereale','pain'];
 // portion maximale raisonnable par repas (g, poids cru / égoutté)
-const MAXG = { poischiche:250, haricotrouge:250, lentille:100, riz:130, pates:140, semoule:130, avoine:100, pdt:500, patate:450 };
+const MAXG = { poulet:200, dinde:200, boeuf:200, colin:250, saumon:180, thon:150, sardine:150, jambon:120, oeuf:240, tofu:250, poischiche:250, haricotrouge:250, lentille:100, riz:130, pates:140, semoule:130, avoine:100, pdt:500, patate:450 };
 function proteinFix(m, pTarget, kTarget){
   const P = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].p * g / 100, 0);
   const K = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].k * g / 100, 0);
