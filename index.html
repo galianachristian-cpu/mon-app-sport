@@ -1913,7 +1913,7 @@ function targets(c, di){
   const kcal = man ? Math.max(1000, Math.round((man + (train && n.kcalSeance !== false ? sk : 0)) / 10) * 10) : auto;
   const pk = { perte: 2.0, maintien: 1.8, muscle: 2.0, recompo: 2.0 }[n.obj || 'maintien'];
   // protéines : g/kg selon l'objectif, sans dépasser 30 % des calories (au moins 1,2 g/kg)
-  const p = Math.round(Math.max(w * 1.2, Math.min(w * pk, kcal * .30 / 4))), l = Math.round(Math.max(w * .8, kcal * .25 / 9)), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
+  const p = Math.round(Math.max(w * 1.2, Math.min(w * pk, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
   return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor };
 }
 // ajustement automatique hebdomadaire selon l'évolution du poids
@@ -1959,20 +1959,38 @@ function roundG(f, g){
 const PROT_G = ['prot','laitier','lait','legumineuse'], CARB_G = ['fec','cereale','pain'];
 // portion maximale raisonnable par repas (g, poids cru / égoutté)
 const MAXG = { poulet:200, dinde:200, boeuf:200, colin:250, saumon:180, thon:150, sardine:150, jambon:120, oeuf:240, tofu:250, poischiche:250, haricotrouge:250, lentille:100, riz:130, pates:140, semoule:130, avoine:100, pdt:500, patate:450 };
-function proteinFix(m, pTarget, kTarget){
-  const P = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].p * g / 100, 0);
-  const K = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].k * g / 100, 0);
-  // seuls les aliments riches en protéines (≥ 8 g pour 100 kcal) servent à compléter : pas les pois chiches, lentilles ou yaourts
+// équilibre un repas : protéines (complément en dessert si besoin), puis lipides, puis glucides pour tomber sur les calories
+const FAT_G = ['gras','noix','fromage'];
+function macroFix(m, T, excl, side, meal){
+  const sum = z => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f][z] * g / 100, 0);
+  const P = () => sum('p'), K = () => sum('k'), L = () => sum('l');
+  const scale = (L2, r) => L2.forEach(f => { m[f] *= r; });
+  let added = null;
+  // 1. protéines : seuls les aliments riches (≥ 8 g pour 100 kcal) servent à compléter
   const prot = Object.keys(m).filter(f => PROT_G.includes(FOODS[f].grp) && FOODS[f].p / FOODS[f].k >= .08).sort((a, b) => FOODS[b].p / FOODS[b].k - FOODS[a].p / FOODS[a].k);
-  if (!prot.length) return;
-  const main = prot[0], orig = m[main], missing = pTarget * .95 - P();
-  if (missing > 2){ const add = Math.min(orig * 1.8, missing / (FOODS[main].p / 100)); m[main] += add; }
-  else if (missing < -pTarget * .35){ m[main] = Math.max(orig * .6, orig + missing * .5 / (FOODS[main].p / 100)); }
-  const carbs = Object.keys(m).filter(f => CARB_G.includes(FOODS[f].grp)), over = K() - kTarget;
-  if (over > 20 && carbs.length){ const ck = carbs.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); const r = Math.max(.4, 1 - over / Math.max(1, ck)); carbs.forEach(f => { m[f] *= r; }); }
-  const over2 = K() - kTarget, fats = Object.keys(m).filter(f => ['gras','noix','fromage'].includes(FOODS[f].grp));
-  if (over2 > 30 && fats.length){ const fk = fats.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); const r = Math.max(.5, 1 - over2 / Math.max(1, fk)); fats.forEach(f => { m[f] *= r; }); }
-  else if (over < -60 && carbs.length){ const ck = carbs.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); const r = Math.min(1.6, 1 - over / Math.max(1, ck)); carbs.forEach(f => { m[f] *= r; }); }
+  let missing = T.p * .95 - P();
+  if (prot.length){
+    const main = prot[0], orig = m[main];
+    if (missing > 2){ m[main] = Math.min(MAXG[main] || 1e9, orig + Math.min(orig * 1.8, missing / (FOODS[main].p / 100))); }
+    else if (missing < -T.p * .35){ m[main] = Math.max(orig * .6, orig + missing * .5 / (FOODS[main].p / 100)); }
+    missing = T.p * .95 - P();
+  }
+  // plat ou petit-déjeuner encore trop léger : fromage blanc (ou skyr) en dessert
+  if (side && missing > Math.max(5, T.p * .15)){ const d = ['fblanc','skyr'].find(f => !excl.includes(f) && !m[f]); if (d){ m[d] = Math.min(meal === 'col' ? 150 : 200, Math.max(80, missing / (FOODS[d].p / 100))); added = d; } }
+  // 2. lipides : repas presque sans gras → un filet d'huile (plat) ou quelques amandes (petit-déj, collation)
+  if (!Object.keys(m).some(f => FAT_G.includes(FOODS[f].grp)) && L() < T.l * .5){ const add = meal === 'pdj' || meal === 'col' ? 'amande' : 'huile'; if (!excl.includes(add)) m[add] = Math.max(5, Math.min(add === 'huile' ? 10 : 20, (T.l * .7 - L()) / (FOODS[add].l / 100))); }
+  // puis on réduit huile, oléagineux et fromage s'il y en a trop
+  const fats = Object.keys(m).filter(f => FAT_G.includes(FOODS[f].grp));
+  const fatOf = () => fats.reduce((a, f) => a + FOODS[f].l * m[f] / 100, 0);
+  if (fats.length && L() > T.l * 1.2){ const fl = fatOf(); scale(fats, Math.max(.4, 1 - (L() - T.l) / Math.max(1, fl))); }
+  else if (fats.length && L() < T.l * .6){ const fl = fatOf(); scale(fats, Math.min(1.5, 1 + (T.l * .8 - L()) / Math.max(1, fl))); }
+  // 3. glucides : on ajuste féculents, céréales et pain pour atteindre les calories
+  const carbs = Object.keys(m).filter(f => CARB_G.includes(FOODS[f].grp)), gap = K() - T.k;
+  if (carbs.length && Math.abs(gap) > 20){ const ck = carbs.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); scale(carbs, Math.max(.4, Math.min(1.6, 1 - gap / Math.max(1, ck)))); }
+  // 4. encore trop calorique : on baisse les lipides ajoutés
+  const over = K() - T.k;
+  if (over > 30 && fats.length){ const fk = fats.reduce((a, f) => a + FOODS[f].k * m[f] / 100, 0); scale(fats, Math.max(.5, 1 - over / Math.max(1, fk))); }
+  return added;
 }
 // portion d'une recette pour une personne et un repas, avec remplacements et calories du repas
 function portion(rid, pid, meal, di, wk){
@@ -1989,10 +2007,11 @@ function portion(rid, pid, meal, di, wk){
   let factor = 1, t = null;
   if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, t.kcal * share / Math.max(1, kcalOf(ing)))); }
   const merged = {}; ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g * factor; });
-  if (t) proteinFix(merged, t.p * share, t.kcal * share);
+  let side = null;
+  if (t) side = macroFix(merged, { k: t.kcal * share, p: t.p * share, l: t.l * share }, excl, true, meal);
   Object.keys(merged).forEach(f => { if (MAXG[f]) merged[f] = Math.min(merged[f], MAXG[f]); });
   ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
-  return { r, ing, m: macrosOf(ing), subs, pT: t ? t.p * share : null };
+  return { r, ing, m: macrosOf(ing), subs, side, pT: t ? t.p * share : null };
 }
 function pickFrom(list, rnd, avoid){ const fresh = list.filter(r => !avoid.includes(r.id)), L = fresh.length ? fresh : list; return L.length ? L[Math.floor(rnd() * L.length)].id : null; }
 function genPlan(wk){
@@ -2125,9 +2144,9 @@ function mealCard(x, st, date){
   const p = x.por, okd = st === 'ok', other2 = st && st.items, skip = st === 'skip';
   return `<article class="ex meal ${okd || other2 ? 'done' : ''}">
     <div class="row1"><button class="emo" data-act="recette" data-meal="${x.meal}">${p.r.e}</button>
-      <button class="name" data-act="recette" data-meal="${x.meal}"><b>${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · ${Math.round(p.m.p)} g prot.</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
+      <button class="name" data-act="recette" data-meal="${x.meal}"><b>${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · P ${Math.round(p.m.p)} · G ${Math.round(p.m.g)} · L ${Math.round(p.m.l)} g</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
       <button class="check" data-act="mok" data-meal="${x.meal}" aria-label="${okd ? 'Annuler' : 'Mangé comme prévu'}" aria-pressed="${okd}">✓</button></div>
-    <div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}</button>`).join('')}</div>
+    <div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === p.side ? ` <small class="cuit">${x.meal === 'col' ? 'en plus' : 'en dessert'}</small>` : ''}</button>`).join('')}</div>
     ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
     ${p.pT && p.m.p < p.pT * .75 ? `<p class="advice">💡 Plat léger en protéines (${Math.round(p.m.p)} g sur ${Math.round(p.pT)} g visés) : ajoute un skyr, un fromage blanc ou 2 œufs.</p>` : ''}
     ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
@@ -2141,7 +2160,7 @@ function sheetRecette(meal){
   const wk = curWk(), rid = ridOf(planOf(wk), nutDay, meal, profile.id), p = portion(rid, profile.id, meal, nutDay, wk);
   openSheet(`<h2>${p.r.e} ${esc(p.r.n)}</h2>
     <div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
-    <div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p>${p.ing.map(([f, g]) => `• ${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>
+    <div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p>${p.ing.map(([f, g]) => `• ${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>
     <div class="box"><h4>👩‍🍳 Préparation</h4><p>${esc(p.r.steps)}</p></div>
     <p class="muted" style="font-size:12px">Glucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
 }
