@@ -2152,7 +2152,7 @@ function nutCourses(){
   ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g}</h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''}><span>${esc(x.n)}</span><b>${x.q}</b></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
-  <div class="row" style="margin-top:16px"><button class="btn pri" id="mailBtn">✉️ Envoyer par mail</button>${navigator.share ? '<button class="btn" id="shareBtn">📤 Partager</button>' : ''}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
+  <div class="row" style="margin-top:16px">${navigator.share ? '<button class="btn pri" id="shareBtn">📤 Envoyer</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn pri" id="mailBtn">✉️ Envoyer par mail</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
 }
 function coursesText(){
   const wk = curWk(), { groups, dates, from } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
@@ -2169,6 +2169,7 @@ function bindCourses(){
   document.querySelectorAll('[data-exrm]').forEach(b => b.onclick = ev => { ev.preventDefault(); (foyer.extra[wk] || []).splice(+b.dataset.exrm, 1); saveFoyer(); viewNutrition(); });
   $('#exf').onsubmit = ev => { ev.preventDefault(); const v = $('#exIn').value.trim(); if (!v) return; (foyer.extra[wk] = foyer.extra[wk] || []).push(v); saveFoyer(); viewNutrition(); };
   $('#mailBtn').onclick = () => { location.href = 'mailto:?subject=' + encodeURIComponent('🛒 Liste de courses') + '&body=' + encodeURIComponent(coursesText()); };
+  // menu de partage du téléphone : Gmail, Messages, WhatsApp… (ne dépend pas du compte configuré dans Mail)
   const sh = $('#shareBtn'); if (sh) sh.onclick = () => navigator.share({ title: 'Liste de courses', text: coursesText() }).catch(() => {});
   $('#copyBtn').onclick = () => { const t = coursesText(); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('📋 Liste copiée'), () => toast('Copie impossible ici')); };
 }
