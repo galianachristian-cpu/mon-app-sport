@@ -236,6 +236,24 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 .profbtn .pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .av{width:28px;height:28px;border-radius:50%;background:var(--grad);color:#0b0f19;display:grid;place-items:center;font-weight:900;font-size:13px;flex:0 0 auto}
 .av.big{width:58px;height:58px;font-size:24px;background:linear-gradient(135deg,var(--p1),var(--p2))}
+.lock{position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));overflow:auto}
+.lk-in{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px;text-align:center}
+.lk-in h2{font-size:20px}
+.lk-msg{color:var(--muted);font-size:14px;min-height:20px}
+.lk-dots{display:flex;gap:14px;margin:4px 0 10px}
+.lk-dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted)}
+.lk-dots i.on{background:var(--a1);border-color:var(--a1)}
+.lk-dots.shake{animation:lkshake .35s}
+@keyframes lkshake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.lk-pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px;justify-content:center}
+.lk-pad button{width:72px;height:72px;border-radius:50%;background:var(--card);border:1px solid var(--line);font-size:26px;font-weight:700;color:var(--text)}
+.lk-pad button:active{background:var(--card2)}
+.lk-pad button:disabled{opacity:.35}
+.lk-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.lk-foot button{padding:9px 14px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--soft)}
+.lk-foot button.danger{border-color:var(--ko);color:var(--ko)}
+body.locked{overflow:hidden}
+body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .profs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .prof{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 10px;border-radius:18px;background:var(--bg2);border:2px solid var(--line)}
 .prof b{font-size:16px}.prof small{color:var(--muted);font-size:12px}
@@ -1190,8 +1208,9 @@ function applyProfileTheme(){
   const r = document.documentElement.style; r.setProperty('--a1', profile.a1); r.setProperty('--a2', profile.a2);
   const b = $('#profBtn'); if (b){ b.querySelector('.av').textContent = profile.nom.slice(0, 1).toUpperCase(); b.querySelector('.pn').textContent = profile.nom; }
 }
-async function switchProfile(id){
+async function switchProfile(id, unlocked){
   if (id === profile.id){ closeSheet(); return; }
+  if (!unlocked && lockOf(id)){ closeSheet(); showLock(id, () => switchProfile(id, true), true); return; }
   await flushSave();
   profile = PROFILES.find(p => p.id === id) || PROFILES[0];
   try{ localStorage.setItem('mp_profile', profile.id); }catch(e){}
@@ -1204,8 +1223,10 @@ function sheetProfiles(){
   openSheet(`<h2>Qui s’entraîne ?</h2>
     <div class="profs">${PROFILES.map(p => `<button class="prof ${p.id === profile.id ? 'on' : ''}" data-prof="${p.id}" style="--p1:${p.a1};--p2:${p.a2}"><span class="av big">${esc(p.nom.slice(0, 1).toUpperCase())}</span><b>${esc(p.nom)}</b>${p.id === profile.id ? '<small>Profil actuel</small>' : '<small>Changer</small>'}</button>`).join('')}</div>
     <p style="color:var(--muted);font-size:13px;margin:14px 0 10px">Chaque profil a son programme, ses charges et ses progrès.</p>
-    <form id="pf" class="row"><input id="pName" value="${esc(profile.nom)}" maxlength="16" aria-label="Nom du profil actuel" class="inp" style="flex:1"><button class="btn" type="submit">✏️ Renommer</button></form>`);
+    <form id="pf" class="row"><input id="pName" value="${esc(profile.nom)}" maxlength="16" aria-label="Nom du profil actuel" class="inp" style="flex:1"><button class="btn" type="submit">✏️ Renommer</button></form>
+    <div id="lockSet"></div>`);
   $('#sheet').querySelectorAll('[data-prof]').forEach(b => b.onclick = () => switchProfile(b.dataset.prof));
+  lockSection();
   $('#pf').onsubmit = ev => { ev.preventDefault(); const v = $('#pName').value.trim(); if (!v) return; profile.nom = v;
     const n = safeGet('mp_names', {}); n[profile.id] = v; safeSet('mp_names', n); applyProfileTheme(); sheetProfiles(); toast('Profil renommé ✓'); };
 }
@@ -3682,9 +3703,133 @@ $('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.targe
 $('#app').addEventListener('touchend', e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){ currentDay = (currentDay + (dx < 0 ? 1 : 6)) % 7; render(); } sx = null; }, { passive: true });
 window.addEventListener('pagehide', () => { flushSave(); });
 
+/* ============================================================
+   VERROUILLAGE : code PIN par profil + Face ID / Touch ID
+   (gardé uniquement sur ce téléphone : le code n'est jamais envoyé en ligne)
+   ============================================================ */
+const LOCK_KEY = 'mp_lock', LOCK_AFTER = 60e3;
+const lockCfg = () => safeGet(LOCK_KEY, {});
+const lockOf = pid => lockCfg()[pid] || null;
+const lockPut = (pid, v) => { const L = lockCfg(); if (v) L[pid] = v; else delete L[pid]; safeSet(LOCK_KEY, L); };
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function pinHash(pin, salt){
+  if (window.crypto && crypto.subtle){ const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']); return b64(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: unb64(salt), iterations: 150000, hash: 'SHA-256' }, k, 256)); }
+  let h = salt + pin; for (let i = 0; i < 20000; i++) h = String(hashN(h + i)); return 'f' + h;
+}
+async function setPin(pid, pin){ const salt = b64(crypto.getRandomValues(new Uint8Array(16))); lockPut(pid, Object.assign({}, lockOf(pid) || {}, { salt, hash: await pinHash(pin, salt), n: pin.length, fail: 0, until: 0 })); }
+async function pinOk(pid, pin){ const L = lockOf(pid); return !!L && await pinHash(pin, L.salt) === L.hash; }
+// Face ID / Touch ID : clé de l'appareil, déverrouillée par la biométrie
+async function bioAvail(){ try{ return !!(window.PublicKeyCredential && window.isSecureContext && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }catch(e){ return false; } }
+async function bioEnroll(pid){
+  const nom = (PROFILES.find(p => p.id === pid) || {}).nom || pid;
+  const c = await navigator.credentials.create({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: 'Mon Programme' }, user: { id: new TextEncoder().encode(pid), name: nom, displayName: nom },
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' }, timeout: 60000 } });
+  lockPut(pid, Object.assign({}, lockOf(pid), { cred: b64(c.rawId) }));
+}
+async function bioCheck(pid){
+  const L = lockOf(pid); if (!L || !L.cred) return false;
+  const a = await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: 'public-key', id: unb64(L.cred) }], userVerification: 'required', timeout: 60000 } });
+  return !!a;
+}
+// écran de verrouillage
+let lockState = null, hiddenAt = 0;
+function showLock(pid, onOk, cancelable){
+  lockState = { pid, onOk, cancelable, buf: '' };
+  let el = $('#lock'); if (!el){ el = document.createElement('div'); el.id = 'lock'; el.className = 'lock'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
+  paintLock(); document.body.classList.add('locked');
+  const L = lockOf(pid); if (L && L.cred) setTimeout(() => lockBio(true), 350);
+}
+function paintLock(msg){
+  const { pid, buf, cancelable } = lockState, L = lockOf(pid) || {}, p = PROFILES.find(x => x.id === pid) || profile, n = L.n || 4, wait = Math.max(0, Math.ceil(((L.until || 0) - Date.now()) / 1000));
+  const others = PROFILES.filter(x => x.id !== pid);
+  $('#lock').innerHTML = `<div class="lk-in">
+    <span class="av big" style="--p1:${p.a1};--p2:${p.a2}">${esc(p.nom.slice(0, 1).toUpperCase())}</span>
+    <h2>🔒 ${esc(p.nom)}</h2><p class="lk-msg" aria-live="polite">${msg || (wait ? `Trop d’essais : réessaie dans ${wait} s` : 'Entre ton code')}</p>
+    <div class="lk-dots" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<i class="${i < buf.length ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="lk-pad">${[1,2,3,4,5,6,7,8,9].map(d => `<button data-lk="${d}" ${wait ? 'disabled' : ''}>${d}</button>`).join('')}
+      ${L.cred ? '<button data-lk="bio" aria-label="Face ID ou Touch ID">🙂</button>' : '<span></span>'}<button data-lk="0" ${wait ? 'disabled' : ''}>0</button><button data-lk="del" aria-label="Effacer">⌫</button></div>
+    <div class="lk-foot">${others.map(o => `<button data-lkp="${o.id}">👤 ${esc(o.nom)}</button>`).join('')}${cancelable ? '<button data-lk="cancel">Annuler</button>' : ''}<button data-lk="forgot">Code oublié ?</button></div></div>`;
+  if (wait) setTimeout(() => { if (lockState && lockState.pid === pid) paintLock(); }, 1000);
+}
+function hideLock(){ const el = $('#lock'); if (el) el.remove(); document.body.classList.remove('locked'); lockState = null; }
+async function lockTry(){
+  const st = lockState, pid = st.pid, L = lockOf(pid);
+  if (await pinOk(pid, st.buf)){ lockPut(pid, Object.assign({}, lockOf(pid), { fail: 0, until: 0 })); const fn = st.onOk; hideLock(); if (fn) fn(); return; }
+  const fail = (L.fail || 0) + 1, until = fail >= 5 ? Date.now() + 30e3 * Math.pow(2, Math.min(4, fail - 5)) : 0;
+  lockPut(pid, Object.assign({}, L, { fail, until })); st.buf = '';
+  if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  paintLock(until ? null : `Code incorrect${fail >= 3 ? ` (${5 - fail} essai${5 - fail > 1 ? 's' : ''} avant attente)` : ''}`);
+  $('#lock .lk-dots').classList.add('shake');
+}
+async function lockBio(auto){
+  const st = lockState; if (!st) return;
+  try{ if (await bioCheck(st.pid)){ const fn = st.onOk; hideLock(); if (fn) fn(); } }
+  catch(e){ if (!auto && lockState) paintLock('Face ID indisponible : utilise ton code'); }
+}
+document.addEventListener('click', e => {
+  if (!lockState) return; const b = e.target.closest('#lock [data-lk],#lock [data-lkp]'); if (!b || b.disabled) return;
+  const st = lockState, k = b.dataset.lk;
+  if (b.dataset.lkp){ const id = b.dataset.lkp; if (lockOf(id)) showLock(id, () => switchProfile(id, true), st.cancelable); else { hideLock(); switchProfile(id, true); } return; }
+  if (k === 'del'){ st.buf = st.buf.slice(0, -1); paintLock(); return; }
+  if (k === 'bio') return lockBio(false);
+  if (k === 'cancel'){ hideLock(); return; }
+  if (k === 'forgot'){ $('#lock .lk-in').innerHTML = `<h2>Code oublié ?</h2><p class="lk-msg" style="max-width:320px">On peut supprimer le code de ce profil. La copie de ses données sur ce téléphone est effacée, puis rechargée depuis la sauvegarde en ligne : ce qui n’a pas encore été envoyé peut être perdu.</p><div class="lk-foot"><button data-lk="back">Retour</button><button data-lk="reset" class="danger">Supprimer le code</button></div>`; return; }
+  if (k === 'back'){ paintLock(); return; }
+  if (k === 'reset'){ const pid = st.pid; lockPut(pid, null); try{ localStorage.removeItem(backupKey(pid)); }catch(err){} location.reload(); return; }
+  const L = lockOf(st.pid) || {}; if ((L.until || 0) > Date.now() || st.buf.length >= (L.n || 4)) return;
+  st.buf += k; paintLock(); if (st.buf.length === (L.n || 4)) setTimeout(lockTry, 120);
+});
+document.addEventListener('keydown', e => { if (!lockState || !$('#lock .lk-pad')) return; if (/^\d$/.test(e.key)){ const b = $(`#lock [data-lk="${e.key}"]`); if (b) b.click(); } else if (e.key === 'Backspace'){ $('#lock [data-lk="del"]').click(); } });
+// au retour dans l'appli après plus d'une minute : on reverrouille (et on masque l'écran dans le sélecteur d'apps)
+document.addEventListener('visibilitychange', () => {
+  if (!lockOf(profile.id)) return;
+  if (document.hidden){ hiddenAt = Date.now(); document.body.classList.add('veil'); }
+  else { document.body.classList.remove('veil'); if (!lockState && Date.now() - hiddenAt > LOCK_AFTER) showLock(profile.id, null, false); }
+});
+// réglages dans la fenêtre des profils
+async function lockSection(){
+  const L = lockOf(profile.id), bio = await bioAvail(), box = $('#lockSet'); if (!box) return;
+  box.innerHTML = `<h3 class="sec">🔒 Verrouillage de ${esc(profile.nom)}</h3><div class="card">
+    <p class="muted" style="font-size:13px;margin-bottom:10px">${L ? `Code à ${L.n} chiffres demandé à l’ouverture et après 1 min hors de l’appli.${L.cred ? ' Face ID / Touch ID activé.' : ''}` : 'Protège ce profil avec un code à l’ouverture de l’appli (gardé seulement sur ce téléphone).'}</p>
+    <div class="row" style="flex-wrap:wrap;gap:8px">${L ? `<button class="btn sm" data-lks="change">🔁 Changer le code</button>${bio ? `<button class="btn sm" data-lks="bio">${L.cred ? '🚫 Désactiver Face ID' : '🙂 Activer Face ID / Touch ID'}</button>` : ''}<button class="btn sm danger" data-lks="off">Retirer le code</button>` : '<button class="btn pri sm" data-lks="on">🔒 Activer un code</button>'}</div></div>`;
+  box.querySelectorAll('[data-lks]').forEach(b => b.onclick = () => lockAction(b.dataset.lks));
+}
+function pinForm(title, needOld, onDone){
+  const L = lockOf(profile.id);
+  openSheet(`<h2>${title}</h2><form id="pinF">
+    ${needOld ? `<div class="fg"><label for="pinO">Code actuel</label><input id="pinO" type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]*" class="inp"></div>` : ''}
+    ${onDone ? `<div class="fg"><label for="pinA">Nouveau code (4 à 6 chiffres)</label><input id="pinA" type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]*" class="inp"></div>
+    <div class="fg"><label for="pinB">Confirme le code</label><input id="pinB" type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]*" class="inp"></div>` : ''}
+    <p class="muted" id="pinM" style="font-size:12.5px;min-height:18px"></p>
+    <div class="row"><button type="button" class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn pri" type="submit">Valider</button></div></form>`);
+  $('#pinF').onsubmit = async ev => {
+    ev.preventDefault(); const msg = t => { $('#pinM').textContent = t; };
+    if (needOld && !(await pinOk(profile.id, $('#pinO').value))) return msg('Code actuel incorrect.');
+    if (!onDone){ lockPut(profile.id, null); closeSheet(); toast('🔓 Code retiré'); return; }
+    const a = $('#pinA').value, b = $('#pinB').value;
+    if (!/^\d{4,6}$/.test(a)) return msg('Le code doit faire 4 à 6 chiffres.');
+    if (a !== b) return msg('Les deux codes ne sont pas identiques.');
+    await setPin(profile.id, a); onDone();
+  };
+  setTimeout(() => { const f = $('#pinF input'); if (f) f.focus(); }, 300);
+}
+async function lockAction(k){
+  if (k === 'on') pinForm('🔒 Choisir un code', false, async () => { closeSheet(); toast('🔒 Code activé'); if (await bioAvail()) setTimeout(() => sheetProfiles(), 400); });
+  if (k === 'change') pinForm('🔁 Changer le code', true, () => { closeSheet(); toast('🔒 Nouveau code enregistré'); });
+  if (k === 'off') pinForm('Retirer le code', true, null);
+  if (k === 'bio'){
+    const L = lockOf(profile.id);
+    if (L.cred){ const n = Object.assign({}, L); delete n.cred; lockPut(profile.id, n); toast('Face ID désactivé'); lockSection(); return; }
+    try{ await bioEnroll(profile.id); toast('🙂 Face ID / Touch ID activé'); }catch(e){ toast('Face ID non activé'); }
+    lockSection();
+  }
+}
+
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 (async function init(){
   applyTheme(); applyProfileTheme();
+  if (lockOf(profile.id)) showLock(profile.id, null, false);
   T.total = T.left = settings.preset;
   currentDay = todayIdx();
   render();
