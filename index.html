@@ -1956,10 +1956,13 @@ function roundG(f, g){
 }
 // Ajuste les protéines du repas vers l'objectif : plus d'aliments protéinés, moins de féculents (calories gardées)
 const PROT_G = ['prot','laitier','lait','legumineuse'], CARB_G = ['fec','cereale','pain'];
+// portion maximale raisonnable par repas (g, poids cru / égoutté)
+const MAXG = { poischiche:250, haricotrouge:250, lentille:100, riz:130, pates:140, semoule:130, avoine:100, pdt:500, patate:450 };
 function proteinFix(m, pTarget, kTarget){
   const P = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].p * g / 100, 0);
   const K = () => Object.entries(m).reduce((a, [f, g]) => a + FOODS[f].k * g / 100, 0);
-  const prot = Object.keys(m).filter(f => PROT_G.includes(FOODS[f].grp)).sort((a, b) => FOODS[b].p / FOODS[b].k - FOODS[a].p / FOODS[a].k);
+  // seuls les aliments riches en protéines (≥ 8 g pour 100 kcal) servent à compléter : pas les pois chiches, lentilles ou yaourts
+  const prot = Object.keys(m).filter(f => PROT_G.includes(FOODS[f].grp) && FOODS[f].p / FOODS[f].k >= .08).sort((a, b) => FOODS[b].p / FOODS[b].k - FOODS[a].p / FOODS[a].k);
   if (!prot.length) return;
   const main = prot[0], orig = m[main], missing = pTarget * .95 - P();
   if (missing > 2){ const add = Math.min(orig * 1.8, missing / (FOODS[main].p / 100)); m[main] += add; }
@@ -1986,8 +1989,9 @@ function portion(rid, pid, meal, di, wk){
   if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, t.kcal * share / Math.max(1, kcalOf(ing)))); }
   const merged = {}; ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g * factor; });
   if (t) proteinFix(merged, t.p * share, t.kcal * share);
+  Object.keys(merged).forEach(f => { if (MAXG[f]) merged[f] = Math.min(merged[f], MAXG[f]); });
   ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
-  return { r, ing, m: macrosOf(ing), subs };
+  return { r, ing, m: macrosOf(ing), subs, pT: t ? t.p * share : null };
 }
 function pickFrom(list, rnd, avoid){ const fresh = list.filter(r => !avoid.includes(r.id)), L = fresh.length ? fresh : list; return L.length ? L[Math.floor(rnd() * L.length)].id : null; }
 function genPlan(wk){
@@ -2124,6 +2128,7 @@ function mealCard(x, st, date){
       <button class="check" data-act="mok" data-meal="${x.meal}" aria-label="${okd ? 'Annuler' : 'Mangé comme prévu'}" aria-pressed="${okd}">✓</button></div>
     <div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}</button>`).join('')}</div>
     ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
+    ${p.pT && p.m.p < p.pT * .75 ? `<p class="advice">💡 Plat léger en protéines (${Math.round(p.m.p)} g sur ${Math.round(p.pT)} g visés) : ajoute un skyr, un fromage blanc ou 2 œufs.</p>` : ''}
     ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
     <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ J’ai mangé autre chose</button><button class="btn sm" data-act="mchange" data-meal="${x.meal}">🔄 Autre plat</button><button class="btn sm" data-x="mout" data-meal="${x.meal}">🧳 Pas à la maison</button></div>
   </article>`;
