@@ -319,6 +319,11 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .mb{margin:6px 0}.mbh{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}.mbh span{color:var(--muted);font-weight:700}
 .meal .mlbl{font-size:11.5px;font-weight:700;color:var(--muted)}
 .ingr{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.duo-por{margin-top:12px;padding:10px 12px;border-radius:13px;background:color-mix(in srgb,#fb923c 8%,transparent);border:1px solid color-mix(in srgb,#fb923c 35%,transparent);font-size:13px}
+.duo-por summary{cursor:pointer;font-weight:700;color:var(--text);list-style-position:inside}
+.duo-por summary small{font-weight:500;color:var(--muted)}
+.duo-por .ingr{margin-top:8px}
+.duo-tot{margin-top:10px;font-size:12.5px;color:var(--soft);line-height:1.45}
 .ig{padding:6px 10px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);font-size:12.5px;color:var(--soft)}
 .ig b{color:var(--text)}
 .ig small.cuit{color:var(--muted);font-size:11px}
@@ -1202,7 +1207,7 @@ async function loadOther(){
   const op = otherProfile(); if (!op) return;
   let src = await fetchDoc(op.id); const loc = safeGet(backupKey(op.id), null); if (!src || localNewer(loc, src)) src = loc;
   other = src ? { p: op, d: src } : null;
-  if (view === 'seance' || view === 'progres') render();
+  if (view === 'seance' || view === 'progres' || view === 'nutrition') render();
 }
 function applyProfileTheme(){
   const r = document.documentElement.style; r.setProperty('--a1', profile.a1); r.setProperty('--a2', profile.a2);
@@ -2145,6 +2150,7 @@ function nutJour(){
   const wk = curWk(), dates = weekDates(wk), date = dates[nutDay], c = ctxOf(profile.id), t = targets(c, nutDay);
   const ports = dayPortions(profile.id, nutDay, wk), plan = ports.reduce((a, x) => { if (x.por){ a.k += x.por.m.k; a.p += x.por.m.p; } return a; }, { k: 0, p: 0 });
   const eaten = eatenTotals(date, ports), J = journal[date] || {}, isToday = nutDay === todayIdx();
+  const op = otherProfile(), oports = op ? dayPortions(op.id, nutDay, wk).map(z => Object.assign(z, { op })) : [];
   const sess = (data['day' + nutDay] || []).length ? dayTitle(nutDay) : null;
   return `<div class="days">${DAY_SHORT.map((d, i) => `<button class="day ${i === nutDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''}" data-nday="${i}"><b>${d}</b><span>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : 'Repos'}</span></button>`).join('')}</div>
   <section class="hero"><div style="flex:1;min-width:0;position:relative;z-index:1">
@@ -2153,14 +2159,27 @@ function nutJour(){
     <p class="muted" style="font-size:12px;margin-top:8px">Menu prévu : ${kc(plan.k)} kcal · ${Math.round(plan.p)} g de protéines</p></div>
     <div class="ring">${ring(t.kcal ? eaten.k / t.kcal : 0, 86, 9, 'rn')}<div class="v">${kc(eaten.k)}<small>mangées</small></div></div></section>
   <div class="card" style="margin-top:12px">${macroBar('Protéines', eaten.p, t.p, '#f472b6')}${macroBar('Glucides', eaten.g, t.g, '#22d3ee')}${macroBar('Lipides', eaten.l, t.l, '#fbbf24')}</div>
-  <div class="list">${ports.map(x => mealCard(x, J[x.meal], date)).join('')}</div>
+  <div class="list">${ports.map(x => mealCard(x, J[x.meal], date, oports.find(z => z.meal === x.meal))).join('')}</div>
   ${eauCard(date)}
   <h3 class="sec">Conseils du jour</h3><div class="card tips-list">${tipsFor(t, eaten, isToday, ports).map(s => `<p>${s}</p>`).join('')}</div>`;
 }
-function mealCard(x, st, date){
+// portion de l'autre personne sous chaque repas (+ total à cuisiner quand c'est le même plat)
+function duoBlock(x, ox){
+  if (!ox) return '';
+  const o = ox.op, nom = esc(o.nom), ready = nutReady(ctxOf(o.id).nut);
+  if (ox.away) return `<p class="duo-por muted">🧳 ${nom} : hors de la maison</p>`;
+  if (!ox.por) return '';
+  const q = ox.por, same = x.por && x.por.r.id === q.r.id;
+  const chips = q.ing.map(([f, g]) => `<span class="ig"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === q.side ? ' <small class="cuit">en dessert</small>' : ''}</span>`).join('');
+  let tot = '';
+  if (same && !x.away){ const T = {}; [x.por, q].forEach(p => p.ing.forEach(([f, g]) => { T[f] = (T[f] || 0) + g; })); tot = `<p class="duo-tot">🍳 <b>À cuisiner pour 2</b> : ${Object.entries(T).map(([f, g]) => `${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` (≈ ${cuitG(f, g)} g cuit)` : ''}`).join(' · ')}</p>`; }
+  return `<details class="duo-por" ${same ? 'open' : ''}><summary>👫 ${nom} : ${same ? 'même plat' : esc(q.r.n)} · ${kc(q.m.k)} kcal · P ${Math.round(q.m.p)} g${ready ? '' : ' <small>(portion standard : profil nutrition à remplir)</small>'}</summary>
+    <div class="ingr">${chips}</div>${tot}</details>`;
+}
+function mealCard(x, st, date, ox){
   const [, lbl, ico] = MEALS.find(m => m[0] === x.meal);
   if (x.away){ const o = st && st.items; return `<article class="ex meal ${o ? 'done' : ''}"><div class="row1"><span class="emo">🧳</span><div class="name"><b>${lbl} hors de la maison</b><span class="sub muted">Retiré de la liste de courses${o ? ` · noté : ${kc(macrosOf(st.items).k)} kcal` : ''}</span></div></div>
-    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ Noter ce que j’ai mangé</button><button class="btn sm" data-x="mout" data-meal="${x.meal}">🏠 Je suis là finalement</button></div></article>`; }
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ Noter ce que j’ai mangé</button><button class="btn sm" data-x="mout" data-meal="${x.meal}">🏠 Je suis là finalement</button></div>${duoBlock(x, ox)}</article>`; }
   if (!x.por) return `<article class="ex meal"><div class="row1"><span class="emo">${ico}</span><div class="name"><b>${lbl}</b><span class="sub muted">Aucune recette compatible</span></div></div></article>`;
   const p = x.por, okd = st === 'ok', other2 = st && st.items, skip = st === 'skip';
   return `<article class="ex meal ${okd || other2 ? 'done' : ''}">
@@ -2172,6 +2191,7 @@ function mealCard(x, st, date){
     ${p.pT && p.m.p < p.pT * .75 ? `<p class="advice">💡 Plat léger en protéines (${Math.round(p.m.p)} g sur ${Math.round(p.pT)} g visés) : ajoute un skyr, un fromage blanc ou 2 œufs.</p>` : ''}
     ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
     <div class="row" style="margin-top:10px"><button class="btn sm" data-act="mother" data-meal="${x.meal}">✏️ J’ai mangé autre chose</button><button class="btn sm" data-act="mchange" data-meal="${x.meal}">🔄 Autre plat</button><button class="btn sm" data-x="mout" data-meal="${x.meal}">🧳 Pas à la maison</button></div>
+    ${duoBlock(x, ox)}
   </article>`;
 }
 function bindJour(){
