@@ -489,6 +489,8 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 .pkbig.big{width:100%;max-width:360px;height:auto;aspect-ratio:1;padding:0;overflow:hidden;background:#fff}
 .g-emo.pkg:has(.exgif){padding:0;overflow:hidden;background:#fff;width:min(70vw,300px);height:min(70vw,300px)}
 .duov .g-emo.pkg:has(.exgif){width:min(40vw,170px);height:min(40vw,170px)}
+.g-emo.g-big,.g-emo.g-big:has(.exgif){width:min(86vw,38vh,400px);height:min(86vw,38vh,400px);border-radius:28px}
+@media (max-height:740px){.g-ex h2{font-size:22px}.g-sets{margin-top:10px}.g-inputs{margin-top:10px;gap:8px}.g-step{padding:4px;gap:2px}.g-step button{width:40px;height:52px;font-size:24px}.g-step div{min-width:56px}.g-step b{font-size:30px}.g-main{margin-top:12px;padding:16px;font-size:20px}}
 .emo.pkb:has(.exgif){padding:0;background:#fff}
 
 .itvis{width:min(62vw,260px);height:min(62vw,260px);border-radius:24px;overflow:hidden;background:#fff;margin:4px auto 6px;border:1px solid var(--line)}
@@ -2705,14 +2707,10 @@ function guideRender(){
   } else {
     const big = (f, v, d, u) => `<div class="g-step"><button data-g="adj" data-f="${f}" data-d="${-d}" aria-label="moins">−</button><div><b>${v != null ? fr(v) : '–'}</b><small>${u}</small></div><button data-g="adj" data-f="${f}" data-d="${d}" aria-label="plus">+</button></div>`;
     const inputs = t === 'f' ? big('w', w, 2.5, 'kg') + big('r', r, 1, 'reps') : t === 'p' ? big('r', r, 1, 'reps') : t === 's' ? big('r', r, 5, 'secondes') : big('r', num(lg.r) ?? topReps(e.r), 5, 'minutes') + big('w', num(lg.w), .5, 'km');
-    const wu = t === 'f' && S.length === 0 && e.cmp ? warmup(w) : [];
-    body = `<div class="g-ex"><div class="g-emo pkg">${exVis(e)}</div><h2>${esc(e.n)}</h2>
-      <p class="g-sub">${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span> ` : ''}<span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span></p>
+    // écran épuré : la démonstration en grand et l'essentiel (pas de conseils écrits)
+    body = `<div class="g-ex"><div class="g-emo pkg g-big">${exVis(e)}</div><h2>${esc(e.n)}</h2>
       ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < S.length ? 'on' : j === S.length ? 'cur' : ''}">${j < S.length ? (t === 'f' ? fr(num(S[j].w) || 0) + '×' + S[j].r : S[j].r) : j + 1}</span>`).join('')}</div><p class="g-lbl">Série ${n} sur ${tot}</p>` : ''}
-      <div class="g-inputs">${inputs}</div>
-      ${t === 'f' && w ? `<p class="g-plates">🏋️ ${esc(platesTxt(w) || 'Sans disques')}</p>` : ''}
-      ${wu.length ? `<p class="g-plates">🔥 Échauffement : ${wu.map(([x, rr]) => `${fr(x)} × ${rr}`).join(' · ')}</p>` : ''}
-      ${e.tips ? `<p class="g-tip">💡 ${esc(e.tips)}</p>` : ''}</div>
+      <div class="g-inputs">${inputs}</div></div>
       ${t === 's' ? `<button class="g-main" data-g="timer">▶️ Lancer ${fr(r)} s</button>` : `<button class="g-main" data-g="done">✓ ${t === 'c' ? 'Terminé' : 'Série faite'}</button>`}`;
   }
   $('#guide').innerHTML = `<div class="g-top"><button data-g="prev" aria-label="Exercice précédent">‹</button><div><b>${pos}/${all}</b><small>${left} restant${left > 1 ? 's' : ''}</small></div><button data-g="next" aria-label="Exercice suivant">›</button><span class="spacer"></span><button data-g="voice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-g="close" aria-label="Quitter">✕</button></div>${body}`;
