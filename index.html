@@ -319,11 +319,27 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .mb{margin:6px 0}.mbh{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}.mbh span{color:var(--muted);font-weight:700}
 .meal .mlbl{font-size:11.5px;font-weight:700;color:var(--muted)}
 .ingr{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.duo-por{margin-top:12px;padding:10px 12px;border-radius:13px;background:color-mix(in srgb,#fb923c 8%,transparent);border:1px solid color-mix(in srgb,#fb923c 35%,transparent);font-size:13px}
-.duo-por summary{cursor:pointer;font-weight:700;color:var(--text);list-style-position:inside}
-.duo-por summary small{font-weight:500;color:var(--muted)}
+.duo-por{margin-top:12px;padding:10px 12px;border-radius:13px;background:color-mix(in srgb,var(--c2,#fb923c) 9%,transparent);border:1px solid color-mix(in srgb,var(--c2,#fb923c) 40%,transparent);font-size:13px}
+.duo-por summary{cursor:pointer;color:var(--text);list-style-position:inside}
+.duo-por summary small{color:var(--muted)}
 .duo-por .ingr{margin-top:8px}
-.duo-tot{margin-top:10px;font-size:12.5px;color:var(--soft);line-height:1.45}
+.dt-lead{margin-top:12px;font-size:13px;font-weight:700;color:var(--soft)}
+.dtab-w{margin-top:8px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.dtab{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+.dtab th,.dtab td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
+.dtab tbody th,.dtab tfoot th{text-align:left;font-weight:600;color:var(--soft);width:36%}
+.dtab th small{color:var(--muted);font-weight:500}
+.dtab thead th{font-size:12px;font-weight:800;padding:8px 4px}
+.dtab thead th.c1{color:var(--c1);background:color-mix(in srgb,var(--c1) 14%,transparent)}
+.dtab thead th.c2{color:var(--c2);background:color-mix(in srgb,var(--c2) 14%,transparent)}
+.dtab td.c1{background:color-mix(in srgb,var(--c1) 6%,transparent)}
+.dtab td.c2{background:color-mix(in srgb,var(--c2) 6%,transparent)}
+.dtab td b{display:block;color:var(--text);font-size:13px}
+.dtab td small{display:block;color:var(--muted);font-size:10.5px}
+.dtab td.tot b,.dtab tfoot td.tot{color:var(--text);font-weight:800}
+.dtab tfoot td,.dtab tfoot th{font-weight:700;border-bottom:0;border-top:1px solid var(--line)}
+.dtab tr:last-child th,.dtab tr:last-child td{border-bottom:0}
+.dt-sw{width:100%;padding:0;background:none;border:0;color:inherit;font:inherit}
 .ig{padding:6px 10px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);font-size:12.5px;color:var(--soft)}
 .ig b{color:var(--text)}
 .ig small.cuit{color:var(--muted);font-size:11px}
@@ -2186,18 +2202,30 @@ function nutJour(){
   ${eauCard(date)}
   <h3 class="sec">Conseils du jour</h3><div class="card tips-list">${tipsFor(t, eaten, isToday, ports).map(s => `<p>${s}</p>`).join('')}</div>`;
 }
-// portion de l'autre personne sous chaque repas (+ total à cuisiner quand c'est le même plat)
+// même plat pour les deux : tableau ingrédient par ingrédient (moi · l'autre · total)
+const sameDish = (x, ox) => !!(ox && !x.away && !ox.away && x.por && ox.por && x.por.r.id === ox.por.r.id);
+function duoTable(x, ox){
+  const me = profile, o = ox.op, A = x.por, B = ox.por, mA = Object.fromEntries(A.ing), mB = Object.fromEntries(B.ing);
+  const foods = [...new Set([...A.ing.map(([f]) => f), ...B.ing.map(([f]) => f)])];
+  const cell = (f, g, side) => g ? `<b>${qty(f, g)}</b>${CUIT[f] ? `<small>≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === side ? `<small>${x.meal === 'col' ? 'en plus' : 'dessert'}</small>` : ''}` : '<span class="muted">–</span>';
+  const ready = nutReady(ctxOf(o.id).nut);
+  return `<p class="dt-lead">👫 Même plat, chacun sa portion${ready ? '' : ` <small class="muted">(${esc(o.nom)} : portion standard, profil nutrition à remplir)</small>`}</p>
+  <div class="dtab-w"><table class="dtab" style="--c1:${me.a1};--c2:${o.a1}"><thead><tr><th></th><th class="c1">${esc(me.nom)}</th><th class="c2">${esc(o.nom)}</th><th>Total</th></tr></thead><tbody>
+  ${foods.map(f => `<tr><th>${esc(FOODS[f].n)}${CUIT[f] ? ' <small>(cru)</small>' : ''}</th>
+    <td class="c1">${mA[f] ? `<button class="dt-sw" data-act="swap" data-meal="${x.meal}" data-f="${f}" aria-label="Remplacer ${esc(FOODS[f].n)}">${cell(f, mA[f], A.side)}</button>` : cell(f, 0)}</td>
+    <td class="c2">${cell(f, mB[f], B.side)}</td><td class="tot">${cell(f, (mA[f] || 0) + (mB[f] || 0))}</td></tr>`).join('')}
+  </tbody><tfoot><tr><th>Calories</th><td class="c1">${kc(A.m.k)}</td><td class="c2">${kc(B.m.k)}</td><td class="tot">${kc(A.m.k + B.m.k)}</td></tr>
+  <tr><th>Protéines</th><td class="c1">${Math.round(A.m.p)} g</td><td class="c2">${Math.round(B.m.p)} g</td><td class="tot">${Math.round(A.m.p + B.m.p)} g</td></tr></tfoot></table></div>
+  <p class="muted" style="font-size:11.5px;margin-top:6px">🍳 Cuisine le total, puis sers chaque assiette avec sa colonne. Touche une de tes quantités pour remplacer l’aliment.</p>`;
+}
+// plat différent, ou absence : ce que mange l'autre
 function duoBlock(x, ox){
-  if (!ox) return '';
+  if (!ox || sameDish(x, ox)) return '';
   const o = ox.op, nom = esc(o.nom), ready = nutReady(ctxOf(o.id).nut);
-  if (ox.away) return `<p class="duo-por muted">🧳 ${nom} : hors de la maison</p>`;
+  if (ox.away) return `<p class="duo-por" style="--c2:${o.a1}">🧳 <b>${nom}</b> n’est pas à la maison : seule ta portion est à préparer.</p>`;
   if (!ox.por) return '';
-  const q = ox.por, same = x.por && x.por.r.id === q.r.id;
-  const chips = q.ing.map(([f, g]) => `<span class="ig"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === q.side ? ' <small class="cuit">en dessert</small>' : ''}</span>`).join('');
-  let tot = '';
-  if (same && !x.away){ const T = {}; [x.por, q].forEach(p => p.ing.forEach(([f, g]) => { T[f] = (T[f] || 0) + g; })); tot = `<p class="duo-tot">🍳 <b>À cuisiner pour 2</b> : ${Object.entries(T).map(([f, g]) => `${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` (≈ ${cuitG(f, g)} g cuit)` : ''}`).join(' · ')}</p>`; }
-  return `<details class="duo-por" ${same ? 'open' : ''}><summary>👫 ${nom} : ${same ? 'même plat' : esc(q.r.n)} · ${kc(q.m.k)} kcal · P ${Math.round(q.m.p)} g${ready ? '' : ' <small>(portion standard : profil nutrition à remplir)</small>'}</summary>
-    <div class="ingr">${chips}</div>${tot}</details>`;
+  const q = ox.por, chips = q.ing.map(([f, g]) => `<span class="ig"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === q.side ? ' <small class="cuit">en dessert</small>' : ''}</span>`).join('');
+  return `<details class="duo-por" style="--c2:${o.a1}"><summary><b>${nom}</b> mange autre chose : ${q.r.e} ${esc(q.r.n)} · ${kc(q.m.k)} kcal${ready ? '' : ' <small>(portion standard)</small>'}</summary><div class="ingr">${chips}</div></details>`;
 }
 function mealCard(x, st, date, ox){
   const [, lbl, ico] = MEALS.find(m => m[0] === x.meal);
@@ -2209,7 +2237,7 @@ function mealCard(x, st, date, ox){
     <div class="row1"><button class="emo" data-act="recette" data-meal="${x.meal}">${p.r.e}</button>
       <button class="name" data-act="recette" data-meal="${x.meal}"><b>${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · P ${Math.round(p.m.p)} · G ${Math.round(p.m.g)} · L ${Math.round(p.m.l)} g</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
       <button class="check" data-act="mok" data-meal="${x.meal}" aria-label="${okd ? 'Annuler' : 'Mangé comme prévu'}" aria-pressed="${okd}">✓</button></div>
-    <div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === p.side ? ` <small class="cuit">${x.meal === 'col' ? 'en plus' : 'en dessert'}</small>` : ''}</button>`).join('')}</div>
+    ${sameDish(x, ox) ? duoTable(x, ox) : `${ox && ox.por && !ox.away ? `<p class="dt-lead" style="--c1:${profile.a1}">🍽️ Ta portion</p>` : ''}<div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === p.side ? ` <small class="cuit">${x.meal === 'col' ? 'en plus' : 'en dessert'}</small>` : ''}</button>`).join('')}</div>`}
     ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
     ${p.pT && p.m.p < p.pT * .75 ? `<p class="advice">💡 Plat léger en protéines (${Math.round(p.m.p)} g sur ${Math.round(p.pT)} g visés) : ajoute un skyr, un fromage blanc ou 2 œufs.</p>` : ''}
     ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
