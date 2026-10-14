@@ -489,6 +489,8 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 .pkbig.big{width:100%;max-width:360px;height:auto;aspect-ratio:1;padding:0;overflow:hidden;background:#fff}
 .g-emo.pkg:has(.exgif){padding:0;overflow:hidden;background:#fff;width:min(70vw,300px);height:min(70vw,300px)}
 .duov .g-emo.pkg:has(.exgif){width:min(40vw,170px);height:min(40vw,170px)}
+.g-emo.g-big,.g-emo.g-big:has(.exgif){width:min(86vw,38vh,400px);height:min(86vw,38vh,400px);border-radius:28px}
+@media (max-height:740px){.g-ex h2{font-size:22px}.g-sets{margin-top:10px}.g-inputs{margin-top:10px;gap:8px}.g-step{padding:4px;gap:2px}.g-step button{width:40px;height:52px;font-size:24px}.g-step div{min-width:56px}.g-step b{font-size:30px}.g-main{margin-top:12px;padding:16px;font-size:20px}}
 .emo.pkb:has(.exgif){padding:0;background:#fff}
 
 .itvis{width:min(62vw,260px);height:min(62vw,260px);border-radius:24px;overflow:hidden;background:#fff;margin:4px auto 6px;border:1px solid var(--line)}
@@ -1120,7 +1122,7 @@ const BIG = ['Pectoraux','Dos','Quadriceps','Ischio-jambiers','Fessiers'];
    ÉTAT — champs historiques (data, done, logs) gardés à l'identique
    ============================================================ */
 let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [], nut = null, journal = {}, prog = null, forme = {}, badges = null, runs = [];
-let currentDay = 0, view = 'seance', online = !!db, other = null, saveT = 0;
+let currentDay = 0, view = 'seance', online = !!db, other = null, saveT = 0, remoteReady = false, loading = false, syncTimer = null;
 const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1148,7 +1150,9 @@ const fsEnc = v => Array.isArray(v) ? v.map(x => Array.isArray(x) ? { __arr: fsE
 const fsDec = v => Array.isArray(v) ? v.map(x => plainObj(x) && '__arr' in x && Object.keys(x).length === 1 ? fsDec(x.__arr) : fsDec(x)) : plainObj(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fsDec(x)])) : v;
 const hasNested = v => Array.isArray(v) ? v.some(x => Array.isArray(x) || hasNested(x)) : plainObj(v) ? Object.values(v).some(hasNested) : false;
 // copie de l'appareil plus récente que celle en ligne ? (horodatage, ou données que l'ancienne version n'arrivait pas à envoyer)
-const localNewer = (loc, rem) => !!loc && ((loc._t || 0) > (rem._t || 0) || (!rem._t && hasNested(loc)));
+const richness = d => !d ? 0 : (d.nut ? 5 : 0) + (d.prog ? 5 : 0) + (d.body || []).length + (d.hist || []).length + Object.keys(d.journal || {}).length + (d.seances || []).length + (d.runs || []).length
+  + Object.keys(d.plans || {}).length + Object.keys(d.swaps || {}).length + Object.keys(d.foods || {}).length;
+const localNewer = (loc, rem) => !!loc && richness(loc) >= richness(rem) * .5 && ((loc._t || 0) > (rem._t || 0) || (!rem._t && hasNested(loc)));
 function applyDoc(src){
   data = src.data || clone(DEFAULT_DATA);
   done = src.done || {}; logs = src.logs || {}; sets = src.sets || {}; sl = src.sl || {}; hist = src.hist || [];
@@ -1163,12 +1167,15 @@ async function fetchDoc(id){
   }catch(e){ online = false; return null; }
 }
 async function load(){
-  setStatus('saving', 'Chargement…');
-  let src = await fetchDoc(profile.id), push = false;
+  setStatus('saving', 'Chargement…'); loading = true; remoteReady = false; clearTimeout(syncTimer);
+  const pid = profile.id;
+  let src = await fetchDoc(pid), push = false;
+  if (pid !== profile.id){ loading = false; return; }
   const loc = safeGet(backupKey(), null);
-  if (!src) src = loc || {};
+  if (src) remoteReady = true;
+  if (!src){ src = loc || {}; syncTimer = setTimeout(retrySync, 10000); }
   else if (localNewer(loc, src)){ src = loc; push = true; }
-  applyDoc(src);
+  applyDoc(src); loading = false;
   restoreTemp();
   const w = isoWeek(new Date());
   if (week && week !== w){
@@ -1178,20 +1185,34 @@ async function load(){
   }
   week = w;
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
+  else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
 }
+// la base n'a pas répondu au démarrage : on réessaie, et on garde la version la plus complète
+async function retrySync(){
+  if (remoteReady || !db) return;
+  const pid = profile.id, rem = await fetchDoc(pid); if (pid !== profile.id) return;
+  if (!rem){ syncTimer = setTimeout(retrySync, 20000); return; }
+  remoteReady = true;
+  const loc = snapshot();
+  if (localNewer(loc, rem)) save(true);
+  else { applyDoc(rem); safeSet(backupKey(), snapshot()); render(); setStatus('saved', 'Synchronisé'); toast('🔄 Données synchronisées'); }
+}
 let saveTimer = null, pending = null;
 async function pushRemote(id, snap){
   if (!db){ setStatus('local', 'Sur cet appareil'); return; }
+  // tant que la version en ligne n'a pas été lue, on n'écrase rien (gardé sur le téléphone)
+  if (id === profile.id && !remoteReady){ setStatus('local', 'Hors ligne · gardé ici'); clearTimeout(syncTimer); syncTimer = setTimeout(retrySync, 5000); return; }
   try{
     await DOC(id).set(Object.assign(fsEnc(snap), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }));
     online = true; setStatus('saved', 'Sauvegardé ✓');
   }catch(e){ online = false; setStatus('error', 'Hors ligne · gardé ici'); }
 }
 function save(now){
+  if (loading) return; // changement de profil ou chargement en cours : rien à enregistrer
   const id = profile.id; saveT = Date.now();
   safeSet(backupKey(id), snapshot());
   clearTimeout(saveTimer); setStatus('saving', 'Sauvegarde…'); pending = { id };
@@ -1220,7 +1241,7 @@ async function switchProfile(id, unlocked){
   profile = PROFILES.find(p => p.id === id) || PROFILES[0];
   try{ localStorage.setItem('mp_profile', profile.id); }catch(e){}
   closeSheet(); applyProfileTheme(); progEx = null; other = null;
-  applyDoc({ data: {} });
+  loading = true; remoteReady = false; applyDoc({ data: {} });
   currentDay = todayIdx(); view = 'seance'; render();
   await load(); render(); toast('👋 Profil de ' + profile.nom);
 }
@@ -2101,18 +2122,20 @@ function sheetAway(){
 function awayChanged(){ saveFoyer(); sheetAway(); if (view === 'nutrition') viewNutrition(); }
 
 /* Sauvegarde du « foyer » (menus et liste de courses communs) */
-let foyerTimer = null;
+let foyerTimer = null, foyerReady = false;
 async function loadFoyer(){
   let src = null;
   if (db){ try{ const doc = await Promise.race([DOC(FOYER_ID).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 8000))]); src = doc.exists ? fsDec(doc.data()) : {}; }catch(e){ src = null; } }
   const loc = safeGet('mp_foyer', null), push = !!src && localNewer(loc, src);
+  foyerReady = !!src || !db;
   if (!src || push) src = loc || {};
+  if (!foyerReady) setTimeout(() => { if (!foyerReady) loadFoyer().then(() => { if (view === 'nutrition') render(); }); }, 15000);
   foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true }, src || {});
   mergeFoyerExtras(); if (push) saveFoyer();
 }
 function saveFoyer(){
   foyer._t = Date.now(); safeSet('mp_foyer', foyer); clearTimeout(foyerTimer);
-  foyerTimer = setTimeout(async () => { if (!db) return; try{ await DOC(FOYER_ID).set(Object.assign(fsEnc(clone(foyer)), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })); }catch(e){} }, 700);
+  foyerTimer = setTimeout(async () => { if (!db || !foyerReady) return; try{ await DOC(FOYER_ID).set(Object.assign(fsEnc(clone(foyer)), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })); }catch(e){} }, 700);
 }
 
 /* ============================================================
@@ -2705,14 +2728,10 @@ function guideRender(){
   } else {
     const big = (f, v, d, u) => `<div class="g-step"><button data-g="adj" data-f="${f}" data-d="${-d}" aria-label="moins">−</button><div><b>${v != null ? fr(v) : '–'}</b><small>${u}</small></div><button data-g="adj" data-f="${f}" data-d="${d}" aria-label="plus">+</button></div>`;
     const inputs = t === 'f' ? big('w', w, 2.5, 'kg') + big('r', r, 1, 'reps') : t === 'p' ? big('r', r, 1, 'reps') : t === 's' ? big('r', r, 5, 'secondes') : big('r', num(lg.r) ?? topReps(e.r), 5, 'minutes') + big('w', num(lg.w), .5, 'km');
-    const wu = t === 'f' && S.length === 0 && e.cmp ? warmup(w) : [];
-    body = `<div class="g-ex"><div class="g-emo pkg">${exVis(e)}</div><h2>${esc(e.n)}</h2>
-      <p class="g-sub">${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span> ` : ''}<span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span></p>
+    // écran épuré : la démonstration en grand et l'essentiel (pas de conseils écrits)
+    body = `<div class="g-ex"><div class="g-emo pkg g-big">${exVis(e)}</div><h2>${esc(e.n)}</h2>
       ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < S.length ? 'on' : j === S.length ? 'cur' : ''}">${j < S.length ? (t === 'f' ? fr(num(S[j].w) || 0) + '×' + S[j].r : S[j].r) : j + 1}</span>`).join('')}</div><p class="g-lbl">Série ${n} sur ${tot}</p>` : ''}
-      <div class="g-inputs">${inputs}</div>
-      ${t === 'f' && w ? `<p class="g-plates">🏋️ ${esc(platesTxt(w) || 'Sans disques')}</p>` : ''}
-      ${wu.length ? `<p class="g-plates">🔥 Échauffement : ${wu.map(([x, rr]) => `${fr(x)} × ${rr}`).join(' · ')}</p>` : ''}
-      ${e.tips ? `<p class="g-tip">💡 ${esc(e.tips)}</p>` : ''}</div>
+      <div class="g-inputs">${inputs}</div></div>
       ${t === 's' ? `<button class="g-main" data-g="timer">▶️ Lancer ${fr(r)} s</button>` : `<button class="g-main" data-g="done">✓ ${t === 'c' ? 'Terminé' : 'Série faite'}</button>`}`;
   }
   $('#guide').innerHTML = `<div class="g-top"><button data-g="prev" aria-label="Exercice précédent">‹</button><div><b>${pos}/${all}</b><small>${left} restant${left > 1 ? 's' : ''}</small></div><button data-g="next" aria-label="Exercice suivant">›</button><span class="spacer"></span><button data-g="voice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-g="close" aria-label="Quitter">✕</button></div>${body}`;
@@ -3794,9 +3813,9 @@ document.addEventListener('click', e => {
   if (k === 'del'){ st.buf = st.buf.slice(0, -1); paintLock(); return; }
   if (k === 'bio') return lockBio(false);
   if (k === 'cancel'){ hideLock(); return; }
-  if (k === 'forgot'){ $('#lock .lk-in').innerHTML = `<h2>Code oublié ?</h2><p class="lk-msg" style="max-width:320px">On peut supprimer le code de ce profil. La copie de ses données sur ce téléphone est effacée, puis rechargée depuis la sauvegarde en ligne : ce qui n’a pas encore été envoyé peut être perdu.</p><div class="lk-foot"><button data-lk="back">Retour</button><button data-lk="reset" class="danger">Supprimer le code</button></div>`; return; }
+  if (k === 'forgot'){ $('#lock .lk-in').innerHTML = `<h2>Code oublié ?</h2><p class="lk-msg" style="max-width:320px">On peut supprimer le code de ce profil sur ce téléphone. Tes données ne sont pas touchées ; tu pourras choisir un nouveau code dans la fenêtre des profils.</p><div class="lk-foot"><button data-lk="back">Retour</button><button data-lk="reset" class="danger">Supprimer le code</button></div>`; return; }
   if (k === 'back'){ paintLock(); return; }
-  if (k === 'reset'){ const pid = st.pid; lockPut(pid, null); try{ localStorage.removeItem(backupKey(pid)); }catch(err){} location.reload(); return; }
+  if (k === 'reset'){ lockPut(st.pid, null); location.reload(); return; }
   const L = lockOf(st.pid) || {}; if ((L.until || 0) > Date.now() || st.buf.length >= (L.n || 4)) return;
   st.buf += k; paintLock(); if (st.buf.length === (L.n || 4)) setTimeout(lockTry, 120);
 });
