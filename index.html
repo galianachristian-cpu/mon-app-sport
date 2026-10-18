@@ -397,6 +397,12 @@ button.chip{cursor:pointer}
 .g-rest{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
 .g-rest small{font-size:16px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:1px}
 .g-rest b{font-size:96px;font-weight:900;letter-spacing:-3px;font-variant-numeric:tabular-nums}
+.g-next{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.g-nlbl{font-size:13px;font-weight:800;color:var(--a1);text-transform:uppercase;letter-spacing:.8px}
+.g-emo.g-nvis,.g-emo.g-nvis:has(.exgif){width:min(62vw,30vh,260px);height:min(62vw,30vh,260px);border-radius:22px}
+.g-next h3{font-size:20px;margin-top:4px}
+.g-nsub{color:var(--soft);font-size:14px;font-weight:600}
+@media (max-height:740px){.g-rest{gap:8px}.g-rest b{font-size:64px}.g-emo.g-nvis,.g-emo.g-nvis:has(.exgif){width:min(56vw,26vh);height:min(56vw,26vh)}}
 .g-rest .bar{width:min(420px,90%);height:10px}
 /* forme, divers */
 .pick{display:flex;gap:6px;flex-wrap:wrap}
@@ -2750,8 +2756,10 @@ function guideRender(){
   const w = num(lg.w) ?? sugW(e), r = num(lg.r) ?? topReps(e.r);
   let body = '';
   if (G.phase === 'rest'){
-    body = `<div class="g-rest"><small>Repos</small><b id="gT">${fmtT(T.left)}</b><div class="bar"><i id="gB" style="width:${T.total ? T.left * 100 / T.total : 0}%"></i></div>
-      <p>Ensuite : <b>${esc(e.n)}</b> · série ${n}/${tot}${t === 'f' && w ? ` · ${fr(w)} kg` : ''}</p>
+    // pendant le repos : l'exercice qui suit, avec sa démonstration
+    const nx = `${t === 'c' ? esc(e.r) : `Série ${n} sur ${tot}`}${t === 'f' && w ? ` · ${fr(w)} kg` : ''}${t !== 'c' && t !== 'f' ? ` · ${esc(e.r)}` : ''}${t === 'f' ? ` × ${topReps(e.r)}` : ''}`;
+    body = `<div class="g-rest"><small>${G.timerSet ? 'En cours' : 'Repos'}</small><b id="gT">${fmtT(T.left)}</b><div class="bar"><i id="gB" style="width:${T.total ? T.left * 100 / T.total : 0}%"></i></div>
+      <div class="g-next"><p class="g-nlbl">${G.timerSet ? '💪 Tiens bon' : G.newEx ? '⏭️ Exercice suivant' : '🔁 Prochaine série'}</p><div class="g-emo pkg g-nvis">${exVis(e)}</div><h3>${esc(e.n)}</h3><p class="g-nsub">${nx}</p></div>
       <div class="row" style="justify-content:center"><button class="btn" data-g="plus">+15 s</button><button class="btn pri" data-g="skip">Passer ⏭️</button></div></div>`;
   } else {
     const big = (f, v, d, u) => `<div class="g-step"><button data-g="adj" data-f="${f}" data-d="${-d}" aria-label="moins">−</button><div><b>${v != null ? fr(v) : '–'}</b><small>${u}</small></div><button data-g="adj" data-f="${f}" data-d="${d}" aria-label="plus">+</button></div>`;
@@ -2773,7 +2781,7 @@ function guideAction(a, b){
   if (a === 'adj'){ if (!logs[key]) logs[key] = { w:'', r:'' }; const f = b.dataset.f, base = num(logs[key][f]) ?? (f === 'w' ? sugW(e) : topReps(e.r)) ?? 0; logs[key][f] = String(+Math.max(0, base + +b.dataset.d).toFixed(2)); save(); return guideRender(); }
   if (a === 'plus'){ addTime(15); return; }
   if (a === 'skip'){ resetTimer(); G.phase = 'work'; announceEx(); return guideRender(); }
-  if (a === 'timer'){ G.phase = 'timer'; startTimer(num((logs[key] || {}).r) ?? topReps(e.r), e.n + ' · série ' + (setsOf(k, i).length + 1)); speak('Go'); G.phase = 'rest'; G.timerSet = true; return guideRender(); }
+  if (a === 'timer'){ G.newEx = false; G.phase = 'timer'; startTimer(num((logs[key] || {}).r) ?? topReps(e.r), e.n + ' · série ' + (setsOf(k, i).length + 1)); speak('Go'); G.phase = 'rest'; G.timerSet = true; return guideRender(); }
   if (a === 'done'){
     if (!logs[key]) logs[key] = { w:'', r:'' };
     if (typ(e) === 'f' && !logs[key].w && sugW(e)) logs[key].w = String(sugW(e));
@@ -2787,6 +2795,7 @@ function afterSet(){
   const k = G.k, i = G.i, e = data[k][i], fin = (done[k] || [])[i];
   if (!data[k].some((x, j) => !(done[k] || [])[j] && !isSkip(x))){ speak('Séance terminée, bravo !'); closeGuide(); return; }
   if (fin){ const j = nextIdx(k, i + 1); G.i = j; }
+  G.newEx = !!fin;
   if (!T.run) startTimer(fin && e.ph === 'warm' ? 20 : settings.preset, 'Repos');
   G.phase = 'rest'; G.said = false; speak(fin ? `Bien joué. Repos ${Math.round(T.total)} secondes, puis ${data[k][G.i].n}` : `Repos ${Math.round(T.total)} secondes`);
   guideRender();
