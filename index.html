@@ -1354,6 +1354,7 @@ async function switchProfile(id, unlocked){
 function sheetProfiles(){
   openSheet(`<h2>Qui s’entraîne ?</h2>
     <div class="profs">${PROFILES.map(p => `<button class="prof ${p.id === profile.id ? 'on' : ''}" data-prof="${p.id}" style="--p1:${p.a1};--p2:${p.a2}"><span class="av big">${esc(p.nom.slice(0, 1).toUpperCase())}</span><b>${esc(p.nom)}</b>${p.id === profile.id ? '<small>Profil actuel</small>' : '<small>Changer</small>'}</button>`).join('')}</div>
+    <p class="muted" style="font-size:11.5px;text-align:center;margin-top:14px">Version ${APP_VERSION}${/deploy-preview/.test(location.hostname) ? ' · ⚠️ aperçu de test : ne se met pas à jour, ouvre l’adresse principale' : ''}</p>
     <p style="color:var(--muted);font-size:13px;margin:14px 0 10px">Chaque profil a son programme, ses charges et ses progrès.</p>
     <p style="color:var(--muted);font-size:13px;margin:4px 0 8px">Ta couleur</p>
     <div class="swatches">${PALETTES.map(([a, b, n], i) => `<button class="swatch ${profile.a1 === a && profile.a2 === b ? 'on' : ''}" data-pal="${i}" style="--s1:${a};--s2:${b}" aria-label="${n}" title="${n}"></button>`).join('')}</div>
@@ -4143,7 +4144,16 @@ async function lockAction(k){
   }
 }
 
-if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+// version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
+const APP_VERSION = 24;
+if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(() => {}));
+}
 (async function init(){
   applyTheme(); applyProfileTheme();
   if (lockOf(profile.id)) showLock(profile.id, null, false);
@@ -4154,6 +4164,7 @@ if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) window.a
   render();
   const on = document.querySelector('.day.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
   setTimeout(remCheck, 3000);
+  if (/deploy-preview/.test(location.hostname)) setTimeout(() => toast('⚠️ Version d’aperçu figée : ouvre l’adresse principale de l’appli'), 2500);
 })();
 </script>
 </body>
