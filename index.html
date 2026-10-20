@@ -547,6 +547,12 @@ button.chip{cursor:pointer}
 .tips{display:flex;flex-direction:column;gap:8px}.tip{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 12px}.tip span{font-size:20px}.tip p{font-size:13.5px;line-height:1.45}
 
 /* Minuteurs */
+.wods{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.wods button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;border-radius:16px;background:var(--card);border:1.5px solid var(--line);text-align:left}
+.wods button span{font-size:22px}.wods button b{font-size:14.5px}.wods button small{font-size:11.5px;color:var(--muted)}.wods button em{font-style:normal;font-size:11.5px;color:#fbbf24;font-weight:700;margin-top:2px}
+.wods button.on{border-color:var(--a1);background:color-mix(in srgb,var(--a1) 12%,var(--card))}
+.wodl{list-style:none;padding:0;margin:4px 0 10px;font-size:17px;font-weight:700;line-height:1.55}
+.itrounds{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:12px}.itrounds span{font-size:16px;color:var(--soft)}.itrounds span b{font-size:34px;color:var(--text)}.itrounds .btn.pri{padding:14px 22px;font-size:18px}
 .itmodes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
 .itmodes button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;border-radius:16px;background:var(--card);border:1.5px solid var(--line);text-align:left}
 .itmodes button span{font-size:22px}.itmodes button b{font-size:15px}.itmodes button small{font-size:11.5px;color:var(--muted)}
@@ -3666,46 +3672,88 @@ function sheetReport(wk){
 /* ============================================================
    MINUTEURS D'ENTRAÎNEMENT (HIIT, Tabata, EMOM, circuit)
    ============================================================ */
-const ITM = { etir:['Étirements','🧘','Routine guidée, 30 s par étirement'], tabata:['Tabata','⚡','20 s d’effort, 10 s de repos, 8 tours'], hiit:['HIIT','🔥','Effort et repos à régler'], emom:['EMOM','⏰','Une série au début de chaque minute'], circuit:['Circuit','🔁','Plusieurs exercices enchaînés'] };
-const itCfg = () => (settings.it = Object.assign({ eZone:'auto', eSec:30, eN:8, eDuo:false, mode:'tabata', tRounds:8, work:30, rest:30, rounds:10, emom:10, emomEx:'10 burpees', circ:'Pompes\nSquats sautés\nMountain climbers\nGainage', cWork:40, cRest:20, cRounds:3, cPause:60 }, settings.it || {}));
+const ITM = { etir:['Étirements','🧘','Routine guidée, 30 s par étirement'], tabata:['Tabata','⚡','20 s d’effort, 10 s de repos, 8 tours'], hiit:['HIIT','🔥','Effort et repos à régler'], emom:['EMOM','⏰','Au début de chaque minute, en alternance'], circuit:['Circuit','🔁','Plusieurs exercices enchaînés'], amrap:['AMRAP','🔄','Un max de tours en un temps donné'], fortime:['For time','🏁','Le plus vite possible, chrono qui monte'] };
+const itCfg = () => (settings.it = Object.assign({ eZone:'auto', eSec:30, eN:8, eDuo:false, mode:'tabata', tRounds:8, work:30, rest:30, rounds:10, emom:10, emomEx:'10 burpees', circ:'Pompes\nSquats sautés\nMountain climbers\nGainage', cWork:40, cRest:20, cRounds:3, cPause:60, aDur:12, aList:'10 kettlebell swings\n10 burpees\n12 cal assault bike', fRounds:3, fCap:20, fList:'15 cal rameur\n15 squats goblet\n10 pompes', wod:null }, settings.it || {}));
+const itLines = v => String(v || '').split('\n').map(x => x.trim()).filter(Boolean);
 function itSeq(c){
   const S = [{ k:'prep', l:'Prépare-toi', s:10 }];
   if (c.mode === 'tabata' || c.mode === 'hiit'){ const n = c.mode === 'tabata' ? c.tRounds : c.rounds, w = c.mode === 'tabata' ? 20 : c.work, r = c.mode === 'tabata' ? 10 : c.rest;
     for (let i = 1; i <= n; i++){ S.push({ k:'work', l:'Effort', s:w, tour:i, n }); if (i < n && r) S.push({ k:'rest', l:'Repos', s:r, tour:i, n }); } }
   else if (c.mode === 'etir'){ const L = stretchList(c.eZone || 'auto', c.eN || 8, !c.eDuo);
     L.forEach((nm, j) => { const sides = STRETCH[nm] && STRETCH[nm][1] ? [' · côté gauche', ' · côté droit'] : ['']; sides.forEach((sd, q) => { S.push({ k:'work', l:nm + sd, nm, s:c.eSec || 30, tour:j + 1, n:L.length }); const nx = q === 0 && sides.length > 1 ? nm + sides[1] : L[j + 1]; if (nx) S.push({ k:'rest', l: q === 0 && sides.length > 1 ? 'Change de côté' : 'On enchaîne', s:5, next:nx }); }); }); }
-  else if (c.mode === 'emom'){ for (let i = 1; i <= c.emom; i++) S.push({ k:'work', l:c.emomEx || 'Minute ' + i, s:60, tour:i, n:c.emom }); }
+  else if (c.mode === 'emom'){ const L = itLines(c.emomEx); for (let i = 1; i <= c.emom; i++) S.push({ k:'work', l:L.length ? L[(i - 1) % L.length] : 'Minute ' + i, s:60, tour:i, n:c.emom }); }
+  else if (c.mode === 'amrap') S.push({ k:'work', l:'AMRAP', s:(c.aDur || 12) * 60, amrap:1, list:itLines(c.aList) });
+  else if (c.mode === 'fortime') S.push({ k:'work', l:'For time', s:(c.fCap || 20) * 60, ft:1, list:itLines(c.fList), n:c.fRounds || 1 });
   else { const ex = String(c.circ || '').split('\n').map(x => x.trim()).filter(Boolean); if (!ex.length) ex.push('Exercice');
     for (let t = 1; t <= c.cRounds; t++){ ex.forEach((x, j) => { S.push({ k:'work', l:x, s:c.cWork, tour:t, n:c.cRounds, ex:j + 1, ne:ex.length }); if (j < ex.length - 1 && c.cRest) S.push({ k:'rest', l:'Repos', s:c.cRest, tour:t, n:c.cRounds, next:ex[j + 1] }); });
       if (t < c.cRounds && c.cPause) S.push({ k:'rest', l:'Pause entre les tours', s:c.cPause, tour:t, n:c.cRounds, next:ex[0] }); } }
   return S;
 }
-let IT = null;
+let IT = null, lastWod = null;
+// WOD tout faits avec le matériel de la caserne
+const WODS = [
+  { n:'Le Départ feu', ic:'🔥', mode:'amrap', cfg:{ aDur:12, aList:'10 kettlebell swings (16 kg)\n10 burpees\n12 cal assault bike' }, d:'AMRAP 12 min · cardio + kettlebell' },
+  { n:'L’Échelle', ic:'🪜', mode:'fortime', cfg:{ fRounds:4, fCap:20, fList:'15 cal rameur\n15 squats goblet (haltère 15 kg)\n10 pompes\n10 box jumps (plyobox)' }, d:'For time · 4 tours · limite 20 min' },
+  { n:'Le Sauvetage', ic:'🧍', mode:'fortime', cfg:{ fRounds:5, fCap:25, fList:'20 m portage du sac lesté 20 kg\n10 thrusters haltères (2 × 10 kg)\n10 cal SkiErg\n20 m marche du fermier (2 × 22,5 kg)' }, d:'For time · 5 tours · porter, pousser, tirer' },
+  { n:'La Garde', ic:'⏰', mode:'emom', cfg:{ emom:16, emomEx:'12 cal assault bike\n15 kettlebell swings (16 kg)\n12 wall balls (ballon 4 kg)\n40 s gainage' }, d:'EMOM 16 min · 4 postes en alternance' },
+  { n:'Gilet lesté', ic:'🦺', mode:'amrap', cfg:{ aDur:20, aList:'Avec le gilet lesté 10 kg :\n5 pompes\n10 fentes marchées\n15 squats\n15 cal rameur' }, d:'AMRAP 20 min avec le gilet de 10 kg' },
+  { n:'Tabata machines', ic:'⚡', mode:'circuit', cfg:{ circ:'Assault bike\nBurpees\nRameur\nGainage', cWork:20, cRest:10, cRounds:2, cPause:60 }, d:'Circuit 20 s / 10 s · 2 tours' },
+  { n:'Haut du corps', ic:'💪', mode:'emom', cfg:{ emom:12, emomEx:'10 développés haltères (2 × 15 kg)\n12 rowings haltère par bras\n10 dips sur banc' }, d:'EMOM 12 min · haut du corps' },
+  { n:'Le Grand Feu', ic:'🚒', mode:'fortime', cfg:{ fRounds:1, fCap:40, fList:'50 cal rameur\n40 kettlebell swings (16 kg)\n30 box jumps\n20 thrusters haltères (2 × 10 kg)\n10 burpees\n50 cal assault bike' }, d:'For time · le gros enchaînement · limite 40 min' }
+];
+const WOD_POOL = { cardio:['12 cal assault bike','15 cal rameur','12 cal SkiErg','15 cal vélo','50 sauts à la corde'], kb:['15 kettlebell swings (16 kg)','10 squats goblet kettlebell (16 kg)','10 développés kettlebell (12 kg) par bras','10 soulevés roumains kettlebell (20 kg)'],
+  hal:['10 thrusters haltères (2 × 10 kg)','12 rowings haltère (20 kg) par bras','10 fentes haltères (2 × 12,5 kg)','10 développés haltères (2 × 15 kg)'], pdc:['10 burpees','15 pompes','20 squats sautés','10 box jumps (plyobox)','30 s gainage'],
+  lest:['20 m portage du sac lesté 20 kg','12 wall balls (ballon 4 kg)','20 m marche du fermier (2 × 22,5 kg)','10 slams ballon (4 kg)'] };
+function wodRandom(){
+  const pick = A => A[Math.floor(Math.random() * A.length)], cats = Object.keys(WOD_POOL).sort(() => Math.random() - .5).slice(0, 4), L = cats.map(k => pick(WOD_POOL[k])), m = pick(['amrap', 'fortime', 'emom']);
+  const n = '🎲 WOD du ' + new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (m === 'amrap') return { n, mode: m, cfg: { aDur: pick([10, 12, 15, 18]), aList: L.join('\n') } };
+  if (m === 'fortime') return { n, mode: m, cfg: { fRounds: pick([3, 4, 5]), fCap: 25, fList: L.join('\n') } };
+  return { n, mode: m, cfg: { emom: L.length * pick([3, 4]), emomEx: L.join('\n') } };
+}
+function wodLoad(w){ const c = itCfg(); c.mode = w.mode; Object.assign(c, w.cfg); c.wod = w.n; safeSet('mp_settings', settings); viewIT(); window.scrollTo({ top: 0 }); toast(`🚒 ${w.n.replace('🎲 ', '')} prêt : touche Démarrer`); }
+const wodScore = r => r.mode === 'fortime' ? (r.cap ? `Limite de temps · ${r.r} tour${r.r > 1 ? 's' : ''}` : fmtT(r.t)) : `${r.r} tour${r.r > 1 ? 's' : ''}`;
+function wodBest(n){
+  const L = ((coach && coach.wods) || {})[n] || []; if (!L.length) return '';
+  const ft = L.filter(r => r.mode === 'fortime' && !r.cap), am = L.filter(r => r.mode === 'amrap');
+  return ft.length ? fmtT(Math.min(...ft.map(r => r.t))) : am.length ? `${Math.max(...am.map(r => r.r))} tours` : '';
+}
+function wodSave(n, res, c){
+  coach = Object.assign({}, coach); coach.wods = Object.assign({}, coach.wods);
+  const L = (coach.wods[n] || []).slice(), prev = wodBest(n);
+  const rec = !!L.length && (res.mode === 'fortime' ? !res.cap && L.filter(r => !r.cap).every(r => res.t < r.t) : L.every(r => res.r > r.r));
+  L.push(res); coach.wods[n] = L.slice(-20); lastWod = { n, res, rec, prev }; save();
+}
 function viewIT(){
   const c = itCfg(), S = itSeq(c), tot = S.reduce((a, x) => a + x.s, 0);
   const f = (id, l, v, u) => `<div class="fg"><label for="${id}">${l}</label><div class="row"><input id="${id}" class="inp" inputmode="numeric" value="${v}" style="flex:1">${u ? `<span class="muted" style="font-size:13px">${u}</span>` : ''}</div></div>`;
   const form = c.mode === 'etir' ? `<div class="chips2 wrap" style="margin-bottom:10px">${Object.entries(EZ).map(([k, l]) => `<button type="button" class="${(c.eZone || 'auto') === k ? 'on' : ''}" data-x="ezone" data-z="${k}">${l}</button>`).join('')}</div><div class="two">${f('iES', 'Par étirement', c.eSec, 's')}${f('iEN', 'Nombre', c.eN)}</div><div class="toggle"><span>Inclure les étirements à deux<small>Avec l’aide de ton/ta partenaire</small></span><button type="button" class="sw ${c.eDuo ? 'on' : ''}" data-x="eduo" role="switch" aria-checked="${!!c.eDuo}"></button></div><p class="muted" style="font-size:12.5px">${stretchList(c.eZone || 'auto', c.eN || 8, !c.eDuo).map(esc).join(' · ')}</p>`
     : c.mode === 'tabata' ? `<div class="two">${f('iTR', 'Tours', c.tRounds, '× 20 s / 10 s')}</div>`
     : c.mode === 'hiit' ? `<div class="three2">${f('iW', 'Effort', c.work, 's')}${f('iR', 'Repos', c.rest, 's')}${f('iN', 'Tours', c.rounds)}</div>`
-    : c.mode === 'emom' ? `<div class="two">${f('iE', 'Durée', c.emom, 'min')}<div class="fg"><label for="iEx">À faire chaque minute</label><input id="iEx" class="inp" value="${esc(c.emomEx)}"></div></div>`
+    : c.mode === 'emom' ? `${f('iE', 'Durée', c.emom, 'min')}<div class="fg"><label for="iEx">À faire chaque minute (une ligne par minute, en alternance)</label><textarea id="iEx" class="inp" rows="4">${esc(c.emomEx)}</textarea></div>`
+    : c.mode === 'amrap' ? `${f('iAD', 'Durée', c.aDur, 'min')}<div class="fg"><label for="iAL">Un tour = (une ligne par exercice)</label><textarea id="iAL" class="inp" rows="5">${esc(c.aList)}</textarea></div>`
+    : c.mode === 'fortime' ? `<div class="two">${f('iFR', 'Tours', c.fRounds)}${f('iFC', 'Temps limite', c.fCap, 'min')}</div><div class="fg"><label for="iFL">Un tour = (une ligne par exercice)</label><textarea id="iFL" class="inp" rows="5">${esc(c.fList)}</textarea></div>`
     : `<div class="fg"><label for="iC">Exercices (un par ligne)</label><textarea id="iC" class="inp" rows="5">${esc(c.circ)}</textarea></div><div class="two">${f('iCW', 'Effort', c.cWork, 's')}${f('iCR', 'Repos', c.cRest, 's')}</div><div class="two">${f('iCN', 'Tours', c.cRounds)}${f('iCP', 'Pause entre tours', c.cPause, 's')}</div>`;
   $('#app').innerHTML = `<div class="fade">${chronoSeg()}
+    <h3 class="sec">🚒 WOD caserne</h3><div class="wods">${WODS.map((w, j) => { const b = wodBest(w.n); return `<button class="${c.wod === w.n ? 'on' : ''}" data-x="wod" data-w="${j}"><span>${w.ic}</span><b>${esc(w.n)}</b><small>${esc(w.d)}</small>${b ? `<em>🏆 ${esc(b)}</em>` : ''}</button>`; }).join('')}</div>
+    <button class="btn block" data-x="wodrand" style="margin-top:10px">🎲 WOD surprise avec le matériel de la caserne</button>
+    <h3 class="sec">Minuteurs</h3>${c.wod ? `<div class="advice up"><span>🚒 <b>${esc(c.wod)}</b>${wodBest(c.wod) ? ` · record : ${esc(wodBest(c.wod))}` : ''}</span></div>` : ''}
     <div class="itmodes">${Object.entries(ITM).map(([k, [l, ic, d]]) => `<button class="${c.mode === k ? 'on' : ''}" data-x="itmode" data-m="${k}"><span>${ic}</span><b>${l}</b><small>${d}</small></button>`).join('')}</div>
-    <div class="card" style="margin-top:12px"><form id="itF">${form}</form><p class="muted" style="font-size:12.5px;margin-top:6px">Durée totale : <b id="itTot">${fmtDur(tot)}</b> · 10 s de préparation au début. Bips sur les 3 dernières secondes${settings.voice ? ', annonces vocales' : ''}.</p></div>
+    <div class="card" style="margin-top:12px"><form id="itF">${form}</form><p class="muted" style="font-size:12.5px;margin-top:6px">Durée totale : <b id="itTot">${fmtDur(tot)}</b>${c.mode === 'fortime' ? ' maximum' : ''} · 10 s de préparation au début. Bips sur les 3 dernières secondes${settings.voice ? ', annonces vocales' : ''}.</p></div>
     <button class="btn pri block" data-x="itgo" style="margin-top:14px;padding:16px;font-size:17px">▶️ Démarrer ${ITM[c.mode][0]}</button></div>`;
   const F = $('#itF'); F.oninput = () => { const g = (id, k, mn, mx) => { const el = $('#' + id); if (el){ const v = parseInt(el.value); if (v >= mn && v <= mx) c[k] = v; } };
-    g('iTR', 'tRounds', 1, 30); g('iW', 'work', 5, 600); g('iR', 'rest', 0, 600); g('iN', 'rounds', 1, 60); g('iE', 'emom', 1, 60); g('iCW', 'cWork', 5, 600); g('iCR', 'cRest', 0, 600); g('iCN', 'cRounds', 1, 20); g('iCP', 'cPause', 0, 600); g('iES', 'eSec', 10, 180); g('iEN', 'eN', 3, 15);
+    g('iTR', 'tRounds', 1, 30); g('iW', 'work', 5, 600); g('iR', 'rest', 0, 600); g('iN', 'rounds', 1, 60); g('iE', 'emom', 1, 60); g('iCW', 'cWork', 5, 600); g('iCR', 'cRest', 0, 600); g('iCN', 'cRounds', 1, 20); g('iCP', 'cPause', 0, 600); g('iES', 'eSec', 10, 180); g('iEN', 'eN', 3, 15); g('iAD', 'aDur', 1, 90); g('iFR', 'fRounds', 1, 50); g('iFC', 'fCap', 1, 120); if ($('#iAL')) c.aList = $('#iAL').value; if ($('#iFL')) c.fList = $('#iFL').value;
     if ($('#iEx')) c.emomEx = $('#iEx').value; if ($('#iC')) c.circ = $('#iC').value; safeSet('mp_settings', settings); $('#itTot').textContent = fmtDur(itSeq(c).reduce((a, x) => a + x.s, 0)); };
   F.onsubmit = ev => ev.preventDefault();
 }
 function itStart(cOver){
-  const c = cOver || itCfg(); IT = { c, S: itSeq(c), i: 0, end: 0, paused: false, left: 0, beeped: -1, t0: Date.now(), iv: null };
+  const c = cOver || itCfg(); IT = { c, S: itSeq(c), i: 0, end: 0, paused: false, left: 0, beeped: -1, t0: Date.now(), iv: null, rounds: 0, said: {} };
   beep(660, .05, .01); itEnter(0); IT.iv = setInterval(itTick, 200);
 }
 function itEnter(i, over){
   IT.i = i; const s = IT.S[i]; IT.end = Date.now() + (s.s - (over || 0)) * 1000; IT.left = s.s - (over || 0); IT.beeped = -1;
   if (i){ beep(s.k === 'work' ? 1175 : 660, .45, .35); if (navigator.vibrate && settings.vibe) navigator.vibrate(s.k === 'work' ? [250] : [120, 80, 120]); }
-  speak(s.k === 'work' ? (IT.c.mode === 'emom' ? 'Minute ' + s.tour + ', ' + s.l : (IT.c.mode === 'circuit' || IT.c.mode === 'etir') ? s.l : 'Go !') : s.k === 'rest' ? (s.next ? 'Repos. Ensuite, ' + s.next : 'Repos') : 'Prépare-toi');
+  speak(s.k === 'work' ? (s.amrap || s.ft ? 'Go ! ' + s.list.join(', ') : IT.c.mode === 'emom' ? 'Minute ' + s.tour + ', ' + s.l : (IT.c.mode === 'circuit' || IT.c.mode === 'etir') ? s.l : 'Go !') : s.k === 'rest' ? (s.next ? 'Repos. Ensuite, ' + s.next : 'Repos') : 'Prépare-toi');
   itRender();
 }
 function itTick(){
@@ -3714,7 +3762,9 @@ function itTick(){
   const c = Math.ceil(IT.left);
   if (c <= 3 && c >= 1 && IT.beeped !== c){ IT.beeped = c; beep(880, .12, .25); }
   if (IT.left <= 0){ let over = -IT.left, i = IT.i + 1; while (i < IT.S.length && over >= IT.S[i].s){ over -= IT.S[i].s; i++; } if (i >= IT.S.length) return itFinish(); itEnter(i, over); return; }
-  const s = IT.S[IT.i], t = $('#itT'), b = $('#itB'); if (t) t.textContent = fmtT(IT.left); if (b) b.style.width = (100 - IT.left * 100 / s.s) + '%';
+  const s = IT.S[IT.i], t = $('#itT'), b = $('#itB');
+  if ((s.amrap || s.ft) && s.s >= 240){ const half = Math.round(s.s / 2); if (!IT.said.h && IT.left <= half){ IT.said.h = 1; speak('Mi-temps'); } if (!IT.said.m && IT.left <= 60){ IT.said.m = 1; speak('Dernière minute'); } }
+  if (t) t.textContent = fmtT(s.ft ? s.s - IT.left : IT.left); if (b) b.style.width = (100 - IT.left * 100 / s.s) + '%';
   const rem = $('#itRem'); if (rem) rem.textContent = fmtDur(IT.S.slice(IT.i + 1).reduce((a, x) => a + x.s, 0) + Math.max(0, IT.left));
 }
 function itRender(){
@@ -3722,28 +3772,36 @@ function itRender(){
   openFull(`<div class="itv ${s.k}"><div class="g-top"><div><b>${ITM[IT.c.mode][1]} ${ITM[IT.c.mode][0]}</b><small>reste <span id="itRem">${fmtDur(IT.S.slice(IT.i).reduce((a, x) => a + x.s, 0))}</span></small></div><span class="spacer"></span><button data-x="itvoice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-x="itstop" aria-label="Arrêter">✕</button></div>
     <div class="itmain"><small>${s.k === 'work' ? (s.tour ? (IT.c.mode === 'circuit' ? `Tour ${s.tour}/${s.n} · exercice ${s.ex}/${s.ne}` : `${IT.c.mode === 'emom' ? 'Minute' : 'Tour'} ${s.tour}/${s.n}`) : '') : s.k === 'rest' ? 'Récupère' : 'Ça commence'}</small>
       ${s.nm && LIB_BY[s.nm] && s.k === 'work' ? `<div class="itvis">${exVis(LIB_BY[s.nm])}</div>` : s.k === 'rest' && s.next && LIB_BY[String(s.next).split(' · ')[0]] ? `<div class="itvis sm">${exVis(LIB_BY[String(s.next).split(' · ')[0]], true)}</div>` : ''}
-      <h2>${esc(s.l)}</h2><b id="itT">${fmtT(IT.left)}</b><div class="bar"><i id="itB" style="width:0%"></i></div>
-      <p>${nx ? `Ensuite : <b>${esc(nx.k === 'rest' ? nx.l : nx.l)}</b> · ${nx.s} s` : 'Dernier effort, à fond ! 💥'}</p></div>
+      ${s.amrap || s.ft ? `<ul class="wodl">${s.list.map(x => `<li>${esc(x)}</li>`).join('')}</ul><b id="itT">${fmtT(s.ft ? s.s - IT.left : IT.left)}</b><div class="bar"><i id="itB" style="width:0%"></i></div>
+      <div class="itrounds"><span><b>${IT.rounds}</b>${s.ft ? ' / ' + s.n : ''} tour${IT.rounds > 1 ? 's' : ''}</span><button class="btn pri" data-x="itround">+1 tour</button>${IT.rounds ? '<button class="btn sm" data-x="itround" data-d="-1">−1</button>' : ''}</div>
+      ${s.ft ? '<button class="btn" data-x="itdone" style="margin-top:6px">🏁 Terminé</button>' : ''}<p style="display:none">` : `<h2>${esc(s.l)}</h2><b id="itT">${fmtT(IT.left)}</b><div class="bar"><i id="itB" style="width:0%"></i></div>
+      <p>`}${nx ? `Ensuite : <b>${esc(nx.k === 'rest' ? nx.l : nx.l)}</b> · ${nx.s} s` : 'Dernier effort, à fond ! 💥'}</p></div>
     <div class="row itctl"><button class="btn" data-x="itprev">⏮</button><button class="btn pri" data-x="itpause">${IT.paused ? '▶️ Reprendre' : '⏸ Pause'}</button><button class="btn" data-x="itnext">⏭</button></div></div>`);
 }
-function itAct(a){
+function itAct(a, b){
   if (!IT) return;
   if (a === 'itstop'){ clearInterval(IT.iv); const ran = (Date.now() - IT.t0) / 1000; IT = null; closeFull(); if (ran > 120) itLog(ran); render(); return; }
   if (a === 'itpause'){ if (IT.paused){ IT.paused = false; IT.end = Date.now() + IT.left * 1000; } else { IT.paused = true; IT.left = (IT.end - Date.now()) / 1000; } return itRender(); }
   if (a === 'itnext'){ if (IT.i + 1 >= IT.S.length) return itFinish(); return itEnter(IT.i + 1); }
   if (a === 'itprev') return itEnter(Math.max(0, IT.i - 1));
   if (a === 'itvoice'){ settings.voice = !settings.voice; safeSet('mp_settings', settings); return itRender(); }
+  if (a === 'itround'){ const s = IT.S[IT.i]; IT.rounds = Math.max(0, IT.rounds + (b && b.dataset.d ? +b.dataset.d : 1)); beep(988, .12, .3); if (navigator.vibrate && settings.vibe) navigator.vibrate(30);
+    if (s.ft && IT.rounds >= s.n) return itFinish(true); if (!(b && b.dataset.d)) speak(IT.rounds + ' tour' + (IT.rounds > 1 ? 's' : '')); return itRender(); }
+  if (a === 'itdone') return itFinish(true);
 }
 function itLog(sec){
-  const n = ITM[IT ? IT.c.mode : itCfg().mode][0], d = today(), min = Math.max(1, Math.round(sec / 60));
-  hist.push({ d, k:'it', n: n + ' (minuteur)', m: n === 'Étirements' ? 'Mobilité' : 'Cardio', t:'c', s:1, r:String(min), w:null }); save();
-  toast('✅ ' + n + ' : ' + min + ' min enregistrées');
+  const n = ITM[IT ? IT.c.mode : itCfg().mode][0], d = today(), min = Math.max(1, Math.round(sec / 60)), wn = IT && IT.c.wod ? IT.c.wod.replace('🎲 ', '') : null;
+  hist.push({ d, k:'it', n: wn || n + ' (minuteur)', m: n === 'Étirements' ? 'Mobilité' : 'Cardio', t:'c', s:1, r:String(min), w:null }); save();
+  toast('✅ ' + (wn || n) + ' : ' + min + ' min enregistrées');
 }
-function itFinish(){
-  clearInterval(IT.iv); const sec = IT.S.reduce((a, x) => a + x.s, 0) - 10, mode = IT.c.mode;
+function itFinish(early){
+  clearInterval(IT.iv); const mode = IT.c.mode, w = IT.S[IT.i], timed = w && (w.amrap || w.ft);
+  const sec = timed ? Math.round(w.ft && early ? w.s - Math.max(0, (IT.end - Date.now()) / 1000) : w.s) : IT.S.reduce((a, x) => a + x.s, 0) - 10;
+  if (timed){ const res = { d: today(), mode, r: IT.rounds }; if (w.ft){ res.t = sec; res.cap = !early; } wodSave(IT.c.wod || `${ITM[mode][0]} ${Math.round(w.s / 60)} min`, res, IT.c); }
   beep(1318, .8, .35); speak('Terminé, bravo !'); if (navigator.vibrate && settings.vibe) navigator.vibrate([300, 100, 300, 100, 600]);
   itLog(sec); IT = null;
-  openFull(`<div class="itv done"><div class="itmain"><div style="font-size:64px">🏁</div><h2>${ITM[mode][0]} terminé !</h2><p>${fmtDur(sec)} d’effort enregistrées dans tes séances.</p><button class="btn pri" data-x="itclose" style="margin-top:18px">Fermer</button></div></div>`);
+  const L = lastWod;
+  openFull(`<div class="itv done"><div class="itmain"><div style="font-size:64px">🏁</div><h2>${ITM[mode][0]} terminé !</h2>${L && L.res.d === today() && (mode === 'amrap' || mode === 'fortime') ? `<p style="font-size:20px"><b>${esc(wodScore(L.res))}</b>${L.rec ? ' · 🏆 Record !' : ''}</p>${mode === 'amrap' ? '<div class="row" style="justify-content:center"><button class="btn sm" data-x="wodfix" data-d="-1">−1 tour</button><button class="btn sm" data-x="wodfix" data-d="1">+1 tour</button></div>' : ''}` : ''}<p>${fmtDur(sec)} d’effort enregistrées dans tes séances.</p><button class="btn pri" data-x="itclose" style="margin-top:18px">Fermer</button></div></div>`);
   confetti();
 }
 
@@ -4016,12 +4074,15 @@ function evoAct(a, b){
   switch (a){
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
     case 'ctab': chronoTab = b.dataset.t; render(); break;
-    case 'itmode': itCfg().mode = b.dataset.m; safeSet('mp_settings', settings); viewIT(); break;
+    case 'itmode': itCfg().mode = b.dataset.m; itCfg().wod = null; safeSet('mp_settings', settings); viewIT(); break;
     case 'itgo': itStart(); break;
     case 'ezone': itCfg().eZone = b.dataset.z; safeSet('mp_settings', settings); viewIT(); break;
     case 'eduo': itCfg().eDuo = !itCfg().eDuo; safeSet('mp_settings', settings); viewIT(); break;
     case 'stretch': startStretch(b.dataset.z || 'auto'); break;
     case 'itclose': closeFull(); render(); break;
+    case 'wod': wodLoad(WODS[+b.dataset.w]); break;
+    case 'wodrand': wodLoad(wodRandom()); break;
+    case 'wodfix': if (lastWod){ lastWod.res.r = Math.max(0, lastWod.res.r + +b.dataset.d); save(); const p = b.closest('.itmain').querySelector('p b'); if (p) p.textContent = wodScore(lastWod.res); } break;
     case 'runtype': runType = b.dataset.t; viewRun(); break;
     case 'rungo': runStart(); break;
     case 'runpause': runPause(); break;
@@ -4064,7 +4125,7 @@ function evoAct(a, b){
     case 'remperm': if ('Notification' in window) Notification.requestPermission().then(p => { viewSemaine(); if (p === 'granted'){ notify('🔔 Notifications activées', 'Tu recevras tes rappels ici.', 'test'); } }); break;
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
     default:
-      if (a.startsWith('it')) itAct(a);
+      if (a.startsWith('it')) itAct(a, b);
       else if (a.startsWith('du')) duoAct(a, b);
   }
 }
@@ -4556,7 +4617,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
