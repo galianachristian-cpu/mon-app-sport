@@ -1800,7 +1800,7 @@ function duoChallenges(){
     <table class="tbl"><thead><tr><th></th><th>${esc(me)}</th><th>${esc(ot)}</th><th></th></tr></thead><tbody>${DUO_CH.map(([c, ic, l]) => `<tr><td>${ic} ${l}</td><td>${cell(A[c][0], A[c][1])}</td><td>${cell(B[c][0], B[c][1])}</td><td>${ok(c) ? '✅' : ''}</td></tr>`).join('')}</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:6px">${nOk === DUO_CH.length ? '🏅 Semaine réussie ensemble, bravo à vous deux !' : 'Les 4 défis réussis par vous deux = une médaille commune 🏅'}${nW ? ` · ${nW} semaine${nW > 1 ? 's' : ''} réussie${nW > 1 ? 's' : ''} ensemble` : ''}</p></div>`;
 }
-function startSession(k){ if (!sess[k] || sess[k].end || !sess[k].start) sess[k] = { start: Date.now() }; }
+function startSession(k){ if (!sess[k] || sess[k].end || !sess[k].start || ymd(new Date(sess[k].start)) !== ymd(new Date())) sess[k] = { start: Date.now() }; }
 function record(k, i){
   const e = data[k][i], lg = logs[keyOf(k, i)] || {}, t = typ(e), S = setsOf(k, i), d = ymd(new Date());
   hist = hist.filter(h => !(h.d === d && h.n === e.n));
@@ -1860,16 +1860,20 @@ function bilanData(k){
   const H = hist.filter(h => h.d === d && names.includes(h.n));
   const vol = H.reduce((a, h) => a + volOf(h), 0);
   const recs = H.filter(h => { const b = bestOf(h.n, d), v = scoreOf(h); return b > 0 && v > b; });
-  const dur = s.start && s.end ? Math.min(300, Math.round((s.end - s.start) / 60000)) : null;
+  // durée : chrono réel s'il est plausible, sinon estimation (minutes de cardio notées + séries × (effort + repos))
+  const est = Math.round(H.reduce((a, h) => a + ((h.t || 'f') === 'c' ? num(h.r) || 0 : (h.sl ? h.sl.length : +h.s || 0) * (45 + settings.preset) / 60), 0));
+  const raw = s.start && s.end ? (s.end - s.start) / 60000 : null, ok = raw != null && raw <= est * 2 + 20 && raw >= est * .4;
+  const dur = ok ? Math.round(raw) : est || null, durEst = !ok && !!est;
+  const kcal = H.reduce((a, h) => a + (kcalOfH(h) || 0), 0);
   const prev = seances.filter(x => x.k === k && x.d < d).slice(-1)[0];
-  return { d, k, vol, recs, dur, prev, nEx: H.length, sets: H.reduce((a, h) => a + (h.sl ? h.sl.length : h.s || 0), 0) };
+  return { d, k, vol, recs, dur, durEst, kcal, prev, nEx: H.length, sets: H.reduce((a, h) => a + (h.sl ? h.sl.length : h.s || 0), 0) };
 }
 function sheetBilan(k, fresh){
   const b = bilanData(k), saved = seances.find(x => x.d === b.d && x.k === k);
   const diff = b.prev && b.prev.vol ? Math.round((b.vol - b.prev.vol) * 100 / b.prev.vol) : null;
   openSheet(`<div class="bilan"><div class="big">🏁</div><h2 style="padding:0;text-align:center">${fresh ? 'Séance terminée, bravo !' : 'Bilan de la séance'}</h2>
     <p class="muted" style="text-align:center;margin-bottom:14px">${DAY_NAMES[+k.slice(3)]} · ${esc(dayTitle(+k.slice(3)))} · ${fmtD(b.d)}</p>
-    <div class="three"><div><b>${b.dur != null ? b.dur + ' min' : '–'}</b><small>Durée</small></div><div><b>${fmtVol(b.vol)}</b><small>Soulevés</small></div><div><b>${b.sets}</b><small>Séries</small></div></div>
+    <div class="three"><div><b>${b.dur != null ? (b.durEst ? '≈ ' : '') + b.dur + ' min' : '–'}</b><small>Durée</small></div>${b.vol ? `<div><b>${fmtVol(b.vol)}</b><small>Soulevés</small></div>` : `<div><b>${kc(Math.round(b.kcal))}</b><small>kcal</small></div>`}<div><b>${b.sets}</b><small>Série${b.sets > 1 ? 's' : ''}</small></div></div>
     ${diff != null ? `<div class="box"><p>${diff >= 0 ? '📈' : '📉'} <b>${diff >= 0 ? '+' : ''}${diff} %</b> de volume par rapport à la dernière fois (${fmtVol(b.prev.vol)}, ${fmtD(b.prev.d)})</p></div>` : ''}
     ${b.recs.length ? `<div class="box tips"><h4>🏆 ${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''}</h4><p>${b.recs.map(h => `${esc(h.n)} : ${fr(scoreOf(h))} ${unitOf(h.t || 'f', h)}`).join('\n')}</p></div>` : ''}
     <h4 class="muted" style="margin:14px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px">Ton ressenti</h4>
@@ -4617,7 +4621,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 35;
+const APP_VERSION = 36;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
