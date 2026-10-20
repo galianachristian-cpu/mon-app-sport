@@ -1234,7 +1234,7 @@ const BIG = ['Pectoraux','Dos','Quadriceps','Ischio-jambiers','Fessiers'];
 /* ============================================================
    ÉTAT — champs historiques (data, done, logs) gardés à l'identique
    ============================================================ */
-let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [], nut = null, journal = {}, prog = null, forme = {}, badges = null, runs = [];
+let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [], nut = null, journal = {}, prog = null, forme = {}, badges = null, runs = [], gear = null;
 let currentDay = 0, view = 'seance', online = !!db, other = null, saveT = 0, remoteReady = false, loading = false, syncTimer = null;
 const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
@@ -1251,12 +1251,31 @@ const fr = n => String(+(+n).toFixed(2)).replace('.', ',');
 const typ = e => e.t || 'f';
 const topReps = r => { const m = String(r || '').match(/\d+([.,]\d+)?/g); return m ? Math.max(...m.map(x => parseFloat(x.replace(',', '.')))) : 10; };
 const incOf = e => BIG.includes(e.m) ? 2.5 : 1;
+// Mon matériel : les charges qui existent vraiment (haltères, kettlebells, barre EZ + disques)
+const GEAR_CASERNE = { on: true, db: [8, 10, 12.5, 15, 20, 22.5], kb: [6, 8, 12, 16], bar: 7, pl: [1.25, 1.25, 2.5, 2.5, 5, 5] };
+function barLoads(g){
+  const pl = (g.pl || []).filter(x => x > 0).slice(0, 14), S = new Set([0]);
+  pl.forEach(x => [...S].forEach(v => S.add(+(v + x).toFixed(2))));
+  return [...S].map(v => +((g.bar || 0) + 2 * v).toFixed(2)).sort((a, b) => a - b);
+}
+function availW(e){
+  if (!gear || !gear.on || typ(e) !== 'f') return null;
+  const q = eqOf(e), L = q === 'Haltères' ? gear.db : q === 'Kettlebell' ? gear.kb : q === 'Barre' && gear.bar ? barLoads(gear) : null;
+  return L && L.length ? [...new Set(L)].sort((a, b) => a - b) : null;
+}
+// charge dispo la plus proche ; dir > 0 : la suivante au-dessus, dir < 0 : en dessous
+function snapW(e, w, dir){
+  const L = availW(e); if (!L || w == null) return w;
+  if (dir > 0) return L.find(x => x > w + 1e-9) ?? null;
+  if (dir < 0) return [...L].reverse().find(x => x < w - 1e-9) ?? L[0];
+  return L.reduce((a, x) => Math.abs(x - w) < Math.abs(a - w) ? x : a, L[0]);
+}
 
 /* ============================================================
    SAUVEGARDE (Firebase + copie sur l'appareil)
    ============================================================ */
 function setStatus(st, msg){ $('#saveDot').className = 'dot ' + st; $('#saveText').textContent = msg; $('#savePill').title = msg; }
-function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body, nut, journal, prog, forme, badges, runs, _t: saveT }; }
+function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body, nut, journal, prog, forme, badges, runs, gear, _t: saveT }; }
 // Firestore refuse les tableaux dans des tableaux (aliments notés [[aliment, g]], tracés GPS) : on les emballe à l'envoi
 const plainObj = v => v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;
 const fsEnc = v => Array.isArray(v) ? v.map(x => Array.isArray(x) ? { __arr: fsEnc(x) } : fsEnc(x)) : plainObj(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fsEnc(x)])) : v;
@@ -1269,7 +1288,7 @@ const localNewer = (loc, rem) => !!loc && richness(loc) >= richness(rem) * .5 &&
 function applyDoc(src){
   data = src.data || clone(DEFAULT_DATA);
   done = src.done || {}; logs = src.logs || {}; sets = src.sets || {}; sl = src.sl || {}; hist = src.hist || [];
-  titles = src.titles || {}; sess = src.sess || {}; seances = src.seances || []; body = src.body || []; nut = src.nut || null; journal = src.journal || {}; prog = src.prog || null; forme = src.forme || {}; badges = src.badges || null; runs = src.runs || [];
+  titles = src.titles || {}; sess = src.sess || {}; seances = src.seances || []; body = src.body || []; nut = src.nut || null; journal = src.journal || {}; prog = src.prog || null; forme = src.forme || {}; badges = src.badges || null; runs = src.runs || []; gear = src.gear || null;
   week = src.week || null; saveT = src._t || 0;
 }
 async function fetchDoc(id){
@@ -1366,6 +1385,7 @@ function sheetProfiles(){
     <p style="color:var(--muted);font-size:13px;margin:4px 0 8px">Ta couleur</p>
     <div class="swatches">${PALETTES.map(([a, b, n], i) => `<button class="swatch ${profile.a1 === a && profile.a2 === b ? 'on' : ''}" data-pal="${i}" style="--s1:${a};--s2:${b}" aria-label="${n}" title="${n}"></button>`).join('')}</div>
     <form id="pf" class="row"><input id="pName" value="${esc(profile.nom)}" maxlength="16" aria-label="Nom du profil actuel" class="inp" style="flex:1"><button class="btn" type="submit">✏️ Renommer</button></form>
+    <button class="btn block" data-x="gear" style="margin-top:12px">🏋️ Mon matériel</button>
     <div id="lockSet"></div>`);
   $('#sheet').querySelectorAll('[data-prof]').forEach(b => b.onclick = () => switchProfile(b.dataset.prof));
   lockSection();
@@ -1418,7 +1438,7 @@ function lastTxt(h){
 // Double progression : toutes les séries au haut de la fourchette, 2 séances de suite, même charge → on augmente
 function advice(e){
   if (typ(e) !== 'f') return null;
-  if (prog && cycleIdx(prog) === 3){ const L0 = lastOf(e.n); if (L0 && L0.w) return { up: false, w: Math.round(L0.w * .9 / 2.5) * 2.5 || L0.w, txt: `Semaine de décharge : ${e.s} × ${topReps(e.r)} à ${fr(Math.round(L0.w * .9 / 2.5) * 2.5 || L0.w)} kg (≈ −10 %), sans forcer` }; return null; }
+  if (prog && cycleIdx(prog) === 3){ const L0 = lastOf(e.n); if (L0 && L0.w){ const w = snapW(e, Math.round(L0.w * .9 / 2.5) * 2.5 || L0.w, 0); return { up: false, w, txt: `Semaine de décharge : ${e.s} × ${topReps(e.r)} à ${fr(w)} kg (≈ −10 %), sans forcer` }; } return null; }
   const top = topReps(e.r), byDay = {};
   histOf(e.n).forEach(h => { byDay[h.d] = h; });
   const last2 = Object.values(byDay).sort((a, b) => a.d < b.d ? -1 : 1).slice(-2);
@@ -1426,7 +1446,12 @@ function advice(e){
   if (!last2.length) return null;
   const L = last2[last2.length - 1];
   if (!L.w) return null;
-  if (last2.length === 2 && ok(last2[0]) && ok(L) && last2[0].w === L.w) return { up: true, w: +(L.w + incOf(e)).toFixed(2), from: L.w };
+  if (last2.length === 2 && ok(last2[0]) && ok(L) && last2[0].w === L.w){
+    if (!availW(e)) return { up: true, w: +(L.w + incOf(e)).toFixed(2), from: L.w };
+    const nw = snapW(e, L.w, 1);
+    if (nw != null) return { up: true, w: nw, from: L.w };
+    return { up: false, w: L.w, txt: `Charge max de ton matériel atteinte (${fr(L.w)} kg) : vise ${e.s} × ${top + 2} ou descends en 3 secondes 🐢` };
+  }
   if (ok(L)) return { up: false, w: L.w, txt: `Encore une séance à ${fr(L.w)} kg avec ${e.s} × ${top} et on monte 💪` };
   return { up: false, w: L.w, txt: `Objectif : ${e.s} × ${top} à ${fr(L.w)} kg` };
 }
@@ -2681,19 +2706,19 @@ function bindProfil(){
    ============================================================ */
 // Familles de mouvements → exercices de la bibliothèque, selon le matériel (ordre = variantes)
 const SLOTS = {
-  squat:  { salle:['Squat','Presse à jambes','Squat bulgare'], halt:['Squat goblet','Squat bulgare','Fentes marchées'], elas:['Squat élastique','Fente bulgare élastique','Squat cosaque'], pdc:['Squat poids du corps','Chaise'] },
-  hinge:  { salle:['Soulevé de terre roumain','Hip thrust','Soulevé de terre'], halt:['Soulevé de terre roumain','Hip thrust','Good morning'], elas:['Good morning élastique','Hip thrust à genoux élastique','Pont fessier'], pdc:['Pont fessier','Superman'] },
-  pushH:  { salle:['Développé couché','Développé couché haltères','Développé incliné haltères'], halt:['Développé couché haltères','Développé incliné haltères','Pompes'], elas:['Développé couché élastique','Pompes','Écartés élastique'], pdc:['Pompes','Pompes inclinées'] },
-  pushV:  { salle:['Développé militaire','Développé haltères assis','Arnold press'], halt:['Développé haltères assis','Arnold press'], elas:['Développé épaules élastique','Pompes piquées'], pdc:['Pompes piquées','Pompes diamant','Dips sur banc'] },
-  pullV:  { salle:['Tirage vertical (Lat Pulldown)','Tractions'], halt:['Tractions','Rowing haltère un bras'], elas:['Rowing penché élastique','Rowing inversé sous une table'], pdc:['Tractions','Superman'] },
-  pullH:  { salle:['Rowing barre','Tirage horizontal (Cable Row)','Rowing haltère un bras','Rowing T-bar'], halt:['Rowing haltère un bras','Rowing haltères banc incliné','Shrugs (trapèzes)'], elas:['Tirage horizontal élastique','Rowing unilatéral élastique'], pdc:['Rowing inversé sous une table','Superman','Tractions'] },
-  epaule: { salle:['Élévations latérales','Face Pull','Oiseau (Rear Delt Fly)'], halt:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations frontales'], elas:['Oiseau élastique','Rotation externe élastique'], pdc:['Gainage latéral'] },
-  biceps: { salle:['Curl barre','Curl poulie basse','Curl marteau'], halt:['Curl haltères alterné','Curl marteau'], elas:['Curl élastique','Curl marteau élastique'], pdc:[] },
-  triceps:{ salle:['Extension triceps poulie haute','Barre au front','Dips'], halt:['Extension triceps au-dessus tête','Kickback haltère'], elas:['Extension triceps élastique vers le bas','Extension triceps élastique'], pdc:['Dips sur banc','Pompes diamant'] },
-  cuisse: { salle:['Leg extension','Curl jambes allongé','Curl jambes assis'], halt:['Fentes marchées','Step-up'], elas:['Leg curl élastique','Leg extension élastique','Marche latérale élastique'], pdc:['Chaise','Squat poids du corps'] },
-  mollet: { salle:['Mollets debout','Mollets assis'], halt:['Mollets debout'], elas:['Mollets sur une marche'], pdc:['Mollets sur une marche','Mollets debout'] },
-  core:   { salle:['Gainage','Relevé de jambes suspendu','Crunch aux câbles','Roue abdominale'], halt:['Gainage','Russian twist','Gainage latéral','Crunch'], elas:['Gainage','Pallof press élastique','Dead bug','Crunch bicyclette'], pdc:['Gainage','Relevé de jambes au sol','Russian twist','Mountain climbers','Dead bug'] },
-  cardio: { salle:['Rameur','Elliptique','Vélo'], halt:['HIIT 30/30','Corde à sauter','Burpees'], elas:['HIIT 30/30','Jumping jacks','Burpees'], pdc:['HIIT 30/30','Burpees','Mountain climbers'] }
+  squat:  { caserne:['Squat goblet','Squat goblet kettlebell','Squat bulgare','Fentes marchées'], salle:['Squat','Presse à jambes','Squat bulgare'], halt:['Squat goblet','Squat bulgare','Fentes marchées'], elas:['Squat élastique','Fente bulgare élastique','Squat cosaque'], pdc:['Squat poids du corps','Chaise'] },
+  hinge:  { caserne:['Kettlebell swing','Soulevé roumain kettlebell','Hip thrust unilatéral','Pont fessier'], salle:['Soulevé de terre roumain','Hip thrust','Soulevé de terre'], halt:['Soulevé de terre roumain','Hip thrust','Good morning'], elas:['Good morning élastique','Hip thrust à genoux élastique','Pont fessier'], pdc:['Pont fessier','Superman'] },
+  pushH:  { caserne:['Développé couché haltères','Développé incliné haltères','Développé serré haltères','Pompes'], salle:['Développé couché','Développé couché haltères','Développé incliné haltères'], halt:['Développé couché haltères','Développé incliné haltères','Pompes'], elas:['Développé couché élastique','Pompes','Écartés élastique'], pdc:['Pompes','Pompes inclinées'] },
+  pushV:  { caserne:['Développé haltères assis','Arnold press','Développé épaule kettlebell','Pompes piquées'], salle:['Développé militaire','Développé haltères assis','Arnold press'], halt:['Développé haltères assis','Arnold press'], elas:['Développé épaules élastique','Pompes piquées'], pdc:['Pompes piquées','Pompes diamant','Dips sur banc'] },
+  pullV:  { caserne:['Rowing haltère un bras','Pull-over haltère','Renegade row'], salle:['Tirage vertical (Lat Pulldown)','Tractions'], halt:['Tractions','Rowing haltère un bras'], elas:['Rowing penché élastique','Rowing inversé sous une table'], pdc:['Tractions','Superman'] },
+  pullH:  { caserne:['Rowing haltères banc incliné','Rowing haltère un bras','Rowing barre','Shrugs (trapèzes)'], salle:['Rowing barre','Tirage horizontal (Cable Row)','Rowing haltère un bras','Rowing T-bar'], halt:['Rowing haltère un bras','Rowing haltères banc incliné','Shrugs (trapèzes)'], elas:['Tirage horizontal élastique','Rowing unilatéral élastique'], pdc:['Rowing inversé sous une table','Superman','Tractions'] },
+  epaule: { caserne:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations latérales kettlebell','Tirage menton kettlebell'], salle:['Élévations latérales','Face Pull','Oiseau (Rear Delt Fly)'], halt:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations frontales'], elas:['Oiseau élastique','Rotation externe élastique'], pdc:['Gainage latéral'] },
+  biceps: { caserne:['Curl barre','Curl marteau','Curl haltères alterné','Curl concentré'], salle:['Curl barre','Curl poulie basse','Curl marteau'], halt:['Curl haltères alterné','Curl marteau'], elas:['Curl élastique','Curl marteau élastique'], pdc:[] },
+  triceps:{ caserne:['Barre au front','Extension triceps au-dessus tête','Kickback haltère','Extension triceps couché haltères'], salle:['Extension triceps poulie haute','Barre au front','Dips'], halt:['Extension triceps au-dessus tête','Kickback haltère'], elas:['Extension triceps élastique vers le bas','Extension triceps élastique'], pdc:['Dips sur banc','Pompes diamant'] },
+  cuisse: { caserne:['Fentes marchées','Step-up','Squat sumo haltère'], salle:['Leg extension','Curl jambes allongé','Curl jambes assis'], halt:['Fentes marchées','Step-up'], elas:['Leg curl élastique','Leg extension élastique','Marche latérale élastique'], pdc:['Chaise','Squat poids du corps'] },
+  mollet: { caserne:['Mollets sur une marche'], salle:['Mollets debout','Mollets assis'], halt:['Mollets debout'], elas:['Mollets sur une marche'], pdc:['Mollets sur une marche','Mollets debout'] },
+  core:   { caserne:['Gainage','Russian twist','Windmill kettlebell','Dead bug'], salle:['Gainage','Relevé de jambes suspendu','Crunch aux câbles','Roue abdominale'], halt:['Gainage','Russian twist','Gainage latéral','Crunch'], elas:['Gainage','Pallof press élastique','Dead bug','Crunch bicyclette'], pdc:['Gainage','Relevé de jambes au sol','Russian twist','Mountain climbers','Dead bug'] },
+  cardio: { caserne:['HIIT 30/30','Burpees','Corde à sauter','Jumping jacks'], salle:['Rameur','Elliptique','Vélo'], halt:['HIIT 30/30','Corde à sauter','Burpees'], elas:['HIIT 30/30','Jumping jacks','Burpees'], pdc:['HIIT 30/30','Burpees','Mountain climbers'] }
 };
 const COMPOUND = ['squat','hinge','pushH','pushV','pullV','pullH'];
 const PLYO = { low: { deb:['Squat sauté','Sauts latéraux (skater)'], inter:['Box jump','Fentes sautées','Saut en longueur sans élan'], conf:['Box jump','Sauts groupés','Saut en longueur sans élan'] }, up: { deb:[], inter:['Pompes explosives'], conf:['Pompes explosives','Slam médecine-ball'] } };
@@ -2718,7 +2743,7 @@ const SPLITS = { 2:[['FBA','FBB'],'Full body ×2'], 3:[['FBA','FBB','FBC'],'Full
 const DEF_DAYS = { 2:[0,3], 3:[0,2,4], 4:[0,1,3,4], 5:[0,1,2,3,4], 6:[0,1,2,3,4,5] };
 const CYCLE = [['Prise en main','🧭','Séries de base, on trouve les bonnes charges.'],['Volume en hausse','📈','+1 série sur les exercices principaux.'],['Intensité','🔥','+1 série partout : la semaine la plus dure du cycle.'],['Décharge','🪶','Moins de séries et charges −10 % pour récupérer et repartir plus fort.']];
 const NIV = { deb:'Débutant (moins de 6 mois)', inter:'Intermédiaire', conf:'Confirmé (plus de 2 ans)' };
-const MAT = { salle:'Salle de sport complète', halt:'Haltères à la maison', elas:'Élastiques à la maison', pdc:'Sans matériel (poids du corps)' };
+const MAT = { caserne:'Caserne (haltères, kettlebells, barre EZ)', salle:'Salle de sport complète', halt:'Haltères à la maison', elas:'Élastiques à la maison', pdc:'Sans matériel (poids du corps)' };
 const REST = { muscle:120, perte:60, recompo:90, maintien:90 };
 
 function scheme(obj, niv, comp, first){
@@ -2839,16 +2864,16 @@ function coachCard(){
   const objNut = nut && nut.obj;
   if (!prog) return `<div class="card coach"><div class="row" style="align-items:flex-start"><span style="font-size:34px">🧠</span><div style="flex:1;min-width:180px"><b style="font-size:16px">Coach : crée ton programme</b>
     <p class="muted" style="font-size:13px;margin-top:4px">Selon ton objectif${objNut ? ` (${OBJ[objNut][1]} ${OBJ[objNut][0]})` : ''}, tes jours dispo, ton niveau et ton matériel. Il se recalcule chaque semaine : cycles de 4 semaines, changement d’exercice en cas de plateau, adaptation à ton assiduité.</p></div></div>
-    <button class="btn pri block" data-act="coach" style="margin-top:12px">🧠 Créer mon programme</button></div>`;
+    <button class="btn pri block" data-act="coach" style="margin-top:12px">🧠 Créer mon programme</button><button class="btn block" data-x="gear" style="margin-top:8px">🏋️ Mon matériel</button></div>`;
   const ci = cycleIdx(prog), c = CYCLE[ci], last = (prog.log || []).slice(-1)[0], adh = (prog.adh || []).slice(-1)[0];
   return `<div class="card coach">
-    <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s${prog.plyo ? ' · ⚡ pliométrie' : ''}${prog.mob ? ' · 🧘 mobilité' : ''}</small></div></div>
+    <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s${prog.plyo ? ' · ⚡ pliométrie' : ''}${prog.mob ? ' · 🧘 mobilité' : ''}${prog.mat === 'caserne' ? ' · 🚒 caserne' : ''}</small></div></div>
     <div class="cycle">${CYCLE.map((x, i) => `<div class="${i === ci ? 'on' : i < ci ? 'past' : ''}"><span>${x[1]}</span><small>S${i + 1}</small></div>`).join('')}</div>
     <p style="font-size:13.5px"><b>${c[1]} Semaine ${ci + 1} : ${c[0]}.</b> ${c[2]}${ci < 3 ? ` <span class="muted">La semaine prochaine : ${CYCLE[ci + 1][0].toLowerCase()}.</span>` : ' <span class="muted">Ensuite, un nouveau cycle repart, avec des charges plus lourdes.</span>'}</p>
     ${adh ? `<p class="muted" style="font-size:12.5px;margin-top:6px">Semaine dernière : ${Math.round(adh.rate * 100)} % des exercices faits.</p>` : ''}
     ${objNut && objNut !== prog.obj ? `<div class="advice up" style="margin-top:10px"><span>🎯 Ton objectif nutrition est maintenant « ${OBJ[objNut][0]} ».</span><button class="btn sm pri" data-act="coach">Recalculer</button></div>` : ''}
     ${last && last.msgs.length > 1 ? `<div class="box" style="margin-top:10px"><h4>🤖 Ajustements de la semaine</h4><p>${last.msgs.slice(1).map(esc).join('\n')}</p></div>` : ''}
-    <div class="row" style="margin-top:12px"><button class="btn sm" data-act="coach">⚙️ Modifier mes réglages</button>${prog.prev ? '<button class="btn sm" data-act="coach-undo">↩️ Ancien programme</button>' : ''}</div></div>`;
+    <div class="row" style="margin-top:12px"><button class="btn sm" data-act="coach">⚙️ Modifier mes réglages</button><button class="btn sm" data-x="gear">🏋️ Mon matériel</button>${prog.prev ? '<button class="btn sm" data-act="coach-undo">↩️ Ancien programme</button>' : ''}</div></div>`;
 }
 function sheetCoach(){
   const p = prog || {}, obj = p.obj || (nut && nut.obj) || 'muscle';
@@ -2858,7 +2883,7 @@ function sheetCoach(){
     <div class="fg"><label>Jours d’entraînement</label><div class="dpick">${DAY_SHORT.map((d, i) => `<button type="button" data-dp="${i}" class="${days.includes(i) ? 'on' : ''}">${d}</button>`).join('')}</div><small class="muted" id="dpn"></small></div>
     <div class="two"><div class="fg"><label for="cDur">Durée d’une séance</label><select id="cDur">${[45, 60, 75, 90].map(m => `<option value="${m}" ${(p.dur || 60) === m ? 'selected' : ''}>${m} min</option>`).join('')}</select></div>
     <div class="fg"><label for="cNiv">Niveau</label><select id="cNiv">${Object.entries(NIV).map(([k, l]) => `<option value="${k}" ${(p.niv || 'inter') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
-    <div class="fg"><label for="cMat">Matériel</label><select id="cMat">${Object.entries(MAT).map(([k, l]) => `<option value="${k}" ${(p.mat || 'salle') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="fg"><label for="cMat">Matériel</label><select id="cMat">${Object.entries(MAT).map(([k, l]) => `<option value="${k}" ${(p.mat || 'caserne') === k ? 'selected' : ''}>${l}</option>`).join('')}</select><button type="button" class="btn sm" data-x="gear" style="margin-top:8px">🏋️ Mon matériel : les poids que j’ai</button></div>
     <div class="card" style="padding:4px 14px;margin-bottom:12px">
       <div class="toggle"><span>⚡ Pliométrie<small>Sauts explosifs en début de séance : puissance, détente, cardio</small></span><button type="button" class="sw ${p.plyo ? 'on' : ''}" id="cPly" role="switch" aria-checked="${!!p.plyo}"></button></div>
       <div class="toggle"><span>🧘 Mobilité<small>Échauffement ciblé, étirements au retour au calme et une séance souplesse le jour de repos</small></span><button type="button" class="sw ${p.mob ? 'on' : ''}" id="cMob" role="switch" aria-checked="${!!p.mob}"></button></div></div>
@@ -2885,8 +2910,35 @@ function sheetCoach(){
     applyCycle();
     settings.preset = REST[c.obj]; safeSet('mp_settings', settings); if (!T.run){ T.total = T.left = settings.preset; }
     if (nut && nut.obj !== c.obj){ nut.obj = c.obj; }
+    if (c.mat === 'caserne'){ if (!gear) gear = clone(GEAR_CASERNE); gear.on = true; }
     closeSheet(); save(); currentDay = todayIdx(); view = 'semaine'; render(); toast('🧠 Programme appliqué : semaine 1, prise en main');
   };
+  prev();
+}
+// Mon matériel : listes de poids modifiables, pré-remplies avec la caserne
+function sheetGear(){
+  const g = gear || clone(GEAR_CASERNE), back = $('#cf') ? sheetCoach : null;
+  const L = a => (a || []).map(fr).join(' ; ');
+  openSheet(`<h2>🏋️ Mon matériel</h2>
+    <p class="muted" style="font-size:13px;margin-bottom:12px">Les charges proposées et les boutons − / + sautent directement au poids qui existe vraiment. Sépare les poids par des points-virgules.</p>
+    <form id="gf">
+    <div class="card" style="padding:4px 14px;margin-bottom:12px"><div class="toggle"><span>🎯 Adapter les charges à ce matériel<small>Désactive-le si tu t’entraînes ailleurs (salle complète)</small></span><button type="button" class="sw ${g.on ? 'on' : ''}" id="gOn" role="switch" aria-checked="${!!g.on}"></button></div></div>
+    <div class="fg"><label for="gDb">🏋️ Paires d’haltères (kg)</label><input id="gDb" class="inp" inputmode="decimal" value="${esc(L(g.db))}" placeholder="8 ; 10 ; 12,5"></div>
+    <div class="fg"><label for="gKb">🔔 Kettlebells (kg)</label><input id="gKb" class="inp" inputmode="decimal" value="${esc(L(g.kb))}" placeholder="6 ; 8 ; 12 ; 16"></div>
+    <div class="fg"><label for="gBar">〰️ Barre EZ à vide (kg)</label><input id="gBar" class="inp" type="number" step="any" min="0" inputmode="decimal" value="${g.bar ?? ''}" placeholder="7"></div>
+    <div class="fg"><label for="gPl">⚫ Disques pour la barre (un poids par paire)</label><input id="gPl" class="inp" inputmode="decimal" value="${esc(L(g.pl))}" placeholder="1,25 ; 2,5 ; 5"><small class="muted">2 paires de 2,5 kg → écris « 2,5 ; 2,5 »</small></div>
+    <div class="box" id="gPrev"></div>
+    <div class="row" style="margin-top:12px"><button type="button" class="btn sm" id="gPre">🚒 Matériel de la caserne</button><span class="spacer"></span><button type="button" class="btn" id="gCan">Annuler</button><button class="btn pri" type="submit">✅ Enregistrer</button></div></form>`);
+  const parse = v => [...new Set(String(v).split(/;|\/|,\s+|\s+/).map(x => num(x.replace(',', '.'))).filter(x => x > 0))].sort((a, b) => a - b);
+  const parsePl = v => String(v).split(/;|\/|,\s+|\s+/).map(x => num(x.replace(',', '.'))).filter(x => x > 0).sort((a, b) => a - b);
+  const read = () => ({ on: $('#gOn').classList.contains('on'), db: parse($('#gDb').value), kb: parse($('#gKb').value), bar: num($('#gBar').value) || 0, pl: parsePl($('#gPl').value) });
+  const prev = () => { const r = read(), B = r.bar ? barLoads(r) : [];
+    $('#gPrev').innerHTML = `<h4>Charges possibles</h4><p>🏋️ Haltères : ${r.db.length ? r.db.map(fr).join(' · ') + ' kg' : '–'}\n🔔 Kettlebells : ${r.kb.length ? r.kb.map(fr).join(' · ') + ' kg' : '–'}\n〰️ Barre EZ chargée : ${B.length ? B.map(fr).join(' · ') + ' kg' : '–'}</p>`; };
+  $('#gOn').onclick = () => { const b = $('#gOn'); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); };
+  ['#gDb','#gKb','#gBar','#gPl'].forEach(x => $(x).oninput = prev);
+  $('#gPre').onclick = () => { const c = GEAR_CASERNE; $('#gDb').value = L(c.db); $('#gKb').value = L(c.kb); $('#gBar').value = c.bar; $('#gPl').value = L(c.pl); prev(); };
+  $('#gCan').onclick = () => back ? back() : closeSheet();
+  $('#gf').onsubmit = ev => { ev.preventDefault(); gear = read(); save(); toast('🏋️ Matériel enregistré'); if (back) back(); else { closeSheet(); render(); } };
   prev();
 }
 function coachUndo(){
@@ -2921,7 +2973,7 @@ const isTodayView = () => currentDay === todayIdx();
 const modeToday = () => isTodayView() ? formeMode(formeOf()) : null;
 const isSkip = e => e && e.skipD === today();
 function effS(e){ const m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob') return +e.s || 0; return Math.max(1, (+e.s || 0) + m.dS); }
-function sugW(e){ const a = advice(e); if (!a || a.w == null) return null; const m = modeToday(); return m && m.load < 1 ? Math.round(a.w * m.load / 2.5) * 2.5 : a.w; }
+function sugW(e){ const a = advice(e); if (!a || a.w == null) return null; const m = modeToday(); return m && m.load < 1 ? snapW(e, Math.round(a.w * m.load / 2.5) * 2.5, 0) : a.w; }
 // remplacements temporaires du jour (douleur) : on remet les exercices d'origine les autres jours
 function restoreTemp(){
   const d = today();
@@ -3039,7 +3091,7 @@ function guideAction(a, b){
   if (a === 'close') return closeGuide();
   if (a === 'voice'){ settings.voice = !settings.voice; safeSet('mp_settings', settings); return guideRender(); }
   if (a === 'prev' || a === 'next'){ const L = data[k]; let j = i; do { j = (j + (a === 'next' ? 1 : L.length - 1)) % L.length; } while (isSkip(L[j]) && j !== i); G.i = j; G.phase = 'work'; announceEx(); return guideRender(); }
-  if (a === 'adj'){ if (!logs[key]) logs[key] = { w:'', r:'' }; const f = b.dataset.f, base = num(logs[key][f]) ?? (f === 'w' ? sugW(e) : f === 'k' ? kcalEst(e, num(logs[key].r)) : topReps(e.r)) ?? 0; logs[key][f] = String(+Math.max(0, base + +b.dataset.d).toFixed(2)); save(); return guideRender(); }
+  if (a === 'adj'){ if (!logs[key]) logs[key] = { w:'', r:'' }; const f = b.dataset.f, base = num(logs[key][f]) ?? (f === 'w' ? sugW(e) : f === 'k' ? kcalEst(e, num(logs[key].r)) : topReps(e.r)) ?? 0; logs[key][f] = String(+Math.max(0, f === 'w' && availW(e) ? snapW(e, base, +b.dataset.d) ?? base : base + +b.dataset.d).toFixed(2)); save(); return guideRender(); }
   if (a === 'plus'){ addTime(15); return; }
   if (a === 'skip'){ resetTimer(); G.phase = 'work'; announceEx(); return guideRender(); }
   if (a === 'timer'){ G.newEx = false; G.phase = 'timer'; startTimer(num((logs[key] || {}).r) ?? topReps(e.r), e.n + ' · série ' + (setsOf(k, i).length + 1)); speak('Go'); G.phase = 'rest'; G.timerSet = true; return guideRender(); }
@@ -3690,6 +3742,7 @@ function evoAct(a, b){
     case 'duo': startDuo(); break;
     case 'batch': batchScope = null; sheetBatch(); break;
     case 'awaysheet': awayWk = null; sheetAway(); break;
+    case 'gear': sheetGear(); break;
     case 'stock': sheetStock(); break;
     case 'bp': bilanP = b.dataset.p; bilanOff = 0; viewProgres(); break;
     case 'bo': bilanOff = Math.min(0, bilanOff + +b.dataset.d); viewProgres(); break;
@@ -4045,7 +4098,7 @@ document.addEventListener('click', e => {
     case 'adj': {
       const key = keyOf(k, i), f = b.dataset.f; if (!logs[key]) logs[key] = { w:'', r:'' };
       const inp = b.parentElement.querySelector('input');
-      const base = num(logs[key][f]) ?? num(inp && inp.placeholder) ?? 0, nv = Math.max(0, base + +b.dataset.d);
+      const base = num(logs[key][f]) ?? num(inp && inp.placeholder) ?? 0, e2 = data[k][i], nv = Math.max(0, f === 'w' && availW(e2) ? snapW(e2, base, +b.dataset.d) ?? base : base + +b.dataset.d);
       logs[key][f] = String(+nv.toFixed(2)); if (inp) inp.value = logs[key][f];
       save(); break;
     }
@@ -4198,7 +4251,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
