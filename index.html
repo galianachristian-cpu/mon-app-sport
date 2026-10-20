@@ -1242,7 +1242,7 @@ const DAY_SUB = ['Poitrine & Triceps','Dos & Biceps','Jambes','Épaules & Abdos'
 const BYDAY = ['MO','TU','WE','TH','FR','SA','SU'];
 const MUSCLES = { 'Pectoraux':'#22d3ee','Triceps':'#a78bfa','Dos':'#60a5fa','Biceps':'#f472b6','Quadriceps':'#34d399','Ischio-jambiers':'#2dd4bf','Fessiers':'#fb7185','Mollets':'#a3e635','Épaules':'#fbbf24','Abdos':'#f97316','Cardio':'#ef4444','Pliométrie':'#e879f9','Mobilité':'#38bdf8','Étirements':'#c4b5fd' };
 const EMOJIS = ['🏋️','💪','🔥','🎯','🦵','⚡','🏃','🚴','🧘','🤸','🥊','❤️'];
-const TYPES = { f:'Charge (kg × reps)', p:'Poids du corps (reps)', s:'Temps (secondes)', c:'Cardio (minutes + km)' };
+const TYPES = { f:'Charge (kg × reps)', p:'Poids du corps (reps)', s:'Temps (secondes)', c:'Cardio (minutes + km)', k:'Séries en calories (machine)' };
 const FEELS = [['😫','Difficile'],['😕','Bof'],['🙂','Correct'],['😀','Bien'],['🔥','Au top']];
 const BIG = ['Pectoraux','Dos','Quadriceps','Ischio-jambiers','Fessiers'];
 
@@ -1429,9 +1429,31 @@ function volOf(h){
 const MET = [[/course|tapis|footing|run/i, 9.8], [/v[ée]lo|bike|spinning/i, 7.5], [/rameur|skierg/i, 7], [/elliptique/i, 5.5], [/escalier/i, 8.5], [/natation|nage/i, 7], [/marche/i, 4], [/corde/i, 11], [/hiit|burpee|tabata/i, 8]];
 const bodyKg = () => { const b = body.filter(x => x.p != null).slice(-1)[0]; return num(b && b.p) || num(nut && nut.poids) || 75; };
 function kcalEst(e, min){ const t = e.t || 'f', w = bodyKg();
+  if (t === 'k') return (e.sl || []).reduce((a, x) => a + (num(x.r) || 0), 0) || (+e.s || 1) * topReps(e.r);
   if (t === 'c'){ const m = (MET.find(([re]) => re.test(e.n)) || [0, 7])[1]; return Math.round(m * 3.5 * w / 200 * (min ?? topReps(e.r))); }
   const sets = e.sl && e.sl.length ? e.sl.length : (+e.s || 3); return Math.round(sets * (t === 's' ? 6 : 12) * w / 75); }
 const kcalOfH = h => num(h.kcal) ?? kcalEst(h, num(h.r));
+// calories d'une séance de machine : notées en continu, ou somme des séries en calories
+const kcalVal = h => (h.t || 'f') === 'k' ? (h.sl || []).reduce((a, x) => a + (num(x.r) || 0), 0) || null : num(h.kcal);
+const bestKcal = (name, before) => hist.filter(h => h.n === name && (!before || h.d < before)).reduce((a, h) => Math.max(a, kcalVal(h) || 0), 0);
+const ERGO = /rameur|skierg|assault|v[ée]lo|bike|elliptique/i;
+// séries en calories : objectif +1 cal par série quand toutes les séries de la dernière fois ont atteint la cible
+function sugK(e){
+  const L = lastOf(e.n), top = topReps(e.r);
+  if (!L || (L.t || 'f') !== 'k' || !(L.sl || []).length) return top;
+  const S = L.sl.map(x => num(x.r) || 0), lo = Math.min(...S);
+  return S.length >= (+L.s || 1) && lo >= Math.max(top, num((L.sl[0] || {}).r) || 0) ? lo + 1 : Math.max(top, lo);
+}
+function adviceK(e){
+  const L = lastOf(e.n); if (!L || (L.t || 'f') !== 'k' || !(L.sl || []).length) return null;
+  const g = sugK(e), bk = bestKcal(e.n), lo = Math.min(...L.sl.map(x => num(x.r) || 0));
+  return { txt: g > lo ? `Toutes tes séries à ${lo} cal ou plus : vise ${effS(e)} × ${g} cal (record : ${bk} cal sur une séance)` : `Objectif : ${effS(e)} × ${g} cal · record : ${bk} cal sur une séance` };
+}
+function adviceC(e){
+  const L = lastOf(e.n); if (!L || !num(L.kcal)) return null;
+  const bk = bestKcal(e.n), g = Math.max(num(L.kcal) + 5, 0);
+  return { txt: `Dernière fois ${L.kcal} kcal${L.r ? ' en ' + fr(L.r) + ' min' : ''} · record ${bk} kcal : vise ${g} kcal` };
+}
 // valeur « record » selon le type : kg max, reps max, secondes max, km max (ou minutes)
 function scoreOf(h){
   const t = h.t || 'f';
@@ -1440,7 +1462,7 @@ function scoreOf(h){
   if (h.sl && h.sl.length) return Math.max(...h.sl.map(x => num(x.r) || 0));
   return num(h.r);
 }
-const unitOf = (t, h) => t === 'f' ? 'kg' : t === 'p' ? 'reps' : t === 's' ? 's' : (h && h.w != null ? 'km' : 'min');
+const unitOf = (t, h) => t === 'f' ? 'kg' : t === 'p' ? 'reps' : t === 's' ? 's' : t === 'k' ? 'cal' : (h && h.w != null ? 'km' : 'min');
 const histOf = name => hist.filter(h => h.n === name);
 const lastOf = name => { for (let i = hist.length - 1; i >= 0; i--) if (hist[i].n === name) return hist[i]; return null; };
 const lastBefore = (name, d) => { for (let i = hist.length - 1; i >= 0; i--) if (hist[i].n === name && hist[i].d < d) return hist[i]; return null; };
@@ -1451,9 +1473,9 @@ function lastTxt(h){
   if (h.sl && h.sl.length){
     if (t === 'f' && !h.sl.some(x => num(x.w))) return h.sl.map(x => x.r || '–').join(', ') + ' reps';
     if (t === 'f'){ const ws = [...new Set(h.sl.map(x => num(x.w)))]; return ws.length === 1 ? `${fr(ws[0] || 0)} kg × ${h.sl.map(x => x.r || '–').join(', ')}` : h.sl.map(x => `${fr(num(x.w) || 0)}×${x.r || '–'}`).join(', '); }
-    return h.sl.map(x => x.r || '–').join(', ') + (t === 's' ? ' s' : ' reps');
+    return h.sl.map(x => x.r || '–').join(', ') + (t === 's' ? ' s' : t === 'k' ? ' cal' : ' reps');
   }
-  return t === 'f' ? `${h.w != null ? fr(h.w) + ' kg' : '–'} × ${h.r || '–'}` : `${h.r || '–'}${t === 's' ? ' s' : ' reps'}`;
+  return t === 'f' ? `${h.w != null ? fr(h.w) + ' kg' : '–'} × ${h.r || '–'}` : `${h.r || '–'}${t === 's' ? ' s' : t === 'k' ? ' cal' : ' reps'}`;
 }
 // Double progression : toutes les séries au haut de la fourchette, 2 séances de suite, même charge → on augmente
 function advice(e){
@@ -1593,16 +1615,17 @@ let exOpen = {}, justSet = null;
 function openIdx(k){ const L = data[k] || [], dn = done[k] || []; const o = exOpen[k]; if (o != null && L[o] && !dn[o]) return o; return L.findIndex((x, j) => !dn[j] && !isSkip(x)); }
 function exCard(k, e, i){
   const key = keyOf(k, i), lg = logs[key] || { w:'', r:'' }, isDone = (done[k] || [])[i], t = typ(e);
-  const S = setsOf(k, i), last = lastOf(e.n), adv = advice(e), top = topReps(e.r);
+  const S = setsOf(k, i), last = lastOf(e.n), adv = t === 'k' ? adviceK(e) : t === 'c' ? adviceC(e) : advice(e), top = topReps(e.r);
   const best = bestOf(e.n, ymd(new Date())), cur = t === 'f' ? Math.max(0, ...S.map(x => num(x.w) || 0)) : t === 'c' ? null : Math.max(0, ...S.map(x => num(x.r) || 0));
   const isPR = best > 0 && cur > best;
   let inputs = '';
   if (t === 'f') inputs = stepper(i, 'w', lg.w, 2.5, 'kg', 'Poids', sugW(e) != null ? fr(sugW(e)) : '') + stepper(i, 'r', lg.r, 1, 'reps', 'Répétitions', top);
   else if (t === 'p') inputs = stepper(i, 'r', lg.r, 1, 'reps', 'Répétitions', top);
+  else if (t === 'k') inputs = stepper(i, 'r', lg.r, 1, 'cal', 'Calories de la série', sugK(e));
   else if (t === 's') inputs = stepper(i, 'r', lg.r, 5, 's', 'Durée en secondes', top) + `<button class="btn sm" data-act="go-s" data-i="${i}">▶️ Lancer</button>`;
   else inputs = stepper(i, 'r', lg.r, 5, 'min', 'Durée en minutes', top) + stepper(i, 'w', lg.w, 0.5, 'km', 'Distance', '') + stepper(i, 'k', lg.k, 10, 'kcal', 'Calories affichées par la machine', String(kcalEst(e, num(lg.r) ?? top)));
   const setBtns = t === 'c' ? '' : `<div class="sets"><span class="lbl">Séries</span>${Array.from({ length: effS(e) }, (_, j) => { const x = S[j];
-    const lbl = x ? (t === 'f' ? `<b>${num(x.w) ? fr(num(x.w)) : 'PC'}</b><small>×${esc(x.r)}${x.f ? ' ' + FEEL3[x.f - 1][0] : ''}</small>` : `<b>${esc(x.r)}</b><small>${t === 's' ? 's' : 'reps'}${x.f ? ' ' + FEEL3[x.f - 1][0] : ''}</small>`) : j + 1;
+    const lbl = x ? (t === 'f' ? `<b>${num(x.w) ? fr(num(x.w)) : 'PC'}</b><small>×${esc(x.r)}${x.f ? ' ' + FEEL3[x.f - 1][0] : ''}</small>` : `<b>${esc(x.r)}</b><small>${t === 's' ? 's' : t === 'k' ? 'cal' : 'reps'}${x.f ? ' ' + FEEL3[x.f - 1][0] : ''}</small>`) : j + 1;
     return `<button class="set ${x ? 'on' : ''}${justSet === key + ':' + j ? ' pop' : ''}" data-act="set" data-i="${i}" data-j="${j}" aria-label="Série ${j+1}${x ? ' faite' : ''}">${lbl}</button>`; }).join('')}</div>`;
   if (!isSkip(e) && i !== openIdx(k)){
     const dots = t === 'c' ? '' : `<span class="mini-sets">${Array.from({ length: effS(e) }, (_, j) => `<i class="${j < S.length ? 'on' : ''}"></i>`).join('')}</span>`;
@@ -1788,6 +1811,7 @@ function setDone(k, i, val){
   const was = !!done[k][i]; done[k][i] = val;
   if (val && !was){
     startSession(k); record(k, i);
+    { const e2 = data[k][i], h2 = lastOf(e2.n), v = h2 && kcalVal(h2), bk = bestKcal(e2.n, ymd(new Date())); if (typ(e2) === 'c' && v && bk > 0 && v > bk) setTimeout(() => { confetti(); toast(`🏆 Record de calories sur ${e2.n} : ${v} kcal !`); }, 300); }
     const list = data[k], all = list.every((x, j) => done[k][j] || isSkip(x));
     if (all){ sess[k].end = Date.now(); pauseTimer(); setTimeout(() => { confetti(); sheetBilan(k, true); }, 300); }
     else toast('✅ ' + data[k][i].n + ' terminé');
@@ -1796,14 +1820,14 @@ function setDone(k, i, val){
 }
 function logSet(k, i, j){
   const e = data[k][i], key = keyOf(k, i), lg = logs[key] || {}, t = typ(e), S = setsOf(k, i).slice();
-  const val = () => ({ w: t === 'f' ? String(num(lg.w) ?? sugW(e) ?? '') : '', r: String(num(lg.r) ?? topReps(e.r)) });
+  const val = () => ({ w: t === 'f' ? String(num(lg.w) ?? sugW(e) ?? '') : '', r: String(num(lg.r) ?? (t === 'k' ? sugK(e) : topReps(e.r))) });
   if (j < S.length){ sheetSet(k, i, j); return; }
   startSession(k);
   const today = ymd(new Date()), best = bestOf(e.n, today), score = L2 => t === 'f' ? Math.max(0, ...L2.map(x => num(x.w) || 0)) : t === 'c' ? 0 : Math.max(0, ...L2.map(x => num(x.r) || 0)), before = score(S);
   while (S.length <= j) S.push(val());
   justSet = key + ':' + j; setTimeout(() => { justSet = null; }, 600);
   if (settings.vibe && navigator.vibrate) navigator.vibrate(12);
-  if (best > 0 && score(S) > best && before <= best){ setTimeout(() => { confetti(); toast(`🏆 Nouveau record sur ${e.n} : ${fr(score(S))} ${t === 'f' ? 'kg' : t === 's' ? 's' : 'reps'} !`); if (settings.vibe && navigator.vibrate) navigator.vibrate([40, 60, 40, 60, 120]); }, 250); }
+  if (best > 0 && score(S) > best && before <= best){ setTimeout(() => { confetti(); toast(`🏆 Nouveau record sur ${e.n} : ${fr(score(S))} ${t === 'f' ? 'kg' : t === 's' ? 's' : t === 'k' ? 'cal en une série' : 'reps'} !`); if (settings.vibe && navigator.vibrate) navigator.vibrate([40, 60, 40, 60, 120]); }, 250); }
   sl[key] = S; sets[key] = S.length;
   const tot = effS(e);
   if (S.length >= tot) setDone(k, i, true);
@@ -1815,7 +1839,7 @@ function sheetSet(k, i, j){
   const e = data[k][i], t = typ(e), x = setsOf(k, i)[j];
   openSheet(`<h2>Série ${j + 1} · ${esc(e.n)}</h2><form id="sf">
     <div class="two">${t === 'f' ? `<div class="fg"><label for="sW">Poids (kg)</label><input id="sW" inputmode="decimal" value="${esc(x.w)}"></div>` : ''}
-    <div class="fg"><label for="sR">${t === 's' ? 'Secondes' : 'Répétitions'}</label><input id="sR" inputmode="numeric" value="${esc(x.r)}"></div></div>
+    <div class="fg"><label for="sR">${t === 's' ? 'Secondes' : t === 'k' ? 'Calories' : 'Répétitions'}</label><input id="sR" inputmode="numeric" value="${esc(x.r)}"></div></div>
     <div class="row"><button type="button" class="btn danger" id="sDel">↩️ Annuler la série</button><span class="spacer"></span><button class="btn pri" type="submit">Enregistrer</button></div></form>`);
   $('#sf').onsubmit = ev => { ev.preventDefault(); const S = setsOf(k, i); if (t === 'f') S[j].w = $('#sW').value.trim(); S[j].r = $('#sR').value.trim(); if (done[k] && done[k][i]) record(k, i); closeSheet(); render(); save(); };
   $('#sDel').onclick = () => { const key = keyOf(k, i); sl[key] = setsOf(k, i).slice(0, j); sets[key] = sl[key].length; if ((done[k] || [])[i]) setDone(k, i, false); closeSheet(); render(); save(); };
@@ -1904,6 +1928,17 @@ function makeIcs(){
    VUE PROGRÈS (stats, duo, courbes, corps, photos, séances)
    ============================================================ */
 let progEx = null, progTab = 'bilan';
+// points de la courbe d'un exercice : cardio = calories par séance (ou km, ou minutes, sans mélanger), sinon le score habituel
+function perfPts(H){
+  const t = (H[H.length - 1] || {}).t || 'f';
+  if (t === 'c' || t === 'k'){
+    const K = H.map(h => ({ d: h.d, v: kcalVal(h) })).filter(p => p.v);
+    if (K.length >= 2 || t === 'k') return { pts: K, u: 'kcal' };
+    const C = H.filter(h => (h.t || 'f') === 'c');
+    return C.every(h => h.w != null) ? { pts: C.map(h => ({ d: h.d, v: h.w })), u: 'km' } : { pts: C.map(h => ({ d: h.d, v: num(h.r) })).filter(p => p.v != null), u: 'min' };
+  }
+  return { pts: H.map(h => ({ d: h.d, v: scoreOf(h) })).filter(p => p.v != null), u: unitOf(t, H[H.length - 1]) };
+}
 function viewProgres(){
   const now = new Date(), wk = isoWeek(now), me = weekStats(hist, wk), pv = weekStats(hist, wkShift(wk, -1));
   const delta = (a, b, f = x => x) => b || a ? `<div class="dl ${a > b ? 'up' : a < b ? 'down' : ''}">${a > b ? '▲' : a < b ? '▼' : '='} ${a === b ? 'comme' : f(Math.abs(a - b))} ${a === b ? 'la sem. dernière' : 'vs sem. dernière'}</div>` : '';
@@ -1944,15 +1979,15 @@ function tabPerf(){
   const cells = []; for (let i = 0; i < 70; i++){ const d = new Date(start); d.setDate(start.getDate() + i); const k = ymd(d); const c = hist.filter(h => h.d === k).length; cells.push({ k, c, fut: d > now, now: k === ymd(now) }); }
   const recs = names.map(n => { const h = lastOf(n); return { n, m: h.m, t: h.t || 'f', v: bestOf(n), h }; }).filter(r => r.v > 0).sort((a, b) => a.m < b.m ? -1 : 1);
   let ch = '';
-  if (progEx){ const H = histOf(progEx), t = (H[0] || {}).t || 'f'; const pts = H.map(h => ({ d: h.d, v: scoreOf(h) })).filter(p => p.v != null);
-    ch = lineChart(pts, unitOf(t, H[H.length - 1]), 'Évolution : ' + progEx) + `<table class="tbl"><thead><tr><th>Date</th><th>Séries</th></tr></thead><tbody>${H.slice(-8).reverse().map(h => `<tr><td>${fmtD(h.d)}</td><td><b>${esc(lastTxt(h))}</b></td></tr>`).join('')}</tbody></table>`; }
+  if (progEx){ const H = histOf(progEx), t = (H[0] || {}).t || 'f', pp = perfPts(H), pts = pp.pts;
+    ch = lineChart(pts, pp.u, (pp.u === 'kcal' ? 'Calories par séance : ' : 'Évolution : ') + progEx) + `<table class="tbl"><thead><tr><th>Date</th><th>Séries</th></tr></thead><tbody>${H.slice(-8).reverse().map(h => `<tr><td>${fmtD(h.d)}</td><td><b>${esc(lastTxt(h))}</b></td></tr>`).join('')}</tbody></table>`; }
   const active = cells.filter(c => c.c && !c.fut).length;
   // répartition des séries par muscle sur 7 jours
   const since = new Date(); since.setDate(since.getDate() - 6); const s7 = ymd(since), M = {};
   hist.filter(h => h.d >= s7 && h.m && !['Cardio','Mobilité','Étirements'].includes(h.m)).forEach(h => { M[h.m] = (M[h.m] || 0) + (h.sl ? h.sl.length : +h.s || 1); });
   const ML = Object.entries(M).sort((a, b) => b[1] - a[1]), mMax = ML.length ? ML[0][1] : 1;
   let sum = '';
-  if (progEx){ const H = histOf(progEx), P2 = H.map(h => ({ d: h.d, v: scoreOf(h) })).filter(p => p.v != null); if (P2.length){ const t = (H[0] || {}).t || 'f', u = unitOf(t, H[H.length - 1]), bst = Math.max(...P2.map(p => p.v)), dv = P2[P2.length - 1].v - P2[0].v;
+  if (progEx){ const H = histOf(progEx), pp = perfPts(H), P2 = pp.pts; if (P2.length){ const u = pp.u, bst = Math.max(...P2.map(p => p.v)), dv = P2[P2.length - 1].v - P2[0].v;
     sum = `<div class="exsum"><div><small>Record</small><b>${fr(bst)} ${u}</b></div><div><small>Depuis le ${fmtD(P2[0].d)}</small><b class="${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${dv > 0 ? '+' : ''}${fr(dv)} ${u}</b></div><div><small>Séances</small><b>${P2.length}</b></div></div>`; } }
   return `<h3 class="sec">Régularité (10 semaines)</h3>
   <div class="card"><p class="hsum"><b>${active}</b> jour${active > 1 ? 's' : ''} d’entraînement sur les 10 dernières semaines</p><div class="heat">${['L','M','M','J','V','S','D'].map(d => `<div class="hd">${d}</div>`).join('')}${cells.map(c => `<div class="h ${c.fut ? '' : c.c >= 6 ? 'l3' : c.c >= 3 ? 'l2' : c.c ? 'l1' : ''} ${c.now ? 'now' : ''}" title="${c.k} : ${c.c} exercice(s)" style="${c.fut ? 'opacity:.3' : ''}"></div>`).join('')}</div><div class="hleg"><span>Moins</span><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>Plus</span></div></div>
@@ -2111,10 +2146,11 @@ function sheetDetail(i){
   const last = lastOf(e.n), best = bestOf(e.n), n = data[k].length, t = typ(e);
   openSheet(`<h2>${esc(e.n)}</h2>
     <div class="pkbig${gifOf(e) ? ' big' : ''}">${exVis(e)}</div>
-    <div class="three"><div><b>${t === 'c' ? 1 : esc(e.s)}</b><small>Séries</small></div><div><b>${esc(e.r)}</b><small>${t === 's' ? 'Durée' : t === 'c' ? 'Objectif' : 'Reps'}</small></div><div><b style="color:${mcol(e.m)};font-size:14px">${esc(e.m)}</b><small>Muscle</small></div></div>
+    <div class="three"><div><b>${t === 'c' ? 1 : esc(e.s)}</b><small>Séries</small></div><div><b>${esc(e.r)}</b><small>${t === 's' ? 'Durée' : t === 'k' ? 'Calories' : t === 'c' ? 'Objectif' : 'Reps'}</small></div><div><b style="color:${mcol(e.m)};font-size:14px">${esc(e.m)}</b><small>Muscle</small></div></div>
     ${best ? `<div class="box"><h4>🏆 Ton record</h4><p><b>${fr(best)} ${unitOf(t, last)}</b>${last ? ` · dernière fois ${esc(lastTxt(last))} (${fmtD(last.d)})` : ''}</p></div>` : ''}
     ${barBox(e)}
     ${goalBox(e)}
+    ${(t === 'c' || t === 'k') && ERGO.test(e.n) ? `<div class="box"><h4>🔥 Mode</h4><p>${t === 'k' ? 'Séries en calories : chaque série = un effort où tu notes les calories affichées par la machine.' : 'En continu : durée, distance et calories de la machine.'}</p><button class="btn sm" data-x="kmode" data-i="${i}" style="margin-top:8px">${t === 'k' ? '⏱️ Passer en continu (durée)' : '🔁 Passer en séries de calories'}</button></div>` : ''}
     <div class="box"><h4>📝 Exécution</h4><p>${esc(e.desc || 'Aucune description.')}</p></div>
     <div class="box tips"><h4>⚠️ Conseils de sécurité</h4><p>${esc(e.tips || 'Aucun conseil.')}</p></div>
     <div class="row" style="margin-top:14px"><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n + ' exécution')}" target="_blank" rel="noopener">▶️ Vidéo</a><button class="btn" data-act="edit" data-i="${i}">✏️ Modifier</button>
@@ -2383,7 +2419,7 @@ const nutReady = n => n && n.sexe && n.age && n.taille && (n.poids || n.poids ==
 function weightOf(c){ const B = (c.body || []).filter(b => b.p != null).sort((a, b) => a.d < b.d ? -1 : 1); return B.length ? B[B.length - 1].p : num(c.nut && c.nut.poids) || 70; }
 function sessionKcal(c, di){
   const l = (c.data || {})['day' + di] || [];
-  return Math.round(l.reduce((a, e) => { const t = e.t || 'f'; return a + (t === 'c' ? topReps(e.r) * 8 : (+e.s || 3) * (t === 's' ? 6 : 12)); }, 0));
+  return Math.round(l.reduce((a, e) => { const t = e.t || 'f'; return a + (t === 'c' ? topReps(e.r) * 8 : t === 'k' ? (+e.s || 3) * topReps(e.r) : (+e.s || 3) * (t === 's' ? 6 : 12)); }, 0));
 }
 function targets(c, di){
   const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
@@ -3012,6 +3048,7 @@ function buildProgram(cfg){
     if (cfg.obj === 'perte' || (cfg.obj === 'recompo' && i % 2 === 0)){
       const c = SLOTS.cardio[cfg.mat][i % SLOTS.cardio[cfg.mat].length], cx = exFromLib(c, { slot: 'cardio', vi: 0 });
       if (cx.t === 'c') cx.r = cfg.mat === 'salle' || cfg.mat === 'caserne' ? '15 min' : '20 min'; if (cx.t === 's' && cx.n === 'HIIT 30/30') cx.s = 6;
+      if (cfg.mat === 'caserne' && cx.t === 'c' && ERGO.test(cx.n)){ cx.t = 'k'; cx.s = cfg.niv === 'deb' ? 4 : 6; cx.r = cfg.niv === 'deb' ? '10 cal' : '12 cal'; }
       cx.bs = cx.s; cx.cmp = 0; cx.fin = 1; list.push(cx);
     }
     // pliométrie : après l'échauffement, avant la musculation (on est frais)
@@ -3312,14 +3349,14 @@ function startGuide(){
 function closeGuide(){ G = null; $('#guide').classList.remove('show'); $('#guide').innerHTML = ''; document.body.style.overflow = ''; try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock = null; render(); }
 function announceEx(){
   const e = data[G.k][G.i], t = typ(e), n = setsOf(G.k, G.i).length + 1, w = t === 'f' ? (num((logs[keyOf(G.k, G.i)] || {}).w) ?? sugW(e)) : null;
-  speak(t === 'c' ? `${e.n}, ${e.r}` : `${e.n}. Série ${n} sur ${effS(e)}, ${t === 's' ? topReps(e.r) + ' secondes' : topReps(e.r) + ' répétitions'}${w ? ', ' + fr(w) + ' kilos' : ''}`);
+  speak(t === 'c' ? `${e.n}, ${e.r}` : `${e.n}. Série ${n} sur ${effS(e)}, ${t === 's' ? topReps(e.r) + ' secondes' : t === 'k' ? sugK(e) + ' calories' : topReps(e.r) + ' répétitions'}${w ? ', ' + fr(w) + ' kilos' : ''}`);
 }
 function guideRender(){
   if (!G) return;
   const L = data[G.k], e = L[G.i]; if (!e){ closeGuide(); return; }
   const t = typ(e), key = keyOf(G.k, G.i), lg = logs[key] || {}, S = setsOf(G.k, G.i), tot = effS(e), n = Math.min(S.length + 1, tot);
   const left = L.filter((x, j) => !(done[G.k] || [])[j] && !isSkip(x)).length, pos = L.filter((x, j) => !isSkip(x) && j <= G.i).length, all = L.filter(x => !isSkip(x)).length;
-  const w = num(lg.w) ?? sugW(e), r = num(lg.r) ?? topReps(e.r);
+  const w = num(lg.w) ?? sugW(e), r = num(lg.r) ?? (t === 'k' ? sugK(e) : topReps(e.r));
   let body = '';
   if (G.phase === 'rest'){
     // pendant le repos : l'exercice qui suit, avec sa démonstration
@@ -3329,7 +3366,7 @@ function guideRender(){
       <div class="row" style="justify-content:center"><button class="btn" data-g="plus">+15 s</button><button class="btn pri" data-g="skip">Passer ⏭️</button></div>${G.feel && data[G.feel.k][G.feel.i] ? feelRow(G.feel) : ''}</div>`;
   } else {
     const big = (f, v, d, u) => `<div class="g-step"><button data-g="adj" data-f="${f}" data-d="${-d}" aria-label="moins">−</button><div><b>${v != null ? fr(v) : '–'}</b><small>${u}</small></div><button data-g="adj" data-f="${f}" data-d="${d}" aria-label="plus">+</button></div>`;
-    const inputs = t === 'f' ? big('w', w, 2.5, 'kg') + big('r', r, 1, 'reps') : t === 'p' ? big('r', r, 1, 'reps') : t === 's' ? big('r', r, 5, 'secondes') : big('r', num(lg.r) ?? topReps(e.r), 5, 'minutes') + big('w', num(lg.w), .5, 'km') + big('k', num(lg.k), 10, 'kcal');
+    const inputs = t === 'f' ? big('w', w, 2.5, 'kg') + big('r', r, 1, 'reps') : t === 'p' ? big('r', r, 1, 'reps') : t === 'k' ? big('r', r, 1, 'calories') : t === 's' ? big('r', r, 5, 'secondes') : big('r', num(lg.r) ?? topReps(e.r), 5, 'minutes') + big('w', num(lg.w), .5, 'km') + big('k', num(lg.k), 10, 'kcal');
     // écran épuré : la démonstration en grand et l'essentiel (pas de conseils écrits)
     body = `<div class="g-ex"><div class="g-emo pkg g-big">${exVis(e)}</div><h2>${esc(e.n)}</h2>
       ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < S.length ? 'on' : j === S.length ? 'cur' : ''}">${j < S.length ? (t === 'f' ? fr(num(S[j].w) || 0) + '×' + S[j].r : S[j].r) : j + 1}</span>`).join('')}</div><p class="g-lbl">Série ${n} sur ${tot}</p>` : ''}
@@ -3344,7 +3381,7 @@ function guideAction(a, b){
   if (a === 'close') return closeGuide();
   if (a === 'voice'){ settings.voice = !settings.voice; safeSet('mp_settings', settings); return guideRender(); }
   if (a === 'prev' || a === 'next'){ const L = data[k]; let j = i; do { j = (j + (a === 'next' ? 1 : L.length - 1)) % L.length; } while (isSkip(L[j]) && j !== i); G.i = j; G.phase = 'work'; announceEx(); return guideRender(); }
-  if (a === 'adj'){ if (!logs[key]) logs[key] = { w:'', r:'' }; const f = b.dataset.f, base = num(logs[key][f]) ?? (f === 'w' ? sugW(e) : f === 'k' ? kcalEst(e, num(logs[key].r)) : topReps(e.r)) ?? 0; logs[key][f] = String(+Math.max(0, f === 'w' && availW(e) ? snapW(e, base, +b.dataset.d) ?? base : base + +b.dataset.d).toFixed(2)); save(); return guideRender(); }
+  if (a === 'adj'){ if (!logs[key]) logs[key] = { w:'', r:'' }; const f = b.dataset.f, base = num(logs[key][f]) ?? (f === 'w' ? sugW(e) : f === 'k' ? kcalEst(e, num(logs[key].r)) : typ(e) === 'k' ? sugK(e) : topReps(e.r)) ?? 0; logs[key][f] = String(+Math.max(0, f === 'w' && availW(e) ? snapW(e, base, +b.dataset.d) ?? base : base + +b.dataset.d).toFixed(2)); save(); return guideRender(); }
   if (a === 'plus'){ addTime(15); return; }
   if (a === 'skip'){ resetTimer(); G.feel = null; G.phase = 'work'; announceEx(); return guideRender(); }
   if (a === 'timer'){ G.newEx = false; G.phase = 'timer'; startTimer(num((logs[key] || {}).r) ?? topReps(e.r), e.n + ' · série ' + (setsOf(k, i).length + 1)); speak('Go'); G.phase = 'rest'; G.timerSet = true; return guideRender(); }
@@ -3824,7 +3861,7 @@ function duoRender(){
   const col = (who, nom, p, Sx, w, r) => `<div class="ducol" style="--p1:${p.a1};--p2:${p.a2}"><div class="duhd"><span class="av">${esc(nom.slice(0, 1).toUpperCase())}</span><b>${esc(nom)}</b></div>
     ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < Sx.length ? 'on' : j === Sx.length ? 'cur' : ''}">${j < Sx.length ? (t === 'f' ? fr(num(Sx[j].w) || 0) + '×' + Sx[j].r : Sx[j].r) : j + 1}</span>`).join('')}</div>
     ${t === 'f' ? `<div class="dustep"><button data-x="duadj" data-who="${who}" data-f="w" data-d="-2.5">−</button><span><b>${w != null ? fr(w) : '–'}</b><small>kg</small></span><button data-x="duadj" data-who="${who}" data-f="w" data-d="2.5">+</button></div>` : ''}
-    <div class="dustep"><button data-x="duadj" data-who="${who}" data-f="r" data-d="-1">−</button><span><b>${fr(r)}</b><small>${t === 's' ? 's' : 'reps'}</small></span><button data-x="duadj" data-who="${who}" data-f="r" data-d="1">+</button></div>
+    <div class="dustep"><button data-x="duadj" data-who="${who}" data-f="r" data-d="-1">−</button><span><b>${fr(r)}</b><small>${t === 's' ? 's' : t === 'k' ? 'cal' : 'reps'}</small></span><button data-x="duadj" data-who="${who}" data-f="r" data-d="1">+</button></div>
     <button class="btn ${Sx.length >= tot ? '' : 'pri'} block" data-x="duset" data-who="${who}" ${Sx.length >= tot ? 'disabled' : ''}>${Sx.length >= tot ? '✓ Fini' : '✓ Série ' + (Sx.length + 1)}</button>` : `<button class="btn ${Sx.length ? '' : 'pri'} block" data-x="duset" data-who="${who}" ${Sx.length ? 'disabled' : ''}>${Sx.length ? '✓ Fait' : '✓ Terminé'}</button>`}</div>`;
   openFull(`<div class="duov"><div class="g-top"><button data-x="duprev" aria-label="Exercice précédent">‹</button><div><b>👫 Séance duo</b><small>${L.filter((x, j) => !isSkip(x) && j <= DU.i).length}/${L.filter(x => !isSkip(x)).length}</small></div><button data-x="dunext" aria-label="Exercice suivant">›</button><span class="spacer"></span><button data-x="duend" aria-label="Terminer">✕</button></div>
     <div class="g-ex"><div class="g-emo pkg">${exVis(e)}</div><h2>${esc(e.n)}</h2><p class="g-sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span> · ${t === 'c' ? esc(e.r) : tot + ' × ' + esc(e.r)}</p></div>
@@ -4002,6 +4039,9 @@ function evoAct(a, b){
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
     case 'cible': sheetCible(); break;
+    case 'kmode': { const k = 'day' + currentDay, i = +b.dataset.i, e = data[k][i]; if (!e) break; const key = keyOf(k, i);
+      if (typ(e) === 'k'){ e.t = 'c'; e.s = 1; e.r = e.cR || '15 min'; } else { e.cR = e.r; e.t = 'k'; e.s = 5; e.r = '15 cal'; }
+      e.bs = e.s; delete logs[key]; delete sl[key]; delete sets[key]; save(); render(); sheetDetail(i); toast(typ(e) === 'k' ? '🔁 Séries en calories : ' + e.s + ' × ' + e.r : '⏱️ En continu : ' + e.r); break; }
     case 'nutauto': nut.auto = nut.auto === false; save(); viewNutrition(); toast(nut.auto ? '🤖 Ajustement automatique activé' : '⏸️ Ajustement automatique désactivé'); break;
     case 'lighton': coach = Object.assign({}, coach, { light: curWk() }); save(); render(); toast('🪶 Semaine allégée activée'); break;
     case 'lightoff': coach = Object.assign({}, coach, { light: null, ign: curWk() }); save(); render(); toast('Séances normales'); break;
@@ -4516,7 +4556,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 33;
+const APP_VERSION = 34;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
