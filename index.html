@@ -3170,11 +3170,12 @@ function coachWeekly(prevDone){
   (prog.log = prog.log || []).push({ wk, msgs }); if (prog.log.length > 20) prog.log = prog.log.slice(-20);
   return msgs;
 }
+const adaptBtns = () => (caserneChanges().length ? '<button class="btn block" data-x="adapt" style="margin-top:8px">🚒 Garder mon programme, adapté à la caserne</button>' : '') + (coach && coach.prevData ? '<button class="btn block" data-x="adaptundo" style="margin-top:8px">↩️ Annuler l’adaptation à la caserne</button>' : '');
 function coachCard(){
   const objNut = nut && nut.obj;
   if (!prog) return `<div class="card coach"><div class="row" style="align-items:flex-start"><span style="font-size:34px">🧠</span><div style="flex:1;min-width:180px"><b style="font-size:16px">Coach : crée ton programme</b>
     <p class="muted" style="font-size:13px;margin-top:4px">Selon ton objectif${objNut ? ` (${OBJ[objNut][1]} ${OBJ[objNut][0]})` : ''}, tes jours dispo, ton niveau et ton matériel. Il se recalcule chaque semaine : cycles de 4 semaines, changement d’exercice en cas de plateau, adaptation à ton assiduité.</p></div></div>
-    <button class="btn pri block" data-act="coach" style="margin-top:12px">🧠 Créer mon programme</button><button class="btn block" data-x="gear" style="margin-top:8px">🏋️ Mon matériel</button></div>`;
+    <button class="btn pri block" data-act="coach" style="margin-top:12px">🧠 Créer mon programme</button>${adaptBtns()}<button class="btn block" data-x="gear" style="margin-top:8px">🏋️ Mon matériel</button></div>`;
   const ci = cycleIdx(prog), c = CYCLE[ci], last = (prog.log || []).slice(-1)[0], adh = (prog.adh || []).slice(-1)[0];
   return `<div class="card coach">
     <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s${prog.plyo ? ' · ⚡ pliométrie' : ''}${prog.mob ? ' · 🧘 mobilité' : ''}${prog.mat === 'caserne' ? ' · 🚒 caserne' : ''}</small></div></div>
@@ -3183,7 +3184,7 @@ function coachCard(){
     ${adh ? `<p class="muted" style="font-size:12.5px;margin-top:6px">Semaine dernière : ${Math.round(adh.rate * 100)} % des exercices faits.</p>` : ''}
     ${objNut && objNut !== prog.obj ? `<div class="advice up" style="margin-top:10px"><span>🎯 Ton objectif nutrition est maintenant « ${OBJ[objNut][0]} ».</span><button class="btn sm pri" data-act="coach">Recalculer</button></div>` : ''}
     ${last && last.msgs.length > 1 ? `<div class="box" style="margin-top:10px"><h4>🤖 Ajustements de la semaine</h4><p>${last.msgs.slice(1).map(esc).join('\n')}</p></div>` : ''}
-    <div class="row" style="margin-top:12px"><button class="btn sm" data-act="coach">⚙️ Modifier mes réglages</button><button class="btn sm" data-x="gear">🏋️ Mon matériel</button>${prog.prev ? '<button class="btn sm" data-act="coach-undo">↩️ Ancien programme</button>' : ''}</div></div>`;
+    <div class="row" style="margin-top:12px"><button class="btn sm" data-act="coach">⚙️ Modifier mes réglages</button><button class="btn sm" data-x="gear">🏋️ Mon matériel</button>${caserneChanges().length ? '<button class="btn sm" data-x="adapt">🚒 Adapter à la caserne</button>' : ''}${coach && coach.prevData ? '<button class="btn sm" data-x="adaptundo">↩️ Annuler l’adaptation</button>' : ''}${prog.prev ? '<button class="btn sm" data-act="coach-undo">↩️ Ancien programme</button>' : ''}</div></div>`;
 }
 function sheetCoach(){
   const p = prog || {}, obj = p.obj || (nut && nut.obj) || 'muscle';
@@ -3240,6 +3241,7 @@ function sheetGear(){
     <div class="fg"><label for="gBar">〰️ Barre EZ à vide (kg)</label><input id="gBar" class="inp" type="number" step="any" min="0" inputmode="decimal" value="${g.bar ?? ''}" placeholder="7"></div>
     <div class="fg"><label for="gPl">⚫ Disques pour la barre (un poids par paire)</label><input id="gPl" class="inp" inputmode="decimal" value="${esc(L(g.pl))}" placeholder="1,25 ; 2,5 ; 5"><small class="muted">2 paires de 2,5 kg → écris « 2,5 ; 2,5 »</small></div>
     <div class="box" id="gPrev"></div>
+    ${caserneChanges().length ? `<button type="button" class="btn block" data-x="adapt" style="margin-top:12px">🚒 Adapter mon programme à ce matériel (${caserneChanges().length} exercice${caserneChanges().length > 1 ? 's' : ''} à remplacer)</button>` : ''}
     <div class="row" style="margin-top:12px"><button type="button" class="btn sm" id="gPre">🚒 Matériel de la caserne</button><span class="spacer"></span><button type="button" class="btn" id="gCan">Annuler</button><button class="btn pri" type="submit">✅ Enregistrer</button></div></form>`);
   const parse = v => [...new Set(String(v).split(/;|\/|,\s+|\s+/).map(x => num(x.replace(',', '.'))).filter(x => x > 0))].sort((a, b) => a - b);
   const parsePl = v => String(v).split(/;|\/|,\s+|\s+/).map(x => num(x.replace(',', '.'))).filter(x => x > 0).sort((a, b) => a - b);
@@ -3252,6 +3254,39 @@ function sheetGear(){
   $('#gCan').onclick = () => back ? back() : closeSheet();
   $('#gf').onsubmit = ev => { ev.preventDefault(); gear = read(); save(); toast('🏋️ Matériel enregistré'); if (back) back(); else { closeSheet(); render(); } };
   prev();
+}
+// adapter le programme actuel au matériel de la caserne : on garde les jours et l'organisation, on remplace seulement ce qui n'existe pas là-bas
+const CASERNE_SWAP = {
+  'Presse à jambes':['Squat bulgare','Fentes marchées','Squat goblet'], 'Squat':['Squat goblet','Squat goblet kettlebell'], 'Front squat':['Squat goblet'], 'Hack squat':['Squat goblet','Squat bulgare'], 'Overhead squat':['Squat goblet'],
+  'Écartés aux câbles':['Écartés haltères'], 'Pec deck':['Écartés haltères'], 'Pec deck inversé':['Oiseau (Rear Delt Fly)','Oiseau élastique'], 'Chest press machine':['Développé couché haltères'], 'Développé couché Smith machine':['Développé couché'],
+  'Curl jambes allongé':['Curl jambes assis','Soulevé roumain kettlebell'], 'Mollets debout':['Mollets sur une marche'], 'Mollets assis':['Mollets sur une marche'], 'Mollets à la presse':['Mollets sur une marche'],
+  'Crunch aux câbles':['Relevé de genoux suspendu','Russian twist'], 'Développé militaire':['Développé haltères assis','Arnold press'], 'Développé épaules machine':['Développé haltères assis'],
+  'Face Pull':['Oiseau élastique','Oiseau (Rear Delt Fly)'], 'Rowing T-bar':['Rowing barre','Rowing haltère un bras'], 'Hip thrust machine':['Hip thrust'], 'Abduction machine':['Abduction élastique'],
+  'Tractions':['Tirage vertical (Lat Pulldown)'], 'Tractions supination':['Tirage vertical prise serrée'], 'Tractions prise neutre':['Tirage vertical prise serrée'], 'Tractions assistées machine':['Tirage vertical (Lat Pulldown)'], 'Elliptique':['Vélo','Rameur']
+};
+function caserneChanges(){
+  const C = [];
+  Object.keys(data).sort().forEach(k => { const L = data[k] || [], used = new Set(L.map(e => e.n));
+    L.forEach((e, i) => { const opts = CASERNE_SWAP[e.n]; if (!opts) return; const to = opts.find(n => LIB_BY[n] && !used.has(n)) || opts.find(n => LIB_BY[n]); if (!to) return; used.add(to); C.push({ k, i, from: e.n, to }); }); });
+  return C;
+}
+function sheetAdapt(){
+  const C = caserneChanges();
+  if (!C.length){ toast('✅ Ton programme est déjà faisable à la caserne'); return; }
+  const by = {}; C.forEach(c => { const key = c.from + ' → ' + c.to; (by[key] = by[key] || []).push(DAY_NAMES[+c.k.slice(3)].toLowerCase()); });
+  openSheet(`<h2>🚒 Adapter à la caserne</h2><p class="muted" style="font-size:13.5px;margin-bottom:10px">Je garde tes jours, l’ordre des séances, les séries et les répétitions. Je remplace seulement les exercices impossibles avec le matériel de la caserne :</p>
+    <div class="card tips-list">${Object.entries(by).map(([t, d]) => `<p>🔁 <b>${esc(t)}</b><br><small class="muted">${esc([...new Set(d)].join(', '))}</small></p>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:10px 2px">Les charges de ces exercices repartent de zéro ; ton historique est gardé. Tu peux annuler ensuite.</p>
+    <div class="row"><button class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn pri" data-x="adaptgo">✅ Adapter (${C.length})</button></div>`);
+}
+function adaptCaserne(){
+  const C = caserneChanges(); if (!C.length) return;
+  coach = Object.assign({}, coach, { prevData: clone(data) });
+  C.forEach(c => { const o = data[c.k][c.i], lib = LIB_BY[c.to], ne = exFromLib(c.to, { s: o.s, r: lib.t === o.t || (lib.t === 'f' && !o.t) ? o.r : lib.r });
+    ['bs', 'cmp', 'slot', 'vi', 'ph'].forEach(f => { if (o[f] != null) ne[f] = o[f]; }); data[c.k][c.i] = ne;
+    const key = keyOf(c.k, c.i); delete logs[key]; delete sl[key]; delete sets[key]; });
+  if (!gear) gear = clone(GEAR_CASERNE); gear.on = true;
+  closeSheet(); save(); render(); toast(`🚒 ${C.length} exercice${C.length > 1 ? 's' : ''} adapté${C.length > 1 ? 's' : ''} à la caserne`);
 }
 function coachUndo(){
   if (!prog || !prog.prev) return;
@@ -4134,6 +4169,9 @@ function evoAct(a, b){
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
     case 'cible': sheetCible(); break;
+    case 'adapt': sheetAdapt(); break;
+    case 'adaptgo': adaptCaserne(); break;
+    case 'adaptundo': sheetConfirm('Revenir au programme d’avant l’adaptation ?', 'Revenir', () => { data = coach.prevData; coach = Object.assign({}, coach, { prevData: null }); closeSheet(); save(); render(); toast('↩️ Programme d’avant restauré'); }); break;
     case 'exgo': { const k = 'day' + currentDay, i = +b.dataset.i; if (!(done[k] || [])[i] && !isSkip(data[k][i])) exOpen[k] = i; render(); const el = document.querySelector(`#app .list .ex[data-i="${i}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'kmode': { const k = 'day' + currentDay, i = +b.dataset.i, e = data[k][i]; if (!e) break; const key = keyOf(k, i);
       if (typ(e) === 'k'){ e.t = 'c'; e.s = 1; e.r = e.cR || '15 min'; } else { e.cR = e.r; e.t = 'k'; e.s = 5; e.r = '15 cal'; }
@@ -4652,7 +4690,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 37;
+const APP_VERSION = 38;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
