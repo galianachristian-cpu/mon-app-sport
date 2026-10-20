@@ -273,6 +273,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .feelq button b{font-size:22px;line-height:1}.feelq button small{font-size:11.5px;color:var(--muted)}
 .g-rest .feelq{margin:14px auto 0;max-width:420px}
 .balg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}.balg div{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px 2px;text-align:center}.balg b{display:block;font-size:16px}.balg small{font-size:10.5px;color:var(--muted)}.balg .lo{border-color:#f59e0b}.balg .lo b{color:#fbbf24}
+.duoch .tbl td,.duoch .tbl th{padding:5px 4px;font-size:12.5px}.duoch .tbl td:nth-child(2),.duoch .tbl td:nth-child(3),.duoch .tbl th{text-align:center}.duoch .ok{color:#34d399;font-weight:700}
 .ph-ss{color:#fcd34d;border-color:rgba(252,211,77,.45)}
 .sheet.show{transform:translate(-50%,0);visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 12px}
@@ -1577,7 +1578,7 @@ function viewSeance(){
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
-  ${currentDay === todayIdx() ? duoLine() + reportBanner() : ''}
+  ${currentDay === todayIdx() ? duoLine() + duoChallenges() + reportBanner() : ''}
   ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
@@ -1619,6 +1620,7 @@ function exCard(k, e, i){
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button>
     </div>
     ${adv && adv.up && !isDone ? `<div class="advice up"><span>📈 ${adv.easy ? 'Toutes tes séries étaient faciles' : 'Tu as réussi 2 séances de suite'} : passe à <b>${fr(adv.w)} kg</b> !</span><button class="btn sm pri" data-act="apply" data-i="${i}" data-w="${adv.w}">Appliquer</button></div>` : adv && adv.txt && !isDone ? `<div class="advice">💡 ${esc(adv.txt)}</div>` : ''}
+    ${t === 'f' && !isDone ? loadHelp(e, num(lg.w) ?? sugW(e), S.length) : ''}
     ${setBtns}
     <div class="logrow">${inputs}
       <div class="last">${last ? `Dernière fois : <b>${esc(lastTxt(last))}</b> · ${fmtD(last.d)}` : 'Première fois 💥'}${isPR ? ' <span class="pr">🏆 Record</span>' : ''}</div>
@@ -1671,6 +1673,11 @@ function shortSession(k, target){
   drop(x => x.e.ph === 'warm');
   L.forEach(e => { if (e.ssD && (isSkip(e) || isSkip(L.find(x => x.n === e.ssW)))){ delete e.ssD; delete e.ssW; delete e.ssF; } });
   return estMin(L);
+}
+function sheetCible(){
+  openSheet(`<h2>🎯 Poids visé</h2><form id="cbf" class="row" style="flex-wrap:nowrap"><input id="cbv" class="inp" inputmode="decimal" placeholder="ex. 80" value="${nut && num(nut.cible) ? fr(num(nut.cible)) : ''}" style="flex:1;min-width:0"><button class="btn pri" type="submit">Enregistrer</button></form>
+    <p class="muted" style="font-size:12.5px;margin-top:10px">L’appli estime la date à laquelle tu l’atteins, d’après la tendance de tes pesées.</p>`);
+  $('#cbf').onsubmit = ev => { ev.preventDefault(); const v = num($('#cbv').value); nut = nut || {}; if (v) nut.cible = v; else delete nut.cible; save(); closeSheet(); render(); toast(v ? '🎯 Poids visé : ' + fr(v) + ' kg' : 'Poids visé retiré'); };
 }
 function sheetShort(){
   const k = 'day' + todayIdx(), L = data[k] || [], C = clone(L); shortClear(C);
@@ -1731,6 +1738,38 @@ function fatigueCard(){
   const R = fatigueSigns(); if (!R) return '';
   return `<div class="card" style="margin-top:10px;border-color:#f59e0b"><b>🪫 Je sens de la fatigue</b><p class="muted" style="font-size:13px;margin-top:4px">${esc(R.join(', '))}. Je te conseille une <b>semaine allégée</b> : 1 série en moins et charges −10 %, pour éviter la blessure et repartir plus fort.</p>
     <div class="row" style="margin-top:10px"><button class="btn pri" data-x="lighton" style="flex:1">🪶 Semaine allégée</button><button class="btn" data-x="lightign">Non merci</button></div></div>`;
+}
+// aide à la charge : disques à mettre et échauffement (avant la 1re série des exercices principaux)
+function loadHelp(e, w, nDone){
+  if (!w) return '';
+  const pt = eqOf(e) === 'Barre' ? platesTxt(w, e) : '', wu = !nDone && (e.cmp || eqOf(e) === 'Barre') ? warmup(w, e) : [];
+  if (!pt && !wu.length) return '';
+  return `<div class="advice"><span>${wu.length ? `🔥 Échauffement : <b>${wuTxt(wu)}</b>` : ''}${wu.length && pt ? '<br>' : ''}${pt ? `🏋️ ${fr(w)} kg = ${esc(pt)}` : ''}</span></div>`;
+}
+// défis de la semaine à deux : chacun doit remplir sa part
+function duoStats(d, wk){
+  const D = wkDates(wk), td = today(), W = (d.body || []).filter(b => b.p != null).slice(-1)[0];
+  const g = Math.round((W ? W.p : (d.nut && d.nut.poids) || 70) * .035 * 4);
+  const plan = DAY_NAMES.filter((_, i) => (d.data && d.data['day' + i] || []).some(e => typ(e) !== 'c' || (d.data['day' + i] || []).length === 1)).length;
+  return {
+    seances: [new Set((d.hist || []).filter(h => D.includes(h.d)).map(h => h.d)).size, Math.max(1, Math.min(plan || 3, 5))],
+    eau: [D.filter(x => ((d.forme || {})[x] || {}).eau >= g).length, 5],
+    repas: [D.reduce((a, x) => a + Object.keys((d.journal || {})[x] || {}).filter(m => MEALS.some(y => y[0] === m)).length, 0), 14],
+    pesee: [(d.body || []).filter(b => b.p != null && D.includes(b.d)).length, 2]
+  };
+}
+const DUO_CH = [['seances','🏋️','Séances prévues'],['eau','💧','Jours d’eau au top'],['repas','🍽️','Repas notés'],['pesee','⚖️','Pesées']];
+function duoChallenges(){
+  if (!other || !other.d || !other.d.data) return '';
+  const wk = curWk(), A = duoStats({ data, hist, forme, journal, body, nut }, wk), B = duoStats(other.d, wk);
+  const ok = c => A[c][0] >= A[c][1] && B[c][0] >= B[c][1], nOk = DUO_CH.filter(([c]) => ok(c)).length;
+  const wins = foyer.duoWins || {};
+  if (nOk === DUO_CH.length && !wins[wk] && foyerReady){ foyer.duoWins = Object.assign({}, wins, { [wk]: 1 }); saveFoyer(); setTimeout(() => { confetti(); toast('🏅 Défis de la semaine réussis à deux !'); }, 400); }
+  const nW = Object.keys(foyer.duoWins || {}).length, me = profile.nom.slice(0, 1).toUpperCase(), ot = other.p.nom.slice(0, 1).toUpperCase();
+  const cell = (v, n) => `<span class="${v >= n ? 'ok' : ''}">${Math.min(v, n)}/${n}</span>`;
+  return `<div class="card duoch" style="margin-top:10px"><div class="row"><b style="flex:1">👫 Défis de la semaine</b><small class="muted">${nOk}/${DUO_CH.length}${nW ? ` · 🏅 ${nW}` : ''}</small></div>
+    <table class="tbl"><thead><tr><th></th><th>${esc(me)}</th><th>${esc(ot)}</th><th></th></tr></thead><tbody>${DUO_CH.map(([c, ic, l]) => `<tr><td>${ic} ${l}</td><td>${cell(A[c][0], A[c][1])}</td><td>${cell(B[c][0], B[c][1])}</td><td>${ok(c) ? '✅' : ''}</td></tr>`).join('')}</tbody></table>
+    <p class="muted" style="font-size:12px;margin-top:6px">${nOk === DUO_CH.length ? '🏅 Semaine réussie ensemble, bravo à vous deux !' : 'Les 4 défis réussis par vous deux = une médaille commune 🏅'}${nW ? ` · ${nW} semaine${nW > 1 ? 's' : ''} réussie${nW > 1 ? 's' : ''} ensemble` : ''}</p></div>`;
 }
 function startSession(k){ if (!sess[k] || sess[k].end || !sess[k].start) sess[k] = { start: Date.now() }; }
 function record(k, i){
@@ -1948,7 +1987,7 @@ function tabBilan(){
   const cmp = (a, b, f) => b || a ? `<small class="${a > b ? 'up' : a < b ? 'down' : ''}">${a > b ? '▲' : a < b ? '▼' : '='} ${a === b ? 'pareil' : f(Math.abs(a - b))}</small>` : '';
   const per = { jour: 'à la veille', semaine: 'à la semaine d’avant', mois: 'au mois d’avant' }[bilanP];
   const bars = (key, col, f) => { const V = r.days.map(k => S.byDay[k][key]), M = Math.max(1, ...V); return `<div class="bbars" style="--bc:${col}">${V.map((v, i) => `<div class="bb" title="${fmtD(r.days[i])} : ${f(v)}"><i style="height:${v ? Math.max(4, v * 100 / M) : 0}%"></i><span>${r.short[i]}</span></div>`).join('')}</div>`; };
-  return `<div class="seg small" style="margin-top:14px">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois']].map(([k, l]) => `<button class="${bilanP === k ? 'on' : ''}" data-x="bp" data-p="${k}">${l}</button>`).join('')}</div>
+  return `${goalsCard()}<div class="seg small" style="margin-top:14px">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois']].map(([k, l]) => `<button class="${bilanP === k ? 'on' : ''}" data-x="bp" data-p="${k}">${l}</button>`).join('')}</div>
   <div class="bnav"><button class="btn sm" data-x="bo" data-d="-1" aria-label="Période précédente">‹</button><b>${r.lbl}</b><button class="btn sm" data-x="bo" data-d="1" ${bilanOff >= 0 ? 'disabled' : ''} aria-label="Période suivante">›</button></div>
   <div class="stats">
     <div class="stat"><span class="si">🏋️</span><div class="v">${fmtVol(S.kg)}</div><div class="l">soulevés</div><div class="dl">${cmp(S.kg, pv.kg, fmtVol)}</div></div>
@@ -2075,6 +2114,7 @@ function sheetDetail(i){
     <div class="three"><div><b>${t === 'c' ? 1 : esc(e.s)}</b><small>Séries</small></div><div><b>${esc(e.r)}</b><small>${t === 's' ? 'Durée' : t === 'c' ? 'Objectif' : 'Reps'}</small></div><div><b style="color:${mcol(e.m)};font-size:14px">${esc(e.m)}</b><small>Muscle</small></div></div>
     ${best ? `<div class="box"><h4>🏆 Ton record</h4><p><b>${fr(best)} ${unitOf(t, last)}</b>${last ? ` · dernière fois ${esc(lastTxt(last))} (${fmtD(last.d)})` : ''}</p></div>` : ''}
     ${barBox(e)}
+    ${goalBox(e)}
     <div class="box"><h4>📝 Exécution</h4><p>${esc(e.desc || 'Aucune description.')}</p></div>
     <div class="box tips"><h4>⚠️ Conseils de sécurité</h4><p>${esc(e.tips || 'Aucun conseil.')}</p></div>
     <div class="row" style="margin-top:14px"><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n + ' exécution')}" target="_blank" rel="noopener">▶️ Vidéo</a><button class="btn" data-act="edit" data-i="${i}">✏️ Modifier</button>
@@ -2359,6 +2399,42 @@ function targets(c, di){
   const p = Math.round(Math.max(w * 1.2, Math.min(w * pk, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
   return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor };
 }
+// prévision : date estimée pour atteindre le poids visé
+function weightProj(){
+  const tr = weightTrend(), cible = nut && num(nut.cible);
+  if (!tr || !cible) return null;
+  if (Math.abs(cible - tr.now) < .5) return { done: true, cible };
+  if (Math.abs(tr.perWeek) < .05 || Math.sign(cible - tr.now) !== Math.sign(tr.perWeek)) return { wrong: true, cible, tr };
+  const wks = (cible - tr.now) / tr.perWeek; if (wks > 104) return { far: true, cible };
+  const d = new Date(); d.setDate(d.getDate() + Math.round(wks * 7)); return { d: ymd(d), wks, cible };
+}
+const projTxt = P => !P ? '' : P.done ? `🎯 Objectif ${fr(P.cible)} kg atteint, bravo !` : P.wrong ? `🎯 Objectif ${fr(P.cible)} kg : la tendance va dans l’autre sens pour l’instant.` : P.far ? `🎯 Objectif ${fr(P.cible)} kg : plus de 2 ans à ce rythme.` : `🎯 À ce rythme, <b>${fr(P.cible)} kg vers le ${new Date(P.d + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</b> (${Math.round(P.wks)} semaine${Math.round(P.wks) > 1 ? 's' : ''}).`;
+// prévision de force : charge de travail max par séance, tendance sur 4 mois
+function strengthTrend(name){
+  const lim = new Date(); lim.setDate(lim.getDate() - 120); const from = ymd(lim), by = {};
+  hist.filter(h => h.n === name && (h.t || 'f') === 'f' && h.d >= from && h.w).forEach(h => { by[h.d] = Math.max(by[h.d] || 0, h.w); });
+  const P = Object.entries(by).sort().map(([d, w]) => [new Date(d + 'T12:00').getTime() / 864e5, w]);
+  if (P.length < 3 || P[P.length - 1][0] - P[0][0] < 14) return null;
+  const n = P.length, mx = P.reduce((a, p) => a + p[0], 0) / n, my = P.reduce((a, p) => a + p[1], 0) / n;
+  const sl = P.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / P.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
+  return { perMonth: sl * 30, now: P[n - 1][1], fit: my + sl * (P[n - 1][0] - mx) };
+}
+function goalBox(e){
+  if (typ(e) !== 'f') return '';
+  const tr = strengthTrend(e.n), g = coach && coach.goals && coach.goals[e.n];
+  let eta = '';
+  if (g && tr){ if (tr.now >= g) eta = '✅ Objectif atteint !'; else if (tr.perMonth > .2){ const d = new Date(); d.setDate(d.getDate() + Math.round((g - tr.fit) / tr.perMonth * 30)); eta = `À ce rythme : <b>${fr(g)} kg vers le ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</b>`; } else eta = 'Progression à l’arrêt : il faudra relancer (plus de reps, de séries ou une variante).'; }
+  return `<div class="box"><h4>📈 Prévision</h4><p>${tr ? `Tendance : <b>${tr.perMonth >= 0 ? '+' : ''}${fr(+tr.perMonth.toFixed(1))} kg par mois</b>${tr.perMonth > .2 ? ` · dans 3 mois : ~${fr(Math.round((tr.fit + tr.perMonth * 3) * 2) / 2)} kg` : ''}` : 'Il faut au moins 3 séances sur 2 semaines pour estimer ta progression.'}${eta ? '\n' + eta : ''}</p>
+    <form class="row" data-goal="${esc(e.n)}" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" name="g" inputmode="decimal" placeholder="🎯 Objectif (kg)" value="${g ? fr(g) : ''}" style="flex:1;min-width:0"><button class="btn sm" type="submit">OK</button></form></div>`;
+}
+function goalsCard(){
+  const G2 = Object.entries((coach && coach.goals) || {}), P = weightProj();
+  if (!G2.length && !P) return '';
+  const rows = G2.map(([n, g]) => { const tr = strengthTrend(n); let t = 'pas encore assez de séances';
+    if (tr){ if (tr.now >= g) t = '✅ atteint'; else if (tr.perMonth > .2){ const d = new Date(); d.setDate(d.getDate() + Math.round((g - tr.fit) / tr.perMonth * 30)); t = `vers le ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`; } else t = 'progression à l’arrêt'; }
+    return `<p>🏋️ <b>${esc(n)}</b> : ${tr ? fr(tr.now) : '–'} → ${fr(g)} kg · ${t}</p>`; }).join('');
+  return `<h3 class="sec">🎯 Mes objectifs</h3><div class="card tips-list">${P ? `<p>${projTxt(P)}</p>` : ''}${rows}<p class="muted" style="font-size:12px">Ajoute un objectif de charge depuis la fiche d’un exercice (touche son nom).</p></div>`;
+}
 // coach nutrition : rythme visé (% du poids par semaine : mini, cible, maxi) selon l'objectif
 const RATE = { perte: [-1, -.5, -.25], muscle: [.1, .25, .5], recompo: [-.25, 0, .25], maintien: [-.3, 0, .3] };
 function nutCoach(){
@@ -2392,7 +2468,8 @@ function nutCoachCard(){
   else if (nut.auto === false) st = '⏸️ Ajustement automatique désactivé.';
   else if (!c.ok) st = `⚖️ Pèse-toi au moins 3 fois sur 2 semaines (Progrès → Corps) pour que j’ajuste tes calories. ${c.nW} pesée${c.nW > 1 ? 's' : ''} ces 14 derniers jours.`;
   else st = `Tendance : <b>${f(c.kgW)} kg/semaine</b> (${f(c.pct)} %) · visé : ${target}<br>${c.inRange ? '✅ Dans la cible, on ne touche à rien.' : lg && lg.wk === curWk() ? `🤖 Ajusté cette semaine : <b>${lg.delta > 0 ? '+' : ''}${lg.delta} kcal/jour</b> (${esc(lg.why)}). Prochain point lundi.` : '⚠️ Hors cible : ajustement automatique lundi.'}`;
-  return `<h3 class="sec">🤖 Coach nutrition</h3><div class="card"><p style="font-size:13.5px">${st}</p>
+  const P = weightProj();
+  return `<h3 class="sec">🤖 Coach nutrition</h3><div class="card"><p style="font-size:13.5px">${st}</p>${P ? `<p style="font-size:13.5px;margin-top:6px">${projTxt(P)}</p>` : `<p class="muted" style="font-size:12.5px;margin-top:6px">🎯 <button class="btn sm" data-x="cible">Fixer un poids visé</button> pour avoir une date estimée.</p>`}
     ${nut.adj ? `<p class="muted" style="font-size:12.5px;margin-top:6px">Ajustement en cours : <b>${nut.adj > 0 ? '+' : ''}${nut.adj} kcal/jour</b> par rapport au calcul de départ.</p>` : ''}
     ${num(nut.kcalMan) ? '' : `<div class="toggle" style="margin-top:6px"><span>Ajuster mes calories chaque semaine<small>Selon la tendance de mon poids et mon objectif</small></span><button type="button" class="sw ${nut.auto === false ? '' : 'on'}" data-x="nutauto" role="switch" aria-checked="${nut.auto !== false}"></button></div>`}</div>`;
 }
@@ -3191,20 +3268,33 @@ function sheetForme(then){
    CALCULATEUR DE BARRE, 1RM ET ÉCHAUFFEMENT
    ============================================================ */
 const PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
-function plates(w){
-  const bar = +settings.bar || 20; if (!w || w <= bar) return null;
-  let side = (w - bar) / 2; const out = [];
-  PLATES.forEach(p => { while (side >= p - 1e-9){ out.push(p); side -= p; } });
-  return { bar, out, rest: +side.toFixed(2) };
+// disques à mettre de chaque côté : avec « Mon matériel » on n'utilise que les disques qui existent (un poids par paire)
+function plates(w, e){
+  const own = e && availW(e) && eqOf(e) === 'Barre', oly = own && !!gear.ob && !EZ_EX.includes(e.n);
+  const bar = own ? (oly ? gear.ob : gear.bar) : +settings.bar || 20; if (!w || w < bar) return null;
+  const need = +((w - bar) / 2).toFixed(2); if (!need) return { bar, out: [], rest: 0 };
+  if (!own){ let side = need; const out = []; PLATES.forEach(p => { while (side >= p - 1e-9){ out.push(p); side -= p; } }); return { bar, out, rest: +side.toFixed(2) }; }
+  const P = ((oly ? gear.bp : gear.pl) || []).filter(x => x > 0).sort((a, b) => b - a).slice(0, 16);
+  let best = null;
+  for (let m = 1; m < (1 << P.length); m++){ let t = 0, c = []; for (let j = 0; j < P.length; j++) if (m & (1 << j)){ t += P[j]; c.push(P[j]); } if (Math.abs(t - need) < 1e-6 && (!best || c.length < best.length)) best = c; }
+  return best ? { bar, out: best, rest: 0 } : { bar, out: [], rest: need };
 }
-const platesTxt = w => { const p = plates(w); if (!p) return ''; return `Barre ${p.bar} kg + ${p.out.map(fr).join(' + ')} de chaque côté${p.rest > 0 ? ` (≈ ${fr(w - 2 * p.rest)} kg)` : ''}`; };
+const platesTxt = (w, e) => { const p = plates(w, e); if (!p) return ''; if (!p.out.length && !p.rest) return `Barre seule (${fr(p.bar)} kg)`; return p.out.length ? `Barre ${fr(p.bar)} kg + ${p.out.map(fr).join(' + ')} de chaque côté` : `Pas de combinaison exacte avec tes disques`; };
 function oneRM(name){ return hist.filter(h => h.n === name && (h.t || 'f') === 'f').reduce((a, h) => { const S = h.sl && h.sl.length ? h.sl : [{ w: h.w, r: h.r }]; S.forEach(x => { const w = num(x.w) || 0, r = Math.min(12, num(x.r) || 0); if (w && r) a = Math.max(a, w * (1 + r / 30)); }); return a; }, 0); }
-function warmup(w){ if (!w || w < 30) return []; return [[.5, 8], [.7, 5], [.85, 2]].map(([p, r]) => [Math.max(+settings.bar || 20, Math.round(w * p / 2.5) * 2.5), r]); }
+// séries de chauffe avant un exercice lourd, calées sur les charges disponibles
+function warmup(w, e){
+  if (!w || w < 20) return [];
+  const P = w >= 40 ? [[.4, 8], [.6, 5], [.8, 3]] : [[.5, 8], [.75, 5]], isBar = !e || eqOf(e) === 'Barre', pl = isBar ? plates(w, e) : null, min = pl ? pl.bar : 0;
+  const out = [];
+  P.forEach(([p, r]) => { let x = e && availW(e) ? snapW(e, w * p, 0) : Math.round(w * p / 2.5) * 2.5; x = Math.max(min, x); if (x < w && !out.some(o => o[0] === x)) out.push([x, r]); });
+  return out;
+}
+const wuTxt = W => W.map(([x, r]) => `${r} × ${fr(x)}`).join(' · ') + ' kg';
 function barBox(e){
   if (typ(e) !== 'f') return '';
-  const w = sugW(e) || num((logs[keyOf('day' + currentDay, (data['day' + currentDay] || []).indexOf(e))] || {}).w), rm = oneRM(e.n), wu = warmup(w);
+  const w = num((logs[keyOf('day' + currentDay, (data['day' + currentDay] || []).indexOf(e))] || {}).w) || sugW(e), rm = oneRM(e.n), wu = warmup(w, e);
   if (!w && !rm) return '';
-  return `<div class="box"><h4>🏋️ Charges</h4><p>${w ? `<b>${fr(w)} kg</b> : ${esc(platesTxt(w) || 'pas besoin de disques')}` : ''}${rm ? `\n1RM estimé : <b>${fr(Math.round(rm))} kg</b> (75 % = ${fr(Math.round(rm * .75 / 2.5) * 2.5)} kg)` : ''}${wu.length ? `\nÉchauffement : ${wu.map(([x, r]) => `${fr(x)} × ${r}`).join(' · ')}` : ''}</p></div>`;
+  return `<div class="box"><h4>🏋️ Charges</h4><p>${w ? `<b>${fr(w)} kg</b>${eqOf(e) === 'Barre' && platesTxt(w, e) ? ' : ' + esc(platesTxt(w, e)) : ''}` : ''}${rm ? `\n1RM estimé : <b>${fr(Math.round(rm))} kg</b> (75 % = ${fr(Math.round(rm * .75 / 2.5) * 2.5)} kg)` : ''}${wu.length ? `\nÉchauffement : ${wuTxt(wu)}` : ''}</p></div>`;
 }
 
 /* ============================================================
@@ -3243,7 +3333,7 @@ function guideRender(){
     // écran épuré : la démonstration en grand et l'essentiel (pas de conseils écrits)
     body = `<div class="g-ex"><div class="g-emo pkg g-big">${exVis(e)}</div><h2>${esc(e.n)}</h2>
       ${t !== 'c' ? `<div class="g-sets">${Array.from({ length: tot }, (_, j) => `<span class="${j < S.length ? 'on' : j === S.length ? 'cur' : ''}">${j < S.length ? (t === 'f' ? fr(num(S[j].w) || 0) + '×' + S[j].r : S[j].r) : j + 1}</span>`).join('')}</div><p class="g-lbl">Série ${n} sur ${tot}</p>` : ''}
-      <div class="g-inputs">${inputs}</div></div>
+      <div class="g-inputs">${inputs}</div>${t === 'f' ? loadHelp(e, w, S.length) : ''}</div>
       ${t === 's' ? `<button class="g-main" data-g="timer">▶️ Lancer ${fr(r)} s</button>` : `<button class="g-main" data-g="done">✓ ${t === 'c' ? 'Terminé' : 'Série faite'}</button>`}`;
   }
   $('#guide').innerHTML = `<div class="g-top"><button data-g="prev" aria-label="Exercice précédent">‹</button><div><b>${pos}/${all}</b><small>${left} restant${left > 1 ? 's' : ''}</small></div><button data-g="next" aria-label="Exercice suivant">›</button><span class="spacer"></span><button data-g="voice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-g="close" aria-label="Quitter">✕</button></div>${body}`;
@@ -3911,6 +4001,7 @@ function evoAct(a, b){
     case 'shortgo': { const m = shortSession('day' + todayIdx(), +b.dataset.m); closeSheet(); save(); render(); toast(`⏱️ Séance raccourcie : ~${m} min`); break; }
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
+    case 'cible': sheetCible(); break;
     case 'nutauto': nut.auto = nut.auto === false; save(); viewNutrition(); toast(nut.auto ? '🤖 Ajustement automatique activé' : '⏸️ Ajustement automatique désactivé'); break;
     case 'lighton': coach = Object.assign({}, coach, { light: curWk() }); save(); render(); toast('🪶 Semaine allégée activée'); break;
     case 'lightoff': coach = Object.assign({}, coach, { light: null, ign: curWk() }); save(); render(); toast('Séances normales'); break;
@@ -3937,6 +4028,8 @@ function evoAct(a, b){
       else if (a.startsWith('du')) duoAct(a, b);
   }
 }
+document.addEventListener('submit', e => { const f = e.target.closest('form[data-goal]'); if (!f) return; e.preventDefault(); const n = f.dataset.goal, v = num(f.elements.g.value);
+  coach = Object.assign({}, coach); coach.goals = Object.assign({}, coach.goals); if (v) coach.goals[n] = v; else delete coach.goals[n]; save(); toast(v ? `🎯 Objectif ${n} : ${fr(v)} kg` : 'Objectif retiré'); const i = (data['day' + currentDay] || []).findIndex(x => x.n === n); if (i >= 0) sheetDetail(i); });
 document.addEventListener('click', e => { const b = e.target.closest('[data-x]'); if (!b || b.disabled) return; evoAct(b.dataset.x, b); });
 
 /* ============================================================
@@ -4423,7 +4516,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 32;
+const APP_VERSION = 33;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
