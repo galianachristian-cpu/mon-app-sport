@@ -965,6 +965,9 @@ const DF_GIF_BASE = 'https://www.docteur-fitness.com/wp-content/uploads/';
 const DF_GIF = {
   "Curl barre": '2021/09/curl-barre.gif',
   "Vélo": '2022/11/velo-stationnaire.gif',
+  "Russian twist": '2022/04/russian-twist.gif',
+  "Étirement latéral debout": '2025/12/etirement-lateral-debout.gif',
+  "Étirement vertical des bras": '2025/11/etirement-vertical-des-bras.gif',
   "Cercles de hanches": '2025/11/cercles-de-hanches.gif',
   "Étirement des bras à deux": '2025/11/etirement-assiste-des-bras.gif',
   "Étirement des ischios à deux": '2025/11/etirement-assiste-des-ischio-jambiers.gif',
@@ -4261,7 +4264,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 30;
+const APP_VERSION = 31;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
