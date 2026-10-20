@@ -274,6 +274,18 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .g-rest .feelq{margin:14px auto 0;max-width:420px}
 .balg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}.balg div{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:6px 2px;text-align:center}.balg b{display:block;font-size:16px}.balg small{font-size:10.5px;color:var(--muted)}.balg .lo{border-color:#f59e0b}.balg .lo b{color:#fbbf24}
 .duoch .tbl td,.duoch .tbl th{padding:5px 4px;font-size:12.5px}.duoch .tbl td:nth-child(2),.duoch .tbl td:nth-child(3),.duoch .tbl th{text-align:center}.duoch .ok{color:#34d399;font-weight:700}
+.exstrip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-top:12px;scroll-snap-type:x mandatory;scrollbar-width:none}.exstrip::-webkit-scrollbar,.exstory::-webkit-scrollbar{display:none}
+.exstrip button{flex:0 0 112px;scroll-snap-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:8px;display:flex;flex-direction:column;align-items:stretch;gap:4px;position:relative;text-align:left}
+.exstrip button.cur{border-color:var(--a1);box-shadow:0 0 0 3px color-mix(in srgb,var(--a1) 25%,transparent)}.exstrip button.dn,.exstrip button.sk{opacity:.5}
+.exstrip .v{height:76px;border-radius:12px;background:#fff;display:grid;place-items:center;overflow:hidden}.exstrip .v>*{max-height:76px;max-width:100%}
+.exstrip b{font-size:12.5px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.exstrip small{font-size:11px;color:var(--muted)}
+.exstrip i{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#06281c;font-style:normal;font-size:13px;display:grid;place-items:center;font-weight:900;z-index:1}
+.exstory{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:4px 16px 8px;scrollbar-width:none}
+.exstory button{flex:0 0 150px;height:220px;scroll-snap-align:start;border-radius:20px;overflow:hidden;position:relative;background:#fff;border:2px solid var(--line);padding:0;text-align:left}
+.exstory button.cur{border-color:var(--a1);box-shadow:0 0 0 3px color-mix(in srgb,var(--a1) 30%,transparent)}.exstory button.dn,.exstory button.sk{opacity:.5}
+.exstory .v{position:absolute;inset:0 0 64px;display:grid;place-items:center}.exstory .v>*{max-height:150px;max-width:100%}
+.exstory .t{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 10px;background:linear-gradient(transparent,rgba(11,15,25,.96) 35%);color:#fff}.exstory .t b{font-size:13px;display:block;line-height:1.2}.exstory .t small{font-size:11px;color:var(--soft)}
+.exstory .n{position:absolute;top:8px;left:8px;z-index:1;background:rgba(11,15,25,.82);color:#fff;font-weight:800;font-size:12px;padding:3px 8px;border-radius:99px}
 .ph-ss{color:#fcd34d;border-color:rgba(252,211,77,.45)}
 .sheet.show{transform:translate(-50%,0);visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 12px}
@@ -1588,9 +1600,10 @@ function viewSeance(){
   const totalSets = list.reduce((a, e) => a + (typ(e) === 'c' || isSkip(e) ? 0 : effS(e)), 0);
   const mins = estMin(list), shortOn = list.some(e => e.cutD === today() || (e.cutS && e.cutS.d === today()) || e.ssD === today());
   const muscles = [...new Set(list.map(e => e.m))];
-  const s = sess[k];
+  const s = sess[k], storyOn = currentDay === todayIdx() && list.length > 0 && !sessStarted(k);
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
+  ${storyOn ? storyRow(k, list) : ''}
   <div class="days">${DAY_SHORT.map((d, i) => { const l = data['day'+i] || [], f = l.length && l.every((_, j) => (done['day'+i] || [])[j]);
     return `<button class="day ${i === currentDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''} ${f ? 'full' : ''}" data-day="${i}"><b>${d}</b><span>${esc(dayTitle(i))}</span></button>`; }).join('')}</div>
   <section class="hero">
@@ -1602,6 +1615,7 @@ function viewSeance(){
     </div>
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
   </section>
+  ${!storyOn && list.length > 1 ? stripRow(k, list) : ''}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" data-act="guide" style="flex:1">▶️ Séance guidée</button><button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
@@ -1611,6 +1625,22 @@ function viewSeance(){
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
   </div>`;
+  const cur = $('#app .exstrip .cur'); if (cur) cur.parentElement.scrollLeft = Math.max(0, cur.offsetLeft - 24);
+}
+// séance commencée aujourd'hui ? (une série notée ou un exercice coché)
+function sessStarted(k){ const L = data[k] || []; return L.some((_, i) => (done[k] || [])[i] || setsOf(k, i).length) || !!(sess[k] && sess[k].start && ymd(new Date(sess[k].start)) === today()); }
+const exInfo = e => typ(e) === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}${typ(e) === 'f' && sugW(e) ? ' · ' + fr(sugW(e)) + ' kg' : ''}`;
+// ③ aperçu de la séance du jour : grandes cartes animées
+function storyRow(k, L){
+  const dn = done[k] || [], nx = openIdx(k), mins = estMin(L);
+  return `<h3 class="sec">Ta séance du jour · ${L.length} exercice${L.length > 1 ? 's' : ''} · ~${mins} min</h3>
+  <div class="exstory">${L.map((e, i) => `<button class="${dn[i] ? 'dn' : ''}${isSkip(e) ? ' sk' : ''}${i === nx ? ' cur' : ''}" data-x="exgo" data-i="${i}" aria-label="${esc(e.n)}"><span class="n">${dn[i] ? '✓' : isSkip(e) ? '⏭' : i + 1}</span><span class="v">${exVis(e)}</span><span class="t"><b>${esc(e.n)}</b><small>${exInfo(e)}</small></span></button>`).join('')}</div>
+  <button class="btn pri block" data-act="guide" style="margin-top:8px">▶️ Démarrer la séance guidée</button>`;
+}
+// ① bandeau de vignettes pour naviguer pendant la séance
+function stripRow(k, L){
+  const dn = done[k] || [], cur = openIdx(k);
+  return `<div class="exstrip">${L.map((e, i) => `<button class="${dn[i] ? 'dn' : ''}${isSkip(e) ? ' sk' : ''}${i === cur ? ' cur' : ''}" data-x="exgo" data-i="${i}" aria-label="${esc(e.n)}">${dn[i] ? '<i>✓</i>' : ''}<span class="v">${exVis(e, true)}</span><b>${esc(e.n)}</b><small>${exInfo(e)}</small></button>`).join('')}</div>`;
 }
 function elapsed(start){ const m = Math.max(0, Math.round((Date.now() - start) / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); }
 function stepper(i, f, val, d, unit, label, ph){
@@ -4104,6 +4134,7 @@ function evoAct(a, b){
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
     case 'cible': sheetCible(); break;
+    case 'exgo': { const k = 'day' + currentDay, i = +b.dataset.i; if (!(done[k] || [])[i] && !isSkip(data[k][i])) exOpen[k] = i; render(); const el = document.querySelector(`#app .list .ex[data-i="${i}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'kmode': { const k = 'day' + currentDay, i = +b.dataset.i, e = data[k][i]; if (!e) break; const key = keyOf(k, i);
       if (typ(e) === 'k'){ e.t = 'c'; e.s = 1; e.r = e.cR || '15 min'; } else { e.cR = e.r; e.t = 'k'; e.s = 5; e.r = '15 cal'; }
       e.bs = e.s; delete logs[key]; delete sl[key]; delete sets[key]; save(); render(); sheetDetail(i); toast(typ(e) === 'k' ? '🔁 Séries en calories : ' + e.s + ' × ' + e.r : '⏱️ En continu : ' + e.r); break; }
@@ -4621,7 +4652,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 36;
+const APP_VERSION = 37;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
