@@ -11,6 +11,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== 'GET') return;
+  // l'appli Montée en véhicule (dossier pompiers/) a son propre service worker
+  if (url.origin === location.origin && url.pathname.includes('/pompiers/')) return;
   // page : réseau d'abord (toujours la dernière version), sinon la copie gardée
   if (req.mode === 'navigate' || (url.origin === location.origin && url.pathname.endsWith('.html'))){
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put('./index.html', c)); return r; }).catch(() => caches.match('./index.html').then(r => r || caches.match('./'))));
