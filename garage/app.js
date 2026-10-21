@@ -40,13 +40,13 @@ function newVehicle(model, variant, o = {}){
     type: M ? M.type : (o.type || 'car'), kmLog: [], base: {}, docs: {}, plan: clone(V ? V.plan : (o.type === 'moto' ? PLAN_MOTO : PLAN_CAR)),
     reservoir: V ? V.reservoir : 50, conso: V ? V.conso : 6, carb: V ? V.carb : 'SP95-E10', created: today() }, o.extra || {});
 }
-function fresh(){ return { v:1, updated:0, setup:false, vehicles: DEFAULT_VEHICLES.map(d => newVehicle(d.model, MODELS[d.model].def, d)), fuels:[], maint:[] }; }
+function fresh(){ return migrate({ v:1, updated:0, setup:false, vehicles: DEFAULT_VEHICLES.map(d => newVehicle(d.model, MODELS[d.model].def, d)), fuels:[], maint:[] }); }
 function safeGet(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } }
 function safeSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 function migrate(s){
   if (!s || !Array.isArray(s.vehicles)) return fresh();
   s.fuels = s.fuels || []; s.maint = s.maint || [];
-  s.vehicles.forEach(v => { v.kmLog = v.kmLog || []; v.base = v.base || {}; v.docs = v.docs || {}; v.plan = v.plan || []; });
+  s.vehicles.forEach(v => { v.kmLog = v.kmLog || []; v.base = v.base || {}; v.docs = v.docs || {}; v.plan = v.plan || []; if (!v.paint) v.paint = (v.id === 'auris' || v.id === 'express') ? '#f4f6f8' : v.color; });
   // motorisations confirmées : Auris hybride et Express 1.1 essence de 1992 (si pas encore réglées à la main)
   [['auris', 'auris2-133', 'auris2-hsd'], ['express', 'express2-tce', 'express1-11']].forEach(([id, from, to]) => {
     const v = s.vehicles.find(x => x.id === id && x.variant === from && !x.done); if (!v) return;
@@ -229,37 +229,77 @@ function insights(vfilter){
 }
 
 /* ---------- Silhouettes ---------- */
-function sil(type, c){
-  const g = 'g' + Math.random().toString(36).slice(2, 7);
-  const defs = `<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity=".55"/></linearGradient></defs>`;
-  const wheel = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#0b0f18" stroke="#1f2937" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${r * .5}" fill="#334155"/><circle cx="${x}" cy="${y}" r="${r * .18}" fill="#94a3b8"/>`;
-  if (type === 'moto') return `<svg class="sil" viewBox="0 0 130 56" fill="none">${defs}
-    <ellipse cx="65" cy="50" rx="56" ry="3" fill="#000" opacity=".35"/>
-    ${wheel(25, 39, 13)}${wheel(102, 39, 13)}
-    <path d="M25 39 L42 13" stroke="#94a3b8" stroke-width="3.2" stroke-linecap="round"/>
-    <path d="M38 9 L48 7" stroke="#cbd5e1" stroke-width="2.6" stroke-linecap="round"/>
-    <path d="M35 7 Q28 11 31 21 L42 17 L44 9 Z" fill="url(#${g})"/>
-    <path d="M47 15 Q57 6 74 9 L80 16 L50 22 Z" fill="url(#${g})"/>
-    <path d="M78 15 L100 13 L106 17 L84 21 Z" fill="#1e293b" stroke="#334155"/>
-    <rect x="50" y="22" width="24" height="15" rx="3" fill="#475569"/>
-    <path d="M52 37 Q60 44 74 40" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
-    <path d="M74 25 L102 39" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
-    <path d="M70 20 L92 18 L96 22" stroke="${c}" stroke-width="2" opacity=".7"/>
-    <circle cx="33" cy="15" r="2.5" fill="#fde68a"/></svg>`;
-  if (type === 'van') return `<svg class="sil" viewBox="0 0 130 56" fill="none">${defs}
-    <ellipse cx="65" cy="50" rx="58" ry="3" fill="#000" opacity=".35"/>
-    <path d="M6 41 L6 30 Q6 25 11 24 L27 21 Q36 9 47 8 L118 8 Q123 8 123 13 L123 41 Q123 43 120 43 L111 43 A12 12 0 0 0 87 43 L43 43 A12 12 0 0 0 19 43 L9 43 Q6 43 6 41 Z" fill="url(#${g})"/>
-    <path d="M31 22 Q38 12 47 11 L56 11 L56 22 Z" fill="#0f172a" opacity=".85"/>
-    <path d="M60 11 L60 40 M90 11 L90 40" stroke="#000" opacity=".18"/>
-    <rect x="7" y="27" width="6" height="3" rx="1.5" fill="#fde68a"/><rect x="119" y="20" width="3" height="7" rx="1" fill="#f87171"/>
-    ${wheel(31, 43, 10)}${wheel(99, 43, 10)}</svg>`;
-  return `<svg class="sil" viewBox="0 0 130 56" fill="none">${defs}
-    <ellipse cx="65" cy="50" rx="56" ry="3" fill="#000" opacity=".35"/>
-    <path d="M7 40 Q7 31 15 30 L35 27 Q47 14 63 13 L86 13 Q97 13 106 25 L117 29 Q124 30 124 37 L124 41 Q124 43 121 43 L110 43 A12 12 0 0 0 86 43 L45 43 A12 12 0 0 0 21 43 L10 43 Q7 43 7 40 Z" fill="url(#${g})"/>
-    <path d="M41 27 Q50 17 62 16 L69 16 L69 27 Z" fill="#0f172a" opacity=".85"/><path d="M73 16 L86 16 Q94 16 101 26 L73 27 Z" fill="#0f172a" opacity=".85"/>
-    <rect x="8" y="32" width="7" height="3" rx="1.5" fill="#fde68a"/><rect x="120" y="31" width="3" height="5" rx="1" fill="#f87171"/>
-    <path d="M54 33 L62 33" stroke="#000" opacity=".25" stroke-width="2" stroke-linecap="round"/>
-    ${wheel(33, 43, 10)}${wheel(98, 43, 10)}</svg>`;
+/* Silhouettes de profil, dessinées d'après chaque modèle ; `paint` = couleur de carrosserie */
+function sil(v){
+  const ty = typeOf(v), paint = v.paint || v.color;
+  const shape = ty === 'moto' ? 'moto' : v.model === 'express' && /^express1/.test(v.variant) ? 'express1' : ty === 'van' ? 'van' : 'hatch';
+  const k = Math.random().toString(36).slice(2, 7), sh = 'sh' + k, gl = 'gl' + k;
+  const defs = `<defs><linearGradient id="${sh}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>
+    <linearGradient id="${gl}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#334155"/><stop offset="1" stop-color="#0b1220"/></linearGradient></defs>`;
+  const body = d => `<path d="${d}" fill="${paint}"/><path d="${d}" fill="url(#${sh})" stroke="#000" stroke-opacity=".35" stroke-width=".8"/>`;
+  const wheel = (x, y, r, spokes = 5) => {
+    let s = `<circle cx="${x}" cy="${y}" r="${r}" fill="#0d1117"/><circle cx="${x}" cy="${y}" r="${r * .66}" fill="#9aa4b2"/><circle cx="${x}" cy="${y}" r="${r * .56}" fill="#1f2733"/>`;
+    for (let i = 0; i < spokes; i++){ const a = i * 2 * Math.PI / spokes - Math.PI / 2; s += `<line x1="${x}" y1="${y}" x2="${(x + Math.cos(a) * r * .58).toFixed(1)}" y2="${(y + Math.sin(a) * r * .58).toFixed(1)}" stroke="#c4ccd6" stroke-width="${(r * .16).toFixed(1)}" stroke-linecap="round"/>`; }
+    return s + `<circle cx="${x}" cy="${y}" r="${r * .14}" fill="#e5e7eb"/>`;
+  };
+  const shadow = `<ellipse cx="100" cy="72" rx="92" ry="4" fill="#000" opacity=".45"/>`;
+  if (shape === 'hatch') return `<svg class="sil" viewBox="0 0 200 80" fill="none">${defs}${shadow}
+    ${body('M14 54 C12 48 14 44 21 42 L64 33.5 C78 23 92 16.5 110 15 L128 15 C142 15.5 154 19 163 24.5 L168 26.5 L167 30.5 C171 37 174 44 175 51 L176 58 C176 62 174 64 170 64 L162 64 A15 15 0 0 0 132 64 L66 64 A15 15 0 0 0 36 64 L18 64 C14 64 13 60 14 54 Z')}
+    <path d="M70 34.5 C82 25.5 95 19 110 18 L127 18 C139 18.6 150 22 158.5 27.5 L157.5 31 C130 31.6 100 33.2 70 34.5 Z" fill="url(#${gl})"/>
+    <path d="M110.5 18 L109 33.4 M137 19 L141.5 31.4" stroke="${paint}" stroke-width="3.2"/>
+    <path d="M24 47 C70 44.5 125 41.5 172 39" stroke="#000" stroke-opacity=".18" stroke-width="1"/>
+    <path d="M26 44.5 C70 42 124 39 170 36.5" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <path d="M109 35 L108 62 M68 37.5 L67 58" stroke="#000" stroke-opacity=".22" stroke-width=".7"/>
+    <rect x="94" y="40" width="7" height="1.6" rx=".8" fill="#000" opacity=".35"/><rect x="130" y="38.3" width="7" height="1.6" rx=".8" fill="#000" opacity=".35"/>
+    <path d="M74 34 L81 32.5 L81 37 L75 37.5 Z" fill="${paint}" stroke="#000" stroke-opacity=".3" stroke-width=".6"/>
+    <path d="M18 43 L40 38.5 L36 44.5 L19 47 Z" fill="#dbeafe"/><path d="M20 44 L35 41" stroke="#60a5fa" stroke-width="1"/>
+    <path d="M15 52.5 L34 51.5 L31 57.5 L17 58 Z" fill="#111827"/>
+    <path d="M167 31 L173.5 35 L174.5 44 L165 41.5 Z" fill="#dc2626"/><path d="M158 25 L168 27" stroke="#111827" stroke-width="1.6"/>
+    <path d="M18 62 L35 62 M66 63 L132 63" stroke="#111827" stroke-width="2"/>
+    ${wheel(51, 64, 12.5)}${wheel(147, 64, 12.5)}</svg>`;
+  if (shape === 'express1') return `<svg class="sil" viewBox="0 0 200 80" fill="none">${defs}${shadow}
+    ${body('M10 56 C8 50 9 46 14 45 L44 41 C52 32 58 27 68 25 L80 24 C92 23.5 95 14.5 112 13.5 L184 13.5 C188 13.5 190 15 190 19 L190 58 C190 62 188 65 185 65 L165 65 A14 14 0 0 0 137 65 L55 65 A14 14 0 0 0 27 65 L14 65 C10 65 9 61 10 56 Z')}
+    <path d="M51 40.5 C57 33 62 29 69 28 L89.5 27 L89.5 40 Z" fill="url(#${gl})"/>
+    <path d="M70 28 L67 40" stroke="${paint}" stroke-width="1.6"/>
+    <path d="M91 21 L91 64" stroke="#000" stroke-opacity=".3" stroke-width=".9"/>
+    <path d="M112 16.5 L188 16.5" stroke="#000" stroke-opacity=".2" stroke-width=".7"/>
+    <path d="M186.5 17 L186.5 62" stroke="#000" stroke-opacity=".25" stroke-width=".7"/>
+    <path d="M112 18.5 L184 18.5" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/>
+    <path d="M27 51 L188 51" stroke="#1f2937" stroke-width="3"/>
+    <rect x="82" y="43" width="6" height="1.6" rx=".8" fill="#000" opacity=".4"/>
+    <path d="M56 41 L62 39.5 L62 43.5 L57 44 Z" fill="#1f2937"/>
+    <rect x="11" y="45.5" width="11" height="4.5" rx="1" fill="#e0f2fe"/><rect x="12.5" y="46.5" width="3.5" height="2.5" fill="#fbbf24" opacity=".7"/>
+    <rect x="7" y="53.5" width="20" height="7" rx="2" fill="#1f2937"/><rect x="176" y="58" width="16" height="6" rx="2" fill="#1f2937"/>
+    <rect x="187.5" y="40" width="3" height="11" rx="1" fill="#dc2626"/>
+    ${wheel(41, 65, 11.5, 4)}${wheel(151, 65, 11.5, 4)}</svg>`;
+  if (shape === 'van') return `<svg class="sil" viewBox="0 0 200 80" fill="none">${defs}${shadow}
+    ${body('M9 56 L9 44 Q9 38 16 37 L40 33 Q54 15 70 13 L184 12 Q190 12 190 18 L190 59 Q190 64 185 64 L166 64 A15 15 0 0 0 136 64 L65 64 A15 15 0 0 0 35 64 L14 64 Q9 64 9 56 Z')}
+    <path d="M47 33 Q58 18 71 16 L84 16 L84 33 Z" fill="url(#${gl})"/>
+    <path d="M88 15 L88 62 M150 15 L150 40" stroke="#000" stroke-opacity=".2" stroke-width=".7"/>
+    <rect x="10" y="40" width="14" height="4" rx="2" fill="#dbeafe"/><rect x="186" y="26" width="3.5" height="12" rx="1" fill="#dc2626"/>
+    <path d="M9 52 L30 52 L30 58 L10 58 Z" fill="#111827"/>
+    ${wheel(50, 64, 12.5)}${wheel(151, 64, 12.5)}</svg>`;
+  const pz = d => `<path d="${d}" fill="${paint}"/><path d="${d}" fill="url(#${sh})"/>`;
+  return `<svg class="sil" viewBox="0 0 200 80" fill="none">${defs}${shadow}
+    <path d="M120 45 L150 54" stroke="#4b5563" stroke-width="5" stroke-linecap="round"/>
+    <path d="M128 25 L140 44" stroke="#f59e0b" stroke-width="2.4"/>
+    ${wheel(48, 54, 20, 6)}${wheel(150, 54, 20, 6)}
+    <circle cx="48" cy="54" r="11" stroke="#cbd5e1" stroke-width="1.6" opacity=".8"/><circle cx="150" cy="54" r="9" stroke="#cbd5e1" stroke-width="1.6" opacity=".8"/>
+    <path d="M48 54 L70 17 M51 54 L73 18" stroke="#d1d5db" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 40 Q46 30 62 36" stroke="${paint}" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M80 28 L118 28 L116 49 L88 52 Z" fill="#4b5563"/><path d="M84 33 L114 33 M84 38 L113 38 M85 43 L112 43" stroke="#6b7280"/>
+    <rect x="76" y="25" width="5" height="19" rx="1.5" fill="#111827"/>
+    <path d="M86 48 Q90 60 108 59 L132 55" stroke="#9ca3af" stroke-width="3" stroke-linecap="round"/>
+    <path d="M126 50 L152 45 L154 51 L129 57 Z" fill="#cbd5e1"/><path d="M128 53 L152 48" stroke="#94a3b8"/>
+    ${pz('M80 23 Q88 11 108 12 L121 17 L119 28 L83 30 Z')}
+    <path d="M90 16 Q100 13 110 14" stroke="#fff" stroke-opacity=".55" stroke-width="1"/>
+    <path d="M119 19 L150 15.5 L158 18 L151 22.5 L121 26 Z" fill="#111827"/>
+    ${pz('M148 15.5 L174 9 L172 14 L157 21.5 Z')}
+    <path d="M171 14 L176 19" stroke="#111827" stroke-width="1.5"/><rect x="172" y="18" width="6" height="5" rx="1" fill="#e5e7eb" transform="rotate(20 175 20)"/>
+    <path d="M73 11 L84 9" stroke="#e5e7eb" stroke-width="2.4" stroke-linecap="round"/>
+    ${pz('M60 12 L75 8 L79 21 L70 31 Q59 29 57 20 Z')}
+    <path d="M63 11.5 L73 9 L75 13 L64 15.5 Z" fill="#94a3b8" opacity=".6"/>
+    <path d="M60 18 L67 16.5 L68 24 L61 25 Z" fill="#fef3c7"/></svg>`;
 }
 
 /* ---------- Graphiques SVG ---------- */
@@ -349,7 +389,7 @@ function vehicleCard(v){
   const avg = avgConso(v.id), ck = curKm(v), y = spend(fuelsOf(v.id), addDays(today(), -365)) + spend(maintOf(v.id), addDays(today(), -365));
   const badge = ko ? `<span class="badge ko">⛔ ${ko} en retard</span>` : wa ? `<span class="badge warn">⚠️ ${wa} bientôt</span>` : `<span class="badge ok">✓ À jour</span>`;
   return `<button class="vcard" ${vstyle(v)} data-x="vopen" data-v="${v.id}">
-    <div class="vh"><div class="vt"><b>${esc(v.nom)}</b><small>${esc(variantOf(v).nom)}${v.docs.immat ? ' · ' + esc(v.docs.immat) : ''}</small><div style="margin-top:8px">${badge}</div></div>${sil(typeOf(v), v.color)}</div>
+    <div class="vh"><div class="vt"><b>${esc(v.nom)}</b><small>${esc(variantOf(v).nom)}${v.docs.immat ? ' · ' + esc(v.docs.immat) : ''}</small><div style="margin-top:8px">${badge}</div></div>${sil(v)}</div>
     <div class="vs"><div><b class="num">${ck ? nf(ck) : '–'}</b><span>km</span></div><div><b class="num">${avg ? nf(avg, 1) : '–'}</b><span>L/100</span></div><div><b class="num">${eur(y, 0)}</b><span>sur 12 mois</span></div></div>
     ${next ? `<div class="vn">${next.ic} <span>Prochain : <b>${esc(next.nom)}</b> ${next.state === 'ko' ? '· <b class="ko">en retard</b>' : next.pred ? '· vers ' + fmtDs(next.pred) : ''}</span></div>` : ''}
   </button>`;
@@ -450,7 +490,7 @@ function viewVehicle(){
   return `<section class="vhero" ${vstyle(v)}>
     <button class="back" data-nav="home">‹ Garage</button>
     <div class="row"><div style="flex:1;min-width:0"><h2>${esc(v.nom)}</h2><div class="muted" style="font-size:13px">${esc(variantOf(v).nom)}</div></div><button class="btn sm" data-x="vedit" data-v="${v.id}">✏️</button></div>
-    ${sil(typeOf(v), v.color)}
+    ${sil(v)}
     <div class="kpis"><div class="kpi"><b class="num">${nf(curKm(v))}</b><span>km au compteur</span></div><div class="kpi"><b class="num">${nf(kmRate(v) * 30.4, 0)}</b><span>km / mois</span></div><div class="kpi"><b class="num">${avgConso(v.id) ? nf(avgConso(v.id), 1) : '–'}</b><span>L/100 réel</span></div></div>
     <div class="row" style="margin-top:12px"><button class="btn sm" data-x="fuel" data-v="${v.id}">⛽ Plein</button><button class="btn sm" data-x="scan" data-k="fuel" data-v="${v.id}">📷 Ticket</button><button class="btn sm" data-x="kmlog" data-v="${v.id}">📏 Relevé km</button><button class="btn sm" data-x="ask" data-v="${v.id}">🤖 Mécano IA</button></div>
   </section>
@@ -701,6 +741,7 @@ function planAdd(vid){
 }
 
 /* ---------- Véhicule : modifier / ajouter ---------- */
+const PAINTS = [['#f4f6f8', 'Blanc'], ['#c7ccd3', 'Gris argent'], ['#6b7280', 'Gris foncé'], ['#1f2937', 'Noir'], ['#b91c1c', 'Rouge'], ['#1d4ed8', 'Bleu'], ['#0f766e', 'Vert foncé'], ['#84cc16', 'Vert Kawasaki'], ['#ea580c', 'Orange'], ['#facc15', 'Jaune'], ['#e7dcc4', 'Beige']];
 const COLORS = ['#ef4444', '#f97316', '#facc15', '#84cc16', '#22c55e', '#14b8a6', '#38bdf8', '#6366f1', '#a855f7', '#ec4899', '#e2e8f0', '#94a3b8'];
 function vehicleForm(vid){
   const v = vid ? vById(vid) : null, isNew = !v;
@@ -714,7 +755,8 @@ function vehicleForm(vid){
     <div class="grid3" style="gap:8px"><label class="fld"><span>Réservoir</span><div class="unit"><input class="inp" id="vR" inputmode="decimal" value="${v ? v.reservoir : ''}"><em>L</em></div></label>
     <label class="fld"><span>Conso réf.</span><div class="unit"><input class="inp" id="vC" inputmode="decimal" value="${v ? String(v.conso).replace('.', ',') : ''}"><em>L</em></div></label>
     <label class="fld"><span>Carburant</span><select class="inp" id="vCarb">${FUELS.map(c => `<option ${v && v.carb === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label></div>
-    <div class="fld"><span>Couleur</span><div class="pick">${COLORS.map(c => `<label><input type="radio" name="vcol" value="${c}" ${(v ? v.color : COLORS[6]) === c ? 'checked' : ''}><span style="--vc:${c};width:34px;height:34px;padding:0;border-radius:50%;background:${c}"></span></label>`).join('')}</div></div>
+    <div class="fld"><span>Couleur de la carrosserie</span><div class="pick">${PAINTS.map(([c, n]) => `<label title="${n}"><input type="radio" name="vpaint" value="${c}" ${(v ? v.paint : PAINTS[0][0]) === c ? 'checked' : ''}><span style="--vc:#38bdf8;width:34px;height:34px;padding:0;border-radius:50%;background:${c};box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)"></span></label>`).join('')}</div></div>
+    <div class="fld"><span>Couleur dans l’appli</span><div class="pick">${COLORS.map(c => `<label><input type="radio" name="vcol" value="${c}" ${(v ? v.color : COLORS[6]) === c ? 'checked' : ''}><span style="--vc:${c};width:34px;height:34px;padding:0;border-radius:50%;background:${c}"></span></label>`).join('')}</div></div>
     <h2 class="sec">Papiers</h2>
     <div class="grid2"><label class="fld" style="margin-top:0"><span>Immatriculation</span><input class="inp" id="dI" value="${esc(D.immat || '')}" placeholder="AB-123-CD" style="text-transform:uppercase"></label>
     <label class="fld" style="margin-top:0"><span>Date d’achat</span><input class="inp" type="date" id="dA" value="${D.achat || ''}"></label>
@@ -737,7 +779,7 @@ function vehicleForm(vid){
       const keep = t.plan.filter(p => p.id.startsWith('c')); t.plan = clone(tpl).concat(keep);
     }
     t.nom = $('#vN').value.trim() || t.nom; t.reservoir = pnum($('#vR').value) || t.reservoir; t.conso = pnum($('#vC').value) || t.conso; t.carb = $('#vCarb').value;
-    t.color = ($('#vf [name=vcol]:checked') || {}).value || t.color; t.done = true;
+    t.color = ($('#vf [name=vcol]:checked') || {}).value || t.color; t.paint = ($('#vf [name=vpaint]:checked') || {}).value || t.paint; t.done = true;
     t.docs = Object.assign(t.docs || {}, { immat:$('#dI').value.trim().toUpperCase(), achat:$('#dA').value, ct:$('#dC').value, assu:$('#dS').value, assureur:$('#dAs').value.trim(), vin:$('#dV').value.trim().toUpperCase(), notes:$('#dN').value.trim() });
     const K = pnum($('#vKm').value); if (ok(K) && Math.round(K) !== curKm(t)) t.kmLog.push({ d:today(), km:Math.round(K) });
     if (S.vehicles.every(x => x.done)) S.setup = true;
