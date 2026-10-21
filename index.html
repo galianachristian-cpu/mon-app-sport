@@ -1616,6 +1616,7 @@ function viewSeance(){
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
   </section>
   ${!storyOn && list.length > 1 ? stripRow(k, list) : ''}
+  ${adaptBanner(k)}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" data-act="guide" style="flex:1">▶️ Séance guidée</button><button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
@@ -3270,6 +3271,14 @@ function caserneChanges(){
     L.forEach((e, i) => { const opts = CASERNE_SWAP[e.n]; if (!opts) return; const to = opts.find(n => LIB_BY[n] && !used.has(n)) || opts.find(n => LIB_BY[n]); if (!to) return; used.add(to); C.push({ k, i, from: e.n, to }); }); });
   return C;
 }
+// rappel sur la séance : exercices impossibles à la caserne dans la journée affichée
+function adaptBanner(k){
+  if (coach && coach.noAdapt) return '';
+  const C = caserneChanges().filter(c => c.k === k); if (!C.length) return '';
+  return `<div class="card" style="margin-top:12px;border-color:#f59e0b"><b>🚒 Pas à la caserne : ${esc(C.map(c => c.from).join(', '))}</b>
+    <p class="muted" style="font-size:13px;margin-top:4px">Je peux les remplacer par : ${esc(C.map(c => c.to).join(', '))}. Tes séries, répétitions et jours restent les mêmes.</p>
+    <div class="row" style="margin-top:10px"><button class="btn pri" data-x="adapt" style="flex:1">🔁 Remplacer</button><button class="btn" data-x="noadapt">Je ne suis pas à la caserne</button></div></div>`;
+}
 function sheetAdapt(){
   const C = caserneChanges();
   if (!C.length){ toast('✅ Ton programme est déjà faisable à la caserne'); return; }
@@ -4171,6 +4180,7 @@ function evoAct(a, b){
     case 'cible': sheetCible(); break;
     case 'adapt': sheetAdapt(); break;
     case 'adaptgo': adaptCaserne(); break;
+    case 'noadapt': coach = Object.assign({}, coach, { noAdapt: 1 }); save(); render(); toast('D’accord. Tu peux adapter plus tard depuis Programme → Coach'); break;
     case 'adaptundo': sheetConfirm('Revenir au programme d’avant l’adaptation ?', 'Revenir', () => { data = coach.prevData; coach = Object.assign({}, coach, { prevData: null }); closeSheet(); save(); render(); toast('↩️ Programme d’avant restauré'); }); break;
     case 'exgo': { const k = 'day' + currentDay, i = +b.dataset.i; if (!(done[k] || [])[i] && !isSkip(data[k][i])) exOpen[k] = i; render(); const el = document.querySelector(`#app .list .ex[data-i="${i}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'kmode': { const k = 'day' + currentDay, i = +b.dataset.i, e = data[k][i]; if (!e) break; const key = keyOf(k, i);
@@ -4690,7 +4700,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 38;
+const APP_VERSION = 39;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
