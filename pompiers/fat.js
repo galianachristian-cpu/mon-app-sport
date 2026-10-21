@@ -338,6 +338,86 @@ CCF: { nom: 'Camion Citerne Feux de forêts (FAT CCFM-BP)', maj: '02/2026', sect
   ]]
 ]},
 
+CCFHP: { nom: 'Camion Citerne Feux de forêts Moyen Haute Pression (FAT CCFM / CCFM-HP)', maj: '06/2021', sections: [
+  ['Lot de bord', [
+    [1,'Inventaire FAT',''],
+    [1,'Atlas DFCI 1/25 000',''],
+    [1,'Carte carburant',''],
+    [1,'Clé DFCI',''],
+    [1,'Lot de bord constructeur','cales de roue, manomètre, flexible de gonflage']
+  ]],
+  ['Protection et transmissions', [
+    [4,'Gilets haute visibilité',''],
+    [4,'APR feux de forêts','avec ceinturon'],
+    [5,'Demi-masques avec bouteille d’air','en cabine'],
+    [1,'Portatif TPH 900','housse + micro déporté'],
+    [1,'Portatif TTH 900','housse + micro déporté'],
+    [1,'Chargeur double',''],
+    [1,'Holster double','chef d’agrès'],
+    [1,'Holster simple','binôme d’attaque']
+  ]],
+  ['Éclairage et balisage', [
+    [1,'Projecteur à main',''],
+    [1,'Projecteur de travail',''],
+    [1,'Rallonge projecteur de travail',''],
+    [1,'Rouleau de rubalise',''],
+    [1,'Trépied projecteur de travail','']
+  ]],
+  ['Lances et tuyaux', [
+    [1,'LDV 1000',''],
+    [1,'LDV 500',''],
+    [1,'LDV 250 type FDF','dévidoir auxiliaire de 45'],
+    [2,'LDV 150 haute pression','dont 1 sur dévidoir tournant'],
+    [1,'Lance queue de paon (écran de 40)','avec tuyau de 45 en 10 m'],
+    [1,'Propack + bidon 20 L d’additif','si pas de système d’injection'],
+    [4,'Semi-rigides 25 / 20 m haute pression','dévidoir tournant'],
+    [2,'Souples 25 / 20 m haute pression',''],
+    [6,'Souples 45 / 20 m','dévidoir auxiliaire de 45'],
+    [1,'Souple 45 / 20 m','dans un coffre'],
+    [1,'Souple 70 / 10 m',''],
+    [4,'Souples 70 / 20 m',''],
+    [1,'Souple 110 / 10 m',''],
+    [4,'Aspiraux 110 / 2 m','']
+  ]],
+  ['Jonctions et accessoires hydrauliques', [
+    [1,'Collecteur d’alimentation à clapet 2×65/100',''],
+    [1,'Coude d’alimentation de 100','raccord Keyser'],
+    [1,'Division mixte 65/65-2×40',''],
+    [3,'Réductions 100/65, 65/40, 40/23',''],
+    [1,'Vanne d’arrêt de 40','dévidoir auxiliaire de 45'],
+    [2,'Bouchons de 100 et de 65',''],
+    [1,'Clé de poteau',''],
+    [1,'Clé de barrage',''],
+    [1,'Crépine + flotteur',''],
+    [2,'Seaux pompe',''],
+    [2,'Tricoises 100-70',''],
+    [1,'Turbopompe','']
+  ]],
+  ['Forcement, alimentation et tronçonnage', [
+    [1,'Coupe-boulons',''],
+    [1,'Élingue textile','+1 si treuil'],
+    [1,'Hache',''],
+    [4,'Manilles',''],
+    [1,'Masse',''],
+    [1,'Pelle',''],
+    [1,'Râteau',''],
+    [1,'Serpe ou scie d’élagage pliante',''],
+    [1,'Treuil : fiches d’ancrage + poulie','si équipé'],
+    [1,'Bidon de carburant bleu',''],
+    [1,'Motopompe flottante',''],
+    [1,'Tronçonneuse à chaîne','bidon mélange rouge, huile de chaîne, EPI casque + surpantalon']
+  ]],
+  ['Divers et claies de portage', [
+    [1,'Commande',''],
+    [1,'Cordage',''],
+    [1,'Extincteur poudre ABC 9 kg',''],
+    [1,'Pack de 6 bouteilles d’eau',''],
+    [1,'Trousse de premiers secours','couverture de survie, gants, dacudoses, dosiseptines, compresses, bande'],
+    [1,'Claie de portage de 45','4 tuyaux 45 / 20 m + division 40/40-2×20'],
+    [1,'Claie de portage de 25','4 tuyaux 25 / 20 m + division 40/2×20 + 2 LDV 150']
+  ]]
+]},
+
 CCFU: { nom: 'Camion Citerne Feux de forêts et Urbain 2 dévidoirs', maj: '04/2026', sections: [
   ['Sauvetage et protection', [
     [1,'Échelle à coulisse 3 plans',''],
@@ -516,6 +596,7 @@ window.ESSAIS = (function(){
     FPT:   base.concat([pompe, ari, mpf, ['cam','Caméras thermiques','charge, essai'], ['eau','Tonne','niveau, fuites, vannes']]),
     VSRTU: base.concat([['elec','Outils électroportatifs','batteries chargées, essai'], ['grp','Groupe électrogène 3 kW','démarrage, carburant'], ['bal','Balisage','cônes, triangles, lumaphore'], mpf]),
     CCF:   base.concat([pompe, ['apr','APR de cabine','pression bouteille d’air 300 bars, demi-masques'], ['auto','Autoprotection / rampe','essai rampe d’arrosage, rideau'], mpf, ['ptr','Treuil, manilles, arceaux','état visuel']]),
+    CCFHP: base.concat([pompe, ['apr','APR et demi-masques cabine','pression bouteille d’air, demi-masques'], ['auto','Autoprotection / rampe','essai rampe d’arrosage'], ['hp','Haute pression','essai LDV 150 HP, dévidoir tournant'], mpf, ['ptr','Treuil, manilles, arceaux','état visuel']]),
     CCFU:  base.concat([pompe, ari, ['apr','APR de cabine','pression bouteille 300 bars'], ['auto','Autoprotection / rampe','essai'], mpf]),
     CCGC:  base.concat([pompe, ['mpfg','Motopompes flottantes','démarrage, essence'], ['cit','Citerne souple','état, pliage']]),
     FMOGP: base.concat([pompe, ['mou','Circuit mousse','émulseur, injection, lance canon']]),

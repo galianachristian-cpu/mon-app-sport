@@ -9,7 +9,9 @@ Chaque pompier se connecte avec son nom, choisit l'engin, scanne le compteur et 
 - **Armement** : inventaire facultatif selon les FAT SDIS 34 2026 (VSAV, FPT, VSRTU, CCF, CCFU, CCGC, FMOGP).
 - **Défauts** : gravité mineur / majeur / indisponible, photos, suivi jusqu'à « réglé ».
 - **Hors ligne** : les montées restent sur le téléphone et partent dès que le réseau revient.
-- **Responsable** (code) : engins, heure de relève, QR code d'activation des téléphones, export CSV.
+- **QR codes des pochettes** : chaque engin a son lien direct (`…/#engin=vsav-215`). Les étiquettes à imprimer (6 × 9 cm, avec le personnage du centre) sont générées par l'appli. Les anciens QR codes (formulaires Google) restent reconnus par le scanner de l'appli une fois associés à leur engin.
+- **VSAV** : suivi du protocole hygiène n°2 (désinfection complète hebdomadaire).
+- **Responsable** (code) : engins, heure de relève, QR code d'activation des téléphones, étiquettes, export CSV.
 
 ## Stockage
 
@@ -21,6 +23,8 @@ controles/AAAA/MM/<date>_<engin>_<statut>_<compteur>_<pompier>.json
 anomalies/ouvertes/<engin>_<date>_<n>_<gravité>.json
 anomalies/resolues/…
 photos/AAAA/MM/….jpg
+hygiene/<engin>_<date>.json                   protocole hygiène n°2 (VSAV)
+assets/personnage-….jpg                       image des étiquettes
 ```
 
 ## Mise en service (une seule fois)
