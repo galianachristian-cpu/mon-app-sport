@@ -10,5 +10,5 @@ L'application Mon Garage a maintenant son propre projet : https://github.com/gal
 
 ## Montée en véhicule (pompiers)
 
-Application de contrôle des engins du CS Cruzy / Quarante, dans `pompiers/` (adresse provisoire : https://galianachristian-cpu.github.io/mon-app-sport/pompiers/).
-Elle n'est couplée à aucune autre application et doit déménager dans son propre dépôt `monter-vehicule` (voir `pompiers/README.md`).
+L'application Montée en véhicule du CS Cruzy / Quarante a son propre projet : https://github.com/galianachristian-cpu/monter-vehicule
+(adresse : https://galianachristian-cpu.github.io/monter-vehicule/). L'ancienne adresse `mon-app-sport/pompiers/` redirige vers la nouvelle.
