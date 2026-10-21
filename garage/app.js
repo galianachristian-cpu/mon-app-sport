@@ -47,6 +47,11 @@ function migrate(s){
   if (!s || !Array.isArray(s.vehicles)) return fresh();
   s.fuels = s.fuels || []; s.maint = s.maint || [];
   s.vehicles.forEach(v => { v.kmLog = v.kmLog || []; v.base = v.base || {}; v.docs = v.docs || {}; v.plan = v.plan || []; });
+  // motorisations confirmées : Auris hybride et Express 1.1 essence de 1992 (si pas encore réglées à la main)
+  [['auris', 'auris2-133', 'auris2-hsd'], ['express', 'express2-tce', 'express1-11']].forEach(([id, from, to]) => {
+    const v = s.vehicles.find(x => x.id === id && x.variant === from && !x.done); if (!v) return;
+    const V = MODELS[v.model].variants[to]; v.variant = to; v.reservoir = V.reservoir; v.conso = V.conso; v.carb = V.carb; v.plan = clone(V.plan);
+  });
   return s;
 }
 let S = migrate(safeGet(LS, null));

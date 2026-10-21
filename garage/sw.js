@@ -1,5 +1,5 @@
 /* Mon Garage : service worker pour l'installation et l'usage hors ligne */
-const CACHE = 'mon-garage-v1';
+const CACHE = 'mon-garage-v2';
 const CORE = ['./', './index.html', './app.js', './data.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
