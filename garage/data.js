@@ -48,12 +48,17 @@ const PLAN_KEYWORDS = [
   ['chaine-kit', /kit cha(i|î)ne|pignon|couronne/i],
   ['chaine-gr', /graiss|lubrif.*cha(i|î)ne/i],
   ['soupapes', /soupape/i],
-  ['fourche', /fourche|spi/i]
+  ['fourche', /fourche|spi/i],
+  ['fess', /filtre (a|à) (essence|carburant)/i],
+  ['carbu', /carbu/i],
+  ['cacc', /courroie (d.)?(alternateur|accessoire)/i],
+  ['rouille', /corrosion|rouille|soubassement/i],
+  ['hybf', /batterie hybride|ventilation batterie/i]
 ];
 
 const MODELS = {
   auris: {
-    marque:'Toyota', modele:'Auris', type:'car', color:'#ef4444', def:'auris2-133',
+    marque:'Toyota', modele:'Auris', type:'car', color:'#ef4444', def:'auris2-hsd',
     variants: {
       'auris2-133': {
         nom:'Auris II 1.33 Dual VVT-i 99 ch', annees:'2012 – 2018', carb:'SP95-E10', reservoir:50, conso:5.6,
@@ -70,12 +75,23 @@ const MODELS = {
         nom:'Auris II Hybride 1.8 HSD 136 ch', annees:'2012 – 2018', carb:'SP95-E10', reservoir:45, conso:4.0,
         specs:[
           ['Moteur', [['Moteur','1.8 VVT-i (2ZR-FXE) + moteur électrique'],['Puissance cumulée','136 ch'],['Thermique','99 ch à 5 200 tr/min · 142 Nm'],['Électrique','82 ch · 207 Nm'],['Distribution','Chaîne (sans entretien)'],['Boîte','Automatique e-CVT'],['Batterie','Ni-MH']]],
-          ['Performances', [['0 à 100 km/h','≈ 10,9 s'],['Vitesse max.','180 km/h'],['Conso. mixte','≈ 4,0 L/100 km']]],
+          ['Performances', [['0 à 100 km/h','≈ 10,9 s'],['Vitesse max.','180 km/h'],['Conso. mixte','≈ 4,0 L/100 km'],['Vignette Crit’Air','1']]],
           ['Capacités', [['Réservoir','45 L'],['Huile moteur','0W-20 · ≈ 4,2 L avec filtre'],['Carburant','SP95-E10 / SP98']]],
           ['Pneus', [['Dimension','195/65 R15 · 205/55 R16 · 225/45 R17'],['Pression AV / AR','≈ 2,3 / 2,3 bar']]],
           ['Dimensions', [['Longueur','4,28 m'],['Poids','≈ 1 380 kg'],['Coffre','360 L']]]
         ],
-        plan: planWith(PLAN_CAR, { _add:[{ id:'hyb', ic:'🔌', nom:'Contrôle système hybride (garage Toyota)', km:15000, mois:12 }] })
+        plan: planWith(PLAN_CAR, { _add:[{ id:'hyb', ic:'🔌', nom:'Contrôle système hybride (garage Toyota)', km:15000, mois:12 }, { id:'hybf', ic:'🌀', nom:'Filtre / grille de ventilation de la batterie hybride (sous la banquette arrière)', km:20000, mois:12, info:'Une grille encrassée fait chauffer la batterie et augmente la consommation. Un coup d’aspirateur suffit.' }] })
+      },
+      'auris1-hsd': {
+        nom:'Auris I Hybride 1.8 HSD 136 ch', annees:'2010 – 2012', carb:'SP95-E10', reservoir:45, conso:3.9,
+        specs:[
+          ['Moteur', [['Moteur','1.8 VVT-i (2ZR-FXE) + moteur électrique'],['Puissance cumulée','136 ch'],['Thermique','99 ch à 5 200 tr/min · 142 Nm'],['Électrique','82 ch · 207 Nm'],['Distribution','Chaîne (sans entretien)'],['Boîte','Automatique e-CVT'],['Batterie','Ni-MH']]],
+          ['Performances', [['0 à 100 km/h','≈ 11,4 s'],['Vitesse max.','180 km/h'],['Conso. mixte','≈ 3,9 L/100 km'],['Vignette Crit’Air','1']]],
+          ['Capacités', [['Réservoir','≈ 45 L (à vérifier)'],['Huile moteur','0W-20 · ≈ 4,2 L avec filtre'],['Carburant','SP95-E10 / SP98']]],
+          ['Pneus', [['Dimension','195/65 R15 · 205/55 R16'],['Pression AV / AR','≈ 2,3 / 2,3 bar (voir montant de porte)']]],
+          ['Dimensions', [['Longueur','4,25 m'],['Poids','≈ 1 380 kg']]]
+        ],
+        plan: planWith(PLAN_CAR, { _add:[{ id:'hyb', ic:'🔌', nom:'Contrôle système hybride (garage Toyota)', km:15000, mois:12 }, { id:'hybf', ic:'🌀', nom:'Filtre / grille de ventilation de la batterie hybride (sous la banquette arrière)', km:20000, mois:12, info:'Une grille encrassée fait chauffer la batterie et augmente la consommation. Un coup d’aspirateur suffit.' }] })
       },
       'auris2-12t': {
         nom:'Auris II 1.2 T 116 ch', annees:'2015 – 2018', carb:'SP95-E10', reservoir:50, conso:5.0,
@@ -109,7 +125,7 @@ const MODELS = {
     }
   },
   express: {
-    marque:'Renault', modele:'Express', type:'van', color:'#facc15', def:'express2-tce',
+    marque:'Renault', modele:'Express', type:'van', color:'#facc15', def:'express1-11',
     variants: {
       'express2-tce': {
         nom:'Express Van 1.3 TCe 100 ch', annees:'2021 →', carb:'SP95-E10', reservoir:50, conso:6.8,
@@ -121,6 +137,31 @@ const MODELS = {
           ['Pneus', [['Dimension','205/60 R16'],['Pression AV / AR','≈ 2,4 / 2,6 bar (voir étiquette de porte)']]]
         ],
         plan: planWith(PLAN_CAR, { vidange:{ km:20000, mois:12, info:'Constructeur : jusqu’à 30 000 km / 1 an. 20 000 km conseillé pour un moteur turbo à usage utilitaire.' }, bougies:{ km:60000, mois:48 } })
+      },
+      'express1-11': {
+        nom:'Express (1re génération) 1.1 essence', annees:'1985 – 1998', carb:'SP98', reservoir:43, conso:7.0,
+        specs:[
+          ['Moteur', [['Moteur','1.1 essence « Cléon-Fonte » (C1E)'],['Architecture','4 cylindres en ligne, culbuteurs, 8 soupapes'],['Cylindrée','1 108 cm³'],['Puissance','≈ 48 ch à 5 250 tr/min'],['Alimentation','Carburateur simple corps'],['Distribution','Chaîne (pas de courroie à changer)'],['Boîte','Manuelle 4 ou 5 rapports']]],
+          ['Performances', [['Vitesse max.','≈ 130 km/h'],['Conso. mixte','≈ 7 L/100 km'],['Vignette Crit’Air','Non classé (essence avant 1997) : interdit dans les ZFE strictes, comme Montpellier']]],
+          ['Capacités', [['Réservoir','≈ 43 L (à vérifier)'],['Huile moteur','15W-40 ou 10W-40 minérale / semi-synthèse · ≈ 3 L avec filtre (à vérifier)'],['Carburant','SP98 conseillé (moteur ancien, SP95-E10 déconseillé)']]],
+          ['Utilitaire', [['Volume utile','≈ 2,6 m³'],['Charge utile','≈ 500 kg'],['Poids à vide','≈ 850 kg']]],
+          ['Pneus', [['Dimension','145/80 R13 (à vérifier sur le flanc)'],['Pression AV / AR','≈ 2,0 / 2,3 bar (plus à l’arrière si chargé)']]]
+        ],
+        plan: [
+          { id:'vidange', ic:'🛢️', nom:'Vidange huile + filtre à huile', km:7500, mois:12, info:'Moteur ancien : vidange rapprochée et niveau d’huile à vérifier tous les 1 000 km.' },
+          { id:'fair', ic:'🌬️', nom:'Filtre à air', km:15000, mois:24 },
+          { id:'fess', ic:'⛽', nom:'Filtre à essence', km:30000, mois:36 },
+          { id:'bougies', ic:'⚡', nom:'Bougies + allumeur (tête, rotor)', km:15000, mois:24 },
+          { id:'carbu', ic:'🔧', nom:'Réglage carburateur / ralenti', km:15000, mois:24 },
+          { id:'cacc', ic:'➰', nom:'Courroie d’alternateur', km:40000, mois:48 },
+          { id:'lfrein', ic:'🧪', nom:'Liquide de frein', km:0, mois:24 },
+          { id:'lrefr', ic:'❄️', nom:'Liquide de refroidissement', km:40000, mois:24 },
+          { id:'plaq', ic:'🛑', nom:'Freins : plaquettes AV, tambours AR', km:15000, mois:12 },
+          { id:'pneus', ic:'🛞', nom:'Pneus (usure, âge, pression)', km:10000, mois:12 },
+          { id:'rouille', ic:'🧽', nom:'Contrôle corrosion : bas de caisse, plancher, passages de roue', km:0, mois:12, info:'Point faible des véhicules de cet âge et point surveillé au contrôle technique.' },
+          { id:'batt', ic:'🔋', nom:'Batterie (contrôle)', km:0, mois:24 },
+          { id:'essuie', ic:'🌧️', nom:'Balais d’essuie-glace', km:0, mois:12 }
+        ]
       },
       'express1-14': {
         nom:'Express (1re génération) 1.4 essence', annees:'1985 – 1998', carb:'SP95', reservoir:47, conso:7.5,
@@ -143,6 +184,7 @@ const MODELS = {
         specs:[
           ['Moteur', [['Moteur','4 cylindres en ligne, refroidissement liquide'],['Distribution','Double arbre à cames, 16 soupapes'],['Cylindrée','748 cm³'],['Alésage × course','68,4 × 50,9 mm'],['Puissance','110 ch (81 kW) à 11 000 tr/min'],['Couple','75 Nm à 8 200 tr/min'],['Alimentation','Injection électronique'],['Boîte','6 rapports'],['Transmission','Chaîne · braquet 15 × 43']]],
           ['Partie cycle', [['Cadre','Tubulaire acier, épine dorsale'],['Fourche','Télescopique Ø 41 mm'],['Frein AV','Double disque Ø 300 mm'],['Frein AR','Simple disque Ø 220 mm'],['Carénage','Tête de fourche (version S)']]],
+          ['Réglementation', [['Vignette Crit’Air','3 (moto Euro 2)'],['Contrôle technique','Tous les 3 ans (obligatoire depuis 2024)']]],
           ['Capacités', [['Réservoir','18 L (dont ≈ 3 L de réserve)'],['Huile moteur','10W-40 JASO MA · ≈ 3,8 L avec filtre (à vérifier)'],['Bougies','NGK CR9EK'],['Carburant','SP98 conseillé (SP95-E10 accepté)']]],
           ['Pneus', [['Avant','120/70 ZR17'],['Arrière','180/55 ZR17'],['Pression AV / AR','2,5 / 2,9 bar']]],
           ['Dimensions', [['Poids à sec','≈ 199 kg'],['Hauteur de selle','≈ 815 mm'],['Autonomie','≈ 280 à 300 km']]]
