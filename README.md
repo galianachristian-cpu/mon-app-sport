@@ -5,6 +5,5 @@ application de sport
 
 ## Mon Garage
 
-**Adresse :** https://galianachristian-cpu.github.io/mon-app-sport/garage/
-
-Suivi des pleins (scan des tickets), de la consommation et de l'entretien de la Toyota Auris, du Renault Express et de la Kawasaki Z750 S. Les données sont enregistrées sur le téléphone et dans la même base Firebase que Mon Programme (document `users/garage`).
+L'application Mon Garage a maintenant son propre projet : https://github.com/galianachristian-cpu/mon-garage
+(adresse : https://galianachristian-cpu.github.io/mon-garage/). L'ancienne adresse `mon-app-sport/garage/` redirige vers la nouvelle.
