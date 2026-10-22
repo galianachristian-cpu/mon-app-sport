@@ -2752,10 +2752,73 @@ function genPlan(wk, keep, from){
 }
 const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
 function planOf(wk){
-  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); }
+  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
   return foyer.plans[wk];
 }
 function dayPortions(pid, d, wk){ const plan = planOf(wk); return MEALS.map(([meal]) => { const rid = ridOf(plan, d, meal, pid), away = isAway(pid, d, meal, wk); return { meal, rid, away, por: rid && !away ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
+
+/* ============================================================
+   BUDGET — prix moyens en supermarché (€ par kg, poids acheté), modifiables avec les prix de son magasin
+   ============================================================ */
+const PRICE = { oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
+  lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
+  concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
+const STORES = { moyen:['Prix moyens',1], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
+const budgetCfg = () => foyer.budget || {};
+const priceDef = f => +((PRICE[f] || 5) * (STORES[budgetCfg().store] || STORES.moyen)[1]).toFixed(2);
+const priceKg = f => { const o = (budgetCfg().p || {})[f]; return o != null ? o : priceDef(f); };
+const costOf = ing => ing.reduce((a, [f, g]) => a + g / 1000 * priceKg(f), 0);
+const eur = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' €';
+// coût de la semaine pour le foyer (tous les repas prévus à la maison)
+function weekCost(wk, from){ let t = 0; for (let d = from || 0; d < 7; d++) PROFILES.forEach(p => dayPortions(p.id, d, wk).forEach(x => { if (x.por) t += costOf(x.por.ing); })); return t; }
+// remplace les plats les plus chers par des plats moins chers (pas encore pris cette semaine) jusqu'à tenir le budget
+function budgetFit(wk){
+  const B = budgetCfg(); if (!B.max) return null;
+  const plan = foyer.plans[wk]; if (!plan) return null;
+  const from = wk === curWk() ? todayIdx() : 0, excls = PROFILES.map(p => exclOf(ctxOf(p.id))), base = r => costOf(r.ing);
+  const plats = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls) && !banOf()[r.id]).sort((a, b) => base(a) - base(b));
+  const start = weekCost(wk, 0); let tot = start, n = 0, nSw = 0;
+  const tried = new Set();
+  while (tot > B.max && n++ < 40){
+    let worst = null;
+    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v]) return; const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
+    if (!worst) break;
+    const used = new Set(); plan.days.forEach(day => ['dej', 'din'].forEach(m => { const v = day[m]; if (typeof v === 'string') used.add(v); }));
+    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .85) || plats.find(r => base(r) < worst.c * .85 && plan.days[worst.d][worst.m === 'dej' ? 'din' : 'dej'] !== r.id);
+    tried.add(worst.d + worst.m); if (!alt) continue;
+    plan.days[worst.d][worst.m] = alt.id; nSw++; tot = weekCost(wk, 0);
+  }
+  if (nSw) saveFoyer();
+  return { start, tot, ok: tot <= B.max, nSw };
+}
+// bons plans : remplacer un aliment cher de la liste par un équivalent moins cher
+function bonsPlans(tot){
+  const out = [];
+  Object.entries(tot).forEach(([f, g]) => { (SUBS[f] || []).forEach(to => { if (!FOODS[to] || FOODS[to].grp !== FOODS[f].grp) return; const save = g / 1000 * (priceKg(f) - priceKg(to)); if (save >= 1) out.push({ f, to, save }); }); });
+  const best = {}; out.forEach(x => { if (!best[x.f] || x.save > best[x.f].save) best[x.f] = x; });
+  return Object.values(best).sort((a, b) => b.save - a.save).slice(0, 3);
+}
+function budgetCard(){
+  const B = budgetCfg(), wk = curWk(), tot = weekCost(wk, 0), max = num(B.max), pct = max ? Math.min(100, tot * 100 / max) : 0, over = max && tot > max;
+  const { raw } = coursesList(), bp = bonsPlans(raw), days = PROFILES.length * 7;
+  return `<h3 class="sec">💶 Budget de la semaine</h3><div class="card">
+    <div class="two"><div class="fg"><label for="bSt">Magasin</label><select id="bSt">${Object.entries(STORES).map(([k, [l]]) => `<option value="${k}" ${(B.store || 'moyen') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="fg"><label for="bMax">Budget (vous 2, €/sem.)</label><input id="bMax" class="inp" inputmode="decimal" value="${max ? fr(max) : ''}" placeholder="ex. 80"></div></div>
+    <p style="font-size:14px">Menus de la semaine : <b>≈ ${eur(tot)}</b>${max ? ` sur ${eur(max)}` : ''} · ${eur(tot / days)} par personne et par jour</p>
+    ${max ? `<div class="bar" style="margin-top:8px"><i style="width:${pct}%;background:${over ? 'var(--ko)' : 'var(--ok)'}"></i></div>` : ''}
+    ${over ? `<div class="advice"><span>⚠️ ${eur(tot - max)} au-dessus du budget</span><button class="btn sm pri" data-x="budfit">🎯 Ajuster les menus</button></div>` : max ? '<p class="muted" style="font-size:12.5px;margin-top:6px">✅ Dans le budget.</p>' : '<p class="muted" style="font-size:12.5px;margin-top:6px">Fixe un budget : les nouveaux menus le respecteront.</p>'}
+    ${bp.length ? `<div style="margin-top:10px">${bp.map(x => `<p style="font-size:13px;margin-top:4px">💡 ${esc(FOODS[x.to].n)} à la place de ${esc(FOODS[x.f].n.toLowerCase())} : <b>−${eur(x.save)}</b></p>`).join('')}</div>` : ''}
+    <button class="btn block" data-x="prices" style="margin-top:10px">✏️ Les prix de mon magasin</button>
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Prix estimés (moyennes de supermarché, au poids utilisé) : corrige ceux que tu connais.</p></div>`;
+}
+function sheetPrices(){
+  const B = budgetCfg(), G = {}; Object.values(FOODS).forEach(f => { (G[RAYONS[f.ray]] = G[RAYONS[f.ray]] || []).push(f); });
+  openSheet(`<h2>✏️ Prix de mon magasin</h2><p class="muted" style="font-size:13px;margin-bottom:10px">En € par kilo (ou par litre). Laisse vide pour garder le prix estimé ${esc((STORES[B.store] || STORES.moyen)[0])}.</p><form id="prF">
+    ${Object.entries(G).map(([g, L]) => `<h3 class="sec">${g}</h3><div class="card">${L.map(f => `<div class="row" style="flex-wrap:nowrap;margin:4px 0"><span style="flex:1;font-size:13.5px">${esc(f.n)}</span><input class="inp" data-pr="${f.id}" inputmode="decimal" style="width:90px" placeholder="${fr(priceDef(f.id))}" value="${(B.p || {})[f.id] != null ? fr(B.p[f.id]) : ''}"><small class="muted">€/kg</small></div>`).join('')}</div>`).join('')}
+    <div class="row" style="margin-top:12px"><button type="button" class="btn" id="prReset">↩️ Tout remettre</button><span class="spacer"></span><button class="btn pri" type="submit">💾 Enregistrer</button></div></form>`);
+  $('#prF').onsubmit = ev => { ev.preventDefault(); const P = {}; document.querySelectorAll('[data-pr]').forEach(i => { const v = num(i.value); if (v != null && v >= 0 && v < 200) P[i.dataset.pr] = v; }); foyer.budget = Object.assign({}, B, { p: P }); saveFoyer(); closeSheet(); viewNutrition(); toast('💶 Prix enregistrés'); };
+  $('#prReset').onclick = () => { foyer.budget = Object.assign({}, B, { p: {} }); saveFoyer(); closeSheet(); viewNutrition(); toast('Prix estimés remis'); };
+}
 
 /* Absences : repas pris hors de la maison (par personne, pour une semaine ou toutes les semaines) */
 const awayRecOf = (pid, d, meal) => !!((foyer.awayRec || {})[pid] || {})[d + meal];
@@ -2907,7 +2970,7 @@ function mealCard(x, st, date, ox){
   const p = x.por, okd = st === 'ok', other2 = st && st.items, skip = st === 'skip';
   return `<article class="ex meal ${okd || other2 ? 'done' : ''}">
     <div class="row1"><button class="emo" data-act="recette" data-meal="${x.meal}">${p.r.e}</button>
-      <button class="name" data-act="recette" data-meal="${x.meal}"><b>${favOf()[p.r.id] ? '❤️ ' : ''}${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · P ${Math.round(p.m.p)} · G ${Math.round(p.m.g)} · L ${Math.round(p.m.l)} g</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
+      <button class="name" data-act="recette" data-meal="${x.meal}"><b>${favOf()[p.r.id] ? '❤️ ' : ''}${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · P ${Math.round(p.m.p)} · G ${Math.round(p.m.g)} · L ${Math.round(p.m.l)} g · ≈ ${eur(costOf(p.ing))}</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
       <button class="check" data-act="mok" data-meal="${x.meal}" aria-label="${okd ? 'Annuler' : 'Mangé comme prévu'}" aria-pressed="${okd}">✓</button></div>
     ${sameDish(x, ox) ? duoTable(x, ox) : `${ox && ox.por && !ox.away ? `<p class="dt-lead" style="--c1:${profile.a1}">🍽️ Ta portion</p>` : ''}<div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === p.side ? ` <small class="cuit">${x.meal === 'col' ? 'en plus' : 'en dessert'}</small>` : ''}</button>`).join('')}</div>`}
     ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
@@ -2980,6 +3043,7 @@ function trimJournal(){ const ks = Object.keys(journal).sort(); ks.slice(0, Math
 function nutSemaine(){
   const wk = curWk(), plan = planOf(wk);
   return `<div class="card" style="margin-top:14px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
+  ${(() => { const t = weekCost(wk, 0), mx = num(budgetCfg().max); return `<div class="card" style="margin-top:12px"><p style="font-size:14px">💶 Menus de la semaine : <b>≈ ${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>${mx && t > mx ? '<button class="btn sm pri" data-x="budfit" style="margin-top:8px">🎯 Ajuster les menus au budget</button>' : ''}</div>`; })()}
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
 }
 function coursesList(){
@@ -2988,14 +3052,15 @@ function coursesList(){
   for (let d = from; d < 7; d++) pids.forEach(pid => dayPortions(pid, d, wk).forEach(x => { if (x.por) x.por.ing.forEach(([f, g]) => { tot[f] = (tot[f] || 0) + g; }); }));
   const fmt = (f, g) => { const F = FOODS[f]; if (F.unit){ const n = Math.ceil(g / F.unit.g - .01); return `${n} ${F.unit.u}${n > 1 ? 's' : ''}${F.unit.w ? ` (${n * F.unit.g} g)` : ''}`; } if (f === 'lait'){ const l = Math.ceil(g / 500) / 2; return String(l).replace('.', ',') + ' L'; } if (g >= 1000) return String(Math.ceil(g / 100) / 10).replace('.', ',') + ' kg'; return Math.ceil(g / 50) * 50 + ' g'; };
   // on retire ce qu'il nous reste à la maison
-  const st = stockMap(), have = [];
-  Object.entries(st).forEach(([f, g]) => { if (tot[f]){ const used = Math.min(g, tot[f]); tot[f] -= used; have.push({ f, n: FOODS[f].n, q: qty(f, used), all: tot[f] <= 0 }); if (tot[f] <= 0) delete tot[f]; } });
-  const groups = {}; Object.entries(tot).forEach(([f, g]) => { const r = RAYONS[FOODS[f].ray]; (groups[r] = groups[r] || []).push({ f, n: FOODS[f].n, q: fmt(f, g) }); });
+  const raw = Object.assign({}, tot), st = stockMap(), have = [];
+  Object.entries(st).forEach(([f, g]) => { if (tot[f]){ const used = Math.min(g, tot[f]); tot[f] -= used; have.push({ f, n: FOODS[f].n, q: qty(f, used), all: tot[f] <= 0, c: used / 1000 * priceKg(f) }); if (tot[f] <= 0) delete tot[f]; } });
+  const groups = {}; Object.entries(tot).forEach(([f, g]) => { const r = RAYONS[FOODS[f].ray]; (groups[r] = groups[r] || []).push({ f, n: FOODS[f].n, q: fmt(f, g), c: g / 1000 * priceKg(f) }); });
   Object.values(groups).forEach(L => L.sort((a, b) => a.n.localeCompare(b.n, 'fr')));
-  return { groups, dates, from, pids, have };
+  const total = Object.values(groups).flat().reduce((a, x) => a + x.c, 0), saved = have.reduce((a, x) => a + x.c, 0);
+  return { groups, dates, from, pids, have, raw, total, saved };
 }
 function nutCourses(){
-  const wk = curWk(), { groups, dates, from, pids, have } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [], nAway = awayCount(wk, pids, from), nSt = Object.keys(stockMap()).length;
+  const wk = curWk(), { groups, dates, from, pids, have, total, saved } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [], nAway = awayCount(wk, pids, from), nSt = Object.keys(stockMap()).length;
   const missing = pids.filter(pid => !nutReady(ctxOf(pid).nut)).map(pid => ctxOf(pid).nom);
   return `<div class="card" style="margin-top:14px">
     <div class="seg small">${[['semaine','Toute la semaine'],['reste','À partir d’aujourd’hui']].map(([k, l]) => `<button class="${coursesScope === k ? 'on' : ''}" data-cs="${k}">${l}</button>`).join('')}</div>
@@ -3003,8 +3068,10 @@ function nutCourses(){
     <button class="btn block" data-x="awaysheet" style="margin-top:8px">🧳 Absences : ${nAway ? `${nAway} repas hors de la maison` : 'aucune'}</button>
     <button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste : ${nSt ? `${nSt} aliment${nSt > 1 ? 's' : ''}` : 'rien de noté'}</button>
     <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
+  ${budgetCard()}
+  <div class="card" style="margin-top:12px"><p style="font-size:14px">🛒 Total estimé de la liste : <b>${eur(total)}</b>${saved >= .5 ? ` · <span style="color:var(--ok)">${eur(saved)} économisés grâce à vos restes</span>` : ''}</p></div>
   ${have.length ? `<h3 class="sec">🥡 Déjà à la maison</h3><div class="card"><p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}</div>` : ''}
-  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g}</h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''}><span>${esc(x.n)}</span><b>${x.q}</b></label>`).join('')}</div>`).join('')}
+  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''}><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
   <div class="row" style="margin-top:16px">${navigator.share ? '<button class="btn pri" id="shareBtn">📤 Envoyer</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn pri" id="mailBtn">✉️ Envoyer par mail</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
@@ -3013,7 +3080,8 @@ function coursesText(){
   const wk = curWk(), { groups, dates, from } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
   const nAway = awayCount(wk, coursesList().pids, from);
   let s = `Liste de courses du ${fmtD(dates[from])} au ${fmtD(dates[6])}${nAway ? ` (sans les ${nAway} repas hors de la maison)` : ''}\n`;
-  Object.entries(groups).sort().forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q}`).join('\n') + '\n'; });
+  Object.entries(groups).sort().forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q} (≈ ${eur(x.c)})`).join('\n') + '\n'; });
+  s += `\nTotal estimé : ≈ ${eur(Object.values(groups).flat().filter(x => !ck[x.f]).reduce((a, x) => a + x.c, 0))}\n`;
   const E = ex.filter((_, i) => !ck['x' + i]); if (E.length) s += '\n➕ Autres\n' + E.map(x => '- ' + x).join('\n') + '\n';
   return s + '\nEnvoyé depuis Mon Programme 🏋️';
 }
@@ -3023,6 +3091,8 @@ function bindCourses(){
   document.querySelectorAll('[data-cw]').forEach(b => b.onclick = () => { coursesWho = b.dataset.cw; viewNutrition(); });
   document.querySelectorAll('[data-ck]').forEach(c => c.onchange = () => { const ck = foyer.checked[wk] = foyer.checked[wk] || {}; if (c.checked) ck[c.dataset.ck] = 1; else delete ck[c.dataset.ck]; c.closest('.shopit').classList.toggle('got', c.checked); saveFoyer(); });
   document.querySelectorAll('[data-exrm]').forEach(b => b.onclick = ev => { ev.preventDefault(); (foyer.extra[wk] || []).splice(+b.dataset.exrm, 1); saveFoyer(); viewNutrition(); });
+  const bS = $('#bSt'); if (bS) bS.onchange = () => { foyer.budget = Object.assign({}, budgetCfg(), { store: bS.value }); saveFoyer(); viewNutrition(); };
+  const bM = $('#bMax'); if (bM) bM.onchange = () => { const v = num(bM.value); foyer.budget = Object.assign({}, budgetCfg(), { max: v && v > 0 ? v : null }); saveFoyer(); viewNutrition(); };
   $('#exf').onsubmit = ev => { ev.preventDefault(); const v = $('#exIn').value.trim(); if (!v) return; (foyer.extra[wk] = foyer.extra[wk] || []).push(v); saveFoyer(); viewNutrition(); };
   $('#mailBtn').onclick = () => { location.href = 'mailto:?subject=' + encodeURIComponent('🛒 Liste de courses') + '&body=' + encodeURIComponent(coursesText()); };
   // menu de partage du téléphone : Gmail, Messages, WhatsApp… (ne dépend pas du compte configuré dans Mail)
@@ -4255,6 +4325,8 @@ function evoAct(a, b){
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
     case 'cible': sheetCible(); break;
+    case 'prices': sheetPrices(); break;
+    case 'budfit': { const r = budgetFit(curWk()); viewNutrition(); toast(!r ? 'Fixe d’abord un budget' : r.nSw ? `🎯 ${r.nSw} plat${r.nSw > 1 ? 's' : ''} remplacé${r.nSw > 1 ? 's' : ''} : ≈ ${eur(r.tot)}${r.ok ? ' ✅' : ' (budget très serré)'}` : 'Impossible de faire moins cher avec les recettes actuelles'); break; }
     case 'bk': sheetBackups(); break;
     case 'bknow': b.disabled = true; autoBackup(true).then(ok => { toast(ok ? '💾 Sauvegarde faite' : '❌ Sauvegarde impossible (connexion ?)'); sheetBackups(); }); break;
     case 'bkres': if (db) BKC().doc(b.dataset.id).get().then(doc => { if (!doc.exists) return toast('Sauvegarde introuvable'); bkRestore(fsDec(doc.data()), 'la sauvegarde choisie'); }).catch(() => toast('❌ Lecture impossible')); break;
@@ -4784,7 +4856,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 42;
+const APP_VERSION = 43;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
