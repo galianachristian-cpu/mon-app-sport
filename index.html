@@ -286,6 +286,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .exstory .v{position:absolute;inset:0 0 64px;display:grid;place-items:center}.exstory .v>*{max-height:150px;max-width:100%}
 .exstory .t{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 10px;background:linear-gradient(transparent,rgba(11,15,25,.96) 35%);color:#fff}.exstory .t b{font-size:13px;display:block;line-height:1.2}.exstory .t small{font-size:11px;color:var(--soft)}
 .exstory .n{position:absolute;top:8px;left:8px;z-index:1;background:rgba(11,15,25,.82);color:#fff;font-weight:800;font-size:12px;padding:3px 8px;border-radius:99px}
+.bcomp{margin:4px 0 12px}.bcomp summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--soft);padding:6px 0}.bcomp[open] summary{margin-bottom:8px}
 .ph-ss{color:#fcd34d;border-color:rgba(252,211,77,.45)}
 .sheet.show{transform:translate(-50%,0);visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 12px}
@@ -2083,13 +2084,34 @@ function tabSeances(){
   return `<h3 class="sec">Volume par séance</h3><div class="card">${lineChart(pts, 'kg', 'Volume par séance')}</div>
   <h3 class="sec">Historique</h3><div class="card">${L.slice(0, 40).map(s => `<div class="rec"><span style="font-size:24px">${s.feel != null ? FEELS[s.feel][0] : '🏋️'}</span><div class="t"><b>${esc(s.titre || '')}</b><small>${fmtD(s.d)} · ${s.dur != null ? s.dur + ' min · ' : ''}${s.sets || 0} séries${s.recs ? ' · 🏆 ' + s.recs : ''}</small></div><div class="v" style="color:var(--text);font-size:15px">${fmtVol(s.vol || 0)}</div></div>`).join('')}</div>`;
 }
+// composition corporelle (balance à impédance) : dernière valeur connue d'un champ
+function lastComp(f){ const B = body.filter(b => f ? b[f] != null : ['g', 'mm', 'v', 'bmr', 'eau'].some(k => b[k] != null)).sort((a, b) => a.d < b.d ? -1 : 1); const L = B[B.length - 1]; return !L ? (f ? null : null) : f ? L[f] : L; }
+// masse maigre (kg) d'après la dernière pesée avec graisse, si elle date de moins de 60 jours
+function leanKg(B){ B = B || body; const L = B.filter(b => b.g != null && b.p != null).sort((a, b) => a.d < b.d ? -1 : 1).pop(); if (!L) return null; const age = (Date.now() - new Date(L.d + 'T12:00')) / 864e5; return age <= 60 ? { lean: L.p * (1 - L.g / 100), fat: L.p * L.g / 100, g: L.g, d: L.d } : null; }
+function compCard(B){
+  const C = B.filter(b => b.g != null || b.mm != null); if (!C.length) return '';
+  const L = C[C.length - 1], P = C.length > 1 ? C[0] : null, lk = L.g != null && L.p != null ? { fat: L.p * L.g / 100, lean: L.p * (1 - L.g / 100) } : null;
+  const dl = (a, b, u, good) => a != null && b != null && a !== b ? ` <small class="${(a - b > 0) === good ? 'up' : 'down'}">${a > b ? '+' : ''}${fr(+(a - b).toFixed(1))}${u}</small>` : '';
+  const tile = (v, l, extra) => `<div class="stat"><div class="v" style="font-size:22px">${v}</div><div class="l">${l}</div>${extra ? `<div class="dl">${extra}</div>` : ''}</div>`;
+  const cib = nut && num(nut.cible), lean10 = lk ? lk.lean / .9 : null;
+  return `<h3 class="sec">Composition corporelle</h3><div class="card">
+    <div class="stats">${L.g != null ? tile(fr(L.g) + ' %', 'graisse', P ? dl(L.g, P.g, ' %', false) : '') : ''}${lk ? tile(fr(+lk.fat.toFixed(1)) + ' kg', 'masse grasse') : ''}${lk ? tile(fr(+lk.lean.toFixed(1)) + ' kg', 'masse maigre', P && P.g != null && P.p != null ? dl(lk.lean, P.p * (1 - P.g / 100), ' kg', true) : '') : ''}${L.mm != null ? tile(fr(L.mm) + ' kg', 'masse musculaire', P ? dl(L.mm, P.mm, ' kg', true) : '') : ''}${L.v != null ? tile(fr(L.v), 'graisse viscérale' + (L.v <= 9 ? ' ✅' : ' ⚠️')) : ''}${L.bmr != null ? tile(fr(L.bmr), 'kcal métab. de base') : ''}</div>
+    ${lk ? `<p class="muted" style="font-size:12.5px;margin-top:8px">${cib ? `🎯 Pour ${fr(cib)} kg en gardant ton muscle, tu serais à <b>${fr(Math.max(0, +((1 - lk.lean / cib) * 100).toFixed(1)))} % de graisse</b>. ` : ''}À 10 % de graisse sans perdre de muscle, tu pèserais environ <b>${fr(+lean10.toFixed(1))} kg</b>.</p>` : ''}
+    ${C.filter(b => b.g != null).length >= 2 ? lineChart(C.filter(b => b.g != null).map(b => ({ d: b.d, v: b.g })), '%', 'Évolution de la graisse corporelle') : ''}
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Les balances à impédance sont imprécises au jour le jour : regarde la tendance, pèse-toi à la même heure, à jeun.</p></div>`;
+}
 function tabCorps(){
   const B = body.slice().sort((a, b) => a.d < b.d ? -1 : 1), last = B[B.length - 1], first = B[0];
   const dp = last && first && last.p != null && first.p != null && B.length > 1 ? last.p - first.p : null;
   return `<h3 class="sec">Nouvelle mesure</h3>
   <div class="card"><form id="bf"><div class="two"><div class="fg"><label for="bP">Poids (kg)</label><input id="bP" inputmode="decimal" placeholder="${last && last.p != null ? fr(last.p) : '75'}"></div><div class="fg"><label for="bT">Tour de taille (cm)</label><input id="bT" inputmode="decimal" placeholder="${last && last.t != null ? fr(last.t) : '85'}"></div></div>
+    <details class="bcomp"${lastComp() ? ' open' : ''}><summary>⚖️ Données de ta balance connectée (facultatif)</summary>
+      <div class="two"><div class="fg"><label for="bG">Graisse corporelle (%)</label><input id="bG" inputmode="decimal" placeholder="${lastComp('g') != null ? fr(lastComp('g')) : '16'}"></div><div class="fg"><label for="bM">Masse musculaire (kg)</label><input id="bM" inputmode="decimal" placeholder="${lastComp('mm') != null ? fr(lastComp('mm')) : '70'}"></div></div>
+      <div class="three2"><div class="fg"><label for="bV">Graisse viscérale</label><input id="bV" inputmode="decimal" placeholder="${lastComp('v') != null ? fr(lastComp('v')) : '9'}"></div><div class="fg"><label for="bB">Métab. de base (kcal)</label><input id="bB" inputmode="numeric" placeholder="${lastComp('bmr') != null ? fr(lastComp('bmr')) : '1900'}"></div><div class="fg"><label for="bE">Eau (%)</label><input id="bE" inputmode="decimal" placeholder="${lastComp('eau') != null ? fr(lastComp('eau')) : '60'}"></div></div>
+      <p class="muted" style="font-size:12px">Graisse et métabolisme servent à affiner tes calories et tes protéines.</p></details>
     <button class="btn pri block" type="submit">➕ Enregistrer (${fmtD(ymd(new Date()))})</button></form></div>
   ${B.length ? `<h3 class="sec">Poids</h3><div class="card">${last && last.p != null ? `<div class="wbig"><b>${fr(last.p)}<small> kg</small></b>${dp != null ? `<span class="wd ${!dp ? '' : (nut && nut.obj === 'muscle' ? dp > 0 : dp < 0) ? 'down' : 'up'}">${dp > 0 ? '+' : ''}${fr(dp)} kg depuis le ${fmtD(first.d)}</span>` : ''}${nut && num(nut.cible) ? `<span class="wd goal">🎯 Objectif ${fr(num(nut.cible))} kg · encore ${fr(Math.abs(last.p - num(nut.cible)))} kg</span>` : ''}</div>` : ''}${lineChart(B.filter(b => b.p != null).map(b => ({ d: b.d, v: b.p })), 'kg', 'Évolution du poids', nut && num(nut.cible) ? num(nut.cible) : null)}</div>
+  ${compCard(B)}
   ${B.some(b => b.t != null) ? `<h3 class="sec">Tour de taille</h3><div class="card">${lineChart(B.filter(b => b.t != null).map(b => ({ d: b.d, v: b.t })), 'cm', 'Évolution du tour de taille')}</div>` : ''}
   <div class="card" style="margin-top:10px"><table class="tbl"><thead><tr><th>Date</th><th>Poids</th><th>Taille</th><th></th></tr></thead><tbody>${B.slice(-10).reverse().map(b => `<tr><td>${fmtD(b.d)}</td><td>${b.p != null ? fr(b.p) + ' kg' : '–'}</td><td>${b.t != null ? fr(b.t) + ' cm' : '–'}</td><td><button class="btn sm" data-act="bdel" data-d="${b.d}" aria-label="Supprimer la mesure du ${fmtD(b.d)}">🗑️</button></td></tr>`).join('')}</tbody></table></div>` : ''}
   <h3 class="sec">Photos de progression</h3>
@@ -2098,8 +2120,12 @@ function tabCorps(){
     <div id="photos" class="photos"></div></div>${bienCard()}`;
 }
 function bindCorps(){
-  $('#bf').onsubmit = ev => { ev.preventDefault(); const p = num($('#bP').value), t = num($('#bT').value); if (p == null && t == null) return toast('Entre au moins une mesure.');
-    const d = ymd(new Date()); body = body.filter(b => b.d !== d); body.push({ d, p, t }); save(); viewProgres(); toast('⚖️ Mesure enregistrée'); };
+  $('#bf').onsubmit = ev => { ev.preventDefault(); const v = id => num(($('#' + id) || {}).value), p = v('bP'), t = v('bT');
+    const C = { g: v('bG'), mm: v('bM'), v: v('bV'), bmr: v('bB'), eau: v('bE') };
+    if (p == null && t == null && Object.values(C).every(x => x == null)) return toast('Entre au moins une mesure.');
+    const d = ymd(new Date()), old = body.find(b => b.d === d) || {}, e = { d, p: p ?? old.p ?? null, t: t ?? old.t ?? null };
+    Object.entries(C).forEach(([k, x]) => { if (x != null) e[k] = x; else if (old[k] != null) e[k] = old[k]; });
+    body = body.filter(b => b.d !== d); body.push(e); save(); viewProgres(); toast('⚖️ Mesure enregistrée'); };
   $('#phIn').onchange = async ev => { const f = ev.target.files[0]; if (!f) return; try{ const img = await shrink(f, 720); await photoAdd({ pid: profile.id, d: ymd(new Date()), img }); toast('📷 Photo ajoutée'); paintPhotos(); }catch(e){ toast('Impossible d’ajouter cette photo.'); } };
   paintPhotos();
 }
@@ -2465,7 +2491,8 @@ function sessionKcal(c, di){
 }
 function targets(c, di){
   const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
-  const bmr = Math.round(10 * w + 6.25 * n.taille - 5 * n.age + sx);
+  const bc = c.pid === profile.id ? lastComp('bmr') : null, bcD = c.pid === profile.id ? body.filter(b => b.bmr != null).sort((a, b) => a.d < b.d ? -1 : 1).pop() : null;
+  const bmr = bc && bcD && (Date.now() - new Date(bcD.d + 'T12:00')) / 864e5 <= 60 ? Math.round(bc) : Math.round(10 * w + 6.25 * n.taille - 5 * n.age + sx);
   const act = +n.act || 1.35, sk = sessionKcal(c, di), train = sk > 0;
   const tdee = Math.round(bmr * act + sk);
   const f = { perte: .8, maintien: 1, muscle: 1.1, recompo: train ? 1.0 : .9 }[n.obj || 'maintien'];
@@ -2474,8 +2501,9 @@ function targets(c, di){
   const kcal = man ? Math.max(1000, Math.round((man + (train && n.kcalSeance !== false ? sk : 0)) / 10) * 10) : auto;
   const pk = { perte: 2.0, maintien: 1.8, muscle: 2.0, recompo: 2.0 }[n.obj || 'maintien'];
   // protéines : g/kg selon l'objectif, sans dépasser 30 % des calories (au moins 1,2 g/kg)
-  const p = Math.round(Math.max(w * 1.2, Math.min(w * pk, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
-  return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor };
+  const lk = c.pid === profile.id ? leanKg() : null, pBase = lk ? lk.lean * pk * 1.1 : w * pk;
+  const p = Math.round(Math.max(w * 1.2, Math.min(pBase, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
+  return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor, bmrScale: !!(bc && bmr === Math.round(bc)), lean: lk ? lk.lean : null };
 }
 // prévision : date estimée pour atteindre le poids visé
 function weightProj(){
@@ -2981,7 +3009,7 @@ function nutProfil(){
   <button class="btn pri block" type="submit" style="margin-top:16px">💾 Enregistrer et calculer</button></form>
   ${t ? `<h3 class="sec">Tes besoins calculés</h3><div class="card"><div class="three"><div><b>${kc(t.bmr)}</b><small>Métabolisme</small></div><div><b>${kc(Math.round(t.bmr * (+n.act || 1.35)))}</b><small>Jour de repos</small></div><div><b>${kc(t.kcal)}</b><small>Objectif aujourd’hui</small></div></div>
     ${t.man ? `<p style="font-size:13px;margin-bottom:6px">✍️ <b>Total choisi par toi</b>${t.train && nut.kcalSeance !== false ? ' + séance du jour' : ''} · calcul automatique : ${kc(t.auto)} kcal</p>` : ''}
-    <p class="muted" style="font-size:12.5px">Formule de Mifflin-St Jeor, + énergie des séances du programme, ${({ perte: '−20 % pour perdre environ 0,5 à 1 % du poids par semaine', maintien: 'sans ajustement', muscle: '+10 % pour une prise de muscle propre', recompo: '−10 % les jours de repos, maintien les jours de séance' })[n.obj || 'maintien']}.${n.adj ? ` Ajustement automatique cumulé : <b>${n.adj > 0 ? '+' : ''}${n.adj} kcal</b>.` : ''}</p>
+    <p class="muted" style="font-size:12.5px">${t.bmrScale ? 'Métabolisme de base mesuré par ta balance' : 'Formule de Mifflin-St Jeor'}${t.lean ? `, protéines calculées sur ta masse maigre (${fr(+t.lean.toFixed(1))} kg)` : ''}, + énergie des séances du programme, ${({ perte: '−20 % pour perdre environ 0,5 à 1 % du poids par semaine', maintien: 'sans ajustement', muscle: '+10 % pour une prise de muscle propre', recompo: '−10 % les jours de repos, maintien les jours de séance' })[n.obj || 'maintien']}.${n.adj ? ` Ajustement automatique cumulé : <b>${n.adj > 0 ? '+' : ''}${n.adj} kcal</b>.` : ''}</p>
     ${(n.log || []).length ? `<table class="tbl"><thead><tr><th>Semaine</th><th>Poids</th><th>Ajustement</th></tr></thead><tbody>${n.log.slice(-5).reverse().map(l => `<tr><td>${esc(l.wk.slice(5))}</td><td>${l.pct > 0 ? '+' : ''}${String(l.pct).replace('.', ',')} %</td><td>${l.delta > 0 ? '+' : ''}${l.delta} kcal</td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="font-size:12.5px;margin-top:6px">🤖 Pèse-toi 2 à 3 fois par semaine (Progrès → Corps) : chaque lundi, l’appli ajuste tes calories selon ton évolution.</p>'}</div>` : ''}
   <p class="muted" style="font-size:11.5px;margin:14px 2px">Ces calculs sont des estimations générales et ne remplacent pas l’avis d’un médecin ou d’un diététicien, surtout en cas de problème de santé.</p>`;
 }
@@ -4701,7 +4729,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 39;
+const APP_VERSION = 40;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
