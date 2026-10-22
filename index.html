@@ -1330,6 +1330,9 @@ function applyDoc(src){
   titles = src.titles || {}; sess = src.sess || {}; seances = src.seances || []; body = src.body || []; nut = src.nut || null; journal = src.journal || {}; prog = src.prog || null; forme = src.forme || {}; badges = src.badges || null; runs = src.runs || []; gear = src.gear || null; coach = src.coach || null;
   if (gear && gear.ob === undefined){ gear.ob = GEAR_CASERNE.ob; gear.bp = GEAR_CASERNE.bp.slice(); if (String(gear.kb) === '6,8,12,16') gear.kb.push(20); }
   week = src.week || null; saveT = src._t || 0;
+  Object.values(logs).forEach(lg => { if (lg && !okVal('w', lg.w)) lg.w = ''; });
+  Object.values(sl).forEach(S => (S || []).forEach(x => { if (x && !okVal('w', x.w)) x.w = ''; }));
+  hist.forEach(h => { if (h.w != null && !okVal('w', h.w)) { h.w = null; (h.sl || []).forEach(x => { if (!okVal('w', x.w)) x.w = ''; }); } });
 }
 async function fetchDoc(id){
   if (!db) return null;
@@ -1480,6 +1483,9 @@ function sheetProfiles(){
    CALCULS : séries, volume, records, progression
    ============================================================ */
 const keyOf = (k, i) => k + '_' + i;
+// valeurs saisies plausibles (évite 17181818,5 kg quand des chiffres s'ajoutent au lieu de remplacer)
+const LIM = { w: 400, r: 1000, k: 3000 };
+const okVal = (f, v) => { const n = num(v); return v === '' || v == null || (n != null && n >= 0 && n <= (LIM[f] || 1e9)); };
 const setsOf = (k, i) => sl[keyOf(k, i)] || [];
 function volOf(h){
   if ((h.t || 'f') !== 'f') return 0;
@@ -1921,7 +1927,7 @@ function sheetSet(k, i, j){
     <div class="two">${t === 'f' ? `<div class="fg"><label for="sW">Poids (kg)</label><input id="sW" inputmode="decimal" value="${esc(x.w)}"></div>` : ''}
     <div class="fg"><label for="sR">${t === 's' ? 'Secondes' : t === 'k' ? 'Calories' : 'Répétitions'}</label><input id="sR" inputmode="numeric" value="${esc(x.r)}"></div></div>
     <div class="row"><button type="button" class="btn danger" id="sDel">↩️ Annuler la série</button><span class="spacer"></span><button class="btn pri" type="submit">Enregistrer</button></div></form>`);
-  $('#sf').onsubmit = ev => { ev.preventDefault(); const S = setsOf(k, i); if (t === 'f') S[j].w = $('#sW').value.trim(); S[j].r = $('#sR').value.trim(); if (done[k] && done[k][i]) record(k, i); closeSheet(); render(); save(); };
+  $('#sf').onsubmit = ev => { ev.preventDefault(); if ((t === 'f' && !okVal('w', $('#sW').value.trim())) || !okVal('r', $('#sR').value.trim())) return toast('⚠️ Valeur impossible, vérifie ta saisie'); const S = setsOf(k, i); if (t === 'f') S[j].w = $('#sW').value.trim(); S[j].r = $('#sR').value.trim(); if (done[k] && done[k][i]) record(k, i); closeSheet(); render(); save(); };
   $('#sDel').onclick = () => { const key = keyOf(k, i); sl[key] = setsOf(k, i).slice(0, j); sets[key] = sl[key].length; if ((done[k] || [])[i]) setDone(k, i, false); closeSheet(); render(); save(); };
 }
 
@@ -3461,6 +3467,7 @@ function sheetForme(then){
 const PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
 // disques à mettre de chaque côté : avec « Mon matériel » on n'utilise que les disques qui existent (un poids par paire)
 function plates(w, e){
+  if (!w || w > LIM.w) return null;
   const own = e && availW(e) && eqOf(e) === 'Barre', oly = own && !!gear.ob && !EZ_EX.includes(e.n);
   const bar = own ? (oly ? gear.ob : gear.bar) : +settings.bar || 20; if (!w || w < bar) return null;
   const need = +((w - bar) / 2).toFixed(2); if (!need) return { bar, out: [], rest: 0 };
@@ -4641,8 +4648,12 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const inp = e.target.closest('[data-log]'); if (!inp) return;
   const key = keyOf('day' + currentDay, inp.dataset.i); if (!logs[key]) logs[key] = { w:'', r:'' };
-  logs[key][inp.dataset.log] = inp.value; save();
+  const f = inp.dataset.log;
+  if (!okVal(f, inp.value)){ toast(`⚠️ ${inp.value} ${f === 'w' ? 'kg' : ''} : valeur impossible, vérifie ta saisie`); inp.value = logs[key][f] || ''; return; }
+  logs[key][f] = inp.value; save();
 });
+// en touchant une case, son contenu est sélectionné : on tape la nouvelle valeur au lieu de l'ajouter derrière
+document.addEventListener('focusin', e => { const t = e.target; if (t && t.matches && t.matches('[data-log], #sW, #sR')) setTimeout(() => { try{ t.select(); }catch(x){} }, 0); });
 // balayage gauche / droite pour changer de jour
 let sx = null, sy = null;
 $('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
@@ -4773,7 +4784,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 41;
+const APP_VERSION = 42;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
