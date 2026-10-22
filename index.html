@@ -1362,6 +1362,7 @@ async function load(){
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
+  setTimeout(() => autoBackup(), 5000);
 }
 // la base n'a pas répondu au démarrage : on réessaie, et on garde la version la plus complète
 async function retrySync(){
@@ -1372,6 +1373,46 @@ async function retrySync(){
   const loc = snapshot();
   if (localNewer(loc, rem)) save(true);
   else { applyDoc(rem); safeSet(backupKey(), snapshot()); render(); setStatus('saved', 'Synchronisé'); toast('🔄 Données synchronisées'); }
+}
+/* ---------- sauvegardes automatiques : une copie complète par semaine, en ligne (8 semaines gardées) ---------- */
+const BK_KEEP = 8, BKC = () => db.collection('backups');
+const bkSum = d => ({ seances: (d.seances || []).length, ex: (d.hist || []).length, poids: ((d.body || []).filter(b => b.p != null).sort((a, b) => a.d < b.d ? -1 : 1).pop() || {}).p ?? null, repas: Object.keys(d.journal || {}).length });
+async function bkWrite(pid, id, snap, label){
+  await BKC().doc(id).set(Object.assign(fsEnc(clone(snap)), { _pid: pid, _wk: curWk(), _label: label || '', _at: Date.now(), _sum: bkSum(snap) }));
+}
+async function autoBackup(force){
+  if (!db || !remoteReady || loading) return false;
+  const pid = profile.id, wk = curWk(), flag = 'mp_bk_' + pid;
+  if (!force && safeGet(flag, '') === wk) return false;
+  const snap = snapshot(); if (!force && richness(snap) < 3) return false;
+  try{
+    await bkWrite(pid, pid + '_' + wk, snap, force ? 'manuelle' : '');
+    if (foyerReady && safeGet('mp_bk_foyer', '') !== wk){ await BKC().doc('foyer_' + wk).set(Object.assign(fsEnc(clone(foyer)), { _pid: 'foyer', _wk: wk, _at: Date.now() })); safeSet('mp_bk_foyer', wk); }
+    safeSet(flag, wk);
+    const L = (await BKC().where('_pid', '==', pid).get()).docs.map(d => ({ id: d.id, at: d.get('_at') || 0 })).sort((a, b) => b.at - a.at);
+    await Promise.all(L.slice(BK_KEEP).map(x => BKC().doc(x.id).delete().catch(() => {})));
+    const F = (await BKC().where('_pid', '==', 'foyer').get()).docs.map(d => ({ id: d.id, at: d.get('_at') || 0 })).sort((a, b) => b.at - a.at);
+    await Promise.all(F.slice(BK_KEEP).map(x => BKC().doc(x.id).delete().catch(() => {})));
+    return true;
+  }catch(e){ return false; }
+}
+async function sheetBackups(){
+  openSheet(`<h2>💾 Sauvegardes</h2><p class="muted" style="font-size:13.5px">Chaque semaine, une copie complète de tes données (programme, séances, charges, nutrition, poids…) est enregistrée en ligne, à part. Les ${BK_KEEP} dernières sont gardées.</p><div id="bkL" class="card" style="margin-top:12px"><p class="muted">Chargement…</p></div>
+    <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn pri" data-x="bknow">💾 Sauvegarder maintenant</button><button class="btn" data-act="export">⬇️ Télécharger un fichier</button><label class="btn" style="cursor:pointer">⬆️ Restaurer un fichier<input type="file" accept=".json,application/json" id="bkIn" hidden></label></div>`);
+  $('#bkIn').onchange = async ev => { const f = ev.target.files[0]; if (!f) return; try{ const d = JSON.parse(await f.text()); if (!d || (!d.data && !d.hist)) throw new Error('format'); bkRestore(d, 'le fichier « ' + f.name + ' »'); }catch(e){ toast('❌ Ce fichier n’est pas une sauvegarde de l’appli'); } };
+  if (!db) { $('#bkL').innerHTML = '<p class="muted">Sauvegarde en ligne indisponible (pas de connexion).</p>'; return; }
+  try{
+    const L = (await BKC().where('_pid', '==', profile.id).get()).docs.map(d => ({ id: d.id, wk: d.get('_wk'), at: d.get('_at') || 0, sum: d.get('_sum') || {}, label: d.get('_label') || '' })).sort((a, b) => b.at - a.at);
+    if (!$('#bkL')) return;
+    $('#bkL').innerHTML = L.length ? L.map(b => `<div class="rec"><span style="font-size:22px">🗂️</span><div class="t"><b>${new Date(b.at).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })} · ${new Date(b.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${b.label ? ' · ' + esc(b.label) : ''}</b><small>${b.sum.seances || 0} séance${(b.sum.seances || 0) > 1 ? 's' : ''} · ${b.sum.ex || 0} exercice${(b.sum.ex || 0) > 1 ? 's' : ''} noté${(b.sum.ex || 0) > 1 ? 's' : ''}${b.sum.poids != null ? ' · ' + fr(b.sum.poids) + ' kg' : ''}</small></div><button class="btn sm" data-x="bkres" data-id="${esc(b.id)}">Restaurer</button></div>`).join('') : '<p class="muted">Pas encore de sauvegarde : la première se fait automatiquement à l’ouverture de l’appli, ou touche « Sauvegarder maintenant ».</p>';
+  }catch(e){ if ($('#bkL')) $('#bkL').innerHTML = '<p class="muted">Impossible de lire les sauvegardes pour l’instant.</p>'; }
+}
+function bkRestore(d, what){
+  sheetConfirm(`Remplacer toutes tes données actuelles par ${what} ? Une copie de l’état actuel est faite avant, au cas où.`, '♻️ Restaurer', async () => {
+    try{ if (db && remoteReady) await bkWrite(profile.id, profile.id + '_avant_' + Date.now(), snapshot(), 'avant restauration'); }catch(e){}
+    const src = Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith('_') && k !== 'lastUpdated'));
+    applyDoc(src); saveT = Date.now(); closeSheet(); save(true); render(); toast('♻️ Données restaurées');
+  });
 }
 let saveTimer = null, pending = null;
 async function pushRemote(id, snap){
@@ -1425,7 +1466,7 @@ function sheetProfiles(){
     <p style="color:var(--muted);font-size:13px;margin:4px 0 8px">Ta couleur</p>
     <div class="swatches">${PALETTES.map(([a, b, n], i) => `<button class="swatch ${profile.a1 === a && profile.a2 === b ? 'on' : ''}" data-pal="${i}" style="--s1:${a};--s2:${b}" aria-label="${n}" title="${n}"></button>`).join('')}</div>
     <form id="pf" class="row"><input id="pName" value="${esc(profile.nom)}" maxlength="16" aria-label="Nom du profil actuel" class="inp" style="flex:1"><button class="btn" type="submit">✏️ Renommer</button></form>
-    <button class="btn block" data-x="gear" style="margin-top:12px">🏋️ Mon matériel</button>
+    <div class="row" style="margin-top:12px"><button class="btn" data-x="gear" style="flex:1">🏋️ Mon matériel</button><button class="btn" data-x="bk" style="flex:1">💾 Sauvegardes</button></div>
     <div id="lockSet"></div>`);
   $('#sheet').querySelectorAll('[data-prof]').forEach(b => b.onclick = () => switchProfile(b.dataset.prof));
   lockSection();
@@ -1943,7 +1984,7 @@ function viewSemaine(){
     <p class="muted" style="font-size:12px;margin-top:8px">Jours : ${DAY_NAMES.filter((_, i) => (data['day'+i] || []).length).join(', ') || 'aucun'}.</p></div>
   ${remCard()}
   <h3 class="sec">Réglages</h3>
-  <div class="card"><div class="row"><button class="btn" data-act="resetweek">🔄 Remettre la semaine à zéro</button><button class="btn" data-act="export">💾 Sauvegarde (fichier)</button><button class="btn" data-act="pdf">📄 Programme en PDF</button></div>
+  <div class="card"><div class="row"><button class="btn" data-act="resetweek">🔄 Remettre la semaine à zéro</button><button class="btn" data-x="bk">💾 Sauvegardes</button><button class="btn" data-act="pdf">📄 Programme en PDF</button></div>
   <p class="muted" style="font-size:12.5px;margin-top:10px">Chaque lundi, les coches repartent à zéro automatiquement. Tes charges et ton historique sont gardés.</p></div>
   ${installCard()}
   </div>`;
@@ -4207,6 +4248,9 @@ function evoAct(a, b){
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
     case 'cible': sheetCible(); break;
+    case 'bk': sheetBackups(); break;
+    case 'bknow': b.disabled = true; autoBackup(true).then(ok => { toast(ok ? '💾 Sauvegarde faite' : '❌ Sauvegarde impossible (connexion ?)'); sheetBackups(); }); break;
+    case 'bkres': if (db) BKC().doc(b.dataset.id).get().then(doc => { if (!doc.exists) return toast('Sauvegarde introuvable'); bkRestore(fsDec(doc.data()), 'la sauvegarde choisie'); }).catch(() => toast('❌ Lecture impossible')); break;
     case 'adapt': sheetAdapt(); break;
     case 'adaptgo': adaptCaserne(); break;
     case 'noadapt': coach = Object.assign({}, coach, { noAdapt: 1 }); save(); render(); toast('D’accord. Tu peux adapter plus tard depuis Programme → Coach'); break;
@@ -4729,7 +4773,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 40;
+const APP_VERSION = 41;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
