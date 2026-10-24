@@ -1665,6 +1665,7 @@ function viewSeance(){
   const totalSets = list.reduce((a, e) => a + (typ(e) === 'c' || isSkip(e) ? 0 : effS(e)), 0);
   const mins = estMin(list), shortOn = list.some(e => e.cutD === today() || (e.cutS && e.cutS.d === today()) || e.ssD === today());
   const muscles = [...new Set(list.map(e => e.m))];
+  if (list.length && nDone === list.length && sess[k] && sess[k].start && !sess[k].end){ sess[k].end = Date.now(); setTimeout(() => save(), 0); }
   const s = sess[k], storyOn = currentDay === todayIdx() && list.length > 0 && !sessStarted(k);
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
@@ -1675,7 +1676,7 @@ function viewSeance(){
     <div style="flex:1;min-width:0;position:relative;z-index:1">
       <h2>${DAY_NAMES[currentDay]}${currentDay === todayIdx() ? ' <span class="tday">aujourd’hui</span>' : ''}</h2>
       <p>${esc(dayTitle(currentDay))}</p>
-      <div class="meta"><span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}<span class="chip">⏱️ ~${mins} min</span>${prog && cycleIdx(prog) === 3 ? '<span class="chip">🪶 Décharge</span>' : ''}${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
+      <div class="meta"><span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}<span class="chip">⏱️ ~${mins} min</span>${prog && cycleIdx(prog) === 3 ? '<span class="chip">🪶 Décharge</span>' : ''}${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end && nDone < list.length ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
       ${muscles.length ? `<div class="meta">${muscles.map(m => `<span class="mus" style="--c:${mcol(m)}">${esc(m)}</span>`).join('')}</div>` : ''}
     </div>
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
@@ -1896,7 +1897,7 @@ function duoChallenges(){
     <table class="tbl"><thead><tr><th></th><th>${esc(me)}</th><th>${esc(ot)}</th><th></th></tr></thead><tbody>${DUO_CH.map(([c, ic, l]) => `<tr><td>${ic} ${l}</td><td>${cell(A[c][0], A[c][1])}</td><td>${cell(B[c][0], B[c][1])}</td><td>${ok(c) ? '✅' : ''}</td></tr>`).join('')}</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:6px">${nOk === DUO_CH.length ? '🏅 Semaine réussie ensemble, bravo à vous deux !' : 'Les 4 défis réussis par vous deux = une médaille commune 🏅'}${nW ? ` · ${nW} semaine${nW > 1 ? 's' : ''} réussie${nW > 1 ? 's' : ''} ensemble` : ''}</p></div>`;
 }
-function startSession(k){ if (!sess[k] || sess[k].end || !sess[k].start || ymd(new Date(sess[k].start)) !== ymd(new Date())) sess[k] = { start: Date.now() }; }
+function startSession(k){ const L = data[k] || []; if (L.length && L.every((x, j) => (done[k] || [])[j] || isSkip(x))) return; if (!sess[k] || sess[k].end || !sess[k].start || ymd(new Date(sess[k].start)) !== ymd(new Date())) sess[k] = { start: Date.now() }; }
 function record(k, i){
   const e = data[k][i], lg = logs[keyOf(k, i)] || {}, t = typ(e), S = setsOf(k, i), d = ymd(new Date());
   hist = hist.filter(h => !(h.d === d && h.n === e.n));
@@ -4876,7 +4877,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 44;
+const APP_VERSION = 45;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
