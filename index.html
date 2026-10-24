@@ -979,6 +979,22 @@ const EQ_FIX = { 'Développé couché':'Barre', 'Développé décliné':'Barre',
   'Développé haltères assis':'Haltères', 'Élévations latérales':'Haltères', 'Élévations frontales':'Haltères', 'Oiseau (Rear Delt Fly)':'Haltères', 'Arnold press':'Haltères', 'Curl marteau':'Haltères', 'Curl pupitre':'Barre', 'Extension triceps au-dessus tête':'Haltères', 'Squat goblet':'Haltères', 'Squat bulgare':'Haltères', 'Fentes marchées':'Haltères', 'Step-up':'Haltères', 'Russian twist':'Poids du corps', 'Curl concentré':'Haltères', 'Curl spider':'Haltères', 'Curl Zottman':'Haltères', 'Renegade row':'Haltères', 'Tate press':'Haltères', 'Pull-over haltère':'Haltères',
   'Marche du fermier':'Kettlebell', 'Kettlebell swing':'Kettlebell', 'Windmill kettlebell':'Kettlebell', 'Marche latérale élastique':'Élastique', 'Abduction élastique':'Élastique', 'Pallof press élastique':'Élastique', 'Tractions avec élastique':'Élastique', 'Nordic curl':'Élastique',
   'Rowing T-bar':'Machine & poulie', 'Poussée de traîneau':'Machine & poulie', 'Reverse hyperextension':'Machine & poulie', 'Mollets au Donkey':'Machine & poulie', 'Leg extension':'Machine & poulie', 'Pec deck':'Machine & poulie', 'Pec deck inversé':'Machine & poulie', 'Hack squat':'Machine & poulie', 'Face Pull':'Machine & poulie', 'Abduction machine':'Machine & poulie', 'Kickback poulie':'Machine & poulie', 'Mollets assis':'Machine & poulie', 'Suspension à la barre':'Poids du corps', 'Wall ball':'Poids du corps', 'Slam médecine-ball':'Poids du corps' };
+// exercices impossibles avec le matériel de la caserne (pas de rack à squat, pas de barre de traction, Multigym limitée…)
+const NO_CASERNE = new Set(['Squat','Front squat','Overhead squat','Soulevé de terre trap bar','Rack pull','Curl pupitre','Good morning','Mollets debout barre','Développé militaire','Développé décliné','Développé incliné barre',
+  'Écartés aux câbles','Pec deck','Écartés poulie haute','Chest press machine','Développé couché Smith machine','Rowing T-bar','Tractions assistées machine','Pec deck inversé','Développé épaules machine','Curl machine','Dips assistés machine',
+  'Presse à jambes','Hack squat','Squat Smith machine','Poussée de traîneau','Curl jambes allongé','Curl jambes assis','Abduction machine','Hip thrust machine','Reverse hyperextension','Mollets debout','Mollets assis','Mollets à la presse','Mollets au Donkey',
+  'Crunch aux câbles','Crunch machine','Rotation du buste poulie','Machine à escaliers',
+  'Tractions','Tractions supination','Tractions prise neutre','Tractions australiennes','Tractions négatives','Suspension à la barre','Muscle-up','Tractions avec élastique','Extension lombaire banc 45°','Leg curl au swiss ball','Crunch swiss ball','Roue abdominale','Sit-up décliné','Natation']);
+const HOME = [['Elliptique','🏠 Vélo elliptique']];
+const homeHas = n => !gear || !gear.home || gear.home.includes(n);
+// faisable avec mon matériel ? (caserne + maison) — sans « Mon matériel » activé, tout est permis
+const canDo = n => !gear || !gear.on || ((!NO_CASERNE.has(n)) && (!HOME.some(([h]) => h === n) || homeHas(n)));
+// remplaçant faisable : même muscle, même type, pas déjà dans la séance
+function altDoable(e, used, avoid){
+  const t = typ(e), m = e.m, slot = Object.values(SLOTS).find(v => (v.caserne || []).includes(e.n) || Object.values(v).some(L => L.includes(e.n)));
+  const pref = slot ? slot.caserne || [] : [];
+  return [...pref, ...LIB.filter(x => x.m === m && (x.t || 'f') === t).map(x => x.n)].find(n => LIB_BY[n] && canDo(n) && n !== e.n && !(used && used.has(n)) && !(avoid && avoid.has(n))) || null;
+}
 function eqOf(x){
   if (EQ_FIX[x.n]) return EQ_FIX[x.n];
   const n = x.n.toLowerCase();
@@ -1288,7 +1304,7 @@ const topReps = r => { const m = String(r || '').match(/\d+([.,]\d+)?/g); return
 const incOf = e => BIG.includes(e.m) ? 2.5 : 1;
 // Mon matériel : les charges qui existent vraiment (haltères, kettlebells, barre EZ + disques)
 // d'après l'inventaire de la salle du centre de secours Cruzy / Quarante (barre EZ et ses petits disques : d'après les photos)
-const GEAR_CASERNE = { on: true, db: [8, 10, 12.5, 15, 20, 22.5], kb: [6, 8, 12, 16, 20], bar: 7, pl: [1.25, 1.25, 2.5, 2.5, 5, 5], ob: 20, bp: [5, 5, 5, 10, 10, 10, 10, 15, 15, 15] };
+const GEAR_CASERNE = { on: true, home: ['Elliptique'], db: [8, 10, 12.5, 15, 20, 22.5], kb: [6, 8, 12, 16, 20], bar: 7, pl: [1.25, 1.25, 2.5, 2.5, 5, 5], ob: 20, bp: [5, 5, 5, 10, 10, 10, 10, 15, 15, 15] };
 // exercices faits avec la barre EZ (les autres exercices à la barre : barre olympique)
 const EZ_EX = ['Curl barre', 'Barre au front', 'Curl pupitre', 'Drag curl'];
 function barLoads(g, oly){
@@ -2298,18 +2314,19 @@ function sheetEdit(i, preset){
     closeSheet(); render(); save(); toast(i >= 0 ? 'Exercice modifié ✓' : '✅ ' + ne.n + ' ajouté');
   };
 }
-let libQ = '', libM = 'Tous', libE = 'Tout';
+let libQ = '', libM = 'Tous', libE = null;
 function sheetLib(){
-  const ms = ['Tous', ...Object.keys(MUSCLES)];
+  const ms = ['Tous', ...Object.keys(MUSCLES)], mine = !!(gear && gear.on);
+  if (libE == null || (libE === 'Mine' && !mine)) libE = mine ? 'Mine' : 'Tout';
   openSheet(`<h2>📚 Bibliothèque</h2>
     <input id="lq" class="inp" type="search" placeholder="Rechercher : squat, gainage, vélo…" value="${esc(libQ)}" style="width:100%" aria-label="Rechercher un exercice">
     <div class="chips2">${ms.map(m => `<button data-lm="${m}" class="${libM === m ? 'on' : ''}" style="--c:${mcol(m)}">${m}</button>`).join('')}</div>
-    <div class="chips2" aria-label="Matériel">${['Tout', ...EQUIP].map(q => `<button data-le="${q}" class="${libE === q ? 'on' : ''}" style="--c:#94a3b8">${q === 'Tout' ? '🧰 Tout matériel' : q}</button>`).join('')}</div>
+    <div class="chips2" aria-label="Matériel">${[...(mine ? ['Mine'] : []), 'Tout', ...EQUIP].map(q => `<button data-le="${q}" class="${libE === q ? 'on' : ''}" style="--c:#94a3b8">${q === 'Mine' ? '🚒 Mon matériel' : q === 'Tout' ? '🧰 Tout matériel' : q}</button>`).join('')}</div>
     <p class="muted" id="lcnt" style="margin:4px 0 8px;font-size:.8rem"></p>
     <div id="lres"></div>`);
   const paint = () => {
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || eqOf(x) === libE) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
+    const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || (libE === 'Mine' ? canDo(x.n) : eqOf(x) === libE)) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
     $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
     $('#lcnt').textContent = R.length + (R.length > 1 ? ' exercices' : ' exercice');
     $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
@@ -3256,7 +3273,7 @@ function buildProgram(cfg){
   // jours de cardio léger sur les jours de repos
   const rest = [0,1,2,3,4,5,6].filter(d => !cfg.days.includes(d)), nCardio = { perte: 2, recompo: 1, maintien: 1, muscle: 0 }[cfg.obj] || 0;
   rest.filter(d => d !== 6 || rest.length <= 2).slice(0, nCardio).forEach((d, k) => {
-    const name = cfg.niv === 'deb' || cfg.mat === 'pdc' ? 'Marche rapide' : (k ? 'Vélo' : 'Course à pied'), cx = exFromLib(name, { slot: 'cardio', vi: 0 });
+    const name = cfg.mat === 'caserne' && homeHas('Elliptique') ? (k ? 'Course à pied' : 'Elliptique') : cfg.niv === 'deb' || cfg.mat === 'pdc' ? 'Marche rapide' : (k ? 'Vélo' : 'Course à pied'), cx = exFromLib(name, { slot: 'cardio', vi: 0 });
     if (cfg.obj !== 'perte') cx.r = name === 'Marche rapide' ? '40 min' : '30 min';
     cx.bs = 1; cx.cmp = 0; out['day' + d] = [cx]; titles2['day' + d] = 'Cardio léger';
   });
@@ -3387,12 +3404,14 @@ function sheetGear(){
     <div class="fg"><label for="gBp">🛞 Disques bumper (un poids par paire)</label><input id="gBp" class="inp" inputmode="decimal" value="${esc(L(g.bp))}" placeholder="5 ; 10 ; 15"><small class="muted">6 disques de 5 kg = 3 paires → « 5 ; 5 ; 5 »</small></div>
     <div class="fg"><label for="gBar">〰️ Barre EZ à vide (kg)</label><input id="gBar" class="inp" type="number" step="any" min="0" inputmode="decimal" value="${g.bar ?? ''}" placeholder="7"></div>
     <div class="fg"><label for="gPl">⚫ Disques pour la barre (un poids par paire)</label><input id="gPl" class="inp" inputmode="decimal" value="${esc(L(g.pl))}" placeholder="1,25 ; 2,5 ; 5"><small class="muted">2 paires de 2,5 kg → écris « 2,5 ; 2,5 »</small></div>
+    <div class="fg"><label>À la maison</label><div class="chips2 wrap">${HOME.map(([n, l]) => `<button type="button" class="${!g.home || g.home.includes(n) ? 'on' : ''}" data-home="${n}">${l}</button>`).join('')}</div></div>
     <div class="box" id="gPrev"></div>
     ${caserneChanges().length ? `<button type="button" class="btn block" data-x="adapt" style="margin-top:12px">🚒 Adapter mon programme à ce matériel (${caserneChanges().length} exercice${caserneChanges().length > 1 ? 's' : ''} à remplacer)</button>` : ''}
     <div class="row" style="margin-top:12px"><button type="button" class="btn sm" id="gPre">🚒 Matériel de la caserne</button><span class="spacer"></span><button type="button" class="btn" id="gCan">Annuler</button><button class="btn pri" type="submit">✅ Enregistrer</button></div></form>`);
   const parse = v => [...new Set(String(v).split(/;|\/|,\s+|\s+/).map(x => num(x.replace(',', '.'))).filter(x => x > 0))].sort((a, b) => a - b);
   const parsePl = v => String(v).split(/;|\/|,\s+|\s+/).map(x => num(x.replace(',', '.'))).filter(x => x > 0).sort((a, b) => a - b);
-  const read = () => ({ on: $('#gOn').classList.contains('on'), db: parse($('#gDb').value), kb: parse($('#gKb').value), bar: num($('#gBar').value) || 0, pl: parsePl($('#gPl').value), ob: num($('#gOb').value) || 0, bp: parsePl($('#gBp').value) });
+  $('#sheet').querySelectorAll('[data-home]').forEach(b => b.onclick = () => b.classList.toggle('on'));
+  const read = () => ({ home: [...document.querySelectorAll('[data-home].on')].map(b => b.dataset.home), on: $('#gOn').classList.contains('on'), db: parse($('#gDb').value), kb: parse($('#gKb').value), bar: num($('#gBar').value) || 0, pl: parsePl($('#gPl').value), ob: num($('#gOb').value) || 0, bp: parsePl($('#gBp').value) });
   const prev = () => { const r = read(), B = r.bar ? barLoads(r) : [], O = r.ob ? barLoads(r, true) : [];
     $('#gPrev').innerHTML = `<h4>Charges possibles</h4><p>🏋️ Haltères : ${r.db.length ? r.db.map(fr).join(' · ') + ' kg' : '–'}\n🔔 Kettlebells : ${r.kb.length ? r.kb.map(fr).join(' · ') + ' kg' : '–'}\n〰️ Barre EZ chargée : ${B.length ? B.map(fr).join(' · ') + ' kg' : '–'}\n🏋️‍♂️ Barre olympique : ${O.length ? fr(O[0]) + ' à ' + fr(O[O.length - 1]) + ' kg, par ' + fr(Math.min(...O.slice(1).map((x, i) => x - O[i])) || 0) + ' kg' : '–'}</p>`; };
   $('#gOn').onclick = () => { const b = $('#gOn'); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); };
@@ -3409,12 +3428,13 @@ const CASERNE_SWAP = {
   'Curl jambes allongé':['Leg curl élastique','Soulevé roumain kettlebell'], 'Curl jambes assis':['Leg curl élastique','Soulevé roumain kettlebell'], 'Mollets debout':['Mollets sur une marche'], 'Mollets assis':['Mollets sur une marche'], 'Mollets à la presse':['Mollets sur une marche'],
   'Crunch aux câbles':['Relevé de genoux suspendu','Russian twist'], 'Développé militaire':['Développé haltères assis','Arnold press'], 'Développé épaules machine':['Développé haltères assis'],
   'Face Pull':['Oiseau élastique','Oiseau (Rear Delt Fly)'], 'Rowing T-bar':['Rowing barre','Rowing haltère un bras'], 'Hip thrust machine':['Hip thrust'], 'Abduction machine':['Abduction élastique'],
-  'Tractions':['Tirage vertical (Lat Pulldown)'], 'Tractions supination':['Tirage vertical prise serrée'], 'Tractions prise neutre':['Tirage vertical prise serrée'], 'Tractions assistées machine':['Tirage vertical (Lat Pulldown)'], 'Elliptique':['Vélo','Rameur']
+  'Tractions':['Tirage vertical (Lat Pulldown)'], 'Tractions supination':['Tirage vertical prise serrée'], 'Tractions prise neutre':['Tirage vertical prise serrée'], 'Tractions assistées machine':['Tirage vertical (Lat Pulldown)']
 };
 function caserneChanges(){
   const C = [];
   Object.keys(data).sort().forEach(k => { const L = data[k] || [], used = new Set(L.map(e => e.n));
-    L.forEach((e, i) => { const opts = CASERNE_SWAP[e.n]; if (!opts) return; const to = opts.find(n => LIB_BY[n] && !used.has(n)) || opts.find(n => LIB_BY[n]); if (!to) return; used.add(to); C.push({ k, i, from: e.n, to }); }); });
+    L.forEach((e, i) => { if (!CASERNE_SWAP[e.n] && canDo(e.n)) return; if (!CASERNE_SWAP[e.n] && (!gear || !gear.on)) return;
+      const opts = (CASERNE_SWAP[e.n] || []).filter(n => canDo(n)); const to = opts.find(n => LIB_BY[n] && !used.has(n)) || altDoable(e, used) || opts.find(n => LIB_BY[n]); if (!to) return; used.add(to); C.push({ k, i, from: e.n, to }); }); });
   return C;
 }
 // rappel sur la séance : exercices impossibles à la caserne dans la journée affichée
@@ -3458,7 +3478,7 @@ const PAIN = {
   'Poignet':{ avoid:['Pompes piquées','Pompes en équilibre (HSPU)','Renegade row','Extension triceps en planche','Pompes','Pompes inclinées','Pompes diamant','Pompes explosives','Curl barre','Barre au front','Développé couché','Développé militaire','Roue abdominale','Burpees','Mountain climbers'], alt:{ 'Développé couché':'Développé couché haltères','Curl barre':'Curl marteau','Développé militaire':'Développé haltères assis','Pompes':'Pec deck' } },
   'Dos':{ avoid:['Good morning élastique','Soulevé de terre sumo','Soulevé de terre jambes tendues','Rack pull','Kettlebell swing','Soulevé de terre','Soulevé de terre roumain','Rowing barre','Good morning','Squat','Superman','Roue abdominale','Relevé de jambes au sol','Russian twist','Shrugs (trapèzes)'], alt:{ 'Squat':'Presse à jambes','Rowing barre':'Tirage horizontal (Cable Row)','Soulevé de terre roumain':'Curl jambes allongé','Soulevé de terre':'Curl jambes allongé','Good morning':'Curl jambes assis' } },
   'Hanche':{ avoid:['Squat cosaque','Fente bulgare élastique','Hip thrust à genoux élastique','Squat','Squat bulgare','Fentes marchées','Fentes sautées','Hip thrust','Squat profond tenu','Pigeon (fessiers)','Box jump','Sauts groupés','Saut en longueur sans élan','Squat goblet','Course à pied'], alt:{ 'Squat':'Leg extension','Course à pied':'Vélo' } },
-  'Genou':{ avoid:['Squat élastique','Fente bulgare élastique','Leg extension élastique','Squat cosaque','Pistol squat','Jumping jacks','Squat','Squat goblet','Squat bulgare','Fentes marchées','Leg extension','Presse à jambes','Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Chaise','Squat poids du corps','Step-up','Course à pied','Corde à sauter','Burpees','Squat profond tenu'], alt:{ 'Squat':'Hip thrust','Presse à jambes':'Pont fessier','Leg extension':'Curl jambes allongé','Course à pied':'Natation','Squat goblet':'Hip thrust' } },
+  'Genou':{ avoid:['Squat goblet kettlebell','Squat sumo haltère','Fentes croisées','Sissy squat','Squat élastique','Fente bulgare élastique','Leg extension élastique','Squat cosaque','Pistol squat','Jumping jacks','Squat','Squat goblet','Squat bulgare','Fentes marchées','Leg extension','Presse à jambes','Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Chaise','Squat poids du corps','Step-up','Course à pied','Corde à sauter','Burpees','Squat profond tenu'], alt:{ 'Squat':'Hip thrust','Presse à jambes':'Pont fessier','Leg extension':'Curl jambes allongé','Course à pied':'Natation','Squat goblet':'Hip thrust' } },
   'Cheville':{ avoid:['Jumping jacks','Box jump','Squat sauté','Fentes sautées','Sauts groupés','Saut en longueur sans élan','Sauts latéraux (skater)','Corde à sauter','Burpees','Course à pied','Mollets debout','Mollets à la presse','Fentes marchées','Step-up'], alt:{ 'Course à pied':'Vélo','Corde à sauter':'Rameur' } }
 };
 const today = () => ymd(new Date());
@@ -3496,7 +3516,7 @@ function applyPain(pains){
   const avoid = new Set(pains.flatMap(z => PAIN[z].avoid));
   L.forEach((e, i) => {
     if (!avoid.has(e.n)) return;
-    const altName = pains.map(z => PAIN[z].alt[e.n]).find(a => a && !avoid.has(a) && LIB_BY[a]);
+    const altName = pains.map(z => PAIN[z].alt[e.n]).find(a => a && !avoid.has(a) && LIB_BY[a] && canDo(a)) || (gear && gear.on ? altDoable(e, new Set(L.map(x => x.n)), avoid) : null);
     if (altName){ const x = exFromLib(altName, { s: e.s, tmpD: d, orig: clone(e) }); if (typ(x) === typ(e)) x.r = e.r; L[i] = x; msgs.push(`🔁 ${e.n} → ${altName}`); }
     else { e.skipD = d; msgs.push(`⏭️ ${e.n} mis de côté aujourd’hui`); }
   });
@@ -4856,7 +4876,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 43;
+const APP_VERSION = 44;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
