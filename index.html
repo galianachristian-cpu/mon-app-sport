@@ -340,7 +340,45 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 .swatches{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
 .swatch{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--s1),var(--s2));border:3px solid transparent;box-shadow:0 0 0 1px var(--line);transition:transform .15s}
 .swatch.on{border-color:var(--card);box-shadow:0 0 0 2px var(--s1),0 6px 16px color-mix(in srgb,var(--s1) 40%,transparent);transform:scale(1.08)}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== Animations v2 ===== */
+/* fond « aurore » qui respire doucement */
+body::before{content:'';position:fixed;inset:-20%;z-index:-1;pointer-events:none;background:radial-gradient(40% 35% at 20% 20%,color-mix(in srgb,var(--a1) 14%,transparent),transparent 70%),radial-gradient(35% 30% at 80% 70%,color-mix(in srgb,var(--a2) 14%,transparent),transparent 70%);animation:aurora 22s ease-in-out infinite alternate;will-change:transform}
+@keyframes aurora{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(4%,-3%,0) rotate(8deg)}100%{transform:translate3d(-3%,4%,0) rotate(-6deg)}}
+/* changement d'onglet : glisse dans le sens de la navigation */
+#app.slideL{animation:slideL .38s cubic-bezier(.2,.8,.2,1)}#app.slideR{animation:slideR .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideL{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+/* barre du bas : pastille qui glisse vers l'onglet actif */
+.nav .wrap{position:relative}
+.nav button.on::before{display:none}
+.navpill{position:absolute;top:0;left:0;width:20%;height:3px;pointer-events:none;transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.navpill::before{content:'';position:absolute;left:50%;width:34px;margin-left:-17px;height:3px;border-radius:0 0 4px 4px;background:var(--grad);box-shadow:0 0 12px color-mix(in srgb,var(--a1) 70%,transparent)}
+/* anneaux qui se dessinent */
+.ringdraw{transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)}
+/* vague au toucher */
+.rip{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:ripple .55s ease-out forwards}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+/* exercice validé : éclat autour du bouton et halo vert sur la carte */
+.ex.justdone{animation:donepulse .9s ease-out}
+@keyframes donepulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}100%{box-shadow:0 0 0 18px rgba(52,211,153,0)}}
+.ex.justdone .check{position:relative}
+.ex.justdone .check::after{content:'';position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,#34d399 0 2px,transparent 3px) 50% 0/6px 6px no-repeat,radial-gradient(circle,#fbbf24 0 2px,transparent 3px) 100% 50%/6px 6px no-repeat,radial-gradient(circle,#22d3ee 0 2px,transparent 3px) 50% 100%/6px 6px no-repeat,radial-gradient(circle,#f472b6 0 2px,transparent 3px) 0 50%/6px 6px no-repeat;animation:burst .6s ease-out forwards}
+@keyframes burst{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.9) rotate(45deg);opacity:0}}
+/* fenêtres du bas : arrivée avec un léger rebond, fond flouté */
+.sheet.show{transition:transform .42s cubic-bezier(.25,1.25,.4,1)}
+.ov.show{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+/* notification : rebond */
+.toast.show{transition:transform .38s cubic-bezier(.3,1.5,.5,1),opacity .25s}
+/* séance en cours : bordure lumineuse qui tourne autour du résumé du jour */
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+.hero.live{position:relative}
+.hero.live::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;background:conic-gradient(from var(--ang),transparent 0 60%,var(--a1),var(--a2),transparent 85%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spinb 4s linear infinite;pointer-events:none}
+@keyframes spinb{to{--ang:360deg}}
+/* séries : petit saut quand on valide */
+.set.on{transition:transform .2s cubic-bezier(.3,1.6,.5,1),background .2s}
+.set:active{transform:scale(.9)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 :focus-visible{outline:2px solid var(--a1);outline-offset:2px}
 .profbtn{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:13px;max-width:120px}
 .profbtn .pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -655,7 +693,7 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
   <button id="miniStop" aria-label="Arrêter le repos">✕</button>
 </div>
 
-<nav class="nav" aria-label="Navigation"><div class="wrap">
+<nav class="nav" aria-label="Navigation"><div class="wrap"><span class="navpill" id="navpill" aria-hidden="true"></span>
   <button data-go="seance" class="on"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg></span>Séance</button>
   <button data-go="semaine"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></svg></span>Programme</button>
   <button data-go="nutrition"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v6a2 2 0 0 0 4 0V3M8 11v10M17.5 21V3c-2 1.1-3 3.4-3 6v4.5h3"/></svg></span>Nutrition</button>
@@ -1287,6 +1325,7 @@ const BIG = ['Pectoraux','Dos','Quadriceps','Ischio-jambiers','Fessiers'];
    ============================================================ */
 let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [], nut = null, journal = {}, prog = null, forme = {}, badges = null, runs = [], gear = null, coach = null;
 let currentDay = 0, view = 'seance', online = !!db, other = null, saveT = 0, remoteReady = false, loading = false, syncTimer = null;
+const NAV_ORDER = ['seance','semaine','nutrition','progres','chrono'];
 const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1672,7 +1711,7 @@ function viewSeance(){
   ${storyOn ? storyRow(k, list) : ''}
   <div class="days">${DAY_SHORT.map((d, i) => { const l = data['day'+i] || [], f = l.length && l.every((_, j) => (done['day'+i] || [])[j]);
     return `<button class="day ${i === currentDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''} ${f ? 'full' : ''}" data-day="${i}"><b>${d}</b><span>${esc(dayTitle(i))}</span></button>`; }).join('')}</div>
-  <section class="hero">
+  <section class="hero${s && s.start && !s.end && nDone < list.length ? ' live' : ''}">
     <div style="flex:1;min-width:0;position:relative;z-index:1">
       <h2>${DAY_NAMES[currentDay]}${currentDay === todayIdx() ? ' <span class="tday">aujourd’hui</span>' : ''}</h2>
       <p>${esc(dayTitle(currentDay))}</p>
@@ -1714,7 +1753,7 @@ function stepper(i, f, val, d, unit, label, ph){
   return `<div class="step"><button data-act="adj" data-f="${f}" data-i="${i}" data-d="${-d}" aria-label="${label} moins">−</button><input inputmode="decimal" type="number" step="any" min="0" value="${esc(val)}" data-log="${f}" data-i="${i}" aria-label="${label}" placeholder="${esc(ph || '–')}"><span class="u">${unit}</span><button data-act="adj" data-f="${f}" data-i="${i}" data-d="${d}" aria-label="${label} plus">+</button></div>`;
 }
 // carte ouverte : celle choisie, sinon le premier exercice pas encore fait
-let exOpen = {}, justSet = null;
+let exOpen = {}, justSet = null, justDone = null;
 function openIdx(k){ const L = data[k] || [], dn = done[k] || []; const o = exOpen[k]; if (o != null && L[o] && !dn[o]) return o; return L.findIndex((x, j) => !dn[j] && !isSkip(x)); }
 function exCard(k, e, i){
   const key = keyOf(k, i), lg = logs[key] || { w:'', r:'' }, isDone = (done[k] || [])[i], t = typ(e);
@@ -1733,13 +1772,13 @@ function exCard(k, e, i){
   if (!isSkip(e) && i !== openIdx(k)){
     const dots = t === 'c' ? '' : `<span class="mini-sets">${Array.from({ length: effS(e) }, (_, j) => `<i class="${j < S.length ? 'on' : ''}"></i>`).join('')}</span>`;
     const info = isDone ? (S.length && t === 'f' ? `${fr(Math.max(...S.map(x => num(x.w) || 0)))} kg · ${S.length} séries` : 'Terminé') : last ? `Dernière fois : ${esc(lastTxt(last))}` : (t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`);
-    return `<article class="ex exmini ${isDone ? 'done' : ''}" data-i="${i}"><div class="row1">
+    return `<article class="ex exmini ${isDone ? 'done' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}"><div class="row1">
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e, true)}</button>
       <button class="name" data-act="exopen" data-i="${i}" aria-expanded="false"><b>${esc(e.n)}</b><span class="sub">${dots}<span class="sr">${info}</span>${isPR ? '<span class="pr">🏆</span>' : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button></div></article>`;
   }
   if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : '⏭️ Mis de côté aujourd’hui (douleur)'}</span></span></div></div></article>`;
-  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">🩺 Remplace « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
+  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">🩺 Remplace « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1">
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`}</span>${e.ssD === today() ? `<span class="ph ph-ss">🔗 avec ${esc(e.ssW)}</span>` : ''}${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
@@ -1913,7 +1952,7 @@ function setDone(k, i, val){
   if (!done[k]) done[k] = [];
   const was = !!done[k][i]; done[k][i] = val;
   if (val && !was){
-    startSession(k); record(k, i);
+    startSession(k); record(k, i); justDone = keyOf(k, i); setTimeout(() => { justDone = null; }, 1000);
     { const e2 = data[k][i], h2 = lastOf(e2.n), v = h2 && kcalVal(h2), bk = bestKcal(e2.n, ymd(new Date())); if (typ(e2) === 'c' && v && bk > 0 && v > bk) setTimeout(() => { confetti(); toast(`🏆 Record de calories sur ${e2.n} : ${v} kcal !`); }, 300); }
     const list = data[k], all = list.every((x, j) => done[k][j] || isSkip(x));
     if (all){ sess[k].end = Date.now(); pauseTimer(); setTimeout(() => { confetti(); sheetBilan(k, true); }, 300); }
@@ -4655,21 +4694,35 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 setInterval(syncAwake, 15000);
 function render(){
   document.querySelectorAll('.nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view));
+  const np = $('#navpill'); if (np) np.style.transform = `translateX(${Math.max(0, NAV_ORDER.indexOf(view)) * 100}%)`;
   $('#subTitle').textContent = profile.nom + ' · ' + { seance: DAY_NAMES[currentDay] + ' · ' + dayTitle(currentDay), semaine: 'Ma semaine', nutrition: 'Nutrition', progres: 'Mes progrès', chrono: 'Chrono' }[view];
   ({ seance: viewSeance, semaine: viewSemaine, nutrition: viewNutrition, progres: viewProgres, chrono: viewChrono })[view]();
   syncAwake();
   paintTimer();
   if ($('#app').classList.contains('enter')) tagStagger();
 }
-function go(v){ view = v; render(); window.scrollTo({ top: 0 }); enterFx(); if (v === 'progres' || v === 'nutrition') loadOther(); }
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest('.btn,.set,.check,.add,.day,.chip,.nav button,.wods button,.itmodes button,.exstrip button'); if (!b || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, sp = document.createElement('span');
+  sp.className = 'ripple'; sp.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  if (getComputedStyle(b).position === 'static') b.style.position = 'relative'; b.classList.add('rip'); b.appendChild(sp); setTimeout(() => sp.remove(), 600);
+}, { passive: true });
+function go(v){ const dir = NAV_ORDER.indexOf(v) - NAV_ORDER.indexOf(view); view = v; render();
+  if (dir && !matchMedia('(prefers-reduced-motion: reduce)').matches){ const a = $('#app'); a.classList.remove('slideL', 'slideR'); void a.offsetWidth; a.classList.add(dir > 0 ? 'slideL' : 'slideR'); setTimeout(() => a.classList.remove('slideL', 'slideR'), 450); }
+  window.scrollTo({ top: 0 }); enterFx(); if (v === 'progres' || v === 'nutrition') loadOther(); }
 // À l'ouverture d'un onglet : cartes en cascade et chiffres qui défilent (pas aux simples rafraîchissements)
 let enterT, enterAt = 0;
+function drawRings(root){
+  root.querySelectorAll('svg circle[stroke-dasharray]').forEach(c => { const to = c.getAttribute('stroke-dashoffset'), full = c.getAttribute('stroke-dasharray'); if (to == null || +to >= +full - .5) return;
+    c.classList.remove('ringdraw'); c.style.strokeDashoffset = full; void c.getBoundingClientRect(); requestAnimationFrame(() => { c.classList.add('ringdraw'); c.style.strokeDashoffset = to; }); });
+}
 function enterFx(){
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const app = $('#app'); clearTimeout(enterT); enterAt = performance.now();
   app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); tagStagger();
   enterT = setTimeout(() => app.classList.remove('enter'), 1200);
   app.querySelectorAll('.stat .v').forEach(countUp);
+  drawRings(app);
 }
 // délai négatif : si l'onglet se redessine pendant l'entrée (données chargées), l'animation reprend où elle en était
 function tagStagger(){
@@ -4898,7 +4951,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 46;
+const APP_VERSION = 47;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
