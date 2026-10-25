@@ -428,6 +428,17 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .btn.sm{padding:7px 11px;font-size:13px;border-radius:11px}
 .set{min-width:44px;height:40px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
 .set b{font-size:12.5px}.set small{font-size:10px;font-weight:700;opacity:.85}
+.ailog{max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px 8px;overscroll-behavior:contain}
+.aim{max-width:88%;padding:9px 12px;border-radius:16px;font-size:14px;line-height:1.45;animation:aimIn .25s ease-out;overflow-wrap:anywhere}
+.aim.me{align-self:flex-end;background:linear-gradient(135deg,var(--a1),var(--a2));color:#0b1020;border-bottom-right-radius:5px;font-weight:600}
+.aim.bot{align-self:flex-start;background:var(--bg2);border:1px solid var(--line);border-bottom-left-radius:5px}
+.aim.err{border-color:var(--ko);color:var(--soft)}
+.aim.typing{display:flex;gap:4px;padding:12px 14px}.aim.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:aiDot 1s infinite}.aim.typing i:nth-child(2){animation-delay:.15s}.aim.typing i:nth-child(3){animation-delay:.3s}
+@keyframes aiDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@keyframes aimIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.aisugg{display:flex;gap:6px;overflow-x:auto;padding:6px 0;scrollbar-width:none}.aisugg .chip{white-space:nowrap;flex:none}
+.aiform{display:flex;gap:8px;align-items:flex-end;margin-top:6px}.aiform textarea{flex:1;min-width:0;resize:none;min-height:42px;max-height:120px;font-size:16px}
+.aibtn{background:linear-gradient(135deg,rgba(167,139,250,.16),rgba(34,211,238,.12))}
 .advice{margin-top:12px;padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.04);border:1px dashed var(--line);font-size:13px;color:var(--soft);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .advice.up{background:color-mix(in srgb,var(--ok) 12%,transparent);border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--text)}
 .chip.live{border-color:color-mix(in srgb,var(--ok) 50%,transparent);color:var(--ok)}
@@ -1750,7 +1761,7 @@ function viewSeance(){
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
-  ${currentDay === todayIdx() ? duoLine() + actionsCard() + duoChallenges() + reportBanner() : ''}
+  ${currentDay === todayIdx() ? duoLine() + actionsCard() + '<button class="btn block aibtn" data-x="ai" style="margin-top:10px">🤖 Demander au coach IA</button>' + duoChallenges() + reportBanner() : ''}
   ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
@@ -2136,7 +2147,7 @@ function viewSemaine(){
     <p class="muted" style="font-size:12px;margin-top:8px">Jours : ${DAY_NAMES.filter((_, i) => (data['day'+i] || []).length).join(', ') || 'aucun'}.</p></div>
   ${remCard()}
   <h3 class="sec">Réglages</h3>
-  <div class="card"><div class="row"><button class="btn" data-act="resetweek">🔄 Remettre la semaine à zéro</button><button class="btn" data-x="bk">💾 Sauvegardes</button><button class="btn" data-act="pdf">📄 Programme en PDF</button></div>
+  <div class="card"><div class="row"><button class="btn" data-act="resetweek">🔄 Remettre la semaine à zéro</button><button class="btn" data-x="bk">💾 Sauvegardes</button><button class="btn" data-x="aisetup">🤖 Coach IA</button><button class="btn" data-act="pdf">📄 Programme en PDF</button></div>
   <div class="fg" style="margin-top:12px"><label>📱 Écran toujours allumé</label><div class="seg small">${AWAKE.map(([k, l]) => `<button class="${(settings.awake || 'seance') === k ? 'on' : ''}" data-x="awake" data-m="${k}">${l}</button>`).join('')}</div>${'wakeLock' in navigator ? '' : '<small class="muted">Ton navigateur ne permet pas de garder l’écran allumé : mets-le à jour.</small>'}</div>
   <p class="muted" style="font-size:12.5px;margin-top:10px">Chaque lundi, les coches repartent à zéro automatiquement. Tes charges et ton historique sont gardés.</p></div>
   ${installCard()}
@@ -4126,6 +4137,88 @@ function itSeq(c){
       if (t < c.cRounds && c.cPause) S.push({ k:'rest', l:'Pause entre les tours', s:c.cPause, tour:t, n:c.cRounds, next:ex[0] }); } }
   return S;
 }
+/* ============================================================
+   COACH IA (Claude) : discussion via un petit relais Cloudflare qui garde la clé
+   ============================================================ */
+const AI_SUGG = ['J’ai mal au genou, adapte ma séance', 'Que manger ce soir avec ce qu’il reste ?', 'Fais le bilan de ma semaine', 'Je n’ai que 30 min, que faire ?'];
+let AI = { pid: null, msgs: [], busy: false };
+function aiCfg(){ try{ return JSON.parse(localStorage.getItem('mp_ai') || '{}') || {}; }catch(e){ return {}; } }
+function aiLoad(){ if (AI.pid === profile.id) return; AI.pid = profile.id; try{ AI.msgs = JSON.parse(localStorage.getItem('mp_ai_chat_' + profile.id) || '[]'); }catch(e){ AI.msgs = []; } }
+function aiKeep(){ AI.msgs = AI.msgs.slice(-30); safeSet('mp_ai_chat_' + AI.pid, AI.msgs); }
+// tout ce que le coach doit savoir, en version compacte
+function aiContext(){
+  const d = todayIdx(), date = today(), k = 'day' + d, list = data[k] || [], dn = done[k] || [];
+  const lim = new Date(); lim.setDate(lim.getDate() - 14); const from = ymd(lim);
+  const c = {
+    date: `${DAY_NAMES[d]} ${date}`, profil: profile.nom,
+    perso: nut ? { sexe: nut.sexe, age: nut.age, taille: nut.taille, objectif: nut.obj, poidsVise: num(nut.cible) || null } : null,
+    poids: { actuel: weightOf(ctxOf(profile.id)), tendanceKgParSemaine: (t => t ? +t.perWeek.toFixed(2) : null)(weightTrend()), compo: lastComp() || null },
+    materiel: gear && gear.on ? { lieu: 'caserne (uniquement ce matériel)', maison: HOME.filter(([h]) => homeHas(h)).map(x => x[1]), exercicesFaisables: LIB.filter(x => canDo(x.n)).map(x => x.n) } : { lieu: 'salle complète' },
+    seanceDuJour: { titre: dayTitle(d), exercices: list.map((e, i) => ({ n: e.n, muscle: e.m, series: effS(e), reps: e.r, chargeConseillee: sugW(e), fait: !!dn[i] })) },
+    semaine: DAY_NAMES.map((n, i) => `${n} : ${(data['day' + i] || []).map(e => e.n).join(', ') || 'repos'}`),
+    historique14j: hist.filter(h => h.d >= from).slice(-160).map(h => [h.d, h.n, h.w ?? null, h.r]),
+    forme: Object.fromEntries(Object.entries(forme).filter(([x]) => x >= from)),
+    planAction: (coach && coach.plan && coach.plan.items || []).map(a => a.t)
+  };
+  if (nutReady(nut)){ const t = targets(ctxOf(profile.id), d); c.nutrition = { objectifJour: { kcal: t.kcal, prot: t.p, gluc: t.g, lip: t.l },
+    mangeAujourdhui: foyer.plans[curWk()] ? (x => ({ kcal: Math.round(x.k), prot: Math.round(x.p) }))(eatenTotals(date, dayPortions(profile.id, d, curWk()))) : null,
+    stock: Object.entries(stockMap()).map(([f, g]) => `${FOODS[f].n} ${Math.round(g)} g`) }; }
+  let s = JSON.stringify(c);
+  while (s.length > 38000 && c.historique14j.length){ c.historique14j = c.historique14j.slice(Math.ceil(c.historique14j.length / 3)); s = JSON.stringify(c); }
+  return s;
+}
+// petit rendu : gras, listes, retours à la ligne
+const aiMd = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/^#{1,4} (.+)$/gm, '<b>$1</b>').replace(/^[-•] (.+)$/gm, '• $1').replace(/\n/g, '<br>');
+function aiLog(){
+  return AI.msgs.map(m => `<div class="aim ${m.role === 'user' ? 'me' : 'bot'}${m.err ? ' err' : ''}">${m.role === 'user' ? esc(m.content) : aiMd(m.content)}</div>`).join('')
+    + (AI.busy ? '<div class="aim bot typing"><i></i><i></i><i></i></div>' : '');
+}
+function aiSetup(){
+  const c = aiCfg();
+  return `<div class="card" style="margin-top:6px"><p style="font-size:13.5px">Le coach IA utilise <b>Claude</b> via ton relais personnel (Cloudflare). Colle ici l’adresse du relais et ton code d’accès.</p>
+    <form id="aiCfgF"><div class="fg"><label for="aiU">Adresse du relais</label><input id="aiU" class="inp" type="url" placeholder="https://mon-coach-ia.xxx.workers.dev" value="${esc(c.url || '')}" autocomplete="off"></div>
+    <div class="fg"><label for="aiC">Code d’accès</label><input id="aiC" class="inp" type="password" value="${esc(c.code || '')}" autocomplete="off"></div>
+    <button class="btn pri block" type="submit" style="margin-top:10px">Enregistrer</button></form></div>`;
+}
+function sheetAI(setup){
+  aiLoad(); const c = aiCfg(), ready = c.url && c.code && !setup;
+  openSheet(`<h2>🤖 Coach IA</h2>${!ready ? aiSetup() : `
+    <div class="ailog" id="aiLog">${AI.msgs.length ? aiLog() : '<p class="muted" style="font-size:13px;text-align:center;margin:18px 0">Pose-moi une question : je connais ta séance, ton historique, ta nutrition et ton matériel.</p>'}</div>
+    <div class="aisugg">${AI_SUGG.map(q => `<button class="chip" data-x="aiq" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <form id="aiF" class="aiform"><textarea id="aiQ" class="inp" rows="1" maxlength="2000" placeholder="Écris ta question…"></textarea><button class="btn pri" type="submit" aria-label="Envoyer" ${AI.busy ? 'disabled' : ''}>➤</button></form>
+    <div class="row" style="margin-top:8px;justify-content:space-between"><button class="btn sm" data-x="aiclear">🗑️ Effacer</button><button class="btn sm" data-x="aisetup">⚙️ Réglages</button></div>
+    <p class="muted" style="font-size:11.5px;margin-top:8px">Conseils indicatifs : en cas de douleur qui persiste, vois un médecin.</p>`}`);
+  aiScroll();
+}
+function aiScroll(){ const L = $('#aiLog'); if (L) L.scrollTop = L.scrollHeight; }
+function aiRefresh(){ const L = $('#aiLog'); if (!L) return; L.innerHTML = aiLog(); aiScroll(); const b = $('#aiF button'); if (b) b.disabled = AI.busy; }
+async function aiSend(q){
+  q = String(q || '').trim(); if (!q || AI.busy) return;
+  const c = aiCfg(); if (!c.url || !c.code) return sheetAI(true);
+  AI.msgs = AI.msgs.filter(m => !m.err); AI.msgs.push({ role: 'user', content: q.slice(0, 2000) }); AI.busy = true; aiKeep(); aiRefresh();
+  let M = AI.msgs.slice(-20).map(({ role, content }) => ({ role, content })); while (M.length && M[0].role !== 'user') M.shift();
+  let txt, err = false;
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 90000);
+  try{
+    const r = await fetch(c.url.replace(/\/+$/, ''), { method: 'POST', headers: { 'content-type': 'application/json', 'x-coach-code': c.code }, body: JSON.stringify({ messages: M, context: aiContext() }), signal: ctl.signal });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.text) txt = j.text + (j.truncated ? '\n\n(réponse coupée, demande la suite)' : '');
+    else { err = true; txt = r.status === 401 ? '🔒 Code d’accès incorrect : vérifie-le dans ⚙️ Réglages.' : '⚠️ ' + (j.error || `Le coach ne répond pas (erreur ${r.status}).`); }
+  }catch(e){ err = true; txt = e.name === 'AbortError' ? '⚠️ Le coach met trop de temps à répondre, réessaie.' : '⚠️ Pas de connexion au coach. Vérifie ta connexion internet ou l’adresse du relais.'; }
+  clearTimeout(to);
+  if (err) AI.msgs.pop();
+  AI.msgs.push(err ? { role: 'assistant', content: txt, err: true } : { role: 'assistant', content: txt });
+  AI.busy = false; aiKeep(); aiRefresh();
+  if (err){ const i = $('#aiQ'); if (i && !i.value) i.value = q; }
+}
+document.addEventListener('submit', e => {
+  if (e.target.id === 'aiF'){ e.preventDefault(); const i = $('#aiQ'), q = i.value; i.value = ''; aiSend(q); }
+  else if (e.target.id === 'aiCfgF'){ e.preventDefault(); const url = $('#aiU').value.trim(), code = $('#aiC').value.trim();
+    if (!/^https:\/\//.test(url) || !code){ toast('Adresse (https://…) et code nécessaires'); return; }
+    safeSet('mp_ai', { url, code }); toast('🤖 Coach IA configuré'); sheetAI(); }
+});
+document.addEventListener('keydown', e => { if (e.target.id === 'aiQ' && e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); e.target.form.requestSubmit(); } });
+
 let IT = null, lastWod = null;
 // WOD tout faits avec le matériel de la caserne
 const WODS = [
@@ -4509,6 +4602,10 @@ const chronoSeg = () => `<div class="seg" role="tablist" style="margin-top:16px"
    ============================================================ */
 function evoAct(a, b){
   switch (a){
+    case 'ai': sheetAI(); break;
+    case 'aisetup': sheetAI(true); break;
+    case 'aiq': aiSend(b.dataset.q); break;
+    case 'aiclear': AI.msgs = []; aiKeep(); sheetAI(); break;
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
     case 'ctab': chronoTab = b.dataset.t; render(); break;
     case 'itmode': itCfg().mode = b.dataset.m; itCfg().wod = null; safeSet('mp_settings', settings); viewIT(); break;
@@ -5106,7 +5203,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 50;
+const APP_VERSION = 51;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

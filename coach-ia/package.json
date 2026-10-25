@@ -1,0 +1,8 @@
+{
+  "name": "mon-coach-ia",
+  "private": true,
+  "type": "module",
+  "scripts": { "deploy": "wrangler deploy" },
+  "dependencies": { "@anthropic-ai/sdk": "latest" },
+  "devDependencies": { "wrangler": "^4" }
+}

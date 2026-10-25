@@ -1,0 +1,9 @@
+# Relais du coach IA : garde la clé Anthropic côté serveur (jamais dans l'appli)
+name = "mon-coach-ia"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# adresses autorisées à appeler le coach (l'appli)
+ALLOWED_ORIGINS = "https://galianachristian-cpu.github.io"
