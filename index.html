@@ -2008,6 +2008,7 @@ function viewSemaine(){
   ${remCard()}
   <h3 class="sec">Réglages</h3>
   <div class="card"><div class="row"><button class="btn" data-act="resetweek">🔄 Remettre la semaine à zéro</button><button class="btn" data-x="bk">💾 Sauvegardes</button><button class="btn" data-act="pdf">📄 Programme en PDF</button></div>
+  <div class="fg" style="margin-top:12px"><label>📱 Écran toujours allumé</label><div class="seg small">${AWAKE.map(([k, l]) => `<button class="${(settings.awake || 'seance') === k ? 'on' : ''}" data-x="awake" data-m="${k}">${l}</button>`).join('')}</div>${'wakeLock' in navigator ? '' : '<small class="muted">Ton navigateur ne permet pas de garder l’écran allumé : mets-le à jour.</small>'}</div>
   <p class="muted" style="font-size:12.5px;margin-top:10px">Chaque lundi, les coches repartent à zéro automatiquement. Tes charges et ton historique sont gardés.</p></div>
   ${installCard()}
   </div>`;
@@ -2234,7 +2235,7 @@ function paintTimer(){
     $('#bigRing').className = 'bigring' + (T.left <= 0 ? ' end' : T.run && T.left <= 10 ? ' warn' : '');
     const pb = $('#tPlay'); if (pb) pb.textContent = T.run ? '⏸' : '▶'; const lb = $('#bigLbl'); if (lb) lb.textContent = T.label; }
 }
-function startTimer(sec, label){
+function startTimer(sec, label){ setTimeout(syncAwake, 0);
   if (sec != null){ T.total = sec; T.left = sec; }
   if (T.left <= 0) T.left = T.total;
   T.label = label || 'Repos'; T.run = true; T.flash = false; T.end = Date.now() + T.left * 1000;
@@ -4346,6 +4347,7 @@ function evoAct(a, b){
     case 'shortoff': shortClear(data['day' + todayIdx()] || []); closeSheet(); save(); render(); toast('↩️ Séance complète'); break;
     case 'balfix': balFix(b.dataset.m); break;
     case 'cible': sheetCible(); break;
+    case 'awake': settings.awake = b.dataset.m; safeSet('mp_settings', settings); syncAwake(); render(); toast('📱 Écran allumé : ' + AWAKE.find(x => x[0] === b.dataset.m)[1].toLowerCase()); break;
     case 'prices': sheetPrices(); break;
     case 'budfit': { const r = budgetFit(curWk()); viewNutrition(); toast(!r ? 'Fixe d’abord un budget' : r.nSw ? `🎯 ${r.nSw} plat${r.nSw > 1 ? 's' : ''} remplacé${r.nSw > 1 ? 's' : ''} : ≈ ${eur(r.tot)}${r.ok ? ' ✅' : ' (budget très serré)'}` : 'Impossible de faire moins cher avec les recettes actuelles'); break; }
     case 'bk': sheetBackups(); break;
@@ -4633,10 +4635,29 @@ function startStretch(zone){ const c = Object.assign({}, itCfg(), { mode:'etir',
 /* ============================================================
    RENDU ET ÉVÉNEMENTS
    ============================================================ */
+// écran toujours allumé : pendant la séance (par défaut), toujours, ou jamais
+let awakeLock = null;
+const AWAKE = [['seance','Pendant la séance'],['toujours','Toujours (appli ouverte)'],['jamais','Jamais']];
+function wantAwake(){
+  const m = settings.awake || 'seance'; if (m === 'jamais' || document.visibilityState !== 'visible') return false; if (m === 'toujours') return true;
+  const s = sess['day' + todayIdx()], live = s && s.start && !s.end && ymd(new Date(s.start)) === today();
+  return !!(G || live || T.run || (typeof RUN !== 'undefined' && RUN) || ($('#full') && $('#full').classList.contains('show')) || (view === 'chrono'));
+}
+async function syncAwake(){
+  if (!('wakeLock' in navigator)) return;
+  const want = wantAwake();
+  try{
+    if (want && !awakeLock){ awakeLock = await navigator.wakeLock.request('screen'); awakeLock.addEventListener('release', () => { awakeLock = null; }); }
+    else if (!want && awakeLock){ const l = awakeLock; awakeLock = null; await l.release(); }
+  }catch(e){ awakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncAwake(); });
+setInterval(syncAwake, 15000);
 function render(){
   document.querySelectorAll('.nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view));
   $('#subTitle').textContent = profile.nom + ' · ' + { seance: DAY_NAMES[currentDay] + ' · ' + dayTitle(currentDay), semaine: 'Ma semaine', nutrition: 'Nutrition', progres: 'Mes progrès', chrono: 'Chrono' }[view];
   ({ seance: viewSeance, semaine: viewSemaine, nutrition: viewNutrition, progres: viewProgres, chrono: viewChrono })[view]();
+  syncAwake();
   paintTimer();
   if ($('#app').classList.contains('enter')) tagStagger();
 }
@@ -4877,7 +4898,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 45;
+const APP_VERSION = 46;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
