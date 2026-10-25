@@ -33,11 +33,10 @@ export default {
 
     const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
     try {
-      const response = await client.beta.messages.create({
-        model: "claude-opus-5-5",
-        max_tokens: 4000,
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
+      // Haiku : le modèle économique (environ 0,1 centime par question)
+      const response = await client.messages.create({
+        model: "claude-haiku-5-5",
+        max_tokens: 3000,
         output_config: { effort: "medium" },
         // consignes fixes en premier (mises en cache), données du jour ensuite
         system: [
