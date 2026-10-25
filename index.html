@@ -32,7 +32,7 @@ button{cursor:pointer;border:none;background:none}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px}
 
 /* En-tête */
-.top{position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top);background:var(--topbg,rgba(11,15,25,.82));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(36,48,74,.6)}
+.top{position:sticky;top:0;z-index:50;padding-top:var(--sat,env(safe-area-inset-top));background:var(--topbg,rgba(11,15,25,.82));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(36,48,74,.6)}
 .top .wrap{display:flex;align-items:center;gap:12px;height:62px}
 .logo{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-size:20px;box-shadow:0 6px 18px color-mix(in srgb,var(--a1) 25%,transparent)}
 .top h1{font-size:18px;font-weight:800;letter-spacing:-.3px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -266,7 +266,7 @@ h3.sec::before{content:'';width:4px;height:13px;border-radius:2px;background:var
 .ov.show{opacity:1;pointer-events:auto}
 .sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);width:min(640px,100%);max-height:92vh;max-height:calc(100dvh - env(safe-area-inset-top) - 20px);max-height:calc(100svh - env(safe-area-inset-top) - 20px);overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;z-index:110;background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:24px 24px 0 0;padding:10px 18px calc(22px + var(--safe-b));transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s;visibility:hidden}
 html.noscroll,html.noscroll body{overflow:hidden}
-.feelbar{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:95;width:min(520px,calc(100% - 24px));background:var(--minibg,rgba(26,35,56,.97));border:1px solid var(--line);border-radius:18px;padding:10px 12px;box-shadow:0 12px 30px rgba(0,0,0,.4);transition:transform .25s,opacity .25s}
+.feelbar{position:fixed;left:50%;top:calc(70px + var(--sat,env(safe-area-inset-top)));transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:95;width:min(520px,calc(100% - 24px));background:var(--minibg,rgba(26,35,56,.97));border:1px solid var(--line);border-radius:18px;padding:10px 12px;box-shadow:0 12px 30px rgba(0,0,0,.4);transition:transform .25s,opacity .25s}
 .feelbar.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
 .feelq{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.feelq>span{flex:1 1 100%;font-size:13px;color:var(--muted);font-weight:600}
 .feelq button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:13px;background:var(--bg2);border:1px solid var(--line)}
@@ -342,8 +342,7 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
 .swatch.on{border-color:var(--card);box-shadow:0 0 0 2px var(--s1),0 6px 16px color-mix(in srgb,var(--s1) 40%,transparent);transform:scale(1.08)}
 /* ===== Animations v2 ===== */
 /* fond « aurore » qui respire doucement */
-body::before{content:'';position:fixed;inset:-20%;z-index:-1;pointer-events:none;background:radial-gradient(40% 35% at 20% 20%,color-mix(in srgb,var(--a1) 14%,transparent),transparent 70%),radial-gradient(35% 30% at 80% 70%,color-mix(in srgb,var(--a2) 14%,transparent),transparent 70%);animation:aurora 22s ease-in-out infinite alternate;will-change:transform}
-@keyframes aurora{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(4%,-3%,0) rotate(8deg)}100%{transform:translate3d(-3%,4%,0) rotate(-6deg)}}
+html,body{overflow-x:hidden}
 /* changement d'onglet : glisse dans le sens de la navigation */
 #app.slideL{animation:slideL .38s cubic-bezier(.2,.8,.2,1)}#app.slideR{animation:slideR .38s cubic-bezier(.2,.8,.2,1)}
 @keyframes slideL{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
@@ -524,7 +523,7 @@ button.chip{cursor:pointer}
 .ph-plyo{color:#f0abfc;border-color:rgba(232,121,249,.45)}.ph-warm,.ph-mob{color:#7dd3fc;border-color:rgba(56,189,248,.45)}.ph-cool{color:#c4b5fd;border-color:rgba(167,139,250,.45)}
 
 /* séance guidée */
-.guide{position:fixed;inset:0;z-index:150;background:radial-gradient(800px 500px at 50% -10%,color-mix(in srgb,var(--a2) 22%,transparent),transparent 60%),var(--bg);display:none;flex-direction:column;padding:calc(12px + env(safe-area-inset-top)) 18px calc(18px + var(--safe-b));overflow-y:auto}
+.guide{position:fixed;inset:0;z-index:150;background:radial-gradient(800px 500px at 50% -10%,color-mix(in srgb,var(--a2) 22%,transparent),transparent 60%),var(--bg);display:none;flex-direction:column;padding:calc(12px + var(--sat,env(safe-area-inset-top))) 18px calc(18px + var(--safe-b));overflow-y:auto}
 .guide.show{display:flex}
 .g-top{display:flex;align-items:center;gap:10px}
 .g-top button{width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--line);font-size:18px}
@@ -1326,6 +1325,15 @@ const BIG = ['Pectoraux','Dos','Quadriceps','Ischio-jambiers','Fessiers'];
 let data = {}, done = {}, logs = {}, sets = {}, sl = {}, hist = [], week = null, titles = {}, sess = {}, seances = [], body = [], nut = null, journal = {}, prog = null, forme = {}, badges = null, runs = [], gear = null, coach = null;
 let currentDay = 0, view = 'seance', online = !!db, other = null, saveT = 0, remoteReady = false, loading = false, syncTimer = null;
 const NAV_ORDER = ['seance','semaine','nutrition','progres','chrono'];
+// iPhone en mode écran d'accueil : si la zone de sécurité est mal annoncée (0), on garde au moins la hauteur de la barre d'état
+(function safeTop(){
+  const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
+  const fix = () => { document.body.appendChild(probe); const h = probe.getBoundingClientRect().height; probe.remove();
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), stand = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+    document.documentElement.style.setProperty('--sat', (ios && stand ? Math.max(h, 47) : h) + 'px'); };
+  if (document.body) fix(); else document.addEventListener('DOMContentLoaded', fix);
+  addEventListener('orientationchange', () => setTimeout(fix, 300)); addEventListener('resize', () => setTimeout(fix, 100));
+})();
 const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -4951,7 +4959,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 47;
+const APP_VERSION = 48;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
