@@ -302,6 +302,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .st-list p{font-size:17px;margin:6px 0}.st-streak{margin-top:14px;font-weight:800;color:#fbbf24}
 .st-sl .bodymap svg{width:140px;height:276px}
 .st-tap{position:absolute;inset:60px 0 120px;display:flex;z-index:1}.st-tap span{flex:1}
+.actions .act{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.actions .act:first-of-type{border-top:none}.actions .ai{font-size:22px;width:30px;text-align:center}.actions .act p{font-size:13.5px;line-height:1.35}.actions .act .bar{height:6px;margin:6px 0 3px}.actions .act.ok p{opacity:.75}.actions .act .bar i{background:var(--grad);transition:width .8s cubic-bezier(.2,.8,.2,1)}
 .ph-ss{color:#fcd34d;border-color:rgba(252,211,77,.45)}
 .sheet.show{transform:translate(-50%,0);visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 12px}
@@ -1749,7 +1750,7 @@ function viewSeance(){
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
-  ${currentDay === todayIdx() ? duoLine() + duoChallenges() + reportBanner() : ''}
+  ${currentDay === todayIdx() ? duoLine() + actionsCard() + duoChallenges() + reportBanner() : ''}
   ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
@@ -4024,6 +4025,64 @@ const repSeen = () => safeGet('mp_rep_' + profile.id, '');
 function reportDue(){ const d = new Date(), wd = todayIdx(); if (wd === 6 && d.getHours() >= 17) return curWk(); if (wd === 0) return wkShift(curWk(), -1); return null; }
 function reportBanner(){ const wk = reportDue(); if (!wk || repSeen() >= wk) return ''; return `<button class="repban" data-x="report" data-wk="${wk}"><span>📊</span><span><b>Ton bilan de la semaine est prêt</b><small>Séances, nutrition, sommeil, poids et conseils</small></span><span>›</span></button>`; }
 function reportCard(){ return `<button class="repban" data-x="report" data-wk="${curWk()}" style="margin-top:16px"><span>📊</span><span><b>Bilan de la semaine</b><small>Résumé, tendance du poids et conseils</small></span><span>›</span></button>`; }
+/* ---------- plan d'action : 3 actions concrètes pour la semaine, suivies automatiquement ---------- */
+function nutWeek(wk){
+  if (!nutReady(nut)) return null;
+  const D = wkDates(wk), td = today(); let n = 0, k = 0, p = 0, tk = 0, tp = 0, we = 0, weT = 0;
+  D.forEach((d, i) => { if (d > td) return; const J = journal[d] || {}; if (!Object.keys(J).some(m => MEALS.some(x => x[0] === m))) return;
+    let e; try{ e = eatenTotals(d, dayPortions(profile.id, i, wk)); }catch(x){ return; } const t = targets(ctxOf(profile.id), i);
+    n++; k += e.k; p += e.p; tk += t.kcal; tp += t.p; if (i >= 5){ we += e.k; weT += t.kcal; } });
+  return n ? { n, k: k / n, p: p / n, tk: tk / n, tp: tp / n, we, weT } : null;
+}
+function weekActions(wk){
+  const r = weekReport(wk), A = [], nw = nutWeek(wk), add = (id, ic, t, w, goal, extra) => A.push(Object.assign({ id, ic, t, w, goal }, extra || {}));
+  if (r.planned && r.st.days < r.planned) add('seances', '📅', `Faire tes ${r.planned} séances (${r.st.days} la semaine passée). Bloque les créneaux dès lundi.`, 3 * (r.planned - r.st.days) / r.planned, r.planned);
+  const bi = balanceIssues(planSets())[0]; if (bi) add('bal', '⚖️', bi.t, 1.4, null, { fix: bi.m });
+  if (nw){
+    if (nw.p < nw.tp * .85) add('prot', '🥩', `Atteindre ${Math.round(nw.tp)} g de protéines par jour (moyenne ${Math.round(nw.p)} g) : un skyr ou 2 œufs en plus.`, 2 * (1 - nw.p / nw.tp) + .6, Math.round(nw.tp * .95));
+    if (nw.weT && nw.we > nw.weT * 1.15) add('we', '🍕', `Week-end : ${Math.round(nw.we - nw.weT)} kcal au-dessus de ton objectif. Prévois les repas du samedi et du dimanche à l’avance.`, 1.5, null);
+    else if (nw.k > nw.tk * 1.1) add('kcal', '🍽️', `Rester sous ${Math.round(nw.tk)} kcal par jour (moyenne ${Math.round(nw.k)} kcal).`, 1.3, Math.round(nw.tk));
+  } else if (nutReady(nut)) add('repas', '📝', 'Noter tes repas au moins 5 jours : sans ça, je ne peux pas ajuster ta nutrition.', 1.2, 5);
+  if (r.som != null && r.som < 7) add('som', '😴', `Dormir 7 h au moins 5 nuits (moyenne ${fr(r.som.toFixed(1))} h) : couche-toi 30 min plus tôt.`, 1.5 * (7 - r.som) + .5, 5);
+  if (r.eauAvg < r.g * .7) add('eau', '💧', `Boire ${r.g} verres d’eau au moins 5 jours (moyenne ${fr(r.eauAvg.toFixed(1))}).`, 1.1, 5);
+  const nWeigh = body.filter(b => b.p != null && r.D.includes(b.d)).length; if (nWeigh < 2) add('pesee', '⚖️', 'Te peser 3 fois (lundi, mercredi, vendredi, le matin à jeun).', .9, 3);
+  if (fatigueSigns()) add('light', '🪶', 'Fatigue détectée : passer une semaine allégée pour récupérer.', 2.2, null);
+  if (A.length < 3) add('record', '🏆', 'Battre au moins un record (charge ou répétitions).', .5, 1);
+  if (A.length < 3) add('cardio', '🫀', '2 séances de cardio de 20 min (elliptique, rameur…).', .4, 2);
+  return A.sort((a, b) => b.w - a.w).slice(0, 3).map(({ w, ...x }) => x);
+}
+function planOfWeek(){
+  const wk = curWk(); coach = coach || {};
+  if (!coach.plan || coach.plan.wk !== wk){ try{ coach = Object.assign({}, coach, { plan: { wk, from: wkShift(wk, -1), items: weekActions(wkShift(wk, -1)), done: {} } }); save(); }catch(e){ return null; } }
+  return coach.plan;
+}
+// progression de chaque action pendant la semaine en cours
+function actionProgress(a){
+  const wk = curWk(), D = wkDates(wk), td = today(), past = D.filter(d => d <= td);
+  const cnt = f => past.filter(f).length;
+  switch (a.id){
+    case 'seances': { const v = weekStats(hist, wk).days; return { v, goal: a.goal, txt: `${v}/${a.goal} séances` }; }
+    case 'prot': { const nw = nutWeek(wk); return nw ? { v: Math.round(nw.p), goal: a.goal, txt: `${Math.round(nw.p)} g en moyenne` } : { v: 0, goal: a.goal, txt: 'repas pas encore notés' }; }
+    case 'kcal': { const nw = nutWeek(wk); return nw ? { v: nw.k <= a.goal ? 1 : 0, goal: 1, txt: `${Math.round(nw.k)} kcal en moyenne` } : { v: 0, goal: 1, txt: 'repas pas encore notés' }; }
+    case 'repas': { const v = cnt(d => Object.keys(journal[d] || {}).some(m => MEALS.some(x => x[0] === m))); return { v, goal: a.goal, txt: `${v}/${a.goal} jours` }; }
+    case 'som': { const v = cnt(d => ((forme[d] || {}).som || 0) >= 7); return { v, goal: a.goal, txt: `${v}/${a.goal} nuits` }; }
+    case 'eau': { const g = eauGoal(), v = cnt(d => ((forme[d] || {}).eau || 0) >= g); return { v, goal: a.goal, txt: `${v}/${a.goal} jours` }; }
+    case 'pesee': { const v = body.filter(b => b.p != null && D.includes(b.d)).length; return { v, goal: a.goal, txt: `${v}/${a.goal} pesées` }; }
+    case 'record': { const v = weekStats(hist, wk).recs; return { v, goal: 1, txt: `${v} record${v > 1 ? 's' : ''}` }; }
+    case 'cardio': { const v = new Set(hist.filter(h => D.includes(h.d) && (h.t || 'f') === 'c').map(h => h.d)).size; return { v, goal: a.goal, txt: `${v}/${a.goal}` }; }
+    case 'bal': { const ok = !balanceIssues(planSets()).some(x => x.m === a.fix); return { v: ok ? 1 : 0, goal: 1, txt: ok ? 'corrigé' : 'à corriger' }; }
+    case 'light': { const ok = lightOn(); return { v: ok ? 1 : 0, goal: 1, txt: ok ? 'activée' : 'pas encore activée' }; }
+    default: return { v: 0, goal: 1, txt: '' };
+  }
+}
+function actionsCard(){
+  const P = planOfWeek(); if (!P || !P.items.length) return '';
+  const rows = P.items.map((a, j) => { const pr = actionProgress(a), ok = pr.v >= pr.goal || (P.done || {})[j], pc = Math.min(100, pr.goal ? pr.v * 100 / pr.goal : 0);
+    return `<div class="act ${ok ? 'ok' : ''}"><span class="ai">${ok ? '✅' : a.ic}</span><div style="flex:1;min-width:0"><p>${esc(a.t)}</p><div class="bar"><i style="width:${ok ? 100 : pc}%"></i></div><small class="muted">${esc(pr.txt)}</small></div>
+      ${a.id === 'bal' && !ok ? `<button class="btn sm pri" data-x="balfix" data-m="${esc(a.fix)}">Corriger</button>` : a.id === 'light' && !ok ? '<button class="btn sm pri" data-x="lighton">Activer</button>' : ''}</div>`; }).join('');
+  const nOk = P.items.filter((a, j) => { const pr = actionProgress(a); return pr.v >= pr.goal || (P.done || {})[j]; }).length;
+  return `<div class="card actions" style="margin-top:12px"><div class="row"><b style="flex:1">🎯 Mes 3 actions de la semaine</b><small class="muted">${nOk}/${P.items.length}</small></div>${rows}</div>`;
+}
 function sheetReport(wk){
   const r = weekReport(wk), isCur = wk === curWk();
   if (wk >= (reportDue() || '9')) safeSet('mp_rep_' + profile.id, wk);
@@ -4039,6 +4098,9 @@ function sheetReport(wk){
       ${r.tr ? `<p><b>${r.tr.perWeek > 0 ? '+' : ''}${fr(r.tr.perWeek.toFixed(2))} kg par semaine</b> <span class="muted">(sur les 6 dernières semaines)</span></p>` : '<p class="muted" style="font-size:13px">Pèse-toi au moins 3 fois sur 2 semaines (Progrès → Corps) pour voir ta tendance.</p>'}
       ${r.proj && r.proj.done ? '<p style="margin-top:6px">🎯 Objectif de poids atteint, bravo !</p>' : r.proj ? `<p style="margin-top:6px">🎯 À ce rythme, tu atteindras <b>${fr(r.cible)} kg</b> vers le <b>${fmtD(r.proj.d)}</b> (≈ ${Math.max(1, Math.round(r.proj.wks))} semaine${r.proj.wks >= 1.5 ? 's' : ''}).</p>` : r.cible && r.tr ? '<p class="muted" style="margin-top:6px;font-size:13px">Ta tendance actuelle ne va pas vers ton poids visé.</p>' : ''}
       <form id="cibF" class="row" style="margin-top:10px"><label for="cib" class="muted" style="font-size:13px;font-weight:700">Poids visé</label><input id="cib" class="inp" inputmode="decimal" style="width:90px" value="${r.cible ? fr(r.cible) : ''}" placeholder="kg"><button class="btn sm" type="submit">OK</button></form></div>
+    <h3 class="sec">🎯 Ton plan d’action pour la semaine prochaine</h3>
+    <div class="tips">${weekActions(wk).map((a, j) => `<div class="tip"><span>${j + 1}</span><p>${a.ic} ${esc(a.t)}</p></div>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:6px 2px 0">Ces 3 actions s’affichent dès lundi sur l’écran Séance, avec ta progression.</p>
     <h3 class="sec">Conseils pour la semaine prochaine</h3>
     <div class="tips">${r.tips.map(([i, t]) => `<div class="tip"><span>${i}</span><p>${t}</p></div>`).join('')}</div>`);
   $('#cibF').onsubmit = ev => { ev.preventDefault(); const v = num($('#cib').value); nut = nut || {}; if (v) nut.cible = v; else delete nut.cible; save(); sheetReport(wk); toast(v ? '🎯 Poids visé : ' + fr(v) + ' kg' : 'Poids visé retiré'); };
@@ -5044,7 +5106,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 49;
+const APP_VERSION = 50;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
