@@ -1,5 +1,5 @@
 /* Mon Programme : service worker pour l'installation et l'usage hors ligne */
-const CACHE = 'mon-programme-v52';
+const CACHE = 'mon-programme-v53';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -18,8 +18,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put('./index.html', c)); return r; }).catch(() => caches.match('./index.html').then(r => r || caches.match('./'))));
     return;
   }
-  // scripts Firebase et police : copie gardée d'abord (ils ne changent pas de version)
-  if (url.hostname === 'www.gstatic.com' || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com'){
+  // scripts Firebase, police et lecteur d'écran (versions fixes) : copie gardée d'abord
+  if (url.hostname === 'www.gstatic.com' || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || (url.hostname === 'cdn.jsdelivr.net' && /tesseract/.test(url.pathname))){
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(req, c)); return r; })));
     return;
   }
