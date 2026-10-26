@@ -2415,7 +2415,7 @@ function sheetDetail(i){
     ${(t === 'c' || t === 'k') && ERGO.test(e.n) ? `<div class="box"><h4>🔥 Mode</h4><p>${t === 'k' ? 'Séries en calories : chaque série = un effort où tu notes les calories affichées par la machine.' : 'En continu : durée, distance et calories de la machine.'}</p><button class="btn sm" data-x="kmode" data-i="${i}" style="margin-top:8px">${t === 'k' ? '⏱️ Passer en continu (durée)' : '🔁 Passer en séries de calories'}</button></div>` : ''}
     <div class="box"><h4>📝 Exécution</h4><p>${esc(e.desc || 'Aucune description.')}</p></div>
     <div class="box tips"><h4>⚠️ Conseils de sécurité</h4><p>${esc(e.tips || 'Aucun conseil.')}</p></div>
-    <div class="row" style="margin-top:14px"><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n + ' exécution')}" target="_blank" rel="noopener">▶️ Vidéo</a><button class="btn" data-act="edit" data-i="${i}">✏️ Modifier</button>
+    <div class="row" style="margin-top:14px"><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n + ' exécution')}" target="_blank" rel="noopener">▶️ Vidéo</a><button class="btn" data-act="edit" data-i="${i}">✏️ Modifier</button><button class="btn pri" data-act="replace" data-i="${i}">🔁 Remplacer</button>
       <button class="btn" data-act="move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Monter">⬆️</button><button class="btn" data-act="move" data-i="${i}" data-d="1" ${i === n - 1 ? 'disabled' : ''} aria-label="Descendre">⬇️</button>
       <span class="spacer"></span><button class="btn danger" data-act="del" data-i="${i}">🗑️</button></div>`);
 }
@@ -2446,10 +2446,12 @@ function sheetEdit(i, preset){
   };
 }
 let libQ = '', libM = 'Tous', libE = null;
-function sheetLib(){
-  const ms = ['Tous', ...Object.keys(MUSCLES)], mine = !!(gear && gear.on);
+function sheetLib(rep){
+  const ms = ['Tous', ...Object.keys(MUSCLES)], mine = !!(gear && gear.on), k = 'day' + currentDay, o = rep != null ? (data[k] || [])[rep] : null;
+  if (rep != null && !o) return;
   if (libE == null || (libE === 'Mine' && !mine)) libE = mine ? 'Mine' : 'Tout';
-  openSheet(`<h2>📚 Bibliothèque</h2>
+  if (o){ libM = MUSCLES[o.m] ? o.m : 'Tous'; libQ = ''; }
+  openSheet(`<h2>${o ? '🔁 Remplacer : ' + esc(o.n) : '📚 Bibliothèque'}</h2>${o ? '<p class="muted" style="font-size:13px;margin:-6px 0 10px">Choisis le nouvel exercice : il garde la même place dans la séance, avec tes séries et répétitions.</p>' : ''}
     <input id="lq" class="inp" type="search" placeholder="Rechercher : squat, gainage, vélo…" value="${esc(libQ)}" style="width:100%" aria-label="Rechercher un exercice">
     <div class="chips2">${ms.map(m => `<button data-lm="${m}" class="${libM === m ? 'on' : ''}" style="--c:${mcol(m)}">${m}</button>`).join('')}</div>
     <div class="chips2" aria-label="Matériel">${[...(mine ? ['Mine'] : []), 'Tout', ...EQUIP].map(q => `<button data-le="${q}" class="${libE === q ? 'on' : ''}" style="--c:#94a3b8">${q === 'Mine' ? '🚒 Mon matériel' : q === 'Tout' ? '🧰 Tout matériel' : q}</button>`).join('')}</div>
@@ -2457,15 +2459,24 @@ function sheetLib(){
     <div id="lres"></div>`);
   const paint = () => {
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const R = LIB.filter(x => (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || (libE === 'Mine' ? canDo(x.n) : eqOf(x) === libE)) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
-    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">＋</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
+    const R = LIB.filter(x => (!o || x.n !== o.n) && (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || (libE === 'Mine' ? canDo(x.n) : eqOf(x) === libE)) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
+    if (o) R.sort((a, b) => ((a.t || 'f') !== typ(o)) - ((b.t || 'f') !== typ(o))); // même type d'abord
+    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">${o ? '🔁' : '＋'}</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
     $('#lcnt').textContent = R.length + (R.length > 1 ? ' exercices' : ' exercice');
-    $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
+    $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { if (o) return replaceEx(k, rep, b.dataset.ln); const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
   };
   $('#lq').oninput = () => { libQ = $('#lq').value; paint(); };
   $('#sheet').querySelectorAll('[data-lm]').forEach(b => b.onclick = () => { libM = b.dataset.lm; $('#sheet').querySelectorAll('[data-lm]').forEach(x => x.classList.toggle('on', x === b)); paint(); });
   $('#sheet').querySelectorAll('[data-le]').forEach(b => b.onclick = () => { libE = b.dataset.le; $('#sheet').querySelectorAll('[data-le]').forEach(x => x.classList.toggle('on', x === b)); paint(); });
   paint();
+}
+// remplace un exercice de la séance par un autre de la bibliothèque (même place, mêmes séries)
+function replaceEx(k, i, name){
+  const o = data[k][i], lib = LIB_BY[name]; if (!o || !lib) return;
+  const same = (lib.t || 'f') === typ(o), ne = exFromLib(name, { s: same && typ(o) !== 'c' ? o.s : lib.s, r: same ? o.r : lib.r });
+  ['bs', 'cmp', 'slot', 'vi', 'ph'].forEach(f => { if (o[f] != null) ne[f] = o[f]; });
+  data[k][i] = ne; const key = keyOf(k, i); delete logs[key]; delete sl[key]; delete sets[key]; if (done[k]) done[k][i] = false;
+  closeSheet(); render(); save(); toast(`🔁 ${o.n} → ${name}`);
 }
 function sheetConfirm(msg, label, fn){
   openSheet(`<h2>${msg}</h2><div class="row" style="margin-top:6px"><button class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn danger" id="cOk">${label}</button></div>`);
@@ -4917,6 +4928,7 @@ document.addEventListener('click', e => {
     case 'exopen': exOpen[k] = i; render(); { const c = document.querySelector(`.ex[data-i="${i}"]`); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } break;
     case 'add': sheetEdit(-1); break;
     case 'lib': sheetLib(); break;
+    case 'replace': sheetLib(i); break;
     case 'edit': sheetEdit(i); break;
     case 'del': sheetConfirm('Supprimer « ' + esc(data[k][i].n) + ' » ?', 'Supprimer', () => delEx(i)); break;
     case 'move': moveEx(i, +b.dataset.d); break;
@@ -5106,7 +5118,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 50;
+const APP_VERSION = 51;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
