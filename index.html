@@ -522,6 +522,8 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .shopit:last-of-type{border-bottom:none}
 .shopit input{width:20px;height:20px;accent-color:var(--ok);flex:0 0 auto}
 .shopit span{flex:1;font-size:14.5px}.shopit b{font-size:13.5px;color:var(--soft)}
+.hvb{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 8px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);font-size:14px;line-height:1.15}.hvb small{font-size:9.5px;font-weight:700;color:var(--muted)}
+.shopit.got.hvd span{text-decoration:none;opacity:.7}
 .shopit.got span,.shopit.got b{text-decoration:line-through;opacity:.5}
 .wkday small{display:block;color:var(--muted);font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 button.chip{cursor:pointer}
@@ -3215,11 +3217,14 @@ function coursesList(){
   Object.entries(st).forEach(([f, g]) => { if (tot[f]){ const used = Math.min(g, tot[f]); tot[f] -= used; have.push({ f, n: FOODS[f].n, q: qty(f, used), all: tot[f] <= 0, c: used / 1000 * priceKg(f) }); if (tot[f] <= 0) delete tot[f]; } });
   const groups = {}; Object.entries(tot).forEach(([f, g]) => { const r = RAYONS[FOODS[f].ray]; (groups[r] = groups[r] || []).push({ f, n: FOODS[f].n, q: fmt(f, g), c: g / 1000 * priceKg(f) }); });
   Object.values(groups).forEach(L => L.sort((a, b) => a.n.localeCompare(b.n, 'fr')));
-  const total = Object.values(groups).flat().reduce((a, x) => a + x.c, 0), saved = have.reduce((a, x) => a + x.c, 0);
-  return { groups, dates, from, pids, have, raw, total, saved };
+  // « j'ai déjà » coché à la main : sorti de la liste et du total
+  const hv = (foyer.have || {})[wk] || {}, mine = [];
+  Object.keys(groups).forEach(r => { groups[r] = groups[r].filter(x => hv[x.f] ? (mine.push(x), false) : true); if (!groups[r].length) delete groups[r]; });
+  const total = Object.values(groups).flat().reduce((a, x) => a + x.c, 0), saved = have.reduce((a, x) => a + x.c, 0) + mine.reduce((a, x) => a + x.c, 0);
+  return { groups, dates, from, pids, have, mine, raw, total, saved };
 }
 function nutCourses(){
-  const wk = curWk(), { groups, dates, from, pids, have, total, saved } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [], nAway = awayCount(wk, pids, from), nSt = Object.keys(stockMap()).length;
+  const wk = curWk(), { groups, dates, from, pids, have, mine, total, saved } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [], nAway = awayCount(wk, pids, from), nSt = Object.keys(stockMap()).length;
   const missing = pids.filter(pid => !nutReady(ctxOf(pid).nut)).map(pid => ctxOf(pid).nom);
   return `<div class="card" style="margin-top:14px">
     <div class="seg small">${[['semaine','Toute la semaine'],['reste','À partir d’aujourd’hui']].map(([k, l]) => `<button class="${coursesScope === k ? 'on' : ''}" data-cs="${k}">${l}</button>`).join('')}</div>
@@ -3229,8 +3234,9 @@ function nutCourses(){
     <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
   ${budgetCard()}
   <div class="card" style="margin-top:12px"><p style="font-size:14px">🛒 Total estimé de la liste : <b>${eur(total)}</b>${saved >= .5 ? ` · <span style="color:var(--ok)">${eur(saved)} économisés grâce à vos restes</span>` : ''}</p></div>
-  ${have.length ? `<h3 class="sec">🥡 Déjà à la maison</h3><div class="card"><p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}</div>` : ''}
-  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''}><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b></label>`).join('')}</div>`).join('')}
+  ${have.length || mine.length ? `<h3 class="sec">🏠 Déjà à la maison</h3><div class="card">${have.length ? `<p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}` : ''}
+    ${mine.map(x => `<div class="shopit got hvd"><span>${esc(x.n)}</span><button class="btn sm" data-hv="${x.f}" aria-label="Remettre ${esc(x.n)} dans la liste">↩️ À acheter</button></div>`).join('')}</div>` : ''}
+  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
   <div class="row" style="margin-top:16px">${navigator.share ? '<button class="btn pri" id="shareBtn">📤 Envoyer</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn pri" id="mailBtn">✉️ Envoyer par mail</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
@@ -3249,6 +3255,8 @@ function bindCourses(){
   document.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => { coursesScope = b.dataset.cs; viewNutrition(); });
   document.querySelectorAll('[data-cw]').forEach(b => b.onclick = () => { coursesWho = b.dataset.cw; viewNutrition(); });
   document.querySelectorAll('[data-ck]').forEach(c => c.onchange = () => { const ck = foyer.checked[wk] = foyer.checked[wk] || {}; if (c.checked) ck[c.dataset.ck] = 1; else delete ck[c.dataset.ck]; c.closest('.shopit').classList.toggle('got', c.checked); saveFoyer(); });
+  document.querySelectorAll('[data-hv]').forEach(b => b.onclick = ev => { ev.preventDefault(); const f = b.dataset.hv, H = Object.assign({}, (foyer.have || {})[wk]);
+    if (H[f]) delete H[f]; else H[f] = 1; foyer.have = Object.assign({}, foyer.have, { [wk]: H }); saveFoyer(); viewNutrition(); toast(H[f] ? `🏠 ${FOODS[f].n} : déjà à la maison` : `🛒 ${FOODS[f].n} remis dans la liste`); });
   document.querySelectorAll('[data-exrm]').forEach(b => b.onclick = ev => { ev.preventDefault(); (foyer.extra[wk] || []).splice(+b.dataset.exrm, 1); saveFoyer(); viewNutrition(); });
   const bS = $('#bSt'); if (bS) bS.onchange = () => { foyer.budget = Object.assign({}, budgetCfg(), { store: bS.value }); saveFoyer(); viewNutrition(); };
   const bM = $('#bMax'); if (bM) bM.onchange = () => { const v = num(bM.value); foyer.budget = Object.assign({}, budgetCfg(), { max: v && v > 0 ? v : null }); saveFoyer(); viewNutrition(); };
@@ -5118,7 +5126,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 51;
+const APP_VERSION = 52;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
