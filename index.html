@@ -112,6 +112,8 @@ button{cursor:pointer;border:none;background:none}
 .rleg small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .set:active{transform:scale(.94)}
 .sets .lbl{font-size:12px;color:var(--muted);margin-right:2px}
+.ocrimg{display:block;width:100%;max-height:34vh;object-fit:contain;border-radius:14px;background:#000}
+#ocrSt .chip{margin:3px 2px}
 .logrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
 .step{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .step button{width:36px;height:38px;font-size:18px;color:var(--muted);font-weight:700}
@@ -1792,6 +1794,7 @@ function exCard(k, e, i){
   else if (t === 'k') inputs = stepper(i, 'r', lg.r, 1, 'cal', 'Calories de la série', sugK(e));
   else if (t === 's') inputs = stepper(i, 'r', lg.r, 5, 's', 'Durée en secondes', top) + `<button class="btn sm" data-act="go-s" data-i="${i}">▶️ Lancer</button>`;
   else inputs = stepper(i, 'r', lg.r, 5, 'min', 'Durée en minutes', top) + stepper(i, 'w', lg.w, 0.5, 'km', 'Distance', '') + stepper(i, 'k', lg.k, 10, 'kcal', 'Calories affichées par la machine', String(kcalEst(e, num(lg.r) ?? top)));
+  if ((t === 'c' || t === 'k') && ERGO.test(e.n)) inputs += `<button class="btn sm" data-act="ocr" data-i="${i}">📷 Lire l’écran</button>`;
   const setBtns = t === 'c' ? '' : `<div class="sets"><span class="lbl">Séries</span>${Array.from({ length: effS(e) }, (_, j) => { const x = S[j];
     const lbl = x ? (t === 'f' ? `<b>${num(x.w) ? fr(num(x.w)) : 'PC'}</b><small>×${esc(x.r)}${x.f ? ' ' + FEEL3[x.f - 1][0] : ''}</small>` : `<b>${esc(x.r)}</b><small>${t === 's' ? 's' : t === 'k' ? 'cal' : 'reps'}${x.f ? ' ' + FEEL3[x.f - 1][0] : ''}</small>`) : j + 1;
     return `<button class="set ${x ? 'on' : ''}${justSet === key + ':' + j ? ' pop' : ''}" data-act="set" data-i="${i}" data-j="${j}" aria-label="Série ${j+1}${x ? ' faite' : ''}">${lbl}</button>`; }).join('')}</div>`;
@@ -1818,6 +1821,112 @@ function exCard(k, e, i){
     </div>
   </article>`;
 }
+/* ============================================================
+   LECTURE DE L'ÉCRAN DES MACHINES : photo → chiffres (Tesseract, dans le téléphone)
+   ============================================================ */
+const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
+let OCR = null, tessP = null;
+function loadTess(){
+  if (window.Tesseract) return Promise.resolve();
+  return tessP = tessP || new Promise((ok, ko) => { const s = document.createElement('script'); s.src = TESS + 'tesseract.min.js'; s.onload = ok; s.onerror = () => { tessP = null; ko(new Error('script')); }; document.head.appendChild(s); });
+}
+function ocrStart(i){
+  let inp = $('#ocrIn');
+  if (!inp){ inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.setAttribute('capture', 'environment'); inp.id = 'ocrIn'; inp.hidden = true; document.body.appendChild(inp);
+    inp.onchange = () => { const f = inp.files && inp.files[0]; inp.value = ''; if (f && OCR) ocrRun(f); }; }
+  OCR = { k: 'day' + currentDay, i };
+  loadTess().catch(() => {}); // on commence à charger pendant la photo
+  inp.click();
+}
+// image → canevas noir sur blanc bien contrasté (les écrans LCD sont souvent clairs sur fond sombre, ou l'inverse)
+function ocrPrep(img){
+  const sc = Math.min(1, 1600 / Math.max(img.width, img.height)), w = Math.round(img.width * sc), h = Math.round(img.height * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h), p = d.data, G = new Uint8Array(w * h), hist = new Array(256).fill(0);
+  for (let j = 0; j < G.length; j++){ const g = (p[j * 4] * .3 + p[j * 4 + 1] * .59 + p[j * 4 + 2] * .11) | 0; G[j] = g; hist[g]++; }
+  // seuil d'Otsu
+  let sum = 0; for (let t = 0; t < 256; t++) sum += t * hist[t];
+  let sB = 0, wB = 0, best = 0, th = 128;
+  for (let t = 0; t < 256; t++){ wB += hist[t]; if (!wB) continue; const wF = G.length - wB; if (!wF) break; sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) ** 2; if (v > best){ best = v; th = t; } }
+  let dark = 0; for (let j = 0; j < G.length; j++) if (G[j] <= th) dark++;
+  const inv = dark > G.length / 2; // fond sombre → on inverse pour avoir du texte noir sur blanc
+  for (let j = 0; j < G.length; j++){ const v = (G[j] > th) !== inv ? 255 : 0; p[j * 4] = p[j * 4 + 1] = p[j * 4 + 2] = v; }
+  x.putImageData(d, 0, 0); return c;
+}
+// mots lus (avec leur position) → nombres ; les étiquettes de l'écran (TIME, CAL, METERS…) disent à quoi sert chaque nombre
+const OCR_LBL = [[/^(time|temps|dur[ée]e?|tps|elapsed)$/i, 't'], [/^(k?cal(orie)?s?|energy|[ée]nergie)$/i, 'k'], [/^(m|meters?|m[eè]tres?|dist(ance)?|km)$/i, 'd']];
+function ocrParse(words, e){
+  const T = [], L = [], t = typ(e), rower = /rameur|skierg/i.test(e.n);
+  const lblOf = w => { const x = OCR_LBL.find(([r]) => r.test(w)); return x ? x[1] : null; };
+  // « 25 10 » très proches sur la même ligne : les deux points de « 25:10 » n'ont pas été vus
+  words = words.reduce((A, w) => { const p = A[A.length - 1], b = w.bbox, pb = p && p.bbox;
+    if (p && b && pb && /^\d{1,2}:?$/.test(p.text) && /^:?[0-5]\d$/.test(w.text) && Math.abs(b.y0 - pb.y0) < (pb.y1 - pb.y0) * .4 && b.x0 - pb.x1 < (pb.y1 - pb.y0) * .9)
+      A[A.length - 1] = { text: p.text.replace(':', '') + ':' + w.text.replace(':', ''), bbox: { x0: pb.x0, y0: Math.min(pb.y0, b.y0), x1: b.x1, y1: Math.max(pb.y1, b.y1) } };
+    else A.push(w); return A; }, []);
+  words.forEach(w => {
+    const b = w.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 }, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, h = Math.max(1, b.y1 - b.y0);
+    const txt = String(w.text || '').replace(/[Oo](?=\d)|(?<=\d)[Oo]/g, '0');
+    const word = txt.replace(/[^A-Za-zÀ-ÿ]/g, ''); if (word && lblOf(word) && !/\d/.test(txt)) { L.push({ k: lblOf(word), km: /^km$/i.test(word), cx, cy, h }); return; }
+    const re = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?:[.,]\d)?|\d+(?:[.,]\d+)?/g; let m;
+    while ((m = re.exec(txt))){
+      const unit = txt.slice(m.index + m[0].length).replace(/[^A-Za-z]/g, ''), o = { s: m[0], cx, cy, h, u: unit ? lblOf(unit) : null, km: /^km/i.test(unit) };
+      if (m[1] != null){ if (+m[2] >= 60 || (m[3] != null && +m[3] >= 60)) continue; o.sec = m[3] != null ? +m[1] * 3600 + +m[2] * 60 + +m[3] : +m[1] * 60 + +m[2]; }
+      else o.v = +m[0].replace(',', '.');
+      if (/^\//.test(txt)) o.pace = true; // « /500m » : allure, pas une distance
+      T.push(o);
+    }
+  });
+  // étiquette la plus proche, au-dessus ou sur la même ligne
+  T.forEach(o => { if (o.u) { o.l = o.u; return; } let best = null, bd = 1e9;
+    L.forEach(l => { if (l.cy > o.cy + o.h * .3) return; const d = Math.hypot(l.cx - o.cx, (l.cy - o.cy) * 1.5); if (d < bd && d < 6 * Math.max(l.h, o.h)){ bd = d; best = l; } });
+    if (best){ o.l = best.k; if (best.km) o.km = true; } });
+  const used = new Set(), pick = (f, sort) => { const c = T.filter(x => !used.has(x) && f(x)).sort(sort)[0]; if (c) used.add(c); return c; };
+  const okT = x => x.sec != null && x.sec >= 30 && x.sec <= 3 * 3600;
+  const tm = pick(x => okT(x) && x.l === 't', () => 0) || pick(x => okT(x) && !x.pace, (a, b) => b.sec - a.sec);
+  const min = tm ? +(tm.sec / 60).toFixed(1) : null;
+  let km = null;
+  if (t === 'c'){
+    const isD = x => x.v != null && !x.pace && (x.km || (rower ? Number.isInteger(x.v) && x.v >= 100 && x.v <= 42195 : x.v > 0 && x.v < 100));
+    const dm = pick(x => isD(x) && x.l === 'd', () => 0) || pick(x => isD(x) && x.l !== 'k' && (rower || /[.,]/.test(x.s)), (a, b) => b.v - a.v);
+    if (dm) km = dm.km || !Number.isInteger(dm.v) || dm.v < 100 ? dm.v : +(dm.v / 1000).toFixed(2);
+  }
+  const est = kcalEst(e, min || num(e.r) || 10) || 100, isK = x => x.v != null && Number.isInteger(x.v) && x.v >= 1 && x.v <= 2000 && !x.pace;
+  const kc = pick(x => isK(x) && x.l === 'k', () => 0) || pick(x => isK(x) && !x.l, (a, b) => Math.abs(a.v - est) - Math.abs(b.v - est));
+  return { T, min, km, kcal: kc ? kc.v : null };
+}
+async function ocrRun(file){
+  const { k, i } = OCR, e = (data[k] || [])[i]; if (!e) return;
+  const t = typ(e), url = URL.createObjectURL(file);
+  openSheet(`<h2>📷 Écran de la machine</h2><img src="${url}" alt="Photo de l’écran" class="ocrimg"><p class="muted" id="ocrSt" style="text-align:center;margin:12px 0">⏳ Lecture des chiffres…</p><div id="ocrBox"></div>`);
+  let R = { T: [], min: null, km: null, kcal: null }, msg = '';
+  try{
+    const img = new Image(); img.src = url; await img.decode();
+    await loadTess();
+    const W = await Tesseract.createWorker('eng', 1, { workerPath: TESS + 'worker.min.js', corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1', langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int' });
+    await W.setParameters({ tessedit_pageseg_mode: '11' });
+    const r1 = await W.recognize(ocrPrep(img)); await W.terminate();
+    R = ocrParse(r1.data.words || [], e);
+    msg = R.T.length ? `Chiffres lus : ${R.T.map(x => `<button class="chip" data-ocrv="${esc(x.sec != null ? (x.sec / 60).toFixed(1) : x.s)}">${esc(x.s)}</button>`).join(' ')}` : '🤔 Aucun chiffre trouvé : rapproche-toi de l’écran, sans reflet, ou remplis à la main.';
+  }catch(err){ msg = navigator.onLine === false ? '📶 La première lecture a besoin d’internet (pour télécharger le lecteur). Remplis à la main pour cette fois.' : '⚠️ Lecture impossible. Remplis à la main ou reprends la photo.'; }
+  if (!OCR || !$('#ocrBox')) return;
+  const fld = (id, l, v, u) => `<div class="fg"><label for="${id}">${l}</label><div class="row" style="flex-wrap:nowrap"><input id="${id}" class="inp" inputmode="decimal" value="${v != null ? esc(fr(v)) : ''}" style="flex:1;min-width:0"><span class="muted">${u}</span></div></div>`;
+  $('#ocrSt').innerHTML = msg;
+  $('#ocrBox').innerHTML = `<p class="muted" style="font-size:12.5px;margin-bottom:8px">Vérifie les valeurs : touche un champ puis un chiffre lu pour le corriger.</p>
+    ${t === 'c' ? fld('oMin', '⏱️ Durée', R.min, 'min') + fld('oKm', '📏 Distance', R.km, 'km') : ''}${fld('oK', '🔥 Calories', R.kcal, t === 'k' ? 'cal' : 'kcal')}
+    <div class="row" style="margin-top:12px"><button class="btn" data-x="ocrre">📷 Reprendre</button><span class="spacer"></span><button class="btn pri" data-x="ocrok">✅ Remplir</button></div>`;
+  let last = $('#oMin') || $('#oK');
+  $('#ocrBox').addEventListener('focusin', ev => { if (ev.target.matches('input')) last = ev.target; });
+  $('#sheet').querySelectorAll('[data-ocrv]').forEach(b => b.onclick = () => { if (last){ last.value = b.dataset.ocrv.replace('.', ','); last.focus(); } });
+}
+function ocrApply(){
+  if (!OCR) return; const { k, i } = OCR, e = (data[k] || [])[i]; if (!e) return;
+  const key = keyOf(k, i), lg = logs[key] = logs[key] || { w:'', r:'' }, g = id => { const el = $('#' + id); return el ? num(el.value) : null; };
+  const t = typ(e), mn = g('oMin'), km = g('oKm'), kc = g('oK');
+  if (t === 'c'){ if (mn != null && okVal('r', mn)) lg.r = String(mn); if (km != null && okVal('w', km)) lg.w = String(km); if (kc != null && okVal('k', kc)) lg.k = String(kc); }
+  else if (kc != null && okVal('r', kc)) lg.r = String(kc);
+  closeSheet(); render(); save(); toast(t === 'k' ? '📷 Calories remplies : touche la série pour la valider' : '📷 Valeurs remplies : coche l’exercice quand c’est bon');
+}
+
 // ressenti après chaque série : 😌 facile / 💪 juste / 🥵 très dur → charge de la série suivante ajustée
 const FEEL3 = [['😌','Facile'],['💪','Juste'],['🥵','Très dur']];
 const lowReps = r => { const m = String(r || '').match(/\d+/); return m ? +m[0] : topReps(r); };
@@ -4528,6 +4637,8 @@ const chronoSeg = () => `<div class="seg" role="tablist" style="margin-top:16px"
    ============================================================ */
 function evoAct(a, b){
   switch (a){
+    case 'ocrok': ocrApply(); break;
+    case 'ocrre': closeSheet(); if (OCR) ocrStart(OCR.i); break;
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
     case 'ctab': chronoTab = b.dataset.t; render(); break;
     case 'itmode': itCfg().mode = b.dataset.m; itCfg().wod = null; safeSet('mp_settings', settings); viewIT(); break;
@@ -4966,6 +5077,7 @@ document.addEventListener('click', e => {
       setDone(k, i, now); render(); save(); break;
     }
     case 'set': logSet(k, i, +b.dataset.j); break;
+    case 'ocr': ocrStart(i); break;
     case 'adj': {
       const key = keyOf(k, i), f = b.dataset.f; if (!logs[key]) logs[key] = { w:'', r:'' };
       const inp = b.parentElement.querySelector('input');
@@ -5126,7 +5238,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 52;
+const APP_VERSION = 53;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
