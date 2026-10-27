@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Mon Programme</title>
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="icon-192-v2.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-v2.png">
 <meta name="apple-mobile-web-app-title" content="Mon Programme">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -700,7 +700,7 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <div class="logo"><img src="icon-192.png" alt="" width="38" height="38"></div>
+  <div class="logo"><img src="icon-192-v2.png" alt="" width="38" height="38"></div>
   <h1>Mon Programme<small id="subTitle">Entraînement de la semaine</small></h1>
   <a class="pill" href="https://galianachristian-cpu.github.io/mon-garage/" title="Mon Garage (véhicules)" aria-label="Ouvrir Mon Garage" style="padding:6px 9px;text-decoration:none">🚗</a>
   <button class="profbtn" id="profBtn" aria-label="Changer de profil"><span class="av">M</span><span class="pn">Moi</span></button>
@@ -4637,8 +4637,8 @@ function remCard(){
     <button class="btn block" data-x="remics" style="margin-top:8px">📅 Ajouter tous les rappels à l’agenda</button></div>`;
 }
 async function notify(title, body, tag){
-  try{ const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (reg && reg.showNotification){ await reg.showNotification(title, { body, tag, icon:'icon-192.png', badge:'icon-192.png', data:{ url: location.href.split('#')[0] } }); return; } }catch(e){}
-  try{ new Notification(title, { body, tag, icon:'icon-192.png' }); }catch(e){}
+  try{ const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (reg && reg.showNotification){ await reg.showNotification(title, { body, tag, icon:'icon-192-v2.png', badge:'icon-192-v2.png', data:{ url: location.href.split('#')[0] } }); return; } }catch(e){}
+  try{ new Notification(title, { body, tag, icon:'icon-192-v2.png' }); }catch(e){}
 }
 function remCheck(){
   if (!notifOk()) return;
@@ -5277,7 +5277,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 55;
+const APP_VERSION = 56;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
