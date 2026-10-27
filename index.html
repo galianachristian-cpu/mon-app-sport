@@ -75,6 +75,9 @@ button{cursor:pointer;border:none;background:none}
 .ex{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;transition:.25s;position:relative}
 .ex.done{border-color:rgba(52,211,153,.45);background:linear-gradient(180deg,rgba(52,211,153,.08),var(--card) 60%)}
 .ex .row1{display:flex;align-items:center;gap:12px}
+.dragh{flex:0 0 auto;width:22px;margin:-6px -6px -6px -4px;align-self:stretch;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);opacity:.55;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.dragmode,.dragmode *{cursor:grabbing!important;user-select:none;-webkit-user-select:none}
+.ex.dragging{transition:none;z-index:5;box-shadow:0 14px 34px rgba(0,0,0,.45);border-color:var(--a1);scale:1.02}
 .emo{width:48px;height:48px;border-radius:14px;background:var(--bg2);border:1px solid var(--line);display:grid;place-items:center;font-size:24px;flex:0 0 auto}
 .ex .name{flex:1;min-width:0;text-align:left}
 .ex .name b{display:block;font-size:16px;line-height:1.25}
@@ -664,9 +667,9 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 
 /* Batch cooking */
 .steps{display:flex;flex-direction:column;gap:8px}
-.step{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:var(--bg2);border:1px solid var(--line);font-size:13.5px;line-height:1.45;cursor:pointer}
-.step input{margin-top:3px;width:18px;height:18px;accent-color:var(--a1);flex:0 0 auto}.step .t{font-weight:900;color:var(--a1);min-width:34px;font-variant-numeric:tabular-nums}
-.step.ok{opacity:.55}.step.ok span:last-child{text-decoration:line-through}
+.steps .step{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:var(--bg2);border:1px solid var(--line);font-size:13.5px;line-height:1.45;cursor:pointer}
+.steps .step input{margin-top:3px;width:18px;height:18px;accent-color:var(--a1);flex:0 0 auto}.steps .step .t{font-weight:900;color:var(--a1);min-width:34px;font-variant-numeric:tabular-nums}
+.steps .step.ok{opacity:.55}.steps .step.ok span:last-child{text-decoration:line-through}
 
 /* Pictogrammes animés */
 .pk{display:block;width:100%;height:100%}
@@ -1801,14 +1804,14 @@ function exCard(k, e, i){
   if (!isSkip(e) && i !== openIdx(k)){
     const dots = t === 'c' ? '' : `<span class="mini-sets">${Array.from({ length: effS(e) }, (_, j) => `<i class="${j < S.length ? 'on' : ''}"></i>`).join('')}</span>`;
     const info = isDone ? (S.length && t === 'f' ? `${fr(Math.max(...S.map(x => num(x.w) || 0)))} kg · ${S.length} séries` : 'Terminé') : last ? `Dernière fois : ${esc(lastTxt(last))}` : (t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`);
-    return `<article class="ex exmini ${isDone ? 'done' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}"><div class="row1">
+    return `<article class="ex exmini ${isDone ? 'done' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span>
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e, true)}</button>
       <button class="name" data-act="exopen" data-i="${i}" aria-expanded="false"><b>${esc(e.n)}</b><span class="sub">${dots}<span class="sr">${info}</span>${isPR ? '<span class="pr">🏆</span>' : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button></div></article>`;
   }
-  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : '⏭️ Mis de côté aujourd’hui (douleur)'}</span></span></div></div></article>`;
+  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : '⏭️ Mis de côté aujourd’hui (douleur)'}</span></span></div></div></article>`;
   return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">🩺 Remplace « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
-    <div class="row1">
+    <div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span>
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`}</span>${e.ssD === today() ? `<span class="ph ph-ss">🔗 avec ${esc(e.ssW)}</span>` : ''}${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button>
@@ -2612,6 +2615,41 @@ function moveEx(i, d){
   remapKeys(k, x => x === i ? j : x === j ? i : x);
   render(); save(); sheetDetail(j);
 }
+// glisser-déposer : l'exercice « from » prend la place « to », les autres se décalent
+function reorderEx(from, to){
+  const k = 'day' + currentDay, l = data[k]; if (!l || from === to || !l[from] || to < 0 || to >= l.length) return;
+  const ord = l.map((_, j) => j); ord.splice(to, 0, ord.splice(from, 1)[0]);
+  const pos = []; ord.forEach((old, j) => { pos[old] = j; });
+  data[k] = ord.map(j => l[j]); const dn = done[k] || []; done[k] = ord.map(j => dn[j] || false);
+  remapKeys(k, x => pos[x] ?? x); if (exOpen[k] != null) exOpen[k] = pos[exOpen[k]];
+  render(); save(); toast('↕️ ' + data[k][to].n + ' déplacé');
+}
+let DRAG = null;
+document.addEventListener('pointerdown', ev => {
+  const h = ev.target.closest('.dragh'); if (!h || view !== 'seance' || DRAG) return;
+  const card = h.closest('.ex'), cards = [...document.querySelectorAll('#app .list > .ex')]; if (!card || cards.length < 2) return;
+  ev.preventDefault(); try{ h.setPointerCapture(ev.pointerId); }catch(e){}
+  const sy = window.scrollY, R = cards.map(c => { const r = c.getBoundingClientRect(); return { top: r.top + sy, mid: r.top + sy + r.height / 2, h: r.height }; });
+  const from = cards.indexOf(card), gap = cards.length > 1 ? R[1].top - R[0].top - R[0].h : 10;
+  DRAG = { h, id: ev.pointerId, card, cards, R, from, to: from, y0: ev.clientY + sy, y: ev.clientY, step: R[from].h + gap, raf: 0 };
+  card.classList.add('dragging'); document.documentElement.classList.add('dragmode');
+  if (navigator.vibrate) navigator.vibrate(15);
+  const loop = () => { if (!DRAG) return; const v = DRAG.y < 90 ? -10 : DRAG.y > innerHeight - 120 ? 10 : 0; if (v){ window.scrollBy(0, v); dragPaint(); } DRAG.raf = requestAnimationFrame(loop); };
+  DRAG.raf = requestAnimationFrame(loop);
+});
+function dragPaint(){
+  const D = DRAG, py = D.y + window.scrollY, dy = py - D.y0, cMid = D.R[D.from].mid + dy;
+  let to = D.from;
+  D.R.forEach((r, j) => { if (j > D.from && cMid > r.mid) to = j; if (j < D.from && cMid < r.mid && to === D.from) to = j; });
+  if (to !== D.to && navigator.vibrate) navigator.vibrate(8);
+  D.to = to; D.card.style.transform = `translateY(${dy}px)`;
+  D.cards.forEach((c, j) => { if (c === D.card) return; const sh = D.from < to && j > D.from && j <= to ? -D.step : D.from > to && j >= to && j < D.from ? D.step : 0; c.style.transform = sh ? `translateY(${sh}px)` : ''; });
+}
+document.addEventListener('pointermove', ev => { if (!DRAG || ev.pointerId !== DRAG.id) return; ev.preventDefault(); DRAG.y = ev.clientY; dragPaint(); }, { passive: false });
+const dragEnd = ev => { if (!DRAG || ev.pointerId !== DRAG.id) return; const D = DRAG; DRAG = null; cancelAnimationFrame(D.raf);
+  document.documentElement.classList.remove('dragmode'); D.cards.forEach(c => { c.style.transform = ''; c.classList.remove('dragging'); });
+  if (ev.type === 'pointerup' && D.to !== D.from) reorderEx(D.from, D.to); };
+document.addEventListener('pointerup', dragEnd); document.addEventListener('pointercancel', dragEnd);
 function delEx(i){
   const k = 'day' + currentDay, name = data[k][i].n;
   data[k].splice(i, 1); if (done[k]) done[k].splice(i, 1);
@@ -5110,7 +5148,7 @@ document.addEventListener('change', e => {
 document.addEventListener('focusin', e => { const t = e.target; if (t && t.matches && t.matches('[data-log], #sW, #sR')) setTimeout(() => { try{ t.select(); }catch(x){} }, 0); });
 // balayage gauche / droite pour changer de jour
 let sx = null, sy = null;
-$('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+$('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice,.dragh')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 $('#app').addEventListener('touchend', e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){ currentDay = (currentDay + (dx < 0 ? 1 : 6)) % 7; render(); } sx = null; }, { passive: true });
 window.addEventListener('pagehide', () => { flushSave(); });
 
@@ -5238,7 +5276,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 53;
+const APP_VERSION = 54;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
