@@ -2240,7 +2240,7 @@ function viewSemaine(){
   $('#app').innerHTML = `<div class="fade">
   <section class="hero" style="margin-top:16px"><div style="flex:1;position:relative;z-index:1"><h2>Ma semaine</h2><p>${dn} exercices faits sur ${tot}</p><div class="bar" style="margin-top:12px"><i style="width:${tot ? Math.round(dn * 100 / tot) : 0}%"></i></div></div>
   <div class="ring">${ring(tot ? dn / tot : 0, 86, 9, 'r2')}<div class="v">${tot ? Math.round(dn * 100 / tot) : 0}%<small>semaine</small></div></div></section>
-  <h3 class="sec">Coach</h3>${coachCard()}${balanceCard()}
+  <h3 class="sec">Coach</h3>${coachCard()}${hiitCard()}${balanceCard()}
   <h3 class="sec">Les 7 jours</h3>
   <div class="wk">${DAY_NAMES.map((d, i) => { const l = data['day'+i] || [], n = l.filter((_, j) => (done['day'+i] || [])[j]).length;
     return `<div class="wkday ${i === todayIdx() ? 'today' : ''}"><button class="n" data-act="goday" data-day="${i}">${DAY_SHORT[i]}</button>
@@ -3634,6 +3634,78 @@ function coachWeekly(prevDone){
   return msgs;
 }
 const adaptBtns = () => (caserneChanges().length ? '<button class="btn block" data-x="adapt" style="margin-top:8px">🚒 Garder mon programme, adapté à la caserne</button>' : '') + (coach && coach.prevData ? '<button class="btn block" data-x="adaptundo" style="margin-top:8px">↩️ Annuler l’adaptation à la caserne</button>' : '');
+/* ============================================================
+   SEMAINE AVEC 2 SÉANCES HIIT : jours choisis → HIIT, le reste de la muscu regroupé
+   ============================================================ */
+const HIIT_A = [['Rameur', { r: '5 min', ph: 'warm' }],
+  ['HIIT 30/30', { s: 10, r: '30 s', desc: '30 s à fond sur l’assault bike (ou rameur, SkiErg), puis 30 s de récupération lente. 10 tours.' }],
+  ['Burpees', { s: 3, r: '10' }], ['Mountain climbers', { s: 3, r: '30 s' }], ['Vélo', { r: '5 min', ph: 'cool' }]];
+const HIIT_B = [['SkiErg', { r: '5 min', ph: 'warm' }],
+  ['Assault bike', { t: 'k', s: 5, r: '12', desc: '5 sprints de 12 calories à fond, 1 min de récupération entre chaque.' }],
+  ['Kettlebell swing', { s: 4, r: '15' }], ['Wall ball', { s: 4, r: '12' }], ['Squat sauté', { s: 3, r: '8' }], ['Rameur', { r: '5 min', ph: 'cool' }]];
+const HIIT_T = ['⚡ HIIT machines', '⚡ HIIT circuit'];
+const NOT_MAIN = new Set(['Cardio', 'Mobilité', 'Étirements', 'Pliométrie']);
+const musOf = L => new Set((L || []).filter(e => !NOT_MAIN.has(e.m)).map(e => e.m));
+const isHiitDay = i => HIIT_T.includes(titles['day' + i]);
+function hiitList(v){
+  const used = new Set();
+  return (v ? HIIT_B : HIIT_A).map(([n, x]) => { let e = exFromLib(n, x);
+    if (e && !canDo(e.n)){ const a = altDoable(e, used); e = a ? exFromLib(a, { s: e.s, r: LIB_BY[a].r, ph: x.ph }) : null; }
+    if (e) used.add(e.n); return e; }).filter(Boolean);
+}
+// muscles proches : où ranger les exercices d'un jour supprimé
+const REL = { 'Épaules':['Pectoraux','Triceps'], 'Triceps':['Pectoraux','Épaules'], 'Pectoraux':['Triceps','Épaules'], 'Biceps':['Dos'], 'Dos':['Biceps'],
+  'Fessiers':['Quadriceps','Ischio-jambiers'], 'Ischio-jambiers':['Quadriceps','Fessiers'], 'Quadriceps':['Ischio-jambiers','Fessiers'], 'Mollets':['Quadriceps','Ischio-jambiers'] };
+function planHiit(hd, weOff){
+  const src = [0, 1, 2, 3, 4, 5, 6].map(i => ({ i, L: data['day' + i] || [], t: isHiitDay(i) ? DAY_SUB[i] : dayTitle(i) }));
+  const train = src.map(d => d.i).filter(i => !(weOff && i >= 5)), keep = train.filter(i => !hd.includes(i));
+  const sig = L => [...musOf(L)].sort().join('+'), tpl = [], seen = new Map();
+  src.filter(d => musOf(d.L).size && !isHiitDay(d.i)).forEach(d => { const s = sig(d.L); if (!seen.has(s)){ seen.set(s, tpl.length); tpl.push(Object.assign({ s, used: false }, d)); } });
+  const out = {}, free = [];
+  keep.forEach(i => { const d = src[i];
+    if (!musOf(d.L).size){ if (!d.L.length || isHiitDay(i)) free.push(i); else out[i] = { L: clone(d.L), t: d.t }; return; } // jour de mobilité ou de cardio : gardé
+    const t = tpl[seen.get(sig(d.L))]; if (t.used) free.push(i); else { t.used = true; out[i] = { L: clone(d.L), t: d.t }; } });
+  free.forEach(i => { const t = tpl.find(x => !x.used); if (t){ t.used = true; out[i] = { L: clone(t.L), t: t.t }; } else out[i] = { L: [], t: 'Repos' }; });
+  // muscles des jours qui disparaissent : 2 exercices par muscle, rangés avec les muscles proches
+  const kd = keep.filter(i => musOf(out[i].L).size), added = {};
+  tpl.filter(x => !x.used).forEach(t => { const per = {};
+    t.L.forEach(e => { if (NOT_MAIN.has(e.m) || (per[e.m] || 0) >= 2) return;
+      const ok = kd.filter(i => out[i].L.length < 9 && !out[i].L.some(x => x.n === e.n)); if (!ok.length) return;
+      const best = ok.find(i => out[i].L.some(x => x.m === e.m || (REL[e.m] || []).includes(x.m))) ?? ok.sort((a, b) => out[a].L.length - out[b].L.length)[0];
+      out[best].L.push(clone(e)); per[e.m] = (per[e.m] || 0) + 1; (added[best] = added[best] || new Set()).add(e.m); }); });
+  Object.entries(added).forEach(([i, S]) => { out[i].t = out[i].t + ' + ' + [...S].join(' & '); });
+  hd.forEach((i, j) => { out[i] = { L: hiitList(j % 2), t: HIIT_T[j % 2] }; });
+  src.forEach(d => { if (!out[d.i]) out[d.i] = { L: [], t: 'Repos' }; });
+  return out;
+}
+let hiitDays = null, hiitWe = true;
+function sheetHiit(){
+  if (!hiitDays){ const cur = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay); hiitDays = cur.length ? cur : [1, 3]; }
+  const P = hiitDays.length ? planHiit(hiitDays, hiitWe) : null;
+  openSheet(`<h2>⚡ Séances HIIT</h2>
+    <p class="muted" style="font-size:13px;margin-bottom:10px">Choisis 2 jours : ils deviennent des séances HIIT de 30 à 40 min (machines de la caserne, kettlebell, poids du corps). Ta muscu est regroupée sur les autres jours.</p>
+    <div class="fg"><label>Jours HIIT</label><div class="dpick">${DAY_SHORT.map((d, i) => `<button type="button" data-x="hiitd" data-d="${i}" class="${hiitDays.includes(i) ? 'on' : ''}">${d}</button>`).join('')}</div></div>
+    <div class="toggle" style="margin:6px 0 12px"><span>Repos le week-end<small>Entraînement du lundi au vendredi seulement</small></span><button type="button" class="sw ${hiitWe ? 'on' : ''}" data-x="hiitwe" role="switch" aria-checked="${hiitWe}"></button></div>
+    ${P ? `<h3 class="sec">Ta nouvelle semaine</h3><div class="card tips-list">${DAY_NAMES.map((n, i) => `<p><b>${n}</b> · ${esc(P[i].t)}<br><small class="muted">${P[i].L.length ? esc(P[i].L.map(e => e.n).join(', ')) : 'repos'}</small></p>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 2px">Tes charges et ton historique sont gardés. Tu pourras revenir à l’ancien programme.</p>` : '<p class="muted">Choisis au moins un jour.</p>'}
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn pri" data-x="hiitgo" ${hiitDays.length === 2 ? '' : 'disabled'}>⚡ Appliquer</button></div>`);
+}
+function applyHiit(){
+  const P = planHiit(hiitDays, hiitWe);
+  coach = Object.assign({}, coach, { prevHiit: { data: clone(data), titles: clone(titles) } });
+  Object.entries(P).forEach(([i, x]) => { const k = 'day' + i, old = (data[k] || []).map(e => e.n);
+    const keepState = old.every((n, j) => x.L[j] && x.L[j].n === n); // exercices d'avant toujours à la même place
+    data[k] = x.L; titles[k] = x.t;
+    if (!keepState){ done[k] = []; [logs, sets, sl].forEach(o => Object.keys(o).filter(y => y.startsWith(k + '_')).forEach(y => delete o[y])); } });
+  closeSheet(); render(); save(); toast('⚡ 2 séances HIIT ajoutées à ta semaine');
+}
+function hiitCard(){
+  const H = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay);
+  return `<div class="card" style="margin-top:12px"><div class="row"><span style="font-size:26px">⚡</span><div style="flex:1;min-width:0"><b>${H.length ? `HIIT : ${H.map(i => DAY_NAMES[i].toLowerCase()).join(' et ')}` : 'Ajouter 2 séances HIIT par semaine'}</b>
+    <small class="muted" style="display:block;font-size:12.5px">${H.length ? 'Sprints machines, kettlebell et poids du corps, 30 à 40 min.' : 'Brûle plus de calories et améliore ton cardio, sans perdre ta muscu.'}</small></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm ${H.length ? '' : 'pri'}" data-x="hiit">${H.length ? '⚙️ Modifier' : '⚡ Choisir mes jours'}</button>${coach && coach.prevHiit ? '<button class="btn sm" data-x="hiitundo">↩️ Revenir à l’ancien programme</button>' : ''}</div></div>`;
+}
+
 function coachCard(){
   const objNut = nut && nut.obj;
   if (!prog) return `<div class="card coach"><div class="row" style="align-items:flex-start"><span style="font-size:34px">🧠</span><div style="flex:1;min-width:180px"><b style="font-size:16px">Coach : crée ton programme</b>
@@ -4679,6 +4751,11 @@ function evoAct(a, b){
   switch (a){
     case 'ocrok': ocrApply(); break;
     case 'ocrre': closeSheet(); if (OCR) ocrStart(OCR.i); break;
+    case 'hiit': hiitDays = null; sheetHiit(); break;
+    case 'hiitd': { const d = +b.dataset.d; hiitDays = hiitDays.includes(d) ? hiitDays.filter(x => x !== d) : [...hiitDays, d].slice(-2).sort(); sheetHiit(); break; }
+    case 'hiitwe': hiitWe = !hiitWe; sheetHiit(); break;
+    case 'hiitgo': applyHiit(); break;
+    case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
     case 'ctab': chronoTab = b.dataset.t; render(); break;
     case 'itmode': itCfg().mode = b.dataset.m; itCfg().wod = null; safeSet('mp_settings', settings); viewIT(); break;
@@ -5278,7 +5355,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 57;
+const APP_VERSION = 58;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
