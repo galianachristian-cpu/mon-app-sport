@@ -259,6 +259,9 @@ select.sel{width:100%;padding:11px 12px;border-radius:12px;background:var(--bg2)
 .nav button .i svg{width:23px;height:23px}
 .nav button.on .i{color:var(--a1);background:color-mix(in srgb,var(--a1) 16%,transparent)}
 .logo svg{width:22px;height:22px}
+.cdn{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:300;font-size:min(46vw,260px);font-weight:900;color:#fff;text-shadow:0 0 40px var(--a1),0 6px 30px rgba(0,0,0,.6);opacity:0;font-variant-numeric:tabular-nums}
+.cdn.show{animation:cdPop .9s ease-out forwards}
+@keyframes cdPop{0%{opacity:0;transform:scale(.4)}20%{opacity:.95;transform:scale(1.08)}70%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
 .pill.garage{padding:4px;text-decoration:none;display:inline-flex;align-items:center}.pill.garage img{width:28px;height:28px;border-radius:8px;display:block}
 .logo:has(img){background:none;overflow:hidden;box-shadow:0 6px 18px rgba(249,115,22,.3)}.logo img{width:100%;height:100%;display:block}
 h1,h2,h3,.hero h2,.today h2,.stat .v,.ring .v,.g-rest b,.g-ex h2,.g-step b,.lk-in h2,.nav button,.seg button,.btn,.ex .name b,.chip,.days .day b,.sheet h2{font-family:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
@@ -1359,7 +1362,7 @@ const NAV_ORDER = ['seance','semaine','nutrition','progres','chrono'];
   if (document.body) fix(); else document.addEventListener('DOMContentLoaded', fix);
   addEventListener('orientationchange', () => setTimeout(fix, 300)); addEventListener('resize', () => setTimeout(fix, 100));
 })();
-const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
+const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, cd:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function safeGet(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
@@ -2465,7 +2468,7 @@ const T = { total: settings.preset, left: settings.preset, run: false, end: 0, i
 function fmtT(s){ s = Math.max(0, Math.ceil(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
 function tick(){
   guideTick(); if (DU){ const el = $('#duT'); if (el) el.textContent = fmtT(T.left); const r = document.querySelector('.durest'); if (r) r.classList.toggle('on', T.run); }
-  if (T.run){ T.left = (T.end - Date.now()) / 1000; if (T.left <= 0){ T.left = 0; T.run = false; clearInterval(T.iv); alarm(); } }
+  if (T.run){ T.left = (T.end - Date.now()) / 1000; if (T.left <= 0){ T.left = 0; T.run = false; clearInterval(T.iv); cdShow(0); alarm(); } else countdown(); }
   paintTimer();
   const el = $('#elapsed'), s = sess['day' + currentDay]; if (el && s && s.start) el.textContent = elapsed(s.start);
 }
@@ -2480,20 +2483,36 @@ function paintTimer(){
     $('#bigRing').className = 'bigring' + (T.left <= 0 ? ' end' : T.run && T.left <= 10 ? ' warn' : '');
     const pb = $('#tPlay'); if (pb) pb.textContent = T.run ? '⏸' : '▶'; const lb = $('#bigLbl'); if (lb) lb.textContent = T.label; }
 }
-function startTimer(sec, label){ setTimeout(syncAwake, 0);
+// décompte des dernières secondes : bip + voix à 10 s, puis 3, 2, 1 en grand à l'écran
+function countdown(){
+  if (!settings.cd) return; const s = Math.ceil(T.left); if (s === T.cdLast) return; T.cdLast = s;
+  if (s === 10 && T.total >= 20){ beep(660, .15, .25); speak('Dix secondes'); }
+  else if (s >= 1 && s <= 3){ beep(880, .12, .35); if (settings.vibe && navigator.vibrate) navigator.vibrate(60); speak(String(s)); cdShow(s); }
+}
+function cdShow(n){
+  let el = $('#cdn'); if (!el){ el = document.createElement('div'); el.id = 'cdn'; el.className = 'cdn'; el.setAttribute('aria-live', 'assertive'); document.body.appendChild(el); }
+  if (!n){ el.classList.remove('show'); return; }
+  el.textContent = n; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+// iPhone : le son et la voix doivent être « débloqués » par un toucher, on le fait au lancement du chrono
+function unlockAudio(){
+  try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); }catch(e){}
+  try{ if (settings.voice && window.speechSynthesis && !unlockAudio.v){ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); unlockAudio.v = 1; } }catch(e){}
+}
+function startTimer(sec, label){ setTimeout(syncAwake, 0); unlockAudio(); T.cdLast = null;
   if (sec != null){ T.total = sec; T.left = sec; }
   if (T.left <= 0) T.left = T.total;
   T.label = label || 'Repos'; T.run = true; T.flash = false; T.end = Date.now() + T.left * 1000;
   clearInterval(T.iv); T.iv = setInterval(tick, 250); paintTimer();
 }
-function pauseTimer(){ if (!T.run) return; T.left = (T.end - Date.now()) / 1000; T.run = false; clearInterval(T.iv); paintTimer(); }
-function resetTimer(){ T.run = false; clearInterval(T.iv); T.left = T.total; T.flash = false; paintTimer(); }
+function pauseTimer(){ cdShow(0); if (!T.run) return; T.left = (T.end - Date.now()) / 1000; T.run = false; clearInterval(T.iv); paintTimer(); }
+function resetTimer(){ cdShow(0); T.run = false; clearInterval(T.iv); T.left = T.total; T.flash = false; paintTimer(); }
 function addTime(s){ if (T.run) T.end += s * 1000; else T.left = Math.max(0, T.left + s); T.total = Math.max(T.total, T.run ? (T.end - Date.now()) / 1000 : T.left); tick(); }
 function alarm(){
   T.flash = true;
   if (G){ if (settings.vibe && navigator.vibrate) navigator.vibrate([200, 80, 200]); speak(G.timerSet ? '' : 'C’est reparti'); guideTimerEnd(); setTimeout(() => { T.flash = false; T.total = settings.preset; T.left = T.total; T.label = 'Repos'; paintTimer(); }, 1500); return; }
   if (settings.vibe && navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 500]);
-  if (settings.sound){ try{ const ctx = new (window.AudioContext || window.webkitAudioContext)(); [0, .25, .5].forEach(t => { const o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = t === .5 ? 1175 : 880; g.gain.setValueAtTime(.3, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .22); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .23); }); setTimeout(() => ctx.close(), 1200); }catch(e){} }
+  if (settings.sound){ try{ const ctx = actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); [0, .25, .5].forEach(t => { const o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = t === .5 ? 1175 : 880; g.gain.setValueAtTime(.3, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .22); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .23); }); setTimeout(() => ctx.close(), 1200); }catch(e){} }
   toast(T.label.startsWith('Repos') ? '⏰ Repos terminé, à toi de jouer !' : '⏰ Temps écoulé !');
   setTimeout(() => { T.flash = false; T.total = settings.preset; T.left = T.total; T.label = 'Repos'; paintTimer(); }, 6000);
 }
@@ -2507,7 +2526,7 @@ function viewRepos(){
   </div>
   <h3 class="sec">Options</h3>
   <div class="card"><div class="toggle"><span>Thème<small>Sombre, clair ou selon le téléphone</small></span><select class="inp" id="thSel" style="width:auto">${[['dark','🌙 Sombre'],['light','☀️ Clair'],['auto','📱 Auto']].map(([v, l]) => `<option value="${v}" ${settings.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div><div class="toggle"><span>Poids de la barre<small>Pour le calcul des disques</small></span><select class="inp" id="barSel" style="width:auto">${[10, 15, 20].map(b => `<option value="${b}" ${+settings.bar === b ? 'selected' : ''}>${b} kg</option>`).join('')}</select></div>
-    ${[['auto','Repos automatique','Le chrono démarre quand tu valides une série'],['sound','Son','Bip à la fin du repos'],['vibe','Vibration','Sur téléphone'],['voice','Voix du coach','Annonces vocales pendant la séance guidée']].map(([k, l, s]) => `<div class="toggle"><span>${l}<small>${s}</small></span><button class="sw ${settings[k] ? 'on' : ''}" data-act="opt" data-k="${k}" role="switch" aria-checked="${settings[k]}" aria-label="${l}"></button></div>`).join('')}
+    ${[['auto','Repos automatique','Le chrono démarre quand tu valides une série'],['cd','Compte à rebours','Bip à 10 s, puis 3, 2, 1 avant la fin du repos'],['sound','Son','Bip à la fin du repos'],['vibe','Vibration','Sur téléphone'],['voice','Voix du coach','Annonces vocales pendant la séance guidée']].map(([k, l, s]) => `<div class="toggle"><span>${l}<small>${s}</small></span><button class="sw ${settings[k] ? 'on' : ''}" data-act="opt" data-k="${k}" role="switch" aria-checked="${settings[k]}" aria-label="${l}"></button></div>`).join('')}
   </div></div>`;
   paintTimer();
   $('#thSel').onchange = () => { settings.theme = $('#thSel').value; safeSet('mp_settings', settings); applyTheme(); };
@@ -5366,7 +5385,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 59;
+const APP_VERSION = 60;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
