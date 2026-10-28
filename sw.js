@@ -1,5 +1,5 @@
 /* Mon Programme : service worker pour l'installation et l'usage hors ligne */
-const CACHE = 'mon-programme-v58';
+const CACHE = 'mon-programme-v59';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192-v2.png', './icon-512-v2.png', './apple-touch-icon-v2.png', './garage-icon.png'];
 
 self.addEventListener('install', e => {
@@ -13,6 +13,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   // l'appli Montée en véhicule (dossier pompiers/) a son propre service worker
   if (url.origin === location.origin && url.pathname.includes('/pompiers/')) return;
+  // vidéo anti-veille : Safari la lit par morceaux, on la laisse au réseau
+  if (/\.(mp4|webm)$/.test(url.pathname)) return;
   // page : réseau d'abord (toujours la dernière version), sinon la copie gardée
   if (req.mode === 'navigate' || (url.origin === location.origin && url.pathname.endsWith('.html'))){
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put('./index.html', c)); return r; }).catch(() => caches.match('./index.html').then(r => r || caches.match('./'))));

@@ -5084,15 +5084,26 @@ function wantAwake(){
   const s = sess['day' + todayIdx()], live = s && s.start && !s.end && ymd(new Date(s.start)) === today();
   return !!(G || live || T.run || (typeof RUN !== 'undefined' && RUN) || ($('#full') && $('#full').classList.contains('show')) || (view === 'chrono'));
 }
+// iPhone : si le verrou d'écran est refusé ou relâché, une mini-vidéo muette en boucle empêche la mise en veille
+let awakeVid = null;
+function vidAwake(on){
+  if (on){ if (!awakeVid){ awakeVid = document.createElement('video'); awakeVid.innerHTML = '<source src="awake.mp4" type="video/mp4"><source src="awake.webm" type="video/webm">'; awakeVid.muted = true; awakeVid.loop = true; awakeVid.playsInline = true; awakeVid.setAttribute('playsinline', ''); awakeVid.setAttribute('muted', '');
+      awakeVid.style.cssText = 'position:fixed;width:1px;height:1px;opacity:.01;pointer-events:none;bottom:0;left:0'; document.body.appendChild(awakeVid); }
+    if (awakeVid.paused) awakeVid.play().catch(() => {}); }
+  else if (awakeVid && !awakeVid.paused) awakeVid.pause();
+}
 async function syncAwake(){
-  if (!('wakeLock' in navigator)) return;
   const want = wantAwake();
-  try{
-    if (want && !awakeLock){ awakeLock = await navigator.wakeLock.request('screen'); awakeLock.addEventListener('release', () => { awakeLock = null; }); }
-    else if (!want && awakeLock){ const l = awakeLock; awakeLock = null; await l.release(); }
-  }catch(e){ awakeLock = null; }
+  if (!want){ vidAwake(false); if (awakeLock){ const l = awakeLock; awakeLock = null; try{ await l.release(); }catch(e){} } return; }
+  if (awakeLock) return;
+  if ('wakeLock' in navigator){
+    try{ awakeLock = await navigator.wakeLock.request('screen'); awakeLock.addEventListener('release', () => { awakeLock = null; setTimeout(syncAwake, 500); }); vidAwake(false); return; }catch(e){ awakeLock = null; }
+  }
+  vidAwake(true); // pas de verrou possible : vidéo de secours
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncAwake(); });
+// Safari n'accorde parfois le verrou (ou la lecture de la vidéo) qu'après un toucher : on retente à chaque toucher
+document.addEventListener('pointerdown', () => { if (!awakeLock && wantAwake()) syncAwake(); }, { passive: true });
 setInterval(syncAwake, 15000);
 function render(){
   document.querySelectorAll('.nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view));
@@ -5355,7 +5366,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 58;
+const APP_VERSION = 59;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
