@@ -1,5 +1,5 @@
 /* Mon Programme : service worker pour l'installation et l'usage hors ligne */
-const CACHE = 'mon-programme-v61';
+const CACHE = 'mon-programme-v62';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192-v2.png', './icon-512-v2.png', './apple-touch-icon-v2.png', './garage-icon.png'];
 
 self.addEventListener('install', e => {
