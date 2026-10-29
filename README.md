@@ -12,3 +12,6 @@ L'application Mon Garage a maintenant son propre projet : https://github.com/gal
 
 L'application Montée en véhicule du CS Cruzy / Quarante a son propre projet : https://github.com/galianachristian-cpu/monter-vehicule
 (adresse : https://galianachristian-cpu.github.io/monter-vehicule/). L'ancienne adresse `mon-app-sport/pompiers/` redirige vers la nouvelle.
+
+## Crédits
+- Animations de `img/anim/` : photos de [Free Exercise DB](https://github.com/yuhonas/free-exercise-db) (domaine public, Unlicense), assemblées en GIF.
