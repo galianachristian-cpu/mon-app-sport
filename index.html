@@ -321,7 +321,7 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .gif{width:100%;border-radius:16px;background:#fff;min-height:120px;display:grid;place-items:center;overflow:hidden;margin-bottom:14px}
 .gif img{width:100%;max-height:260px;object-fit:contain;display:block}
 .gif .no{font-size:50px;padding:30px;background:var(--bg2);width:100%;text-align:center}
-.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}.three > div{min-width:0;overflow-wrap:anywhere}
 .three.four{grid-template-columns:repeat(auto-fit,minmax(70px,1fr))}
 .ybars{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:6px}.yb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
 .yb .yc{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}.yb .yc i{width:46%;max-width:14px;border-radius:5px 5px 2px 2px;background:var(--bc)}.yb .yc i.py{background:rgba(148,163,184,.35)}
@@ -440,6 +440,8 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 @media(max-width:430px){.top h1 small{display:none}.profbtn .pn{display:none}.profbtn{padding:4px}}
 .muted{color:var(--muted)}
 .inp{padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:15px}
+/* iPhone : un champ en dessous de 16 px fait zoomer la page quand on le touche (et elle reste zoomée, fenêtres coupées à droite) */
+@supports (-webkit-touch-callout: none){ input:not([type=checkbox]):not([type=radio]), select, textarea{ font-size:16px !important } }
 .inp:focus{outline:none;border-color:var(--a1)}
 .btn.sm{padding:7px 11px;font-size:13px;border-radius:11px}
 .set{min-width:44px;height:40px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
@@ -5439,7 +5441,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 62;
+const APP_VERSION = 63;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
