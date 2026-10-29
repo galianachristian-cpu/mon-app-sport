@@ -322,6 +322,9 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .gif img{width:100%;max-height:260px;object-fit:contain;display:block}
 .gif .no{font-size:50px;padding:30px;background:var(--bg2);width:100%;text-align:center}
 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.three.four{grid-template-columns:repeat(auto-fit,minmax(70px,1fr))}
+.kbox .kcum{display:flex;gap:10px;margin-top:8px}.kbox .kcum div{flex:1;text-align:center;padding:8px;border-radius:12px;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3)}.kbox .kcum b{display:block;font-size:18px;color:#fb923c}.kbox .kcum small{font-size:11.5px;color:var(--muted)}
+.st-kcal{margin-top:14px;font-size:17px;color:#fdba74;text-align:center}.st-kcal b{color:#fb923c;font-size:20px}
 .three div{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
 .three b{display:block;font-size:18px}
 .three small{color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
@@ -2143,9 +2146,12 @@ function bilanData(k){
   const est = Math.round(H.reduce((a, h) => a + ((h.t || 'f') === 'c' ? num(h.r) || 0 : (h.sl ? h.sl.length : +h.s || 0) * (45 + settings.preset) / 60), 0));
   const raw = s.start && s.end ? (s.end - s.start) / 60000 : null, ok = raw != null && raw <= est * 2 + 20 && raw >= est * .4;
   const dur = ok ? Math.round(raw) : est || null, durEst = !ok && !!est;
-  const kcal = H.reduce((a, h) => a + (kcalOfH(h) || 0), 0);
+  const kcal = H.reduce((a, h) => a + (kcalOfH(h) || 0), 0), kcalMes = H.reduce((a, h) => a + (kcalVal(h) || 0), 0);
+  // cumul : toute la journée (autres séances, course, minuteurs) et toute la semaine
+  const kDay = hist.filter(h => h.d === d).reduce((a, h) => a + (kcalOfH(h) || 0), 0), WD = wkDates(curWk());
+  const kWeek = hist.filter(h => WD.includes(h.d)).reduce((a, h) => a + (kcalOfH(h) || 0), 0);
   const prev = seances.filter(x => x.k === k && x.d < d).slice(-1)[0];
-  return { d, k, vol, recs, dur, durEst, kcal, prev, nEx: H.length, sets: H.reduce((a, h) => a + (h.sl ? h.sl.length : h.s || 0), 0) };
+  return { d, k, vol, recs, dur, durEst, kcal, kcalMes, kDay, kWeek, prev, nEx: H.length, sets: H.reduce((a, h) => a + (h.sl ? h.sl.length : h.s || 0), 0) };
 }
 /* ---------- silhouette des muscles (face / dos) ---------- */
 // séries par muscle sur une liste d'historique
@@ -2175,7 +2181,8 @@ function storyRecap(k){
   const muscles = Object.entries(S).filter(([m]) => MUSCLES[m]).sort((a, c) => c[1] - a[1]);
   const slides = [
     `<div class="st-big">🏁</div><h2>Séance terminée !</h2><p class="st-sub">${esc(dayTitle(+k.slice(3)))} · ${fmtD(b.d)}</p>
-     <div class="st-stats"><div><b data-cnt="${b.dur || 0}">${b.dur || 0}</b><small>minutes</small></div><div><b data-cnt="${b.vol ? Math.round(b.vol) : Math.round(b.kcal)}">${b.vol ? Math.round(b.vol) : Math.round(b.kcal)}</b><small>${b.vol ? 'kg soulevés' : 'kcal'}</small></div><div><b data-cnt="${b.sets}">${b.sets}</b><small>série${b.sets > 1 ? 's' : ''}</small></div></div>`,
+     <div class="st-stats"><div><b data-cnt="${b.dur || 0}">${b.dur || 0}</b><small>minutes</small></div><div><b data-cnt="${b.vol ? Math.round(b.vol) : Math.round(b.kcal)}">${b.vol ? Math.round(b.vol) : Math.round(b.kcal)}</b><small>${b.vol ? 'kg soulevés' : 'kcal'}</small></div><div><b data-cnt="${b.sets}">${b.sets}</b><small>série${b.sets > 1 ? 's' : ''}</small></div></div>
+     ${b.kcal ? `<p class="st-kcal">🔥 <b data-cnt="${Math.round(b.kcal)}">${Math.round(b.kcal)}</b> kcal · cumul semaine <b data-cnt="${Math.round(b.kWeek)}">${Math.round(b.kWeek)}</b> kcal</p>` : ''}`,
     `<h2>Muscles travaillés</h2>${bodyMap(S, 8)}<div class="meta" style="justify-content:center;margin-top:10px">${muscles.map(([m, n]) => `<span class="mus" style="--c:${mcol(m)}">${esc(m)} · ${n}</span>`).join('')}</div>`,
     `${b.recs.length ? `<div class="st-big">🏆</div><h2>${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''} !</h2><div class="st-list">${b.recs.map(h => `<p>${esc(h.n)} <b>${fr(scoreOf(h))} ${unitOf(h.t || 'f', h)}</b></p>`).join('')}</div>`
       : `<div class="st-big">📈</div><h2>${diff == null ? 'Première fois sur cette séance' : diff >= 0 ? `+${diff} % de volume` : `${diff} % de volume`}</h2><p class="st-sub">${diff == null ? 'La prochaine fois, je compare avec aujourd’hui.' : diff >= 0 ? 'Plus que la dernière fois, bravo !' : 'Un peu moins que la dernière fois : la récupération compte aussi.'}</p>`}
@@ -2207,18 +2214,27 @@ async function storyShare(){
   const st = [[b.dur || 0, 'minutes'], [b.vol ? Math.round(b.vol) : Math.round(b.kcal), b.vol ? 'kg soulevés' : 'kcal'], [b.sets, b.sets > 1 ? 'séries' : 'série']];
   st.forEach(([v, l], j) => { const X = 70 + j * 330; x.fillStyle = '#141b2d'; x.beginPath(); x.roundRect ? x.roundRect(X, 270, 300, 200, 28) : x.rect(X, 270, 300, 200); x.fill(); x.fillStyle = gr; x.font = '900 84px system-ui, sans-serif'; x.fillText(String(v), X + 30, 380); x.fillStyle = '#8b9ab4'; x.font = '600 34px system-ui, sans-serif'; x.fillText(l, X + 30, 440); });
   try{ const svg = bodyMap(S, 8).match(/<svg[\s\S]*?<\/svg>/g); for (let j = 0; j < 2; j++){ const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg[j].replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="590" ')); await img.decode(); x.drawImage(img, 170 + j * 420, 520, 300, 590); } }catch(e){}
+  if (b.kcal){ x.fillStyle = '#fb923c'; x.font = '700 40px system-ui, sans-serif'; x.fillText(`🔥 ${Math.round(b.kcal)} kcal · ${Math.round(b.kWeek)} kcal cette semaine`, 70, 1120); }
   x.fillStyle = '#eef2f8'; x.font = '700 40px system-ui, sans-serif'; x.fillText(b.recs.length ? `🏆 ${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''}` : '💪 Séance validée', 70, 1180);
   x.fillStyle = '#8b9ab4'; x.font = '500 32px system-ui, sans-serif'; x.fillText('Mon Programme', 70, 1290);
   const blob = await new Promise(r => c.toBlob(r, 'image/png')), file = new File([blob], 'ma-seance.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: 'Ma séance' }).catch(() => {});
   else { const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = 'ma-seance.png'; l.click(); setTimeout(() => URL.revokeObjectURL(u), 2000); toast('🖼️ Image enregistrée'); }
 }
+// calories : séance, cumul du jour et de la semaine
+function kcalBox(b){
+  if (!b.kcal) return '';
+  const part = b.kcalMes >= b.kcal - 1 ? 'toutes notées sur les machines' : b.kcalMes ? `dont ${kc(Math.round(b.kcalMes))} notées sur les machines, le reste estimé` : 'estimation selon tes séries et ton poids';
+  return `<div class="box kbox"><p>🔥 <b>${kc(Math.round(b.kcal))} kcal</b> brûlées pendant cette séance <span class="muted">(${part})</span></p>
+    <div class="kcum">${Math.round(b.kDay) > Math.round(b.kcal) ? `<div><b>${kc(Math.round(b.kDay))}</b><small>aujourd’hui</small></div>` : ''}<div><b>${kc(Math.round(b.kWeek))}</b><small>cumul de la semaine</small></div></div></div>`;
+}
 function sheetBilan(k, fresh){
   const b = bilanData(k), saved = seances.find(x => x.d === b.d && x.k === k);
   const diff = b.prev && b.prev.vol ? Math.round((b.vol - b.prev.vol) * 100 / b.prev.vol) : null;
   openSheet(`<div class="bilan"><div class="big">🏁</div><h2 style="padding:0;text-align:center">${fresh ? 'Séance terminée, bravo !' : 'Bilan de la séance'}</h2>
     <p class="muted" style="text-align:center;margin-bottom:14px">${DAY_NAMES[+k.slice(3)]} · ${esc(dayTitle(+k.slice(3)))} · ${fmtD(b.d)}</p>
-    <div class="three"><div><b>${b.dur != null ? (b.durEst ? '≈ ' : '') + b.dur + ' min' : '–'}</b><small>Durée</small></div>${b.vol ? `<div><b>${fmtVol(b.vol)}</b><small>Soulevés</small></div>` : `<div><b>${kc(Math.round(b.kcal))}</b><small>kcal</small></div>`}<div><b>${b.sets}</b><small>Série${b.sets > 1 ? 's' : ''}</small></div></div>
+    <div class="three four"><div><b>${b.dur != null ? (b.durEst ? '≈ ' : '') + b.dur + ' min' : '–'}</b><small>Durée</small></div>${b.vol ? `<div><b>${fmtVol(b.vol)}</b><small>Soulevés</small></div>` : ''}<div><b>${kc(Math.round(b.kcal))}</b><small>🔥 kcal</small></div><div><b>${b.sets}</b><small>Série${b.sets > 1 ? 's' : ''}</small></div></div>
+    ${kcalBox(b)}
     ${diff != null ? `<div class="box"><p>${diff >= 0 ? '📈' : '📉'} <b>${diff >= 0 ? '+' : ''}${diff} %</b> de volume par rapport à la dernière fois (${fmtVol(b.prev.vol)}, ${fmtD(b.prev.d)})</p></div>` : ''}
     ${b.recs.length ? `<div class="box tips"><h4>🏆 ${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''}</h4><p>${b.recs.map(h => `${esc(h.n)} : ${fr(scoreOf(h))} ${unitOf(h.t || 'f', h)}`).join('\n')}</p></div>` : ''}
     <h4 class="muted" style="margin:14px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px">Ton ressenti</h4>
@@ -2228,7 +2244,7 @@ function sheetBilan(k, fresh){
   $('#sheet').querySelectorAll('[data-feel]').forEach(x => x.onclick = () => { feel = +x.dataset.feel; $('#sheet').querySelectorAll('[data-feel]').forEach(y => y.classList.toggle('on', y === x)); });
   $('#bOk').onclick = () => {
     seances = seances.filter(x => !(x.d === b.d && x.k === k));
-    seances.push({ d: b.d, k, titre: dayTitle(+k.slice(3)), dur: b.dur, vol: Math.round(b.vol), recs: b.recs.length, sets: b.sets, nEx: b.nEx, feel });
+    seances.push({ d: b.d, k, titre: dayTitle(+k.slice(3)), dur: b.dur, vol: Math.round(b.vol), kcal: Math.round(b.kcal), recs: b.recs.length, sets: b.sets, nEx: b.nEx, feel });
     if (seances.length > 600) seances = seances.slice(-600);
     closeSheet(); render(); save(); toast('💾 Séance enregistrée');
   };
@@ -5385,7 +5401,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 60;
+const APP_VERSION = 61;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
