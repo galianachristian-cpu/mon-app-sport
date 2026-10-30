@@ -4959,6 +4959,81 @@ function wodSave(n, res, c){
   const rec = !!L.length && (res.mode === 'fortime' ? !res.cap && L.filter(r => !r.cap).every(r => res.t < r.t) : L.every(r => res.r > r.r));
   L.push(res); coach.wods[n] = L.slice(-20); lastWod = { n, res, rec, prev }; save();
 }
+/* ---------- mes WOD : WOD recopiés (Litobox, salle, collègue…), enregistrés avec leur nom et partagés avec l'autre profil ---------- */
+const MWM = { fortime: ['🏁', 'For time'], amrap: ['🔄', 'AMRAP'], emom: ['⏰', 'EMOM'], circuit: ['🔁', 'Circuit'] };
+const mwKey = w => '✍️ ' + w.n;
+const mwList = w => w.mode === 'emom' ? w.cfg.emomEx : w.mode === 'amrap' ? w.cfg.aList : w.mode === 'circuit' ? w.cfg.circ : w.cfg.fList;
+const mwDesc = w => w.mode === 'fortime' ? `For time · ${w.cfg.fRounds} tour${w.cfg.fRounds > 1 ? 's' : ''} · limite ${w.cfg.fCap} min` : w.mode === 'amrap' ? `AMRAP ${w.cfg.aDur} min` : w.mode === 'emom' ? `EMOM ${w.cfg.emom} min` : `Circuit ${w.cfg.cWork} s / ${w.cfg.cRest} s · ${w.cfg.cRounds} tour${w.cfg.cRounds > 1 ? 's' : ''}`;
+// tous les WOD : les miens, puis ceux de l'autre profil que je n'ai pas
+function mwAll(){
+  const mine = ((coach && coach.myWods) || []).map((w, i) => ({ w, i, own: true })), names = new Set(mine.map(x => x.w.n));
+  const oth = other && other.d && other.d.coach ? (other.d.coach.myWods || []).filter(w => !names.has(w.n)).map(w => ({ w, own: false })) : [];
+  return mine.concat(oth);
+}
+// lecture d'un WOD collé : type, durées, tours, exercices (à vérifier ensuite dans le formulaire)
+function wodParse(txt){
+  const t = String(txt || ''), lo = t.toLowerCase(), n1 = re => { const m = lo.match(re); return m ? +m[1] : null; };
+  const head = /^(amrap|emom|e\.m\.o\.m|for ?time|pour le temps|\d+\s*(tours?|rounds?)\b|repos|récup|limite|time ?cap|cap\b|tabata|hiit|circuit|\d+\s*(s|sec|secondes)\s*(d’|d')?(effort|on|travail)|wod|échauffement)/i;
+  let ex = t.split('\n').map(x => x.replace(/^\s*(?:[•\-–*·]|\d+[.)])\s*/, '').trim()).filter(x => x && !head.test(x) && !/^\d+\s*(min|minutes)?$/i.test(x)), name = '';
+  // 1re ligne sans chiffre suivie d'exercices chiffrés : c'est le titre
+  const first = t.split('\n').map(x => x.trim()).find(Boolean) || '';
+  if (ex.length > 1 && ex[0] === first && !/\d/.test(first) && ex.slice(1).some(x => /\d/.test(x))){ name = first.slice(0, 40); ex = ex.slice(1); }
+  const tours = n1(/(\d+)\s*(tours?|rounds?)/), cw = lo.match(/(\d+)\s*(?:s|sec|secondes)\b[^\n\/]{0,15}[\/–-]\s*(\d+)\s*(?:s|sec|secondes)\b/);
+  let mode = 'fortime';
+  if (/amrap/.test(lo)) mode = 'amrap'; else if (/e\.?m\.?o\.?m/.test(lo)) mode = 'emom'; else if (cw || /tabata|hiit|circuit/.test(lo)) mode = 'circuit';
+  const dur = n1(/(?:amrap|emom|e\.m\.o\.m)\D{0,6}(\d+)/) || n1(/(\d+)\s*(?:min|minutes)\b/);
+  const cfg = { fRounds: tours || 1, fCap: n1(/(?:limite|cap)\D{0,8}(\d+)/) || 30, aDur: dur || 15, emom: dur || 12, cWork: cw ? +cw[1] : 40, cRest: cw ? +cw[2] : 20, cRounds: tours || 3, cPause: 60 };
+  return { mode, cfg, ex: ex.join('\n'), name };
+}
+let MW = null;
+function sheetMyWod(i){
+  if (i != null && i !== 'new' && !(MW && MW.i === +i)){ const w = coach.myWods[+i]; MW = { i: +i, n: w.n, src: w.src || '', mode: w.mode, cfg: Object.assign({}, w.cfg), ex: mwList(w), txt: '' }; }
+  else if (i === 'new' || !MW) MW = { i: null, n: '', src: '', mode: 'fortime', cfg: { fRounds: 3, fCap: 20, aDur: 15, emom: 12, cWork: 40, cRest: 20, cRounds: 3, cPause: 60 }, ex: '', txt: '' };
+  const c = MW.cfg, f = (id, l, v, u) => `<div class="fg"><label for="${id}">${l}</label><div class="row"><input id="${id}" class="inp" inputmode="numeric" value="${v}" style="flex:1">${u ? `<span class="muted" style="font-size:13px">${u}</span>` : ''}</div></div>`;
+  const nums = MW.mode === 'fortime' ? `<div class="two">${f('mwFR', 'Tours', c.fRounds)}${f('mwFC', 'Temps limite', c.fCap, 'min')}</div>` : MW.mode === 'amrap' ? f('mwAD', 'Durée', c.aDur, 'min')
+    : MW.mode === 'emom' ? f('mwE', 'Durée', c.emom, 'min') : `<div class="three2">${f('mwCW', 'Effort', c.cWork, 's')}${f('mwCR', 'Repos', c.cRest, 's')}${f('mwCN', 'Tours', c.cRounds)}</div>`;
+  openSheet(`<h2>${MW.i != null ? '✏️ Modifier le WOD' : '✍️ Nouveau WOD'}</h2>
+    ${MW.i == null ? `<div class="fg"><label for="mwT">Colle le texte du WOD (facultatif)</label><textarea id="mwT" class="inp" rows="4" placeholder="Ex. : AMRAP 20 min&#10;10 burpees&#10;15 squats&#10;20 mountain climbers">${esc(MW.txt)}</textarea></div>
+    <button type="button" class="btn block" data-x="mwparse">🔎 Remplir automatiquement</button><p class="muted" style="font-size:12px;margin:6px 0 12px">L’application repère le type, les durées, les tours et les exercices. Vérifie ensuite ci-dessous.</p>` : ''}
+    <form id="mwF"><div class="fg"><label for="mwN">Nom du WOD</label><input id="mwN" class="inp" maxlength="40" value="${esc(MW.n)}" placeholder="Ex. : Litobox semaine 45" required></div>
+    <div class="seg small" style="margin-bottom:10px">${Object.entries(MWM).map(([k, [ic, l]]) => `<button type="button" class="${MW.mode === k ? 'on' : ''}" data-x="mwmode" data-m="${k}">${ic} ${l}</button>`).join('')}</div>
+    ${nums}
+    <div class="fg"><label for="mwX">${MW.mode === 'emom' ? 'À faire chaque minute (une ligne par minute, en alternance)' : MW.mode === 'circuit' ? 'Exercices (un par ligne)' : 'Un tour = (une ligne par exercice, avec les répétitions)'}</label><textarea id="mwX" class="inp" rows="5" required>${esc(MW.ex)}</textarea></div>
+    <div class="fg"><label for="mwS">D’où vient-il ? (facultatif)</label><input id="mwS" class="inp" maxlength="40" value="${esc(MW.src)}" placeholder="Litobox, salle, collègue…"></div>
+    <button class="btn pri block" type="submit">💾 Enregistrer${other ? ` (${esc(other.p.nom)} le verra aussi)` : ''}</button></form>`);
+  const rd = () => { const g = (id, k, mn, mx) => { const el = $('#' + id); if (el){ const v = parseInt(el.value); if (v >= mn && v <= mx) MW.cfg[k] = v; } };
+    g('mwFR', 'fRounds', 1, 50); g('mwFC', 'fCap', 1, 120); g('mwAD', 'aDur', 1, 90); g('mwE', 'emom', 1, 60); g('mwCW', 'cWork', 5, 600); g('mwCR', 'cRest', 0, 600); g('mwCN', 'cRounds', 1, 20);
+    MW.n = $('#mwN').value; MW.ex = $('#mwX').value; MW.src = $('#mwS').value; if ($('#mwT')) MW.txt = $('#mwT').value; };
+  $('#mwF').oninput = rd; if ($('#mwT')) $('#mwT').oninput = rd;
+  $('#mwF').onsubmit = ev => { ev.preventDefault(); rd(); const n = MW.n.trim().replace(/^✍️\s*/, ''), L = itLines(MW.ex);
+    if (!n) return toast('Donne un nom au WOD'); if (!L.length) return toast('Ajoute au moins un exercice');
+    const W = ((coach && coach.myWods) || []).slice(); if (W.some((w, j) => w.n.toLowerCase() === n.toLowerCase() && j !== MW.i)) return toast('Tu as déjà un WOD avec ce nom');
+    const key = { fortime: 'fList', amrap: 'aList', emom: 'emomEx', circuit: 'circ' }[MW.mode], keep = { fortime: ['fRounds', 'fCap'], amrap: ['aDur'], emom: ['emom'], circuit: ['cWork', 'cRest', 'cRounds', 'cPause'] }[MW.mode];
+    const cfg = { [key]: L.join('\n') }; keep.forEach(k => cfg[k] = MW.cfg[k]);
+    const w = { n, mode: MW.mode, cfg, src: MW.src.trim(), d: MW.i != null ? W[MW.i].d : today() };
+    if (MW.i != null){ const old = W[MW.i]; if (old.n !== n && coach.wods && coach.wods[mwKey(old)]){ coach.wods = Object.assign({}, coach.wods); coach.wods[mwKey(w)] = coach.wods[mwKey(old)]; delete coach.wods[mwKey(old)]; } W[MW.i] = w; } else W.push(w);
+    coach = Object.assign({}, coach, { myWods: W }); save(); MW = null; closeSheet(); render(); toast('✍️ WOD « ' + n + ' » enregistré'); };
+}
+// fiche d'un WOD : exercices, mes résultats, ceux de l'autre profil
+function sheetWodInfo(j){
+  const x = mwAll()[+j]; if (!x) return; const w = x.w, k = mwKey(w), me = ((coach && coach.wods) || {})[k] || [], ot = other && other.d && other.d.coach ? (other.d.coach.wods || {})[k] || [] : [];
+  const bm = wodBestOf(me), bo = wodBestOf(ot), done = L => L.length ? `fait ${L.length} fois` : 'pas encore fait';
+  openSheet(`<h2>${MWM[w.mode][0]} ${esc(w.n)}</h2><p class="muted">${esc(mwDesc(w))}${w.src ? ' · ' + esc(w.src) : ''}${x.own ? '' : ` · ajouté par ${esc(other.p.nom)}`}</p>
+    <div class="box"><h4>📋 Au programme</h4><ol class="tsteps">${itLines(mwList(w)).map(l => `<li>${esc(l)}</li>`).join('')}</ol></div>
+    <div class="box"><h4>🏆 Scores</h4><div class="rec"><div class="t"><b>${esc(profile.nom)}</b><small>${done(me)}</small></div><div class="v">${bm ? esc(bm.txt) : '–'}</div></div>
+      ${other ? `<div class="rec"><div class="t"><b>${esc(other.p.nom)}</b><small>${done(ot)}</small></div><div class="v">${bo ? esc(bo.txt) : '–'}</div></div>` : ''}
+      ${me.length ? `<p class="muted" style="font-size:12px;margin-top:8px">Mes dernières fois : ${me.slice(-5).reverse().map(r => `${fmtD(r.d)} ${r.mode === 'fortime' || r.mode === 'amrap' ? esc(wodScore(r)) : '✓'}`).join(' · ')}</p>` : ''}</div>
+    <button class="btn pri block" data-x="mwgo" data-j="${j}" style="padding:15px;font-size:16px">▶️ Lancer le WOD</button>
+    <div class="row" style="margin-top:10px">${x.own ? `<button class="btn" style="flex:1" data-x="mwedit" data-i="${x.i}">✏️ Modifier</button><button class="btn" style="flex:1" data-x="mwdel" data-i="${x.i}">🗑️ Supprimer</button>` : `<button class="btn" style="flex:1" data-x="mwcopy" data-j="${j}">📥 L’ajouter à mes WOD</button>`}</div>`);
+}
+function mwStart(j){ const w = mwAll()[+j].w; closeSheet(); itStart(Object.assign({}, itCfg(), w.cfg, { mode: w.mode, wod: mwKey(w) })); }
+function myWodsCard(){
+  const A = mwAll(), wods = (coach && coach.wods) || {}, ow = other && other.d && other.d.coach ? other.d.coach.wods || {} : {};
+  return `<h3 class="sec">✍️ Mes WOD</h3>${A.length ? `<div class="wods">${A.map((x, j) => { const k = mwKey(x.w), b = wodBestOf(wods[k]), o = wodBestOf(ow[k]);
+    return `<button data-x="mwinfo" data-j="${j}"><span>${MWM[x.w.mode][0]}</span><b>${esc(x.w.n)}</b><small>${esc(mwDesc(x.w))}${x.own ? '' : ` · de ${esc(other.p.nom)}`}</small>${b || o ? `<em>${b ? '🏆 ' + esc(b.txt) : ''}${b && o ? ' · ' : ''}${o ? esc(other.p.nom) + ' ' + esc(o.txt) : ''}</em>` : (wods[k] || []).length ? `<em>✓ fait ${(wods[k] || []).length} fois</em>` : ''}</button>`; }).join('')}</div>`
+    : `<p class="muted" style="font-size:13px;margin-bottom:8px">Recopie un WOD vu sur Litobox, à la salle ou chez un collègue : l’application le chronomètre, garde tes scores et les compare avec ceux de ${other ? esc(other.p.nom) : 'ton/ta partenaire'}.</p>`}
+    <button class="btn block" data-x="mwnew" style="margin-top:10px">➕ Ajouter un WOD</button>`;
+}
 function viewIT(){
   const c = itCfg(), S = itSeq(c), tot = S.reduce((a, x) => a + x.s, 0);
   const f = (id, l, v, u) => `<div class="fg"><label for="${id}">${l}</label><div class="row"><input id="${id}" class="inp" inputmode="numeric" value="${v}" style="flex:1">${u ? `<span class="muted" style="font-size:13px">${u}</span>` : ''}</div></div>`;
@@ -4973,6 +5048,7 @@ function viewIT(){
     ${weekWodCard()}
     <h3 class="sec">🚒 WOD caserne</h3><div class="wods">${WODS.map((w, j) => { const b = wodBest(w.n); return `<button class="${c.wod === w.n ? 'on' : ''}" data-x="wod" data-w="${j}"><span>${w.ic}</span><b>${esc(w.n)}</b><small>${esc(w.d)}</small>${b ? `<em>🏆 ${esc(b)}</em>` : ''}</button>`; }).join('')}</div>
     <button class="btn block" data-x="wodrand" style="margin-top:10px">🎲 WOD surprise avec le matériel de la caserne</button>
+    ${myWodsCard()}
     <h3 class="sec">Minuteurs</h3>${c.wod ? `<div class="advice up"><span>🚒 <b>${esc(c.wod)}</b>${wodBest(c.wod) ? ` · record : ${esc(wodBest(c.wod))}` : ''}</span></div>` : ''}
     <div class="itmodes">${Object.entries(ITM).map(([k, [l, ic, d]]) => `<button class="${c.mode === k ? 'on' : ''}" data-x="itmode" data-m="${k}"><span>${ic}</span><b>${l}</b><small>${d}</small></button>`).join('')}</div>
     <div class="card" style="margin-top:12px"><form id="itF">${form}</form><p class="muted" style="font-size:12.5px;margin-top:6px">Durée totale : <b id="itTot">${fmtDur(tot)}</b>${c.mode === 'fortime' ? ' maximum' : ''} · 10 s de préparation au début. Bips sur les 3 dernières secondes${settings.voice ? ', annonces vocales' : ''}.</p></div>
@@ -5034,6 +5110,7 @@ function itFinish(early){
   clearInterval(IT.iv); const mode = IT.c.mode, w = IT.S[IT.i], timed = w && (w.amrap || w.ft);
   const sec = timed ? Math.round(w.ft && early ? w.s - Math.max(0, (IT.end - Date.now()) / 1000) : w.s) : IT.S.reduce((a, x) => a + x.s, 0) - 10;
   if (timed){ const res = { d: today(), mode, r: IT.rounds }; if (w.ft){ res.t = sec; res.cap = !early; } wodSave(IT.c.wod || `${ITM[mode][0]} ${Math.round(w.s / 60)} min`, res, IT.c); }
+  else if (IT.c.wod && (mode === 'emom' || mode === 'circuit')) wodSave(IT.c.wod, { d: today(), mode, done: 1 }, IT.c);
   beep(1318, .8, .35); speak('Terminé, bravo !'); if (navigator.vibrate && settings.vibe) navigator.vibrate([300, 100, 300, 100, 600]);
   const then = IT.c.then; itLog(sec); IT = null;
   if (then){ closeFull(); setTimeout(then, 400); return; }
@@ -5335,6 +5412,14 @@ function evoAct(a, b){
     case 'stshare': if (STORY) clearTimeout(STORY.t); storyShare(); break;
     case 'wod': wodLoad(WODS[+b.dataset.w]); break;
     case 'wodrand': wodLoad(wodRandom()); break;
+    case 'mwnew': MW = null; sheetMyWod('new'); break;
+    case 'mwedit': MW = null; sheetMyWod(b.dataset.i); break;
+    case 'mwinfo': sheetWodInfo(b.dataset.j); break;
+    case 'mwgo': mwStart(b.dataset.j); break;
+    case 'mwmode': { const t = $('#mwF'); if (t) t.oninput(); MW.mode = b.dataset.m; sheetMyWod(MW.i); break; }
+    case 'mwparse': { $('#mwF').oninput(); const P = wodParse(MW.txt); if (!P.ex) { toast('Je n’ai pas trouvé d’exercices : remplis à la main'); break; } MW.mode = P.mode; Object.assign(MW.cfg, P.cfg); MW.ex = P.ex; if (P.name && !MW.n.trim()) MW.n = P.name; sheetMyWod(null); toast('🔎 Vérifie le type, les durées et les exercices'); break; }
+    case 'mwdel': { const W = coach.myWods || [], w = W[+b.dataset.i]; if (!w || !confirm(`Supprimer le WOD « ${w.n} » ? Tes scores sont gardés.`)) break; coach = Object.assign({}, coach, { myWods: W.filter((_, j) => j !== +b.dataset.i) }); save(); closeSheet(); render(); toast('🗑️ WOD supprimé'); break; }
+    case 'mwcopy': { const w = mwAll()[+b.dataset.j].w; coach = Object.assign({}, coach, { myWods: ((coach && coach.myWods) || []).concat([JSON.parse(JSON.stringify(w))]) }); save(); closeSheet(); render(); toast('📥 Ajouté à tes WOD'); break; }
     case 'wodfix': if (lastWod){ lastWod.res.r = Math.max(0, lastWod.res.r + +b.dataset.d); save(); const p = b.closest('.itmain').querySelector('p b'); if (p) p.textContent = wodScore(lastWod.res); } break;
     case 'runtype': runType = b.dataset.t; viewRun(); break;
     case 'rungo': runStart(); break;
@@ -5968,7 +6053,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 76;
+const APP_VERSION = 77;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
