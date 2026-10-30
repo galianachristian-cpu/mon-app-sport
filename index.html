@@ -326,6 +326,8 @@ html.noscroll,html.noscroll body{overflow:hidden}
 .ybars{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:6px}.yb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
 .yb .yc{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}.yb .yc i{width:46%;max-width:14px;border-radius:5px 5px 2px 2px;background:var(--bc)}.yb .yc i.py{background:rgba(148,163,184,.35)}
 .yb span{font-size:10.5px;color:var(--muted);font-weight:700}.yleg{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:12px;color:var(--muted)}.yleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}.yleg i.py{background:rgba(148,163,184,.35)}
+.micro .mi,.card .mi{display:flex;gap:10px;align-items:center;margin-top:8px}.mi .mic{font-size:18px;width:24px;text-align:center}.mi .mit{flex:1;min-width:0}.mi .mih{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px}.mi .mih small{color:var(--muted);white-space:nowrap}.mi .bar{height:6px}
+.msug{font-size:13px;margin-top:6px}.rec .tk{width:22px;font-weight:800;color:var(--muted);text-align:center}
 .kbox .kcum{display:flex;gap:10px;margin-top:8px}.kbox .kcum div{flex:1;text-align:center;padding:8px;border-radius:12px;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3)}.kbox .kcum b{display:block;font-size:18px;color:#fb923c}.kbox .kcum small{font-size:11.5px;color:var(--muted)}
 .st-kcal{margin-top:14px;font-size:17px;color:#fdba74;text-align:center}.st-kcal b{color:#fb923c;font-size:20px}
 .three div{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
@@ -3328,6 +3330,8 @@ function nutJour(){
     <div class="ring">${ring(t.kcal ? eaten.k / t.kcal : 0, 86, 9, 'rn')}<div class="v">${kc(eaten.k)}<small>mangées</small></div></div></section>
   <div class="card" style="margin-top:12px">${macroBar('Protéines', eaten.p, t.p, '#f472b6')}${macroBar('Glucides', eaten.g, t.g, '#22d3ee')}${macroBar('Lipides', eaten.l, t.l, '#fbbf24')}</div>
   <div class="list">${ports.map(x => mealCard(x, J[x.meal], date, oports.find(z => z.meal === x.meal))).join('')}</div>
+  ${protCard(nutDay)}
+  ${microCard(nutDay)}
   ${eauCard(date)}
   ${nutCoachCard()}
   <h3 class="sec">Conseils du jour</h3><div class="card tips-list">${tipsFor(t, eaten, isToday, ports).map(s => `<p>${s}</p>`).join('')}</div>`;
@@ -3435,6 +3439,99 @@ function sheetOther(meal){
   cuitVis(); paint();
 }
 function trimJournal(){ const ks = Object.keys(journal).sort(); ks.slice(0, Math.max(0, ks.length - 60)).forEach(k => delete journal[k]); }
+/* ============================================================
+   VITAMINES, MINÉRAUX ET PROTÉINES PAR REPAS
+   valeurs pour 100 g : table Ciqual de l'ANSES (données publiques) ; lait, miel, oignon et une partie du jambon : moyennes approchées
+   ordre : fer, magnésium, potassium, calcium (mg), vitamine D, B12 (µg), vitamine C (mg), fibres (g), sodium, zinc, oméga-3 DHA (mg)
+   ============================================================ */
+const MICRO = { oeuf:[1.8,11,138,76.8,2,0.89,0,0,124,1,53], poulet:[0.33,32,390,3.3,0,0.17,4.9,0,43,0.52,0], dinde:[0.73,28,242,11,0.1,0.63,0,0,113,1.3,2], boeuf:[2.7,22,346,9,0.1,2.1,0,0,37.8,4.5,0], jambon:[0.6,20,358,10,0.3,0.4,0,0.15,774,1.6,0], thon:[0.76,24,207,6.3,5.1,2.5,0,0,251,0.45,870], sardine:[2,38.5,368,333,7.6,13.6,0,0,300,1.9,1000], colin:[0.49,25.6,357,4.4,0,1.3,1,0,65.2,0.39,130], saumon:[0.48,27.4,358,5.8,4.9,4,1.8,0,45.4,0.36,880], tofu:[2.4,100,140,100,0,0,0,0,10,1.3,0], riz:[1.9,27.7,92.3,13.3,0,0,0,1.5,2.3,1.1,0], pates:[3.2,82.2,378,32.1,0,0,0,6.1,6.2,1.9,0], semoule:[1.2,47,186,17,0,0,0,3.7,1,1.1,0], pdt:[0.78,22,421,14.3,0,0,19.7,2.2,0,0.35,0], patate:[0.61,25,337,30,0,0,2.4,3,55,0.3,0], pain:[2,54.2,236,83.2,0.86,0,0,7.3,470,1.2,0], tortilla:[0.76,19,150,45,0,0,0,2.9,650,0.57,0], galette:[1.2,134,297,13.2,0,0,0,3.4,88,2.1,0], avoine:[3.8,101,362,52,0,0,0,11.2,4,2.6,0], lentille:[6.3,97,940,64,0,0,1.6,16.4,0,3.4,0], poischiche:[1.2,27.5,135,41.2,0,0,0.1,5.5,216,0.93,0], haricotrouge:[1.5,29,250,58,0,0,0.2,7,269,0.74,0], brocoli:[0.72,16,250,41,0,0,68.3,2.8,18.5,0.34,0], haricotvert:[0.85,22,186,42,0,0,12.9,2.6,3,0.26,0], poelee:[0.95,24,212,25,0,0,10.4,4.7,47,0.45,0], epinard:[1.9,75,346,129,0,0,15.3,3,65,0.56,0], courgette:[0.37,18,261,16,0,0,17.9,1,8,0.32,0], carotte:[0,13.6,274,36.2,0,0,3.7,2.9,49,0,0], tomate:[0.17,7,210,6.8,0,0,19.9,1,0,0.08,0], poivron:[0.21,8.2,180,4.8,0,0,121,3.2,0,0.14,0], champignon:[0.31,10.4,364,3,0.3,0,3.2,1,39,0.53,0], chou:[0.27,9.8,270,23,0,0,48.2,2.2,6,0.22,0], concombre:[0.13,13.6,157,19.2,0,0,2.8,0.5,4.8,0.095,0], salade:[1.1,14.9,206,64.6,0,0,5.5,1.1,8.5,0.2,0], oignon:[0.2,10,150,23,0,0,5,1.7,4,0.2,0], concassee:[0.39,11,260,20,0,0,10.5,1.8,27.1,0.09,0], banane:[0.2,28,320,5.1,0,0,7.2,2.7,0,0.14,0], pomme:[0.099,6.5,119,5.3,0,0,4.6,1.4,1.5,0.031,0], orange:[0.57,15,180,66,0,0,47.5,2.7,0,0.25,0], fruitrouge:[0.9,16.9,225,33.6,0,0,77.5,4.5,4,0.22,0], fblanc:[0,12.7,168,150,1.3,0.28,0,0.042,36,0.58,0], skyr:[0,12.7,168,150,1.3,0.28,0,0.042,36,0.58,0], yaourt:[0.11,11.5,167,132,0.13,0.15,1.3,0.18,37.9,0.4,0], lait:[0.02,11,160,120,0.02,0.3,1,0,44,0.4,0], emmental:[0,36.3,90.4,977,0,1.9,0,0.042,272,4.3,0], mozza:[0.44,20,76,598,0.4,2.3,0,0,240,2.9,0], feta:[0.08,12,66,220,0,0.53,0,0.2,908,1.2,0], huile:[0,0,0,0,0,0,0,0,0,0,0], cacahuete:[1.7,168,558,49,0,0,0,5,426,2.5,0], amande:[3.4,270,800,260,0,0,0,12.5,0,3.5,0], miel:[0.4,2,55,5,0,0,0.5,0,5,0.2,0], soja:[2.1,60.9,375,28.9,0,0,2.6,0.9,5250,0.78,0] };
+// repères du jour ANSES 2021 (femme, homme) ; le sel est une limite à ne pas dépasser
+const NUTRI = [
+  ['fe', 'Fer', 'mg', 11, 11, '🩸', 'oxygène et énergie'], ['mg', 'Magnésium', 'mg', 300, 380, '⚡', 'crampes et récupération'],
+  ['k', 'Potassium', 'mg', 3500, 3500, '🫀', 'muscles et tension'], ['ca', 'Calcium', 'mg', 950, 950, '🦴', 'os'],
+  ['d', 'Vitamine D', 'µg', 15, 15, '☀️', 'os et défenses'], ['b12', 'Vitamine B12', 'µg', 4, 4, '🧠', 'nerfs et globules rouges'],
+  ['c', 'Vitamine C', 'mg', 110, 110, '🍊', 'défenses'], ['fi', 'Fibres', 'g', 30, 30, '🌾', 'transit et satiété'],
+  ['zn', 'Zinc', 'mg', 9.3, 11.7, '🛡️', 'immunité et muscles'], ['dha', 'Oméga-3 (DHA)', 'mg', 250, 250, '🐟', 'cœur et cerveau, surtout dans les poissons gras'],
+  ['sel', 'Sel', 'g', 5.8, 5.8, '🧂', 'limite à ne pas dépasser', 1]];
+const NK = ['fe', 'mg', 'k', 'ca', 'd', 'b12', 'c', 'fi', 'na', 'zn', 'dha'];
+const refOf = (n, c) => (c && c.nut && c.nut.sexe === 'F') ? n[3] : n[4];
+function microOf(ing){
+  const t = {}; NK.forEach(k => { t[k] = 0; });
+  ing.forEach(([f, g]) => { const M = MICRO[f]; if (M) NK.forEach((k, i) => { t[k] += M[i] * g / 100; }); });
+  t.sel = t.na * 2.5 / 1000; return t;
+}
+// ce qui a été mangé ce jour-là (sinon le menu prévu), repas par repas
+function dayMeals(pid, di, wk, date){
+  const J = journal[date] || {};
+  return dayPortions(pid, di, wk).map(x => { const st = J[x.meal];
+    if (st === 'ok' && x.por) return { meal: x.meal, ing: x.por.ing, eaten: true };
+    if (st && st.items) return { meal: x.meal, ing: st.items, eaten: true };
+    return { meal: x.meal, ing: x.por && !x.away && st !== 'skip' ? x.por.ing : [], eaten: false }; });
+}
+// portion « normale » d'un aliment, pour les classements
+const PORT = { prot: 120, fec: 80, pain: 60, cereale: 50, legumineuse: 60, legume: 150, aromate: 50, sauce: 15, fruit: 150, laitier: 125, lait: 200, fromage: 30, gras: 10, noix: 30, sucre: 15 };
+const portOf = f => { const F = FOODS[f]; return F.unit ? F.unit.g * (f === 'oeuf' ? 2 : f === 'galette' ? 3 : 1) : (f === 'thon' ? 100 : PORT[F.grp] || 100); };
+const portTxt = f => FOODS[f].unit ? qty(f, portOf(f)) : portOf(f) + ' g';
+// meilleurs aliments pour un nutriment (par portion), ceux du stock et du menu de la semaine en premier
+function topFoods(k, n){
+  const i = NK.indexOf(k === 'sel' ? 'na' : k), st = stockMap();
+  return Object.keys(MICRO).filter(f => FOODS[f]).map(f => ({ f, v: MICRO[f][i] * portOf(f) / 100, v100: MICRO[f][i], st: !!st[f] }))
+    .filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, n || 50);
+}
+let microP = 'jour';
+function microCard(di){
+  const wk = curWk(), c = ctxOf(profile.id), D = weekDates(wk);
+  let ing = [], nDays = 1, eatenAny = false;
+  if (microP === 'jour'){ dayMeals(profile.id, di, wk, D[di]).forEach(m => { ing = ing.concat(m.ing); if (m.eaten) eatenAny = true; }); }
+  else { const td = todayIdx(); nDays = 0; for (let i = 0; i <= td; i++){ const M = dayMeals(profile.id, i, wk, D[i]); if (M.some(m => m.ing.length)){ nDays++; M.forEach(m => { ing = ing.concat(m.ing); if (m.eaten) eatenAny = true; }); } } nDays = Math.max(1, nDays); }
+  if (!ing.length) return '';
+  const T = microOf(ing), rows = NUTRI.map(n => { const v = T[n[0]] / nDays, r = refOf(n, c), p = Math.round(v * 100 / r); return { n, v, p }; });
+  const low = rows.filter(x => !x.n[7] && x.p < 70).sort((a, b) => a.p - b.p).slice(0, 3), salt = rows.find(x => x.n[7] && x.p > 100);
+  const fmtV = (v, u) => (v >= 100 ? kc(v) : String(+v.toFixed(v < 1 ? 2 : 1)).replace('.', ',')) + ' ' + u;
+  const bar = x => { const col = x.n[7] ? (x.p > 100 ? 'var(--ko)' : x.p > 80 ? 'var(--warn)' : 'var(--ok)') : (x.p >= 90 ? 'var(--ok)' : x.p >= 60 ? 'var(--warn)' : 'var(--ko)');
+    return `<div class="mi"><span class="mic">${x.n[5]}</span><div class="mit"><div class="mih"><b>${x.n[1]}</b><small>${fmtV(x.v, x.n[2])} · ${x.p} %${x.n[7] ? ' de la limite' : ''}</small></div><div class="bar"><i style="width:${Math.min(100, x.p)}%;background:${col}"></i></div></div></div>`; };
+  const sugg = x => { const T2 = topFoods(x.n[0], 40), mine = T2.filter(y => y.st).slice(0, 2), oth = T2.filter(y => !y.st).slice(0, 3 - mine.length);
+    return `<p class="msug">${x.n[5]} <b>${x.n[1]}</b> (${x.p} %) : ${[...mine, ...oth].map(y => `${esc(FOODS[y.f].n.toLowerCase())}${y.st ? ' 🏠' : ''}`).join(', ')}</p>`; };
+  return `<h3 class="sec">Vitamines et minéraux</h3><div class="card micro">
+    <div class="seg small">${[['jour', 'Ce jour'], ['semaine', 'Moyenne de la semaine']].map(([k, l]) => `<button class="${microP === k ? 'on' : ''}" data-x="microp" data-m="${k}">${l}</button>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 0">${microP === 'jour' ? (eatenAny ? 'Repas notés, et menu prévu pour les autres.' : 'D’après le menu prévu (rien de noté pour l’instant).') : `Moyenne par jour, du lundi à aujourd’hui (${nDays} jour${nDays > 1 ? 's' : ''}).`} Repères ANSES pour ${c.nut && c.nut.sexe === 'F' ? 'une femme' : 'un homme'}.</p>
+    ${rows.map(bar).join('')}
+    ${low.length ? `<div class="box" style="margin-top:12px"><h4>🥗 À compléter</h4>${low.map(sugg).join('')}<p class="muted" style="font-size:11.5px;margin-top:4px">🏠 = déjà à la maison</p></div>` : '<p style="margin-top:10px;font-size:13.5px">✅ Tous les repères sont couverts à 70 % ou plus.</p>'}
+    ${salt ? `<p class="msug" style="margin-top:8px">🧂 <b>Sel : ${salt.p} % de la limite.</b> Attention au jambon, au fromage et à la sauce soja.</p>` : ''}
+    <button class="btn block" data-x="topfood" style="margin-top:10px">🔎 Les aliments les plus riches</button>
+    <p class="muted" style="font-size:11px;margin-top:8px">Valeurs : table Ciqual (ANSES). Les compléments et les aliments enrichis ne sont pas comptés. Ces repères ne remplacent pas un avis médical.</p></div>`;
+}
+let topK = 'mg';
+function sheetTop(){
+  const n = NUTRI.find(x => x[0] === topK), c = ctxOf(profile.id), r = refOf(n, c), L = topFoods(topK, 25);
+  const f1 = v => String(+v.toFixed(v < 1 ? 2 : v < 10 ? 1 : 0)).replace('.', ',');
+  openSheet(`<h2>🔎 Les plus riches en…</h2>
+    <div class="chips2">${NUTRI.map(x => `<button class="${x[0] === topK ? 'on' : ''}" data-x="topk" data-k="${x[0]}" style="--c:#fb923c">${x[5]} ${x[1]}</button>`).join('')}</div>
+    <p class="muted" style="font-size:12.5px;margin:6px 0 10px">${n[1]} : ${n[6]}. ${n[7] ? `Limite du jour : ${f1(r)} ${n[2]}.` : `Repère du jour : ${f1(r)} ${n[2]}.`} Classement par portion habituelle, parmi les aliments de l’appli. 🏠 = à la maison.</p>
+    <div class="card">${L.map((x, i) => `<div class="rec"><span class="tk">${i + 1}</span><div class="t"><b>${esc(FOODS[x.f].n)}${x.st ? ' 🏠' : ''}</b><small>${portTxt(x.f)} · ${f1(x.v100)} ${n[2]} pour 100 g · ${eur(portOf(x.f) / 1000 * priceKg(x.f))} la portion</small></div><div class="v" style="text-align:right"><b>${f1(x.v)} ${n[2]}</b><small style="display:block;color:var(--muted)">${Math.round(x.v * 100 / r)} %</small></div></div>`).join('')}</div>
+    <p class="muted" style="font-size:11px;margin-top:8px">Valeurs pour l’aliment cru ou tel qu’acheté (table Ciqual, ANSES).</p>`);
+}
+// protéines : réparties sur les repas, et après la séance
+function protCard(di){
+  const wk = curWk(), D = weekDates(wk), c = ctxOf(profile.id), w = weightOf(c), M = dayMeals(profile.id, di, wk, D[di]);
+  const tgt = Math.max(20, Math.min(40, Math.round(w * .3))), train = (data['day' + di] || []).length > 0;
+  const rows = M.filter(m => m.ing.length).map(m => ({ m, p: macrosOf(m.ing).p, main: m.meal !== 'col' }));
+  if (!rows.length) return '';
+  const tot = rows.reduce((a, x) => a + x.p, 0), din = rows.find(x => x.m.meal === 'din');
+  const ADD = [['skyr', 150], ['fblanc', 200], ['oeuf', 120], ['thon', 80], ['jambon', 80]].filter(([f]) => FOODS[f]);
+  const addFor = miss => { const st = stockMap(); const L = ADD.map(([f, g]) => ({ f, g, p: FOODS[f].p * g / 100 })).sort((a, b) => (!!st[b.f] - !!st[a.f]) || Math.abs(a.p - miss) - Math.abs(b.p - miss)); const x = L[0]; return `${qty(x.f, x.g)} de ${esc(FOODS[x.f].n.toLowerCase())} (+${Math.round(x.p)} g)${st[x.f] ? ' 🏠' : ''}`; };
+  const low = rows.filter(x => x.main && x.p < tgt * .75);
+  const meal = k => MEALS.find(x => x[0] === k);
+  const tips = [];
+  low.forEach(x => tips.push(`⚠️ ${meal(x.m.meal)[1]} : ${Math.round(x.p)} g seulement. Ajoute ${addFor(tgt - x.p)}.`));
+  if (din && tot && din.p / tot > .45) tips.push(`🌙 ${Math.round(din.p * 100 / tot)} % de tes protéines arrivent le soir : mieux vaut en mettre plus le matin et le midi.`);
+  if (train){ const col = rows.find(x => x.m.meal === 'col'); if (!col || col.p < 15) tips.push(`🏋️ Jour de séance : dans les 2 h après, prends 20 à 30 g de protéines, par exemple ${addFor(25)}.`); }
+  return `<h3 class="sec">Protéines par repas</h3><div class="card">
+    <p class="muted" style="font-size:12.5px;margin-bottom:8px">Objectif : environ <b>${tgt} g par repas principal</b> (0,3 g par kg). Le muscle se construit mieux avec des protéines à chaque repas qu’avec tout le soir.</p>
+    ${rows.map(x => { const p = Math.round(x.p), mm = meal(x.m.meal), ok = !x.main || x.p >= tgt * .75; return `<div class="mi"><span class="mic">${mm[2]}</span><div class="mit"><div class="mih"><b>${mm[1]}${x.m.eaten ? '' : ' <small class="muted">(prévu)</small>'}</b><small>${p} g${x.main ? ` / ${tgt} g` : ''} ${ok ? '✅' : '⚠️'}</small></div><div class="bar"><i style="width:${Math.min(100, x.p * 100 / tgt)}%;background:${ok ? 'var(--ok)' : 'var(--warn)'}"></i></div></div></div>`; }).join('')}
+    ${tips.length ? `<div class="tips-list" style="margin-top:10px">${tips.map(t => `<p>${t}</p>`).join('')}</div>` : '<p style="margin-top:10px;font-size:13.5px">✅ Protéines bien réparties sur la journée.</p>'}</div>`;
+}
+
 function nutSemaine(){
   const wk = curWk(), plan = planOf(wk);
   return `<div class="card" style="margin-top:14px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
@@ -4892,6 +4989,9 @@ function evoAct(a, b){
     case 'lightoff': coach = Object.assign({}, coach, { light: null, ign: curWk() }); save(); render(); toast('Séances normales'); break;
     case 'lightign': coach = Object.assign({}, coach, { ign: curWk() }); save(); render(); break;
     case 'stock': sheetStock(); break;
+    case 'microp': microP = b.dataset.m; viewNutrition(); break;
+    case 'topfood': sheetTop(); break;
+    case 'topk': topK = b.dataset.k; sheetTop(); break;
     case 'bp': bilanP = b.dataset.p; bilanOff = 0; viewProgres(); break;
     case 'bo': bilanOff = Math.min(0, bilanOff + +b.dataset.d); viewProgres(); break;
     case 'strm': { const st = Object.assign({}, foyer.stock); delete st[b.dataset.f]; foyer.stock = st; saveFoyer(); sheetStock(); if (view === 'nutrition') viewNutrition(); break; }
@@ -5451,7 +5551,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 67;
+const APP_VERSION = 68;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

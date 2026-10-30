@@ -15,3 +15,4 @@ L'application Montée en véhicule du CS Cruzy / Quarante a son propre projet : 
 
 ## Crédits
 - Animations de `img/anim/` (seulement pour les exercices absents de docteur-fitness) : photos de [Free Exercise DB](https://github.com/yuhonas/free-exercise-db) (domaine public, Unlicense), assemblées en GIF.
+- Vitamines et minéraux : table de composition nutritionnelle **Ciqual** de l'ANSES (données publiques), repères du jour ANSES 2021. Lait, miel, oignon et une partie du jambon : valeurs moyennes approchées.
