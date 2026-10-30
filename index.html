@@ -108,6 +108,11 @@ button{cursor:pointer;border:none;background:none}
 .ebc{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.ebd{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}.ebd b{font-size:12px}.ebd small{font-size:10px;color:var(--muted);white-space:nowrap}.ebd.now b{color:var(--a1)}
 .ebb{position:relative;width:100%;height:120px;display:flex;align-items:flex-end;justify-content:center;gap:2px;border-bottom:1px solid var(--line)}.ebb i{width:38%;border-radius:4px 4px 0 0}.ebb i.e{background:#34d399}.ebb i.e.part{opacity:.35}.ebb i.o{background:#fb923c}
 .ebb u{position:absolute;left:4%;right:4%;border-top:2px dashed #e2e8f0;opacity:.7}.ebs{font-size:13.5px;margin-top:10px;text-align:center}.ebs .neg{color:#34d399}.ebs .pos{color:#fb923c}
+.weq{font-size:12px;color:var(--soft);margin:8px 6px 2px;line-height:1.4}
+.st-eq{font-size:15px;margin-top:14px;opacity:.9}.eqb p{font-size:14px}
+.eqc .eqr{padding:10px 0;border-bottom:1px solid var(--line)}.eqc .eqr>small{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.eqc .eqr>div{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}.eqc .eqr span{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}
+.eqc .eqr i{font-style:normal;font-size:30px;grid-row:span 2}.eqc .eqr b{font-size:13.5px;line-height:1.2}.eqc .eqr em{font-style:normal;font-size:11px;color:var(--muted)}.eqn{font-size:13px;margin-top:10px}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -1812,6 +1817,7 @@ function weekHero(){
       ${tile(kc(kc0), 'kcal', kcP ? kc0 / kcP : kc0 ? 1 : 0, '#fb923c', dl(pct(kc0, kcP)))}
       ${tile(kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes' : 'kg', kgP ? kg0 / kgP : kg0 ? 1 : 0, '#22d3ee', dl(pct(kg0, kgP)))}
       ${tile(Math.round(mn0), 'min cardio', mn0 / 150, '#34d399')}</div>
+    ${kg0 || kc0 ? `<p class="weq">${eqLine(kg0, kc0, 'w' + wk)}</p>` : ''}
     <em class="wsee">cette semaine · comparé aux mêmes jours de la semaine dernière · synthèse ›</em></button>`;
 }
 function cumulRow(){
@@ -2281,6 +2287,47 @@ function weekBodyCard(){
 
 /* ---------- récap de fin de séance façon « story » ---------- */
 let STORY = null;
+/* ---------- équivalences parlantes : poids soulevé en objets, calories en nourriture (ordres de grandeur) ---------- */
+const EQ_KG = [[105, 'un collègue en tenue d’intervention', 'collègues en tenue d’intervention', '🧑‍🚒'], [230, 'un piano droit', 'pianos droits', '🎹'], [600, 'une vache', 'vaches', '🐄', 1],
+  [1200, 'une voiture citadine', 'voitures citadines', '🚗', 1], [3500, 'un VSAV (l’ambulance de la caserne)', 'VSAV', '🚑'], [6000, 'un éléphant', 'éléphants', '🐘'], [12000, 'un bus', 'bus', '🚌'],
+  [15000, 'un camion de pompiers (FPT)', 'camions de pompiers', '🚒'], [40000, 'un semi-remorque chargé', 'semi-remorques chargés', '🚛'], [75000, 'un Airbus A320 au décollage', 'Airbus A320 au décollage', '✈️'],
+  [150000, 'une baleine bleue', 'baleines bleues', '🐋', 1], [400000, 'un Boeing 747 au décollage', 'Boeing 747 au décollage', '🛫'], [10100000, 'la tour Eiffel', 'tours Eiffel', '🗼', 1]];
+const EQ_KC = [[100, 'une bière', 'bières', '🍺', 1], [250, 'un pain au chocolat', 'pains au chocolat', '🥐'], [340, 'une portion de frites', 'portions de frites', '🍟', 1], [500, 'un burger', 'burgers', '🍔'],
+  [900, 'une pizza entière', 'pizzas entières', '🍕', 1], [1100, 'un kebab-frites', 'kebabs-frites', '🥙'], [2500, 'une journée entière de repas', 'journées entières de repas', '🍽️', 1], [7700, 'un kilo de graisse', 'kilos de graisse', '🧈']];
+// choix stable pour une même période (graine), parmi les objets qui donnent un nombre parlant (0,85 à 6, sinon jusqu'à 30)
+function eqOf(L, v, seed){
+  if (!(v > 0) || v < L[0][0] * .85) return null;
+  let C = L.filter(x => v / x[0] >= .85 && v / x[0] <= 6); if (!C.length) C = L.filter(x => v / x[0] >= .85 && v / x[0] <= 30); if (!C.length) C = [L[L.length - 1]];
+  const x = C[Math.floor(rng(seed)() * C.length)], n = v / x[0], r = n < 10 ? Math.round(n * 2) / 2 : Math.round(n);
+  const txt = n < .97 ? 'presque ' + x[1] : n < 1.15 ? x[1] : r <= 1 ? (/^la /.test(x[1]) ? 'plus que ' + x[1] : 'plus ' + deOf(x[1])) : r < 2 ? `${fr(r)} ${x[1].replace(/^(un|une|la) /, '')}` : `${fr(r)} ${x[2]}`;
+  // 1,5 burger (singulier sous 2), 2 burgers
+  return { ic: x[3], txt, n, g: x[4], pl: r >= 2 && n >= 1.15 };
+}
+// accord : soulevé, soulevée, soulevés, soulevées
+const agr = (a, base) => base + (a.g ? 'e' : '') + (a.pl ? 's' : '');
+const deOf = s => /^(un|une)\b/.test(s) ? 'd’' + s : 'de ' + s;
+// « tu as soulevé l'équivalent de … et brûlé l'équivalent de … »
+function eqLine(kg, kcal, seed, who){
+  const a = eqOf(EQ_KG, kg, seed + 'k'), b = eqOf(EQ_KC, kcal, seed + 'c');
+  if (!a && !b) return '';
+  const t = who || 'Tu as';
+  return `${t} ${a ? `soulevé l’équivalent ${deOf(a.txt)} ${a.ic}` : ''}${a && b ? ' et ' : ''}${b ? `brûlé l’équivalent ${deOf(b.txt)} ${b.ic}` : ''}`;
+}
+// prochain objet à « soulever » au cumul
+function eqNext(kg){ const x = EQ_KG.find(e => e[0] > kg); return x ? { ic: x[3], txt: x[1], left: x[0] - kg } : null; }
+function eqCard(){
+  const td = today(), yr = td.slice(0, 4), A = (coach && coach.arch) || {};
+  const per = (from, arch) => { const H = hist.filter(h => h.d >= from); let kg = H.reduce((a, h) => a + volOf(h), 0), kcal = H.reduce((a, h) => a + (kcalOfH(h) || 0), 0);
+    if (arch) Object.entries(A).forEach(([m, x]) => { if (arch === true || m.startsWith(arch)){ kg += x.kg || 0; kcal += x.kc || 0; } }); return { kg, kcal }; };
+  const R = [['Cette semaine', wkDates(curWk())[0], null, 'w' + curWk()], ['Ce mois-ci', td.slice(0, 8) + '01', null, 'm' + td.slice(0, 7)], ['Cette année', yr + '-01-01', yr, 'y' + yr], ['Depuis le début', '', true, 'tot' + curWk()]]
+    .map(([l, from, arch, seed]) => ({ l, seed, ...per(from, arch) })).filter(r => r.kg || r.kcal);
+  if (!R.length) return '';
+  const T = R[R.length - 1], nx = eqNext(T.kg);
+  return `<h3 class="sec">Tes exploits en images</h3><div class="card eqc">${R.map(r => { const a = eqOf(EQ_KG, r.kg, r.seed + 'k'), b = eqOf(EQ_KC, r.kcal, r.seed + 'c');
+    return `<div class="eqr"><small>${r.l}</small><div>${a ? `<span><i>${a.ic}</i><b>${esc(a.txt)}</b><em>${agr(a, 'soulevé')} · ${fmtVol(r.kg)}</em></span>` : ''}${b ? `<span><i>${b.ic}</i><b>${esc(b.txt)}</b><em>${agr(b, 'brûlé')} · ${kc(r.kcal)} kcal</em></span>` : ''}</div></div>`; }).join('')}
+    ${nx ? `<p class="eqn">🎯 Prochain palier : soulever ${esc(nx.txt)} ${nx.ic} au total, encore <b>${fmtVol(nx.left)}</b></p>` : ''}
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Ordres de grandeur pour se représenter l’effort. « Brûlé l’équivalent » ne veut pas dire « perdu » : il faut environ 7 700 kcal de déficit pour perdre 1 kg de graisse.</p></div>`;
+}
 function storyRecap(k){
   const b = bilanData(k), H = hist.filter(h => h.d === b.d && (data[k] || []).some(e => e.n === h.n)), S = setsByMuscle(H);
   const diff = b.prev && b.prev.vol ? Math.round((b.vol - b.prev.vol) * 100 / b.prev.vol) : null;
@@ -2288,7 +2335,8 @@ function storyRecap(k){
   const slides = [
     `<div class="st-big">🏁</div><h2>Séance terminée !</h2><p class="st-sub">${esc(dayTitle(+k.slice(3)))} · ${fmtD(b.d)}</p>
      <div class="st-stats"><div><b data-cnt="${b.dur || 0}">${b.dur || 0}</b><small>minutes</small></div><div><b data-cnt="${b.vol ? Math.round(b.vol) : Math.round(b.kcal)}">${b.vol ? Math.round(b.vol) : Math.round(b.kcal)}</b><small>${b.vol ? 'kg soulevés' : 'kcal'}</small></div><div><b data-cnt="${b.sets}">${b.sets}</b><small>série${b.sets > 1 ? 's' : ''}</small></div></div>
-     ${b.kcal ? `<p class="st-kcal">🔥 <b data-cnt="${Math.round(b.kcal)}">${Math.round(b.kcal)}</b> kcal · cumul semaine <b data-cnt="${Math.round(b.kWeek)}">${Math.round(b.kWeek)}</b> kcal</p>` : ''}`,
+     ${b.kcal ? `<p class="st-kcal">🔥 <b data-cnt="${Math.round(b.kcal)}">${Math.round(b.kcal)}</b> kcal · cumul semaine <b data-cnt="${Math.round(b.kWeek)}">${Math.round(b.kWeek)}</b> kcal</p>` : ''}
+     ${b.vol || b.kcal ? `<p class="st-eq">${eqLine(b.vol, b.kcal, 's' + b.d + k)}</p>` : ''}`,
     `<h2>Muscles travaillés</h2>${bodyMap(S, 8)}<div class="meta" style="justify-content:center;margin-top:10px">${muscles.map(([m, n]) => `<span class="mus" style="--c:${mcol(m)}">${esc(m)} · ${n}</span>`).join('')}</div>`,
     `${b.recs.length ? `<div class="st-big">🏆</div><h2>${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''} !</h2><div class="st-list">${b.recs.map(h => `<p>${esc(h.n)} <b>${fr(scoreOf(h))} ${unitOf(h.t || 'f', h)}</b></p>`).join('')}</div>`
       : `<div class="st-big">📈</div><h2>${diff == null ? 'Première fois sur cette séance' : diff >= 0 ? `+${diff} % de volume` : `${diff} % de volume`}</h2><p class="st-sub">${diff == null ? 'La prochaine fois, je compare avec aujourd’hui.' : diff >= 0 ? 'Plus que la dernière fois, bravo !' : 'Un peu moins que la dernière fois : la récupération compte aussi.'}</p>`}
@@ -2322,6 +2370,7 @@ async function storyShare(){
   try{ const svg = bodyMap(S, 8).match(/<svg[\s\S]*?<\/svg>/g); for (let j = 0; j < 2; j++){ const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg[j].replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="590" ')); await img.decode(); x.drawImage(img, 170 + j * 420, 520, 300, 590); } }catch(e){}
   if (b.kcal){ x.fillStyle = '#fb923c'; x.font = '700 40px system-ui, sans-serif'; x.fillText(`🔥 ${Math.round(b.kcal)} kcal · ${Math.round(b.kWeek)} kcal cette semaine`, 70, 1120); }
   x.fillStyle = '#eef2f8'; x.font = '700 40px system-ui, sans-serif'; x.fillText(b.recs.length ? `🏆 ${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''}` : '💪 Séance validée', 70, 1180);
+  { const a = eqOf(EQ_KG, b.vol, 's' + b.d + k + 'k'); if (a){ x.fillStyle = '#22d3ee'; fitText(x, `${a.ic} L’équivalent ${deOf(a.txt)} soulevé`, 70, 1235, 940, 36, 700); } }
   x.fillStyle = '#8b9ab4'; x.font = '500 32px system-ui, sans-serif'; x.fillText('Mon Programme', 70, 1290);
   shareCanvas(c, 'ma-seance.png', 'Ma séance');
 }
@@ -2339,6 +2388,7 @@ function sheetBilan(k, fresh){
     <p class="muted" style="text-align:center;margin-bottom:14px">${DAY_NAMES[+k.slice(3)]} · ${esc(dayTitle(+k.slice(3)))} · ${fmtD(b.d)}</p>
     <div class="three four"><div><b>${b.dur != null ? (b.durEst ? '≈ ' : '') + b.dur + ' min' : '–'}</b><small>Durée</small></div>${b.vol ? `<div><b>${fmtVol(b.vol)}</b><small>Soulevés</small></div>` : ''}<div><b>${kc(Math.round(b.kcal))}</b><small>🔥 kcal</small></div><div><b>${b.sets}</b><small>Série${b.sets > 1 ? 's' : ''}</small></div></div>
     ${kcalBox(b)}
+    ${b.vol || b.kcal ? `<div class="box eqb"><p>${eqLine(b.vol, b.kcal, 's' + b.d + k)}</p></div>` : ''}
     ${diff != null ? `<div class="box"><p>${diff >= 0 ? '📈' : '📉'} <b>${diff >= 0 ? '+' : ''}${diff} %</b> de volume par rapport à la dernière fois (${fmtVol(b.prev.vol)}, ${fmtD(b.prev.d)})</p></div>` : ''}
     ${b.recs.length ? `<div class="box tips"><h4>🏆 ${b.recs.length} record${b.recs.length > 1 ? 's' : ''} battu${b.recs.length > 1 ? 's' : ''}</h4><p>${b.recs.map(h => `${esc(h.n)} : ${fr(scoreOf(h))} ${unitOf(h.t || 'f', h)}`).join('\n')}</p></div>` : ''}
     <h4 class="muted" style="margin:14px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px">Ton ressenti</h4>
@@ -2549,6 +2599,7 @@ function tabSynth(){
       ${big(kgP ? kg0 / kgP : kg0 ? 1 : 0, '#22d3ee', kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes' : 'kg', 'Soulevés', vs(kg0, kgP))}
       ${big(mn0 / 150, '#34d399', Math.round(mn0), 'min', 'Cardio', `objectif santé : 150 min (${Math.round(mn0 * 100 / 150)} %)`)}
     </div>
+    ${eqCard()}
     ${eatBurnCard()}
     ${defiCard()}
     ${synthCard()}`;
@@ -2632,6 +2683,8 @@ function tabRecs(){
 }
 
 /* ---------- bilan de la semaine en image ---------- */
+// texte qui rétrécit pour tenir dans la largeur
+function fitText(x, t, X, Y, maxW, size, weight){ let z = size; do { x.font = `${weight} ${z}px system-ui, sans-serif`; z -= 2; } while (x.measureText(t).width > maxW && z > 18); x.fillText(t, X, Y); }
 async function shareCanvas(c, name, title){
   const blob = await new Promise(r => c.toBlob(r, 'image/png')), file = new File([blob], name, { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title }).catch(() => {});
@@ -2658,8 +2711,10 @@ function weekImage(){
   const T = [[`${nDone}/${planned || '–'}`, 'séances', '#f472b6'], [kc(kc0), 'kcal brûlées', '#fb923c'], [kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes soulevées' : 'kg soulevés', '#22d3ee'], [String(Math.round(mn0)), 'min de cardio', '#34d399']];
   T.forEach(([v, l, col], j) => { const X = 70 + (j % 2) * 480, Y = 500 + Math.floor(j / 2) * 230; x.fillStyle = '#141b2d'; box(X, Y, 460, 200, 28); x.fill();
     x.fillStyle = col; x.fillRect(X, Y + 30, 8, 140); x.font = `900 92px ${F}`; x.fillText(v, X + 40, Y + 115); x.fillStyle = '#8b9ab4'; x.font = `600 34px ${F}`; x.fillText(l, X + 40, Y + 165); });
-  let Y = 1010; x.font = `700 40px ${F}`; x.fillStyle = '#eef2f8';
+  let Y = 990; x.font = `700 40px ${F}`; x.fillStyle = '#eef2f8';
   x.fillText(recs ? `🏆 ${recs} record${recs > 1 ? 's' : ''} battu${recs > 1 ? 's' : ''} cette semaine` : '💪 Une semaine de plus au compteur', 70, Y);
+  { const a = eqOf(EQ_KG, kg0, 'w' + wk + 'k'), e = eqOf(EQ_KC, kc0, 'w' + wk + 'c'), t = [a ? `${a.ic} ${a.txt} ${agr(a, 'soulevé')}` : '', e ? `${e.ic} ${e.txt} ${agr(e, 'brûlé')}` : ''].filter(Boolean).join('  ·  ');
+    if (t){ x.fillStyle = '#22d3ee'; fitText(x, 'L’équivalent de : ' + t, 70, Y + 52, 940, 32, 600); } Y += 30; }
   // défi du mois
   const r = defiRes(td.slice(0, 7)), bar = (nom, v, Yb, c1, c2) => { const p = Math.min(1, v / r.D.g); x.fillStyle = '#8b9ab4'; x.font = `600 30px ${F}`; x.fillText(`${nom} · ${kc(v)} / ${kc(r.D.g)}`, 70, Yb); x.fillStyle = '#141b2d'; box(70, Yb + 14, 940, 22, 11); x.fill(); if (p > 0){ const gb = x.createLinearGradient(70, 0, 1010, 0); gb.addColorStop(0, c1); gb.addColorStop(1, c2); x.fillStyle = gb; box(70, Yb + 14, Math.max(22, 940 * p), 22, 11); x.fill(); } };
   x.fillStyle = '#eef2f8'; x.font = `700 36px ${F}`; x.fillText(`${r.D.ico} Défi ${deMois(td.slice(0, 7))} : ${kc(r.D.g)} ${r.D.t}`, 70, Y + 80);
@@ -6053,7 +6108,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 77;
+const APP_VERSION = 78;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
