@@ -103,6 +103,11 @@ button{cursor:pointer;border:none;background:none}
 .today{margin-top:12px;padding:16px;border-radius:22px;background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--line);box-shadow:var(--shadow)}
 .today .tdate{font-size:12px;font-weight:700;color:var(--muted);text-transform:capitalize}
 .today h2{font-size:24px;letter-spacing:-.5px;margin-top:2px}
+.kxl{font-size:13px;color:var(--soft);margin:8px 0 2px}.mbar.kbar{width:100%;text-align:left;grid-template-columns:minmax(0,1.4fr) 1fr 40px}.kbar div i{background:#fb923c}
+.eb .ebl{display:flex;gap:14px;font-size:12px;color:var(--soft);margin-bottom:8px}.eb .ebl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}.eb .ebl i.g{height:0;border-top:2px dashed #e2e8f0;width:14px;border-radius:0;vertical-align:3px}
+.ebc{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.ebd{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}.ebd b{font-size:12px}.ebd small{font-size:10px;color:var(--muted);white-space:nowrap}.ebd.now b{color:var(--a1)}
+.ebb{position:relative;width:100%;height:120px;display:flex;align-items:flex-end;justify-content:center;gap:2px;border-bottom:1px solid var(--line)}.ebb i{width:38%;border-radius:4px 4px 0 0}.ebb i.e{background:#34d399}.ebb i.e.part{opacity:.35}.ebb i.o{background:#fb923c}
+.ebb u{position:absolute;left:4%;right:4%;border-top:2px dashed #e2e8f0;opacity:.7}.ebs{font-size:13.5px;margin-top:10px;text-align:center}.ebs .neg{color:#34d399}.ebs .pos{color:#fb923c}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -1647,11 +1652,11 @@ function volOf(h){
 // calories d'un exercice : celles notées (machine de cardio), sinon une estimation selon la durée ou les séries et le poids
 const MET = [[/course|tapis|footing|run/i, 9.8], [/v[ée]lo|bike|spinning/i, 7.5], [/rameur|skierg/i, 7], [/elliptique/i, 5.5], [/escalier/i, 8.5], [/natation|nage/i, 7], [/marche/i, 4], [/corde/i, 11], [/hiit|burpee|tabata/i, 8]];
 const bodyKg = () => { const b = body.filter(x => x.p != null).slice(-1)[0]; return num(b && b.p) || num(nut && nut.poids) || 75; };
-function kcalEst(e, min){ const t = e.t || 'f', w = bodyKg();
+function kcalEst(e, min, kg){ const t = e.t || 'f', w = kg || bodyKg();
   if (t === 'k') return (e.sl || []).reduce((a, x) => a + (num(x.r) || 0), 0) || (+e.s || 1) * topReps(e.r);
   if (t === 'c'){ const m = (MET.find(([re]) => re.test(e.n)) || [0, 7])[1]; return Math.round(m * 3.5 * w / 200 * (min ?? topReps(e.r))); }
   const sets = e.sl && e.sl.length ? e.sl.length : (+e.s || 3); return Math.round(sets * (t === 's' ? 6 : 12) * w / 75); }
-const kcalOfH = h => num(h.kcal) ?? kcalEst(h, num(h.r));
+const kcalOfH = (h, kg) => num(h.kcal) ?? kcalEst(h, num(h.r), kg);
 // calories d'une séance de machine : notées en continu, ou somme des séries en calories
 const kcalVal = h => (h.t || 'f') === 'k' ? (h.sl || []).reduce((a, x) => a + (num(x.r) || 0), 0) || null : num(h.kcal);
 const bestKcal = (name, before) => hist.filter(h => h.n === name && (!before || h.d < before)).reduce((a, h) => Math.max(a, kcalVal(h) || 0), 0);
@@ -1723,12 +1728,12 @@ function advice(e){
   if (ok(L)) return { up: false, w: L.w, txt: `Encore une séance à ${fr(L.w)} kg avec ${e.s} × ${top} et on monte 💪` };
   return { up: false, w: L.w, txt: `Objectif : ${e.s} × ${top} à ${fr(L.w)} kg` };
 }
-function weekStats(H, wk){
-  const h = H.filter(x => wkOf(x.d) === wk);
+function weekStats(H, wk, kg){
+  const h = H.filter(x => wkOf(x.d) === wk), kcal = h.reduce((a, x) => a + (kcalOfH(x, kg) || 0), 0);
   const days = new Set(h.map(x => x.d)).size;
   const vol = h.reduce((a, x) => a + volOf(x), 0);
   let recs = 0; h.forEach(x => { const b = H.filter(y => y.n === x.n && y.d < x.d).reduce((a, y) => { const s = scoreOf(y); return s != null && s > a ? s : a; }, 0); const s = scoreOf(x); if (b > 0 && s > b) recs++; });
-  return { days, vol, recs, ex: h.length };
+  return { days, vol, recs, ex: h.length, kcal };
 }
 const fmtVol = v => v >= 1000 ? fr((v / 1000).toFixed(1)) + ' t' : Math.round(v) + ' kg';
 
@@ -2424,6 +2429,10 @@ function viewProgres(){
     <div class="stat"><span class="si">🔥</span><div class="v">${streak}</div><div class="l">jour${streak > 1 ? 's' : ''} d’affilée</div></div>
     <div class="stat"><span class="si">🏋️</span><div class="v">${fmtVol(me.vol)}</div><div class="l">volume soulevé</div>${delta(me.vol, pv.vol, fmtVol)}</div>
     <div class="stat"><span class="si">🏆</span><div class="v">${me.recs}</div><div class="l">records battus</div>${delta(me.recs, pv.recs)}</div>
+    ${(() => { const D = wkDates(wk), P = wkDates(wkShift(wk, -1)), el = D.filter(d => d <= today()).length, kOf = dd => hist.filter(h => dd.includes(h.d)).reduce((a, h) => a + (kcalOfH(h) || 0), 0),
+      k0 = kOf(D), kP = kOf(P.slice(0, el)), mn = hist.filter(h => D.includes(h.d) && (h.t || 'f') === 'c').reduce((a, h) => a + (num(h.r) || 0), 0);
+      return `<div class="stat"><span class="si">🔥</span><div class="v">${kc(k0)}</div><div class="l">kcal brûlées au sport</div>${kP || k0 ? `<div class="dl ${k0 > kP ? 'up' : k0 < kP ? 'down' : ''}">${k0 > kP ? '▲' : k0 < kP ? '▼' : '='} ${k0 === kP ? 'comme' : kc(Math.abs(k0 - kP)) + ' kcal vs'} mêmes jours sem. dernière</div>` : ''}</div>
+    <div class="stat"><span class="si">🏃</span><div class="v">${Math.round(mn)}<small style="font-size:14px"> min</small></div><div class="l">de cardio</div><div class="dl">${Math.round(mn * 100 / 150)} % des 150 min conseillées</div></div>`; })()}
   </div>
   ${duoCard(wk, me)}
   <div class="seg ptabs" role="tablist" style="margin-top:22px">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${progTab === k}" class="${progTab === k ? 'on' : ''}" data-ptab="${k}">${l}</button>`).join('')}</div>
@@ -2434,7 +2443,7 @@ function viewProgres(){
 }
 function duoCard(wk, me){
   if (!other || !other.d) return '';
-  const ot = weekStats(other.d.hist || [], wk), rows = [['Jours', me.days, ot.days, x => x], ['Volume', me.vol, ot.vol, fmtVol], ['Records', me.recs, ot.recs, x => x], ['Exercices', me.ex, ot.ex, x => x]];
+  const ot = weekStats(other.d.hist || [], wk, weightOf(ctxOf(other.p.id))), rows = [['Jours', me.days, ot.days, x => x], ['Calories', Math.round(me.kcal), Math.round(ot.kcal), x => kc(x) + ' kcal'], ['Volume', me.vol, ot.vol, fmtVol], ['Records', me.recs, ot.recs, x => x], ['Exercices', me.ex, ot.ex, x => x]];
   const score = (a, b) => rows.reduce((s, r) => s + (r[a] > r[b] ? 1 : 0), 0), sm = score(1, 2), so = score(2, 1);
   return `<h3 class="sec">Duo de la semaine</h3><div class="card duo-card">
     <div class="duo-head"><div class="${sm > so ? 'lead' : ''}" style="--p1:${profile.a1};--p2:${profile.a2}"><span class="av big">${esc(profile.nom.slice(0, 1).toUpperCase())}</span><b>${esc(profile.nom)}</b>${sm > so ? '<span class="crown">👑</span>' : ''}</div>
@@ -2459,10 +2468,17 @@ function tabPerf(){
   const ML = Object.entries(M).sort((a, b) => b[1] - a[1]), mMax = ML.length ? ML[0][1] : 1;
   let sum = '';
   if (progEx){ const H = histOf(progEx), pp = perfPts(H), P2 = pp.pts; if (P2.length){ const u = pp.u, bst = Math.max(...P2.map(p => p.v)), dv = P2[P2.length - 1].v - P2[0].v;
-    sum = `<div class="exsum"><div><small>Record</small><b>${fr(bst)} ${u}</b></div><div><small>Depuis le ${fmtD(P2[0].d)}</small><b class="${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${dv > 0 ? '+' : ''}${fr(dv)} ${u}</b></div><div><small>Séances</small><b>${P2.length}</b></div></div>`; } }
+    sum = `<div class="exsum"><div><small>Record</small><b>${fr(bst)} ${u}</b></div><div><small>Depuis le ${fmtD(P2[0].d)}</small><b class="${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${dv > 0 ? '+' : ''}${fr(dv)} ${u}</b></div><div><small>Séances</small><b>${P2.length}</b></div></div>`; }
+    const K = H.map(h => kcalOfH(h) || 0), kt = K.reduce((a, v) => a + v, 0), est = H.some(h => num(h.kcal) == null) ? '≈ ' : '';
+    if (kt) sum += `<p class="kxl">🔥 ${est}<b>${kc(kt / H.length)} kcal</b> par séance · ${est}<b>${kc(kt)} kcal</b> au total (${H.length} séance${H.length > 1 ? 's' : ''})</p>`; }
   return `<h3 class="sec">Régularité (10 semaines)</h3>
   <div class="card"><p class="hsum"><b>${active}</b> jour${active > 1 ? 's' : ''} d’entraînement sur les 10 dernières semaines</p><div class="heat">${['L','M','M','J','V','S','D'].map(d => `<div class="hd">${d}</div>`).join('')}${cells.map(c => `<div class="h ${c.fut ? '' : c.c >= 6 ? 'l3' : c.c >= 3 ? 'l2' : c.c ? 'l1' : ''} ${c.now ? 'now' : ''}" title="${c.k} : ${c.c} exercice(s)" style="${c.fut ? 'opacity:.3' : ''}"></div>`).join('')}</div><div class="hleg"><span>Moins</span><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>Plus</span></div></div>
   ${ML.length ? `<h3 class="sec">Muscles travaillés (7 jours)</h3><div class="card">${ML.map(([m, n]) => `<div class="mbar" style="--c:${mcol(m)}"><span>${esc(m)}</span><div><i style="width:${Math.max(6, n * 100 / mMax)}%"></i></div><b>${n}</b></div>`).join('')}<p class="muted" style="font-size:11.5px;margin-top:8px">Nombre de séries par groupe musculaire.</p></div>` : ''}
+  ${(() => { const d30 = new Date(); d30.setDate(d30.getDate() - 29); const s30 = ymd(d30), KX = {};
+    hist.filter(h => h.d >= s30).forEach(h => { const v = kcalOfH(h) || 0; if (v) KX[h.n] = (KX[h.n] || 0) + v; });
+    const KL = Object.entries(KX).sort((a, b) => b[1] - a[1]).slice(0, 8), mx = KL.length ? KL[0][1] : 1, tot = Object.values(KX).reduce((a, v) => a + v, 0);
+    return KL.length ? `<h3 class="sec">Calories par exercice (30 jours)</h3><div class="card">${KL.map(([n, v]) => `<button class="mbar kbar" data-x="recgo" data-n="${esc(n)}" style="--c:#fb923c"><span>${esc(n)}</span><div><i style="width:${Math.max(6, v * 100 / mx)}%"></i></div><b>${kc(v)}</b></button>`).join('')}
+      <p class="muted" style="font-size:11.5px;margin-top:8px">${kc(tot)} kcal en 30 jours. Calories de la machine quand tu les as notées, sinon estimées (durée, séries et ton poids).</p></div>` : ''; })()}
   <h3 class="sec">Progression par exercice</h3>
   <div class="card">${names.length ? `<select class="sel" id="progSel" aria-label="Choisir un exercice">${names.map(n => `<option ${n === progEx ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>${sum}<div class="chart">${ch}</div>`
     : `<div class="empty"><div class="e">📈</div><b>Pas encore de données</b><p>Valide tes séries : ta courbe apparaîtra ici.</p></div>`}</div>
@@ -2533,6 +2549,7 @@ function tabSynth(){
       ${big(kgP ? kg0 / kgP : kg0 ? 1 : 0, '#22d3ee', kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes' : 'kg', 'Soulevés', vs(kg0, kgP))}
       ${big(mn0 / 150, '#34d399', Math.round(mn0), 'min', 'Cardio', `objectif santé : 150 min (${Math.round(mn0 * 100 / 150)} %)`)}
     </div>
+    ${eatBurnCard()}
     ${defiCard()}
     ${synthCard()}`;
 }
@@ -2649,6 +2666,29 @@ function weekImage(){
   bar(profile.nom, r.mine, Y + 135, profile.a1 || a1, profile.a2 || a2); if (r.oth != null) bar(other.p.nom, r.oth, Y + 210, other.p.a1, other.p.a2);
   x.fillStyle = '#8b9ab4'; x.font = `500 30px ${F}`; x.fillText('Mon Programme', 70, 1315);
   return c;
+}
+// calories mangées (journal) contre dépensées (métabolisme × activité + sport réellement fait), jour par jour
+function eatBurnCard(){
+  if (!nutReady(nut)) return `<h3 class="sec">Mangées ou dépensées</h3><div class="card"><p class="muted">Remplis ton profil dans Nutrition (âge, taille, poids) pour comparer ce que tu manges à ce que tu dépenses.</p></div>`;
+  const wk = curWk(), D = wkDates(wk), td = today(), c = ctxOf(profile.id), plan = foyer.plans && foyer.plans[wk];
+  const R = D.map((d, i) => { if (d > td) return { d, fut: true };
+    const t = targets(c, i), sport = hist.filter(h => h.d === d).reduce((a, h) => a + (kcalOfH(h) || 0), 0), out = Math.round(t.bmr * (+nut.act || 1.35) + sport);
+    // journée complète seulement si tous les repas prévus (hors absences) sont notés
+    const J = journal[d] || {}; let eat = null, ports = [];
+    try{ ports = plan ? dayPortions(profile.id, i, wk) : []; }catch(e){ ports = []; }
+    const need = ports.length ? ports.filter(x => x.rid && !x.away).map(x => x.meal) : ['pdj', 'dej', 'din'], got = need.filter(m => J[m]).length;
+    if (MEALS.some(([m]) => J[m])){ try{ eat = Math.round(eatenTotals(d, ports).k); }catch(e){ eat = null; } }
+    return { d, i, eat, out, sport: Math.round(sport), goal: t.kcal, full: got >= need.length, got, need: need.length }; });
+  const mx = Math.max(1, ...R.filter(r => !r.fut).map(r => Math.max(r.eat || 0, r.out, r.goal))), N = R.filter(r => r.eat != null && r.full), part = R.filter(r => r.eat != null && !r.full).length;
+  const bal = N.reduce((a, r) => a + r.eat - r.out, 0);
+  return `<h3 class="sec">Mangées ou dépensées</h3><div class="card eb">
+    <div class="ebl"><span><i style="background:#34d399"></i>mangées</span><span><i style="background:#fb923c"></i>dépensées</span><span><i class="g"></i>objectif</span></div>
+    <div class="ebc">${R.map((r, i) => `<div class="ebd${r.d === td ? ' now' : ''}">${r.fut ? '<div class="ebb"></div>' : `<div class="ebb">
+      <i class="e${r.full ? '' : ' part'}" style="height:${r.eat != null ? Math.max(3, r.eat * 100 / mx) : 0}%" title="Mangé : ${r.eat != null ? kc(r.eat) + ' kcal' + (r.full ? '' : ` (${r.got}/${r.need} repas notés)`) : 'pas noté'}"></i><i class="o" style="height:${r.out * 100 / mx}%" title="Dépensé : ${kc(r.out)} kcal dont ${kc(r.sport)} au sport"></i>
+      <u style="bottom:${r.goal * 100 / mx}%"></u></div>`}<b>${DAY_SHORT[i]}</b><small>${r.fut ? '' : r.eat == null ? 'pas noté' : r.full ? (r.eat - r.out > 0 ? '+' : '') + kc(r.eat - r.out) : `${r.got}/${r.need} repas`}</small></div>`).join('')}</div>
+    ${N.length ? `<p class="ebs">Sur ${N.length} jour${N.length > 1 ? 's' : ''} noté${N.length > 1 ? 's' : ''} : <b class="${bal < 0 ? 'neg' : 'pos'}">${bal < 0 ? 'déficit de ' : 'surplus de '}${kc(Math.abs(bal))} kcal</b>${Math.abs(bal) >= 3500 ? ` (≈ ${fr(Math.round(Math.abs(bal) / 770) / 10)} kg ${bal < 0 ? 'perdus' : 'pris'})` : ''}</p>` : '<p class="muted ebs">Le bilan apparaît dès qu’une journée a tous ses repas notés dans Nutrition.</p>'}
+    ${part ? `<p class="muted" style="font-size:12px;text-align:center;margin-top:4px">${part} jour${part > 1 ? 's' : ''} avec des repas manquants (barre verte pâle) : pas compté${part > 1 ? 's' : ''} dans le bilan.</p>` : ''}
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Dépensé = ton métabolisme estimé × ton activité de tous les jours + les calories de tes séances. Ce sont des estimations (± 10 à 15 %) : regarde surtout la tendance sur plusieurs semaines.</p></div>`;
 }
 function synthCard(){
   const td = today(), pc = (a, b) => b ? Math.round((a - b) * 100 / b) : null;
@@ -5928,7 +5968,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 75;
+const APP_VERSION = 76;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
