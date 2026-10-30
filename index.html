@@ -502,6 +502,16 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .nav button{font-size:10.5px}
 .nav button .i{font-size:20px}
 .seg.small button{padding:7px 4px;font-size:12.5px}
+.seg.seg6{display:grid;grid-template-columns:repeat(3,1fr)}
+.gauge{position:relative;display:grid;place-items:center;flex:none}.gauge svg{position:absolute;inset:0}.gauge .gin{position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.05;text-align:center}
+.sdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.sd{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;border-radius:14px;min-width:0}.sd > b{font-size:12px;color:var(--muted)}.sd small{font-size:9.5px;color:var(--muted);white-space:nowrap;font-weight:700}
+.sd .gin{font-size:17px}.sd.ok small{color:#fdba74}.sd.miss .gin{color:var(--ko);font-weight:900}.sd.fut{opacity:.55}.sd.now{background:color-mix(in srgb,var(--a1) 12%,transparent);outline:1px solid color-mix(in srgb,var(--a1) 40%,transparent)}.sd.now > b{color:var(--a1)}
+.gauge::before{content:'';position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.05),transparent 70%)}
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.sg{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 8px;border-radius:20px;background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--line)}
+.sg .gin b{font-size:22px;font-weight:900;letter-spacing:-.5px}.sg .gin small{font-size:11px;color:var(--muted);font-weight:700}.sg > p{font-weight:800;margin-top:8px;font-size:14px}.sg > small{font-size:11px;margin-top:2px}
+.synthc .syr{display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:6px;align-items:center;width:100%;text-align:left;padding:10px 2px;border-bottom:1px solid var(--line)}.synthc .syr:last-of-type{border-bottom:none}
+.synthc .syr > b{grid-column:1;font-size:14px}.synthc .syr > small{grid-column:1;grid-row:2;font-size:11px;margin-top:-4px}
+.synthc .syr span{grid-row:1 / span 2;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0}.synthc .syr span b{font-size:15px;white-space:nowrap}.synthc .syr span small{font-size:10.5px;color:var(--muted)}.synthc .syr span small.up{color:var(--ok)}.synthc .syr span small.down{color:var(--ko)}
 .mb{margin:6px 0}.mbh{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}.mbh span{color:var(--muted);font-weight:700}
 .meal .mlbl{font-size:11.5px;font-weight:700;color:var(--muted)}
 .ingr{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
@@ -1740,7 +1750,6 @@ function rings3(R){
     return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${x.col}" stroke-opacity=".18" stroke-width="${w}"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${x.col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - p)}" transform="rotate(-90 ${c} ${c})" class="rg"/>`; }).join('')}</svg>`;
 }
 // compteurs motivants : séances, calories, kilos (semaine / mois / depuis le début, au toucher)
-const CUM = [['semaine', 'cette semaine'], ['mois', 'ce mois-ci'], ['total', 'depuis le début']];
 function cumulOf(p){
   const td = today(), from = p === 'semaine' ? wkDates(curWk())[0] : p === 'mois' ? td.slice(0, 8) + '01' : '';
   const H = hist.filter(h => h.d >= from), days = new Set(H.map(h => h.d));
@@ -1749,13 +1758,13 @@ function cumulOf(p){
   return { n, kcal, kg };
 }
 function cumulRow(){
-  const p = settings.cum || 'semaine', c = cumulOf(p), lbl = CUM.find(x => x[0] === p)[1];
+  const p = 'semaine', c = cumulOf(p), lbl = 'cette semaine';
   const kgTxt = c.kg >= 10000 ? [String(+(c.kg / 1000).toFixed(c.kg >= 100000 ? 0 : 1)).replace('.', ','), 'tonnes soulevées'] : [kc(c.kg), 'kg soulevés'];
-  return `<button class="cumul" data-x="cum" aria-label="Changer de période (${lbl})">
+  return `<button class="cumul" data-x="cumgo" aria-label="Voir la synthèse par mois, trimestre, semestre et année">
     <span><b data-cnt="${c.n}">${c.n}</b><small>séance${c.n > 1 ? 's' : ''}</small></span>
     <span><b data-cnt="${Math.round(c.kcal)}">${kc(c.kcal)}</b><small>kcal brûlées</small></span>
     <span><b>${kgTxt[0]}</b><small>${kgTxt[1]}</small></span>
-    <em>${lbl} ›</em></button>`;
+    <em>${lbl} · synthèse ›</em></button>`;
 }
 function todayCard(){
   const d = todayIdx(), date = ymd(new Date()), k = 'day' + d, list = data[k] || [], dn = done[k] || [];
@@ -2337,7 +2346,7 @@ function makeIcs(){
 /* ============================================================
    VUE PROGRÈS (stats, duo, courbes, corps, photos, séances)
    ============================================================ */
-let progEx = null, progTab = 'bilan';
+let progEx = null, progTab = 'synth';
 // points de la courbe d'un exercice : cardio = calories par séance (ou km, ou minutes, sans mélanger), sinon le score habituel
 function perfPts(H){
   const t = (H[H.length - 1] || {}).t || 'f';
@@ -2354,7 +2363,7 @@ function viewProgres(){
   const delta = (a, b, f = x => x) => b || a ? `<div class="dl ${a > b ? 'up' : a < b ? 'down' : ''}">${a > b ? '▲' : a < b ? '▼' : '='} ${a === b ? 'comme' : f(Math.abs(a - b))} ${a === b ? 'la sem. dernière' : 'vs sem. dernière'}</div>` : '';
   const daysSet = new Set(hist.map(h => h.d));
   let streak = 0; { const d = new Date(); for (let i = 0; i < 400; i++){ if (daysSet.has(ymd(d))) streak++; else if (i > 0) break; d.setDate(d.getDate() - 1); } }
-  const tabs = [['bilan','📊 Bilan'],['perf','📈 Perfs'],['seances','🏁 Séances'],['corps','⚖️ Corps'],['badges','🏆 Badges']];
+  const tabs = [['synth','✨ Synthèse'],['bilan','📊 Bilan'],['perf','📈 Perfs'],['seances','🏁 Séances'],['corps','⚖️ Corps'],['badges','🏆 Badges']];
   $('#app').innerHTML = `<div class="fade">
   ${reportCard()}
   <h3 class="sec" style="margin-top:20px">Cette semaine</h3>
@@ -2366,7 +2375,7 @@ function viewProgres(){
   </div>
   ${duoCard(wk, me)}
   <div class="seg" role="tablist" style="margin-top:22px">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${progTab === k}" class="${progTab === k ? 'on' : ''}" data-ptab="${k}">${l}</button>`).join('')}</div>
-  <div id="ptab">${progTab === 'bilan' ? tabBilan() : progTab === 'perf' ? tabPerf() : progTab === 'seances' ? tabSeances() : progTab === 'badges' ? tabBadges() : tabCorps()}</div>
+  <div id="ptab">${progTab === 'synth' ? tabSynth() : progTab === 'bilan' ? tabBilan() : progTab === 'perf' ? tabPerf() : progTab === 'seances' ? tabSeances() : progTab === 'badges' ? tabBadges() : tabCorps()}</div>
   </div>`;
   const sel = $('#progSel'); if (sel) sel.onchange = () => { progEx = sel.value; viewProgres(); };
   if (progTab === 'corps') bindCorps();
@@ -2409,13 +2418,17 @@ function tabPerf(){
 }
 // bilan par jour, semaine ou mois : kg soulevés, calories dépensées, cardio, poids
 let bilanP = 'semaine', bilanOff = 0;
+const MULTI = { trimestre: 3, semestre: 6, annee: 12 };
 function bilanRange(p, off){
   const d = new Date(); d.setHours(12, 0, 0, 0);
   if (p === 'jour'){ d.setDate(d.getDate() + off); const k = ymd(d); return { a: k, b: k, lbl: off === 0 ? 'Aujourd’hui' : off === -1 ? 'Hier' : d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }), days: [k] }; }
   if (p === 'semaine'){ d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 7 * off); const days = Array.from({ length: 7 }, (_, i) => { const x = new Date(d); x.setDate(d.getDate() + i); return ymd(x); });
     return { a: days[0], b: days[6], lbl: off === 0 ? 'Cette semaine' : off === -1 ? 'Semaine dernière' : `Du ${fmtD(days[0])} au ${fmtD(days[6])}`, days, short: ['L','M','M','J','V','S','D'] }; }
-  if (p === 'annee'){ const y = d.getFullYear() + off, days = []; for (let x = new Date(y, 0, 1, 12); x.getFullYear() === y; x.setDate(x.getDate() + 1)) days.push(ymd(x));
-    return { a: days[0], b: days[days.length - 1], lbl: String(y), days, y }; }
+  if (MULTI[p]){ const L = MULTI[p], k0 = Math.floor(d.getMonth() / L) + off, y = d.getFullYear() + Math.floor(k0 * L / 12), m0 = ((k0 * L) % 12 + 12) % 12, days = [], months = [];
+    for (let i = 0; i < L; i++) months.push(y + '-' + String(m0 + i + 1).padStart(2, '0'));
+    for (let x = new Date(y, m0, 1, 12); x.getMonth() < m0 + L && x.getFullYear() === y; x.setDate(x.getDate() + 1)) days.push(ymd(x));
+    const q = m0 / L + 1, lbl = p === 'annee' ? String(y) : p === 'trimestre' ? `${q}${q === 1 ? 'er' : 'e'} trimestre ${y}` : `${q}${q === 1 ? 'er' : 'e'} semestre ${y}`;
+    return { a: days[0], b: days[days.length - 1], lbl, days, y, months }; }
   const m = new Date(d.getFullYear(), d.getMonth() + off, 1, 12), n = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
   const days = Array.from({ length: n }, (_, i) => ymd(new Date(m.getFullYear(), m.getMonth(), i + 1, 12)));
   return { a: days[0], b: days[n - 1], lbl: m.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }), days, short: days.map((_, i) => (i + 1) % 5 === 1 ? String(i + 1) : '') };
@@ -2439,17 +2452,58 @@ function bilanStats(r){
   const w0 = before || inR[0], w1 = inR[inR.length - 1];
   return { H, kg, kc, est, min, km, days: new Set(H.map(h => h.d)).size, byDay, w0, w1, dw: w0 && w1 && w0 !== w1 ? num(w1.p) - num(w0.p) : null };
 }
+// synthèse : mois, trimestre, semestre, année en cours, comparés à la même durée de la période d'avant
+// onglet Synthèse : la semaine jour par jour, de grands compteurs, puis mois / trimestre / semestre / année
+function gauge(p, size, col, inner){
+  const st = 10, r = (size - st) / 2, c = 2 * Math.PI * r, pp = Math.max(0, Math.min(1, p));
+  return `<div class="gauge" style="width:${size}px;height:${size}px"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-opacity=".16" stroke-width="${st}"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="${st}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pp)}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg><div class="gin">${inner}</div></div>`;
+}
+function tabSynth(){
+  const wk = curWk(), D = wkDates(wk), td = today(), P = wkDates(wkShift(wk, -1));
+  const dayOf = d => { const H = hist.filter(h => h.d === d); return { n: H.length, kcal: H.reduce((a, h) => a + (kcalOfH(h) || 0), 0), kg: H.reduce((a, h) => a + volOf(h), 0), min: H.filter(h => (h.t || 'f') === 'c').reduce((a, h) => a + (num(h.r) || 0), 0) }; };
+  const W = D.map(dayOf), PW = P.map(dayOf), elapsed = D.filter(d => d <= td).length;
+  const sum = (A, k, n) => A.slice(0, n).reduce((a, x) => a + x[k], 0);
+  const planned = D.filter((_, i) => (data['day' + i] || []).length).length, nDone = W.filter(x => x.n).length;
+  // comparé aux mêmes jours de la semaine dernière (lundi → même jour)
+  const kc0 = sum(W, 'kcal', 7), kcP = sum(PW, 'kcal', elapsed), kg0 = sum(W, 'kg', 7), kgP = sum(PW, 'kg', elapsed), mn0 = sum(W, 'min', 7);
+  const tiles = D.map((d, i) => { const x = W[i], plan = (data['day' + i] || []).length, fut = d > td, now = d === td;
+    const st = x.n ? 'ok' : now && plan ? 'todo' : fut ? 'fut' : plan ? 'miss' : 'rest', p = x.n ? (plan ? Math.min(1, x.n / plan) : 1) : 0;
+    return `<div class="sd ${st}${now ? ' now' : ''}"><b>${DAY_SHORT[i]}</b>${gauge(p, 46, x.n ? '#fb923c' : '#64748b', x.n ? '🔥' : st === 'todo' ? '⏳' : fut ? (plan ? '·' : '') : plan ? '✕' : '😴')}<small>${x.n ? kc(x.kcal) + ' kcal' : st === 'todo' ? 'à faire' : fut ? (plan ? 'prévu' : 'repos') : plan ? 'manqué' : 'repos'}</small>${x.kg ? `<small>${fmtVol(x.kg)}</small>` : ''}</div>`; }).join('');
+  const big = (p, col, val, unit, lbl, sub) => `<div class="sg">${gauge(p, 112, col, `<b data-cnt="${Math.round(+String(val).replace(/[^\d]/g, '') || 0)}">${val}</b><small>${unit}</small>`)}<p>${lbl}</p><small class="muted">${sub}</small></div>`;
+  const vs = (a, b) => b ? (a >= b ? `▲ +${Math.round((a - b) * 100 / b)} % vs sem. dernière à ce jour` : `${Math.round(a * 100 / b)} % de la sem. dernière à ce jour`) : 'pas de comparaison';
+  return `<h3 class="sec syn-week">Ta semaine, jour par jour</h3><div class="card"><div class="sdays">${tiles}</div>
+      <p class="muted" style="font-size:11.5px;margin-top:8px">🔥 entraîné · ⏳ à faire aujourd’hui · ✕ séance prévue non faite · 😴 repos. L’anneau se remplit selon les exercices faits.</p></div>
+    <h3 class="sec">Tes compteurs de la semaine</h3><div class="sgrid">
+      ${big(planned ? nDone / planned : nDone ? 1 : 0, '#f472b6', nDone, `/ ${planned || '–'}`, 'Séances', planned ? `${Math.round(nDone * 100 / planned)} % du programme` : 'pas de programme')}
+      ${big(kcP ? kc0 / kcP : kc0 ? 1 : 0, '#fb923c', kc(kc0), 'kcal', 'Calories brûlées', vs(kc0, kcP))}
+      ${big(kgP ? kg0 / kgP : kg0 ? 1 : 0, '#22d3ee', kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes' : 'kg', 'Soulevés', vs(kg0, kgP))}
+      ${big(mn0 / 150, '#34d399', Math.round(mn0), 'min', 'Cardio', `objectif santé : 150 min (${Math.round(mn0 * 100 / 150)} %)`)}
+    </div>
+    ${synthCard()}`;
+}
+function synthCard(){
+  const td = today(), pc = (a, b) => b ? Math.round((a - b) * 100 / b) : null;
+  const dl = v => v == null ? '' : `<small class="${v >= 0 ? 'up' : 'down'}">${v >= 0 ? '▲ +' : '▼ '}${v} %</small>`;
+  const rows = [['mois', 'Ce mois-ci'], ['trimestre', 'Ce trimestre'], ['semestre', 'Ce semestre'], ['annee', 'Cette année']].map(([p, l]) => {
+    const r = bilanRange(p, 0), pr = bilanRange(p, -1), el = r.days.indexOf(td); pr.days = pr.days.slice(0, el + 1); pr.b = pr.days[pr.days.length - 1];
+    const S = bilanStats(r), P = bilanStats(pr);
+    [[r, S], [pr, P]].forEach(([R, X]) => (R.months || []).forEach(ym => { const a = coach && coach.arch && coach.arch[ym]; if (a && ym + '-31' <= R.b){ X.kc += a.kc; X.kg += a.kg; X.days += a.j || 0; } }));
+    return `<button class="syr" data-x="synp" data-p="${p}"><b>${l}</b><small class="muted">${esc(r.lbl)}</small>
+      <span><b>${S.days}</b><small>séance${S.days > 1 ? 's' : ''}</small>${dl(pc(S.days, P.days))}</span><span><b>${kc(S.kc)}</b><small>kcal</small>${dl(pc(S.kc, P.kc))}</span><span><b>${fmtVol(S.kg)}</b><small>soulevés</small>${dl(pc(S.kg, P.kg))}</span></button>`; });
+  return `<h3 class="sec synth">Mois, trimestre, semestre, année</h3><div class="card synthc">${rows.join('')}<p class="muted" style="font-size:11.5px;margin-top:8px">Comparé à la période d’avant, sur le même nombre de jours. Touche une ligne pour le détail.</p></div>`;
+}
 function tabBilan(){
-  const r = bilanRange(bilanP, bilanOff), S = bilanStats(r);
-  // année en cours : comparée à la même période de l'année d'avant (1er janvier → même date)
-  const yCur = bilanP === 'annee' && bilanOff === 0, pr = bilanRange(bilanP, bilanOff - 1);
-  if (yCur){ const lim = pr.a.slice(0, 4) + today().slice(4); pr.b = lim; pr.days = pr.days.filter(x => x <= lim); }
+  const r = bilanRange(bilanP, bilanOff), S = bilanStats(r), pr = bilanRange(bilanP, bilanOff - 1);
+  // période en cours (mois, trimestre, semestre, année) : comparée au même nombre de jours de la période d'avant
+  const yCur = bilanOff === 0 && bilanP !== 'jour' && bilanP !== 'semaine', el = r.days.indexOf(today());
+  if (yCur && el >= 0){ pr.days = pr.days.slice(0, el + 1); pr.b = pr.days[pr.days.length - 1]; }
   const pv = bilanStats(pr);
-  if (bilanP === 'annee'){ [[S, r.y, 12], [pv, r.y - 1, yCur ? new Date().getMonth() : 12]].forEach(([X, y, upTo]) => { for (let m = 1; m <= upTo; m++){ const a = coach && coach.arch && coach.arch[y + '-' + String(m).padStart(2, '0')]; if (a){ X.kc += a.kc; X.kg += a.kg; X.est = true; } } }); }
+  if (r.months){ const full = (R, X) => R.months.forEach(ym => { const a = coach && coach.arch && coach.arch[ym]; if (a && ym + '-31' <= R.b){ X.kc += a.kc; X.kg += a.kg; X.days += a.j || 0; X.est = true; } }); full(r, S); full(pr, pv); }
   const cmp = (a, b, f) => b || a ? `<small class="${a > b ? 'up' : a < b ? 'down' : ''}">${a > b ? '▲' : a < b ? '▼' : '='} ${a === b ? 'pareil' : f(Math.abs(a - b))}</small>` : '';
-  const per = { jour: 'à la veille', semaine: 'à la semaine d’avant', mois: 'au mois d’avant', annee: 'à l’année d’avant' }[bilanP];
+  const per = { jour: 'à la veille', semaine: 'à la semaine d’avant', mois: 'au mois d’avant', trimestre: 'au trimestre d’avant', semestre: 'au semestre d’avant', annee: 'à l’année d’avant' }[bilanP];
   const bars = (key, col, f) => { const V = r.days.map(k => S.byDay[k][key]), M = Math.max(1, ...V); return `<div class="bbars" style="--bc:${col}">${V.map((v, i) => `<div class="bb" title="${fmtD(r.days[i])} : ${f(v)}"><i style="height:${v ? Math.max(4, v * 100 / M) : 0}%"></i><span>${r.short[i]}</span></div>`).join('')}</div>`; };
-  return `${goalsCard()}${weekBodyCard()}<div class="seg small" style="margin-top:14px">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['annee','Année']].map(([k, l]) => `<button class="${bilanP === k ? 'on' : ''}" data-x="bp" data-p="${k}">${l}</button>`).join('')}</div>
+  return `${goalsCard()}${weekBodyCard()}<div class="seg small seg6" style="margin-top:14px">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['trimestre','Trimestre'],['semestre','Semestre'],['annee','Année']].map(([k, l]) => `<button class="${bilanP === k ? 'on' : ''}" data-x="bp" data-p="${k}">${l}</button>`).join('')}</div>
   <div class="bnav"><button class="btn sm" data-x="bo" data-d="-1" aria-label="Période précédente">‹</button><b>${r.lbl}</b><button class="btn sm" data-x="bo" data-d="1" ${bilanOff >= 0 ? 'disabled' : ''} aria-label="Période suivante">›</button></div>
   <div class="stats">
     <div class="stat"><span class="si">🏋️</span><div class="v">${fmtVol(S.kg)}</div><div class="l">soulevés</div><div class="dl">${cmp(S.kg, pv.kg, fmtVol)}</div></div>
@@ -2457,9 +2511,9 @@ function tabBilan(){
     <div class="stat"><span class="si">🏃</span><div class="v">${Math.round(S.min)}<small style="font-size:14px"> min</small></div><div class="l">de cardio${S.km ? ` · ${fr(Math.round(S.km * 10) / 10)} km` : ''}</div></div>
     <div class="stat"><span class="si">⚖️</span><div class="v">${S.w1 ? fr(num(S.w1.p)) + '<small style="font-size:14px"> kg</small>' : '–'}</div><div class="l">${S.dw != null ? `${S.dw > 0 ? '+' : ''}${fr(Math.round(S.dw * 10) / 10)} kg sur la période` : 'poids'}</div></div>
   </div>
-  <p class="muted" style="font-size:12px;margin:8px 2px 0">Comparé ${yCur ? `à la même période de ${r.y - 1} (1er janvier → ${fmtD(today())})` : per}. ${S.days} jour${S.days > 1 ? 's' : ''} d’entraînement.${S.est && S.kc ? ' ≈ : calories estimées quand elles n’ont pas été notées (note celles de la machine sur tes exercices de cardio).' : ''}</p>
+  <p class="muted" style="font-size:12px;margin:8px 2px 0">Comparé ${per}${yCur && el >= 0 ? ` (sur les ${el + 1} premiers jours, comme cette période)` : ''}. ${S.days} jour${S.days > 1 ? 's' : ''} d’entraînement.${S.est && S.kc ? ' ≈ : calories estimées quand elles n’ont pas été notées (note celles de la machine sur tes exercices de cardio).' : ''}</p>
   ${bilanP === 'jour' ? `<h3 class="sec">Détail du jour</h3><div class="card">${S.H.length ? S.H.map(h => `<div class="rec"><span class="mus" style="--c:${mcol(h.m)}">${esc(h.m || '')}</span><div class="t"><b>${esc(h.n)}</b><small>${esc(lastTxt(h))}</small></div><div class="v" style="font-size:13px;color:var(--soft);text-align:right">${volOf(h) ? fmtVol(volOf(h)) + '<br>' : ''}${h.kcal == null ? '≈ ' : ''}${kcalOfH(h)} kcal</div></div>`).join('') : '<p class="muted">Pas d’entraînement ce jour-là.</p>'}</div>`
-  : bilanP === 'annee' ? yearCards(r.y)
+  : r.months ? yearCards(r.y, r.months)
   : `<h3 class="sec">Kilos soulevés</h3><div class="card">${bars('kg', 'var(--a1)', fmtVol)}</div><h3 class="sec">Calories dépensées</h3><div class="card">${bars('kc', '#fb923c', v => kc(v) + ' kcal')}</div>${bilanP === 'mois' ? sameMonthLY(r) : ''}`}`;
 }
 // mois : même mois l'année d'avant
@@ -2470,15 +2524,15 @@ function sameMonthLY(r){
   return `<div class="card" style="margin-top:12px"><p style="font-size:13.5px">📅 Même mois l’an dernier : <b>${kc(Math.round(P.kc))} kcal</b>${f(pc(C.kc, P.kc))} · <b>${fmtVol(P.kg)}</b> soulevés${f(pc(C.kg, P.kg))}</p></div>`;
 }
 // année : barres par mois, cette année et l'année d'avant côte à côte
-function yearCards(y){
-  const M = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')), MS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+function yearCards(y, months){
+  const M = (months || Array.from({ length: 12 }, (_, i) => y + '-' + String(i + 1).padStart(2, '0'))).map(ym => ym.slice(5)), MS0 = ['J','F','M','A','M','J','J','A','S','O','N','D'], MS = M.map(m => months && months.length < 12 ? new Date(2000, +m - 1, 1).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '') : MS0[+m - 1]);
   const C = M.map(m => monthTot(y + '-' + m)), P = M.map(m => monthTot((y - 1) + '-' + m)), hasP = P.some(x => x.kc || x.kg);
   const chart = (key, col, f) => { const mx = Math.max(1, ...C.map(x => x[key]), ...P.map(x => x[key]));
     return `<div class="ybars" style="--bc:${col}">${M.map((m, i) => `<div class="yb" title="${MS[i]} : ${f(C[i][key])}${hasP ? ' · ' + (y - 1) + ' : ' + f(P[i][key]) : ''}"><div class="yc">${hasP ? `<i class="py" style="height:${P[i][key] ? Math.max(3, P[i][key] * 100 / mx) : 0}%"></i>` : ''}<i style="height:${C[i][key] ? Math.max(3, C[i][key] * 100 / mx) : 0}%"></i></div><span>${MS[i]}</span></div>`).join('')}</div>
       <div class="yleg"><span><i style="background:${col}"></i>${y}</span>${hasP ? `<span><i class="py"></i>${y - 1}</span>` : ''}</div>`; };
-  const best = C.reduce((b, x, i) => x.kc > C[b].kc ? i : b, 0);
+  const best = C.reduce((b, x, i) => x.kc > C[b].kc ? i : b, 0), bestM = +M[best] - 1;
   return `<h3 class="sec">Calories par mois</h3><div class="card">${chart('kc', '#fb923c', v => kc(Math.round(v)) + ' kcal')}
-      ${C[best].kc ? `<p class="muted" style="font-size:12px;margin-top:8px">🔥 Meilleur mois : ${new Date(y, best, 1).toLocaleDateString('fr-FR', { month: 'long' })} (${kc(Math.round(C[best].kc))} kcal).${hasP ? '' : ' L’an prochain, l’année d’avant s’affichera à côté pour comparer.'}</p>` : ''}</div>
+      ${C[best].kc ? `<p class="muted" style="font-size:12px;margin-top:8px">🔥 Meilleur mois : ${new Date(y, bestM, 1).toLocaleDateString('fr-FR', { month: 'long' })} (${kc(Math.round(C[best].kc))} kcal).${hasP ? '' : ' L’an prochain, l’année d’avant s’affichera à côté pour comparer.'}</p>` : ''}</div>
     <h3 class="sec">Kilos soulevés par mois</h3><div class="card">${chart('kg', 'var(--a1)', fmtVol)}</div>`;
 }
 function tabSeances(){
@@ -5023,7 +5077,8 @@ function evoAct(a, b){
     case 'lightoff': coach = Object.assign({}, coach, { light: null, ign: curWk() }); save(); render(); toast('Séances normales'); break;
     case 'lightign': coach = Object.assign({}, coach, { ign: curWk() }); save(); render(); break;
     case 'stock': sheetStock(); break;
-    case 'cum': { const i = CUM.findIndex(x => x[0] === (settings.cum || 'semaine')); settings.cum = CUM[(i + 1) % CUM.length][0]; safeSet('mp_settings', settings); const el = document.querySelector('.cumul'); if (el){ el.outerHTML = cumulRow(); document.querySelectorAll('.cumul b').forEach(countUp); } break; }
+    case 'cumgo': progTab = 'synth'; go('progres'); setTimeout(() => { const el = document.querySelector('.syn-week'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 350); break;
+    case 'synp': progTab = 'bilan'; bilanP = b.dataset.p; bilanOff = 0; viewProgres(); setTimeout(() => { const el = document.querySelector('.bnav'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); break;
     case 'microp': microP = b.dataset.m; viewNutrition(); break;
     case 'topfood': sheetTop(); break;
     case 'topk': topK = b.dataset.k; sheetTop(); break;
@@ -5379,7 +5434,7 @@ function enterFx(){
   const app = $('#app'); clearTimeout(enterT); enterAt = performance.now();
   app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); tagStagger();
   enterT = setTimeout(() => app.classList.remove('enter'), 1200);
-  app.querySelectorAll('.stat .v, .cumul b').forEach(countUp);
+  app.querySelectorAll('.stat .v, .cumul b, .sg .gin b').forEach(countUp);
   drawRings(app);
 }
 // délai négatif : si l'onglet se redessine pendant l'entrée (données chargées), l'animation reprend où elle en était
@@ -5611,7 +5666,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 70;
+const APP_VERSION = 72;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
