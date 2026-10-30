@@ -1059,7 +1059,7 @@ const NO_CASERNE = new Set(['Squat','Front squat','Overhead squat','Soulevé de 
   'Écartés aux câbles','Pec deck','Écartés poulie haute','Chest press machine','Développé couché Smith machine','Rowing T-bar','Tractions assistées machine','Pec deck inversé','Développé épaules machine','Curl machine','Dips assistés machine',
   'Presse à jambes','Hack squat','Squat Smith machine','Poussée de traîneau','Curl jambes allongé','Curl jambes assis','Abduction machine','Hip thrust machine','Reverse hyperextension','Mollets debout','Mollets assis','Mollets à la presse','Mollets au Donkey',
   'Crunch aux câbles','Crunch machine','Rotation du buste poulie','Machine à escaliers',
-  'Tractions','Tractions supination','Tractions prise neutre','Tractions australiennes','Tractions négatives','Suspension à la barre','Muscle-up','Tractions avec élastique','Extension lombaire banc 45°','Leg curl au swiss ball','Crunch swiss ball','Roue abdominale','Sit-up décliné','Natation']);
+  'Tractions prise neutre','Tractions australiennes','Muscle-up','Extension lombaire banc 45°','Leg curl au swiss ball','Crunch swiss ball','Roue abdominale','Sit-up décliné','Natation']);
 const HOME = [['Elliptique','🏠 Vélo elliptique']];
 const homeHas = n => !gear || !gear.home || gear.home.includes(n);
 // faisable avec mon matériel ? (caserne + maison) — sans « Mon matériel » activé, tout est permis
@@ -1395,7 +1395,7 @@ const typ = e => e.t || 'f';
 const topReps = r => { const m = String(r || '').match(/\d+([.,]\d+)?/g); return m ? Math.max(...m.map(x => parseFloat(x.replace(',', '.')))) : 10; };
 const incOf = e => BIG.includes(e.m) ? 2.5 : 1;
 // Mon matériel : les charges qui existent vraiment (haltères, kettlebells, barre EZ + disques)
-// d'après l'inventaire de la salle du centre de secours Cruzy / Quarante (barre EZ et ses petits disques : d'après les photos)
+// d'après l'inventaire de la salle du centre de secours Cruzy / Quarante (barre de traction sur la chaise romaine) (barre EZ et ses petits disques : d'après les photos)
 const GEAR_CASERNE = { on: true, home: ['Elliptique'], db: [8, 10, 12.5, 15, 20, 22.5], kb: [6, 8, 12, 16, 20], bar: 7, pl: [1.25, 1.25, 2.5, 2.5, 5, 5], ob: 20, bp: [5, 5, 5, 10, 10, 10, 10, 15, 15, 15] };
 // exercices faits avec la barre EZ (les autres exercices à la barre : barre olympique)
 const EZ_EX = ['Curl barre', 'Barre au front', 'Curl pupitre', 'Drag curl'];
@@ -3567,7 +3567,7 @@ const SLOTS = {
   hinge:  { caserne:['Soulevé de terre','Soulevé de terre roumain','Hip thrust','Kettlebell swing','Soulevé roumain kettlebell'], salle:['Soulevé de terre roumain','Hip thrust','Soulevé de terre'], halt:['Soulevé de terre roumain','Hip thrust','Good morning'], elas:['Good morning élastique','Hip thrust à genoux élastique','Pont fessier'], pdc:['Pont fessier','Superman'] },
   pushH:  { caserne:['Développé couché','Développé couché haltères','Développé incliné haltères','Pompes'], salle:['Développé couché','Développé couché haltères','Développé incliné haltères'], halt:['Développé couché haltères','Développé incliné haltères','Pompes'], elas:['Développé couché élastique','Pompes','Écartés élastique'], pdc:['Pompes','Pompes inclinées'] },
   pushV:  { caserne:['Développé haltères assis','Arnold press','Développé épaule kettlebell','Pompes piquées'], salle:['Développé militaire','Développé haltères assis','Arnold press'], halt:['Développé haltères assis','Arnold press'], elas:['Développé épaules élastique','Pompes piquées'], pdc:['Pompes piquées','Pompes diamant','Dips sur banc'] },
-  pullV:  { caserne:['Tirage vertical (Lat Pulldown)','Tirage vertical prise serrée','Pull-over haltère'], salle:['Tirage vertical (Lat Pulldown)','Tractions'], halt:['Tractions','Rowing haltère un bras'], elas:['Rowing penché élastique','Rowing inversé sous une table'], pdc:['Tractions','Superman'] },
+  pullV:  { caserne:['Tirage vertical (Lat Pulldown)','Tirage vertical prise serrée','Pull-over haltère','Tractions'], salle:['Tirage vertical (Lat Pulldown)','Tractions'], halt:['Tractions','Rowing haltère un bras'], elas:['Rowing penché élastique','Rowing inversé sous une table'], pdc:['Tractions','Superman'] },
   pullH:  { caserne:['Rowing barre','Tirage horizontal (Cable Row)','Rowing haltère un bras','Rowing haltères banc incliné'], salle:['Rowing barre','Tirage horizontal (Cable Row)','Rowing haltère un bras','Rowing T-bar'], halt:['Rowing haltère un bras','Rowing haltères banc incliné','Shrugs (trapèzes)'], elas:['Tirage horizontal élastique','Rowing unilatéral élastique'], pdc:['Rowing inversé sous une table','Superman','Tractions'] },
   epaule: { caserne:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations latérales kettlebell','Tirage menton kettlebell'], salle:['Élévations latérales','Face Pull','Oiseau (Rear Delt Fly)'], halt:['Élévations latérales','Oiseau (Rear Delt Fly)','Élévations frontales'], elas:['Oiseau élastique','Rotation externe élastique'], pdc:['Gainage latéral'] },
   biceps: { caserne:['Curl barre','Curl marteau','Curl poulie basse','Curl concentré'], salle:['Curl barre','Curl poulie basse','Curl marteau'], halt:['Curl haltères alterné','Curl marteau'], elas:['Curl élastique','Curl marteau élastique'], pdc:[] },
@@ -3884,7 +3884,7 @@ const CASERNE_SWAP = {
   'Curl jambes allongé':['Leg curl élastique','Soulevé roumain kettlebell'], 'Curl jambes assis':['Leg curl élastique','Soulevé roumain kettlebell'], 'Mollets debout':['Mollets sur une marche'], 'Mollets assis':['Mollets sur une marche'], 'Mollets à la presse':['Mollets sur une marche'],
   'Crunch aux câbles':['Relevé de genoux suspendu','Russian twist'], 'Développé militaire':['Développé haltères assis','Arnold press'], 'Développé épaules machine':['Développé haltères assis'],
   'Face Pull':['Oiseau élastique','Oiseau (Rear Delt Fly)'], 'Rowing T-bar':['Rowing barre','Rowing haltère un bras'], 'Hip thrust machine':['Hip thrust'], 'Abduction machine':['Abduction élastique'],
-  'Tractions':['Tirage vertical (Lat Pulldown)'], 'Tractions supination':['Tirage vertical prise serrée'], 'Tractions prise neutre':['Tirage vertical prise serrée'], 'Tractions assistées machine':['Tirage vertical (Lat Pulldown)']
+  'Tractions prise neutre':['Tirage vertical prise serrée'], 'Tractions assistées machine':['Tirage vertical (Lat Pulldown)']
 };
 function caserneChanges(){
   const C = [];
@@ -5451,7 +5451,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 66;
+const APP_VERSION = 67;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
