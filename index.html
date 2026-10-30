@@ -103,6 +103,20 @@ button{cursor:pointer;border:none;background:none}
 .today{margin-top:12px;padding:16px;border-radius:22px;background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--line);box-shadow:var(--shadow)}
 .today .tdate{font-size:12px;font-weight:700;color:var(--muted);text-transform:capitalize}
 .today h2{font-size:24px;letter-spacing:-.5px;margin-top:2px}
+.wkhero{display:block;width:100%;margin-top:12px;text-align:center;padding:12px 8px 8px;border-radius:18px;background:color-mix(in srgb,var(--a1) 6%,transparent);border:1px solid color-mix(in srgb,var(--a1) 20%,transparent)}
+.wfr{position:relative;display:flex;justify-content:space-between;padding:0 2px}.wfr:before{content:'';position:absolute;left:22px;right:22px;top:19px;height:4px;border-radius:2px;background:var(--line)}
+.wline{position:absolute;left:22px;top:19px;height:4px;border-radius:2px;background:linear-gradient(90deg,#fb923c,#facc15);width:0;animation:wline 1.4s .2s ease-out forwards}
+@keyframes wline{to{width:calc((100% - 44px) * var(--lw))}}
+.wf{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:40px;z-index:1}
+.wf span{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:17px;background:var(--card);border:2px solid var(--line);transform:scale(.4);opacity:0;animation:wpop .45s cubic-bezier(.2,1.6,.4,1) forwards}
+.wf.on span{border-color:#fb923c;background:color-mix(in srgb,#fb923c 16%,var(--card));box-shadow:0 0 12px rgba(251,146,60,.45)}.wf.now span{border-color:var(--a1);border-style:dashed}.wf.miss span{color:var(--ko);font-weight:900}
+.wf b{font-size:10.5px;color:var(--muted)}.wf.td b{color:var(--a1)}.wf small{font-size:9px;color:#fdba74;min-height:11px;font-weight:700}
+@keyframes wpop{to{transform:scale(1);opacity:1}}
+.wct{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}.wct > div{border-radius:14px;padding:8px 2px 6px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:0}
+.wct > div > b{display:block;font-size:18px;font-weight:900;letter-spacing:-.4px;font-variant-numeric:tabular-nums;white-space:nowrap}.wct > div > b small{font-size:11px;color:var(--muted)}.wct > div > small{font-size:9.5px;color:var(--muted);font-weight:700}
+.wb{height:4px;border-radius:2px;background:var(--line);margin:5px 8px 0;overflow:hidden}.wb i{display:block;height:100%;width:0;border-radius:2px;animation:wfill 1.4s .4s ease-out forwards}@keyframes wfill{to{width:var(--w)}}
+.wct em{display:block;font-style:normal;font-size:9px;font-weight:800;margin-top:3px}.wct em.up{color:var(--ok)}.wct em.down{color:var(--ko)}
+.wsee{display:block;font-style:normal;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:7px}
 .cumul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;margin-top:12px;position:relative;text-align:center;padding:10px 6px 20px;border-radius:16px;background:color-mix(in srgb,var(--a1) 8%,transparent);border:1px solid color-mix(in srgb,var(--a1) 22%,transparent)}
 .cumul span{display:flex;flex-direction:column;min-width:0}.cumul b{font-size:20px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cumul small{font-size:11px;color:var(--muted);font-weight:700;line-height:1.2}.cumul em{position:absolute;bottom:4px;left:0;right:0;font-style:normal;font-size:10.5px;color:var(--muted);font-weight:700}
@@ -1757,6 +1771,29 @@ function cumulOf(p){
   if (p === 'total' && coach && coach.arch) Object.values(coach.arch).forEach(a => { kcal += a.kc || 0; kg += a.kg || 0; n += a.j || 0; });
   return { n, kcal, kg };
 }
+// carte du haut : frise de flammes de la semaine + compteurs (animés une fois par ouverture)
+let weekHeroPlayed = false;
+function weekHero(){
+  const wk = curWk(), D = wkDates(wk), P = wkDates(wkShift(wk, -1)), td = today(), ti = D.indexOf(td), anim = !weekHeroPlayed && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dayOf = d => { const H = hist.filter(h => h.d === d); return { n: H.length, kcal: H.reduce((a, h) => a + (kcalOfH(h) || 0), 0), kg: H.reduce((a, h) => a + volOf(h), 0), min: H.filter(h => (h.t || 'f') === 'c').reduce((a, h) => a + (num(h.r) || 0), 0) }; };
+  const W = D.map(dayOf), PW = P.map(dayOf), sum = (A, k, n) => A.slice(0, n).reduce((a, x) => a + x[k], 0), el = ti + 1;
+  const planned = D.filter((_, i) => (data['day' + i] || []).length).length, nDone = W.filter(x => x.n).length;
+  const kc0 = sum(W, 'kcal', 7), kcP = sum(PW, 'kcal', el), kg0 = sum(W, 'kg', 7), kgP = sum(PW, 'kg', el), mn0 = sum(W, 'min', 7);
+  const last = W.reduce((a, x, i) => x.n ? i : a, -1), lineW = last > 0 ? last / 6 : 0;
+  const flames = D.map((d, i) => { const x = W[i], plan = (data['day' + i] || []).length, now = i === ti, fut = d > td;
+    const ic = x.n ? '🔥' : now && plan ? '⏳' : fut ? (plan ? '·' : '😴') : plan ? '✕' : '😴', cls = x.n ? 'on' : now && plan ? 'now' : !fut && plan ? 'miss' : '';
+    return `<div class="wf ${cls}${now ? ' td' : ''}"><span style="${anim ? `animation-delay:${i * .12}s` : 'animation:none;opacity:1;transform:none'}">${ic}</span><b>${DAY_SHORT[i]}</b><small>${x.n ? kc(x.kcal) : ''}</small></div>`; }).join('');
+  const pct = (a, b) => b ? Math.round((a - b) * 100 / b) : null, dl = v => v == null ? '' : `<em class="${v >= 0 ? 'up' : 'down'}">${v >= 0 ? '▲ +' : '▼ '}${v} %</em>`;
+  const tile = (val, lbl, w, col, extra) => `<div><b>${val}</b><small>${lbl}</small><div class="wb"><i style="--w:${Math.round(Math.max(0, Math.min(1, w)) * 100)}%;background:${col};${anim ? '' : 'animation:none;width:var(--w)'}"></i></div>${extra || ''}</div>`;
+  weekHeroPlayed = true;
+  return `<button class="wkhero" data-x="cumgo" aria-label="Ma semaine : voir la synthèse">
+    <div class="wfr"><i class="wline" style="--lw:${lineW};${anim ? '' : 'animation:none;width:calc((100% - 44px) * var(--lw))'}"></i>${flames}</div>
+    <div class="wct">${tile(`${nDone}<small>/${planned || '–'}</small>`, 'séances', planned ? nDone / planned : 0, '#f472b6')}
+      ${tile(kc(kc0), 'kcal', kcP ? kc0 / kcP : kc0 ? 1 : 0, '#fb923c', dl(pct(kc0, kcP)))}
+      ${tile(kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes' : 'kg', kgP ? kg0 / kgP : kg0 ? 1 : 0, '#22d3ee', dl(pct(kg0, kgP)))}
+      ${tile(Math.round(mn0), 'min cardio', mn0 / 150, '#34d399')}</div>
+    <em class="wsee">cette semaine · comparé aux mêmes jours de la semaine dernière · synthèse ›</em></button>`;
+}
 function cumulRow(){
   const p = 'semaine', c = cumulOf(p), lbl = 'cette semaine';
   const kgTxt = c.kg >= 10000 ? [String(+(c.kg / 1000).toFixed(c.kg >= 100000 ? 0 : 1)).replace('.', ','), 'tonnes soulevées'] : [kc(c.kg), 'kg soulevés'];
@@ -1780,7 +1817,7 @@ function todayCard(){
              { p: g ? eau / g : 0, col: '#38bdf8', l: 'Eau', v: `${eau} / ${g} verres` }];
   return `<section class="today">
     <div class="tg"><p class="tdate">${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p><h2>${hello}${nom} 👋</h2>${st ? `<span class="streak">🔥 ${st} jour${st > 1 ? 's' : ''} d’affilée</span>` : '<span class="streak off">Lance ta série aujourd’hui 💪</span>'}</div>
-    ${cumulRow()}
+    ${weekHero()}
     <div class="tr"><button class="ringsbtn" data-go2="nutrition" data-nd="${d}" aria-label="Voir la nutrition du jour">${rings3(R)}</button>
       <ul class="rleg">${R.map(x => `<li style="--c:${x.col}"><i></i><span><b>${x.l}</b><small>${x.v}</small></span></li>`).join('')}</ul></div></section>`;
 }
@@ -5434,7 +5471,7 @@ function enterFx(){
   const app = $('#app'); clearTimeout(enterT); enterAt = performance.now();
   app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); tagStagger();
   enterT = setTimeout(() => app.classList.remove('enter'), 1200);
-  app.querySelectorAll('.stat .v, .cumul b, .sg .gin b').forEach(countUp);
+  app.querySelectorAll('.stat .v, .cumul b, .sg .gin b, .wct > div:not(:first-child) > b').forEach(countUp);
   drawRings(app);
 }
 // délai négatif : si l'onglet se redessine pendant l'entrée (données chargées), l'animation reprend où elle en était
@@ -5666,7 +5703,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 72;
+const APP_VERSION = 73;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
