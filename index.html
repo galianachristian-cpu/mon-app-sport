@@ -1323,11 +1323,13 @@ const DF_GIF = {
   "Assault bike": '2022/07/assault-air-bike.gif',
   "Machine à escaliers": '2022/10/machine-a-escaliers.gif',
   "SkiErg": '2021/12/ergometre-de-ski.gif',
-  "Vélo spinning": '2022/11/velo-stationnaire.gif'
+  "Vélo spinning": '2022/11/velo-stationnaire.gif',
+  "Abduction machine": '2024/07/abduction-de-la-hanche-assis-avec-elastique.gif',
+  "Pigeon (fessiers)": '2025/11/etirement-de-la-hanche-90-90.gif'
 };
 LIB.forEach(x => { x.gif = DF_GIF[x.n] ? DF_GIF_BASE + DF_GIF[x.n] : ''; });
-// exercices sans animation sur docteur-fitness : photos début / fin du mouvement de Free Exercise DB (domaine public), animées
-const LOCAL_GIF = { 'Fentes sautées':'fentes-sautees', 'Relevé de jambes au sol':'releve-jambes', 'Saut en longueur sans élan':'saut-longueur', 'Sauts groupés':'sauts-groupes', 'Slam médecine-ball':'slam-medecine-ball', 'Abduction machine':'abduction-machine' };
+// exercices sans animation sur docteur-fitness (vérifié sur tout le site) : photos début / fin du mouvement de Free Exercise DB (domaine public), animées
+const LOCAL_GIF = { 'Fentes sautées':'fentes-sautees', 'Relevé de jambes au sol':'releve-jambes', 'Saut en longueur sans élan':'saut-longueur', 'Sauts groupés':'sauts-groupes', 'Slam médecine-ball':'slam-medecine-ball' };
 LIB.forEach(x => { if (!x.gif && LOCAL_GIF[x.n]) x.gif = 'img/anim/' + LOCAL_GIF[x.n] + '.gif'; });
 const gifOf = e => !e ? '' : LIB_BY[e.n] ? LIB_BY[e.n].gif : (e.gif || '');
 function exVis(e, still){
@@ -5444,7 +5446,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 64;
+const APP_VERSION = 65;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
