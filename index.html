@@ -2290,7 +2290,7 @@ let STORY = null;
 /* ---------- équivalences parlantes : poids soulevé en objets, calories en nourriture (ordres de grandeur) ---------- */
 const EQ_KG = [[105, 'un collègue en tenue d’intervention', 'collègues en tenue d’intervention', '🧑‍🚒'], [230, 'un piano droit', 'pianos droits', '🎹'], [600, 'une vache', 'vaches', '🐄', 1],
   [1200, 'une voiture citadine', 'voitures citadines', '🚗', 1], [3500, 'un VSAV (l’ambulance de la caserne)', 'VSAV', '🚑'], [6000, 'un éléphant', 'éléphants', '🐘'], [12000, 'un bus', 'bus', '🚌'],
-  [15000, 'un camion de pompiers (FPT)', 'camions de pompiers', '🚒'], [40000, 'un semi-remorque chargé', 'semi-remorques chargés', '🚛'], [75000, 'un Airbus A320 au décollage', 'Airbus A320 au décollage', '✈️'],
+  [14000, 'un camion feux de forêt (CCFM) chargé', 'camions feux de forêt (CCFM) chargés', '🌲'], [16000, 'un camion de pompiers (FPT) chargé', 'camions de pompiers (FPT) chargés', '🚒'], [40000, 'un semi-remorque chargé', 'semi-remorques chargés', '🚛'], [75000, 'un Airbus A320 au décollage', 'Airbus A320 au décollage', '✈️'],
   [150000, 'une baleine bleue', 'baleines bleues', '🐋', 1], [400000, 'un Boeing 747 au décollage', 'Boeing 747 au décollage', '🛫'], [10100000, 'la tour Eiffel', 'tours Eiffel', '🗼', 1]];
 const EQ_KC = [[100, 'une bière', 'bières', '🍺', 1], [250, 'un pain au chocolat', 'pains au chocolat', '🥐'], [340, 'une portion de frites', 'portions de frites', '🍟', 1], [500, 'un burger', 'burgers', '🍔'],
   [900, 'une pizza entière', 'pizzas entières', '🍕', 1], [1100, 'un kebab-frites', 'kebabs-frites', '🥙'], [2500, 'une journée entière de repas', 'journées entières de repas', '🍽️', 1], [7700, 'un kilo de graisse', 'kilos de graisse', '🧈']];
@@ -2298,7 +2298,9 @@ const EQ_KC = [[100, 'une bière', 'bières', '🍺', 1], [250, 'un pain au choc
 function eqOf(L, v, seed){
   if (!(v > 0) || v < L[0][0] * .85) return null;
   let C = L.filter(x => v / x[0] >= .85 && v / x[0] <= 6); if (!C.length) C = L.filter(x => v / x[0] >= .85 && v / x[0] <= 30); if (!C.length) C = [L[L.length - 1]];
-  const x = C[Math.floor(rng(seed)() * C.length)], n = v / x[0], r = n < 10 ? Math.round(n * 2) / 2 : Math.round(n);
+  // les engins de caserne (VSAV, CCFM, FPT) sortent une fois sur deux quand ils conviennent
+  const R = rng(seed), K = C.filter(c => ['🚑', '🌲', '🚒'].includes(c[3])), P = K.length && R() < .5 ? K : C;
+  const x = P[Math.floor(R() * P.length)], n = v / x[0], r = n < 10 ? Math.round(n * 2) / 2 : Math.round(n);
   const txt = n < .97 ? 'presque ' + x[1] : n < 1.15 ? x[1] : r <= 1 ? (/^la /.test(x[1]) ? 'plus que ' + x[1] : 'plus ' + deOf(x[1])) : r < 2 ? `${fr(r)} ${x[1].replace(/^(un|une|la) /, '')}` : `${fr(r)} ${x[2]}`;
   // 1,5 burger (singulier sous 2), 2 burgers
   return { ic: x[3], txt, n, g: x[4], pl: r >= 2 && n >= 1.15 };
@@ -6108,7 +6110,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 78;
+const APP_VERSION = 79;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
