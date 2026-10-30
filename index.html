@@ -103,6 +103,9 @@ button{cursor:pointer;border:none;background:none}
 .today{margin-top:12px;padding:16px;border-radius:22px;background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--line);box-shadow:var(--shadow)}
 .today .tdate{font-size:12px;font-weight:700;color:var(--muted);text-transform:capitalize}
 .today h2{font-size:24px;letter-spacing:-.5px;margin-top:2px}
+.cumul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;margin-top:12px;position:relative;text-align:center;padding:10px 6px 20px;border-radius:16px;background:color-mix(in srgb,var(--a1) 8%,transparent);border:1px solid color-mix(in srgb,var(--a1) 22%,transparent)}
+.cumul span{display:flex;flex-direction:column;min-width:0}.cumul b{font-size:20px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cumul small{font-size:11px;color:var(--muted);font-weight:700;line-height:1.2}.cumul em{position:absolute;bottom:4px;left:0;right:0;font-style:normal;font-size:10.5px;color:var(--muted);font-weight:700}
 .streak{display:inline-flex;margin-top:8px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:800;background:color-mix(in srgb,#fb923c 18%,transparent);color:#fdba74}
 .streak.off{background:var(--bg2);color:var(--muted)}
 .today .tr{display:flex;align-items:center;gap:14px;margin-top:14px}
@@ -1736,6 +1739,24 @@ function rings3(R){
   return `<svg class="rings3" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" aria-hidden="true">${R.map((x, i) => { const r = c - w / 2 - i * (w + gap), C = 2 * Math.PI * r, p = Math.max(0, Math.min(1, x.p));
     return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${x.col}" stroke-opacity=".18" stroke-width="${w}"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${x.col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - p)}" transform="rotate(-90 ${c} ${c})" class="rg"/>`; }).join('')}</svg>`;
 }
+// compteurs motivants : séances, calories, kilos (semaine / mois / depuis le début, au toucher)
+const CUM = [['semaine', 'cette semaine'], ['mois', 'ce mois-ci'], ['total', 'depuis le début']];
+function cumulOf(p){
+  const td = today(), from = p === 'semaine' ? wkDates(curWk())[0] : p === 'mois' ? td.slice(0, 8) + '01' : '';
+  const H = hist.filter(h => h.d >= from), days = new Set(H.map(h => h.d));
+  let kcal = H.reduce((a, h) => a + (kcalOfH(h) || 0), 0), kg = H.reduce((a, h) => a + volOf(h), 0), n = days.size;
+  if (p === 'total' && coach && coach.arch) Object.values(coach.arch).forEach(a => { kcal += a.kc || 0; kg += a.kg || 0; n += a.j || 0; });
+  return { n, kcal, kg };
+}
+function cumulRow(){
+  const p = settings.cum || 'semaine', c = cumulOf(p), lbl = CUM.find(x => x[0] === p)[1];
+  const kgTxt = c.kg >= 10000 ? [String(+(c.kg / 1000).toFixed(c.kg >= 100000 ? 0 : 1)).replace('.', ','), 'tonnes soulevées'] : [kc(c.kg), 'kg soulevés'];
+  return `<button class="cumul" data-x="cum" aria-label="Changer de période (${lbl})">
+    <span><b data-cnt="${c.n}">${c.n}</b><small>séance${c.n > 1 ? 's' : ''}</small></span>
+    <span><b data-cnt="${Math.round(c.kcal)}">${kc(c.kcal)}</b><small>kcal brûlées</small></span>
+    <span><b>${kgTxt[0]}</b><small>${kgTxt[1]}</small></span>
+    <em>${lbl} ›</em></button>`;
+}
 function todayCard(){
   const d = todayIdx(), date = ymd(new Date()), k = 'day' + d, list = data[k] || [], dn = done[k] || [];
   const nEx = list.filter((x, i) => dn[i] || isSkip(x)).length;
@@ -1750,6 +1771,7 @@ function todayCard(){
              { p: g ? eau / g : 0, col: '#38bdf8', l: 'Eau', v: `${eau} / ${g} verres` }];
   return `<section class="today">
     <div class="tg"><p class="tdate">${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p><h2>${hello}${nom} 👋</h2>${st ? `<span class="streak">🔥 ${st} jour${st > 1 ? 's' : ''} d’affilée</span>` : '<span class="streak off">Lance ta série aujourd’hui 💪</span>'}</div>
+    ${cumulRow()}
     <div class="tr"><button class="ringsbtn" data-go2="nutrition" data-nd="${d}" aria-label="Voir la nutrition du jour">${rings3(R)}</button>
       <ul class="rleg">${R.map(x => `<li style="--c:${x.col}"><i></i><span><b>${x.l}</b><small>${x.v}</small></span></li>`).join('')}</ul></div></section>`;
 }
@@ -2402,7 +2424,9 @@ function bilanRange(p, off){
 function trimHist(){
   if (hist.length <= 4000) return; const old = hist.slice(0, hist.length - 4000); hist = hist.slice(-4000);
   coach = Object.assign({}, coach); const A = coach.arch = Object.assign({}, coach.arch);
-  old.forEach(h => { const m = h.d.slice(0, 7), x = A[m] = Object.assign({ kc: 0, kg: 0 }, A[m]); x.kc = Math.round(x.kc + (kcalOfH(h) || 0)); x.kg = Math.round(x.kg + volOf(h)); });
+  const nd = {}; old.forEach(h => { const m = h.d.slice(0, 7), x = A[m] = Object.assign({ kc: 0, kg: 0, j: 0 }, A[m]); x.kc = Math.round(x.kc + (kcalOfH(h) || 0)); x.kg = Math.round(x.kg + volOf(h)); (nd[m] = nd[m] || new Set()).add(h.d); });
+  // jours dont une partie seulement a été archivée : comptés une seule fois (ils restent dans l'historique)
+  const kept = new Set(hist.map(h => h.d)); Object.entries(nd).forEach(([m, D]) => { A[m].j += [...D].filter(d => !kept.has(d)).length; });
 }
 // totaux d'un mois « AAAA-MM » : historique + archive
 function monthTot(ym){ const a = (coach && coach.arch && coach.arch[ym]) || { kc: 0, kg: 0 }; let kc = a.kc, kg = a.kg; hist.forEach(h => { if (h.d.startsWith(ym)){ kc += kcalOfH(h) || 0; kg += volOf(h); } }); return { kc, kg }; }
@@ -4999,6 +5023,7 @@ function evoAct(a, b){
     case 'lightoff': coach = Object.assign({}, coach, { light: null, ign: curWk() }); save(); render(); toast('Séances normales'); break;
     case 'lightign': coach = Object.assign({}, coach, { ign: curWk() }); save(); render(); break;
     case 'stock': sheetStock(); break;
+    case 'cum': { const i = CUM.findIndex(x => x[0] === (settings.cum || 'semaine')); settings.cum = CUM[(i + 1) % CUM.length][0]; safeSet('mp_settings', settings); const el = document.querySelector('.cumul'); if (el){ el.outerHTML = cumulRow(); document.querySelectorAll('.cumul b').forEach(countUp); } break; }
     case 'microp': microP = b.dataset.m; viewNutrition(); break;
     case 'topfood': sheetTop(); break;
     case 'topk': topK = b.dataset.k; sheetTop(); break;
@@ -5354,7 +5379,7 @@ function enterFx(){
   const app = $('#app'); clearTimeout(enterT); enterAt = performance.now();
   app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); tagStagger();
   enterT = setTimeout(() => app.classList.remove('enter'), 1200);
-  app.querySelectorAll('.stat .v').forEach(countUp);
+  app.querySelectorAll('.stat .v, .cumul b').forEach(countUp);
   drawRings(app);
 }
 // délai négatif : si l'onglet se redessine pendant l'entrée (données chargées), l'animation reprend où elle en était
@@ -5586,7 +5611,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 69;
+const APP_VERSION = 70;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
