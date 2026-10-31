@@ -113,6 +113,13 @@ button{cursor:pointer;border:none;background:none}
 .eqc .eqr{padding:10px 0;border-bottom:1px solid var(--line)}.eqc .eqr>small{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .eqc .eqr>div{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}.eqc .eqr span{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}
 .eqc .eqr i{font-style:normal;font-size:30px;grid-row:span 2}.eqc .eqr b{font-size:13.5px;line-height:1.2}.eqc .eqr em{font-style:normal;font-size:11px;color:var(--muted)}.eqn{font-size:13px;margin-top:10px}
+.goals .goal{padding:8px 0;border-bottom:1px solid var(--line)}.goals .gh{display:flex;align-items:center;gap:8px}.goals .gh b:first-child{flex:1;min-width:0}.goals .gh span{font-size:13px;color:var(--soft);white-space:nowrap}
+.goals .gx{color:var(--muted);font-size:13px;padding:2px 6px}.gbar{height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:6px 0 4px}.gbar i{display:block;height:100%;border-radius:6px;background:var(--grad);transition:width .8s}.goals small{font-size:12px;color:var(--muted)}
+.cheer{margin-top:10px;padding:12px 14px}.cheer p{font-size:13.5px;margin:0}.chin{display:flex;gap:10px;align-items:center;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line)}.chin p{flex:1}.che{font-size:18px}
+.chout .row{gap:8px;margin-top:8px}.chb{font-size:22px;width:52px;height:44px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);transition:transform .15s}.chb.on{background:color-mix(in srgb,var(--a1) 20%,transparent);border-color:var(--a1)}.chb:active{transform:scale(1.25)}
+.st-yr{font-size:30px;margin:6px 0}.ymon{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;height:140px;margin-top:18px;align-items:end}.ymon div{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+.ymon i{width:100%;border-radius:4px 4px 0 0;background:rgba(255,255,255,.25)}.ymon .on i{background:var(--grad)}.ymon span{font-size:11px;margin-top:4px;opacity:.7}
+.yduel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.yduel div{display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.06);border-radius:16px;padding:12px}.yduel b{font-size:28px}.yduel small{font-size:12px;opacity:.75}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -1882,7 +1889,7 @@ function viewSeance(){
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
-  ${currentDay === todayIdx() ? duoLine() + actionsCard() + duoChallenges() + reportBanner() : ''}
+  ${currentDay === todayIdx() ? duoLine() + cheerCard() + actionsCard() + duoChallenges() + reportBanner() : ''}
   ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p><button class="btn pri" data-x="wwopen" style="margin-top:10px">📅 Faire le WOD de la semaine</button></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
@@ -2346,6 +2353,142 @@ function eqCard(){
     ${nx ? `<p class="eqn">🎯 Prochain palier : soulever ${esc(nx.txt)} ${nx.ic} au total, encore <b>${fmtVol(nx.left)}</b></p>` : ''}
     <p class="muted" style="font-size:11.5px;margin-top:6px">Ordres de grandeur pour se représenter l’effort. « Brûlé l’équivalent » ne veut pas dire « perdu » : il faut environ 7 700 kcal de déficit pour perdre 1 kg de graisse.</p></div>`;
 }
+/* ---------- objectifs : charge, répétitions, secondes, cardio et poids, avec progression et date probable ---------- */
+// meilleure performance par jour sur 4 mois, tous types d'exercices
+function perfTrend(name){
+  const lim = new Date(); lim.setDate(lim.getDate() - 120); const from = ymd(lim), by = {};
+  hist.filter(h => h.n === name && h.d >= from).forEach(h => { const s = scoreOf(h); if (s > 0) by[h.d] = Math.max(by[h.d] || 0, s); });
+  const P = Object.entries(by).sort().map(([d, v]) => [new Date(d + 'T12:00').getTime() / 864e5, v]);
+  if (P.length < 3 || P[P.length - 1][0] - P[0][0] < 14) return null;
+  const n = P.length, mx = P.reduce((a, p) => a + p[0], 0) / n, my = P.reduce((a, p) => a + p[1], 0) / n;
+  const sl = P.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / P.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
+  return { perMonth: sl * 30, now: P[n - 1][1], fit: my + sl * (P[n - 1][0] - mx) };
+}
+const dLong = d => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+function goalInfo(n, g){
+  const L = lastOf(n), t = L ? L.t || 'f' : 'f', u = unitOf(t, L), best = bestOf(n), H = histOf(n).map(scoreOf).filter(v => v > 0);
+  const meta = coach && coach.goalMeta && coach.goalMeta[n], from = meta ? meta.from : H.length ? H[0] : 0;
+  const pct = best >= g ? 1 : g > from ? Math.max(0, (best - from) / (g - from)) : 0, tr = perfTrend(n);
+  let eta;
+  if (best >= g) eta = `✅ atteint${coach.goalDone && coach.goalDone[n] ? ' le ' + fmtD(coach.goalDone[n]) : ''}`;
+  else if (!tr) eta = 'il faut 3 séances sur 2 semaines pour estimer la date';
+  else if (tr.perMonth > 0.01 * g){ const d = new Date(); d.setDate(d.getDate() + Math.max(1, Math.round((g - Math.max(tr.fit, best)) / tr.perMonth * 30))); eta = d - new Date() > 730 * 864e5 ? 'plus de 2 ans à ce rythme' : `à ce rythme : vers le <b>${dLong(d)}</b>`; }
+  else eta = 'progression à l’arrêt : change une variable (reps, séries, variante)';
+  return { u, best, from, pct, eta, done: best >= g };
+}
+function weightGoal(){
+  const g = nut && num(nut.cible); if (!g) return null;
+  const B = body.filter(b => b.p != null).sort((a, b) => a.d < b.d ? -1 : 1); if (!B.length) return null;
+  const meta = coach && coach.goalMeta && coach.goalMeta.__poids, from = meta ? meta.from : B[0].p, now = B[B.length - 1].p;
+  const pct = from === g ? 1 : Math.max(0, Math.min(1, (from - now) / (from - g))), P = weightProj();
+  return { g, from, now, pct, eta: P ? projTxt(P).replace(/^🎯 /, '') : 'il faut au moins 3 pesées sur une semaine pour estimer la date' };
+}
+function goalsCard(){
+  const G = Object.entries((coach && coach.goals) || {}), W = weightGoal();
+  // objectif atteint : on fête ça une fois
+  G.forEach(([n, g]) => { if (bestOf(n) >= g && !(coach.goalDone && coach.goalDone[n])){ coach = Object.assign({}, coach, { goalDone: Object.assign({}, coach.goalDone, { [n]: today() }) }); save(); setTimeout(() => { confetti(); toast(`🎯 Objectif atteint : ${n} !`); }, 600); } });
+  const bar = (p, done) => `<div class="gbar"><i style="width:${Math.round(p * 100)}%;${done ? 'background:#34d399' : ''}"></i></div>`;
+  const rows = G.map(([n, g]) => { const I = goalInfo(n, g);
+    return `<div class="goal"><div class="gh"><b>${esc(n)}</b><span>${fr(I.best)} → <b>${fr(g)} ${I.u}</b></span><button class="gx" data-x="goaldel" data-n="${esc(n)}" aria-label="Retirer l’objectif">✕</button></div>${bar(I.pct, I.done)}<small>${Math.round(I.pct * 100)} % · ${I.eta}</small></div>`; }).join('');
+  const wr = W ? `<div class="goal"><div class="gh"><b>⚖️ Poids</b><span>${fr(W.now)} → <b>${fr(W.g)} kg</b></span><button class="gx" data-x="goaldel" data-n="__poids" aria-label="Retirer l’objectif">✕</button></div>${bar(W.pct, Math.abs(W.now - W.g) < .5)}<small>${Math.round(W.pct * 100)} % · ${W.eta}</small></div>` : '';
+  return `<h3 class="sec">🎯 Mes objectifs</h3><div class="card goals">${wr}${rows}${!wr && !rows ? '<p class="muted" style="font-size:13px">Fixe-toi un objectif (charge, répétitions, temps ou poids) : l’application suit ta progression et calcule la date probable d’arrivée.</p>' : ''}
+    <button class="btn block" data-x="goaladd" style="margin-top:10px">➕ Ajouter un objectif</button></div>`;
+}
+function sheetGoal(){
+  const names = [...new Set(hist.map(h => h.n))].filter(n => bestOf(n) > 0).sort((a, b) => a.localeCompare(b, 'fr'));
+  openSheet(`<h2>🎯 Nouvel objectif</h2><form id="goF"><div class="fg"><label for="goN">Sur quoi ?</label><select id="goN" class="sel"><option value="__poids">⚖️ Mon poids de corps</option>${names.map(n => `<option>${esc(n)}</option>`).join('')}</select></div>
+    <p class="muted" id="goNow" style="font-size:13px;margin:-4px 0 10px"></p><div class="fg"><label for="goV">Objectif</label><div class="row"><input id="goV" class="inp" inputmode="decimal" required style="flex:1"><span class="muted" id="goU"></span></div></div>
+    <button class="btn pri block" type="submit">🎯 Enregistrer</button></form>`);
+  const upd = () => { const n = $('#goN').value; if (n === '__poids'){ const B = body.filter(b => b.p != null).slice(-1)[0]; $('#goNow').textContent = B ? `Aujourd’hui : ${fr(B.p)} kg` : 'Pas encore de pesée'; $('#goU').textContent = 'kg'; return; }
+    const L = lastOf(n), u = unitOf(L.t || 'f', L); $('#goNow').textContent = `Ton record : ${fr(bestOf(n))} ${u}`; $('#goU').textContent = u; };
+  $('#goN').onchange = upd; upd();
+  $('#goF').onsubmit = ev => { ev.preventDefault(); const n = $('#goN').value, v = num($('#goV').value); if (!v) return toast('Indique un objectif chiffré');
+    coach = Object.assign({}, coach); coach.goalMeta = Object.assign({}, coach.goalMeta);
+    if (n === '__poids'){ const B = body.filter(b => b.p != null).slice(-1)[0]; nut = Object.assign({}, nut, { cible: v }); coach.goalMeta.__poids = { from: B ? B.p : v, d: today() }; }
+    else { coach.goals = Object.assign({}, coach.goals, { [n]: v }); coach.goalMeta[n] = { from: bestOf(n), d: today() }; if (coach.goalDone) { coach.goalDone = Object.assign({}, coach.goalDone); delete coach.goalDone[n]; } }
+    save(); closeSheet(); render(); toast(`🎯 Objectif enregistré`); };
+}
+
+/* ---------- encouragements entre profils : chacun écrit dans son propre profil, l'autre le lit ---------- */
+const CHEERS = ['👏', '🔥', '💪'];
+const dayLbl = d => d === today() ? 'aujourd’hui' : d === ymd(new Date(Date.now() - 864e5)) ? 'hier' : new Date(d + 'T12:00').toLocaleDateString('fr-FR', { weekday: 'long' });
+function otherSessions(days){
+  if (!other || !other.d) return [];
+  const lim = ymd(new Date(Date.now() - days * 864e5)), H = (other.d.hist || []).filter(h => h.d && h.d >= lim), by = {};
+  H.forEach(h => (by[h.d] = by[h.d] || []).push(h));
+  return Object.entries(by).sort((a, b) => a[0] < b[0] ? 1 : -1).map(([d, L]) => { const s = (other.d.seances || []).find(x => x.d === d);
+    const min = s && s.dur ? s.dur : Math.round(L.filter(h => (h.t || 'f') === 'c').reduce((a, h) => a + (num(h.r) || 0), 0));
+    return { d, titre: s && s.titre ? s.titre : [...new Set(L.map(h => h.n.replace(/ \(minuteur\)$/, '')))].slice(0, 2).join(' + '), min, n: L.length }; });
+}
+function cheerCard(){
+  if (!other || !other.d) return '';
+  const seen = (coach && coach.cheerSeen) || 0, got = (((other.d.coach || {}).cheers) || []).filter(c => c.to === profile.id && c.at > seen);
+  const byD = {}; got.forEach(c => (byD[c.d] = byD[c.d] || []).push(c.e));
+  const recv = got.length ? `<div class="chin"><p>${Object.entries(byD).map(([d, E]) => `<b>${esc(other.p.nom)}</b> t’a envoyé <span class="che">${[...new Set(E)].join('')}</span> pour ta séance ${dayLbl(d) === 'aujourd’hui' || dayLbl(d) === 'hier' ? 'd’' + dayLbl(d) : 'de ' + dayLbl(d)}`).join('<br>')}</p><button class="btn sm pri" data-x="cheerok">Merci !</button></div>` : '';
+  const S = otherSessions(3)[0], mine = S ? ((coach && coach.cheers) || []).filter(c => c.to === other.p.id && c.d === S.d).map(c => c.e) : [];
+  const send = S ? `<div class="chout"><p>🏋️ <b>${esc(other.p.nom)}</b> a fait <b>${esc(S.titre)}</b> ${dayLbl(S.d)}${S.min ? ` · ${S.min} min` : ''}</p><div class="row">${CHEERS.map(e => `<button class="chb${mine.includes(e) ? ' on' : ''}" data-x="cheer" data-e="${e}" data-d="${S.d}" aria-label="Envoyer ${e}">${e}</button>`).join('')}</div></div>` : '';
+  return recv || send ? `<div class="card cheer">${recv}${send}</div>` : '';
+}
+
+/* ---------- mon année en story ---------- */
+function yearData(y, H, A, kg){
+  const Y = H.filter(h => h.d && h.d.startsWith(y)), days = [...new Set(Y.map(h => h.d))].sort();
+  let t = Y.reduce((a, h) => a + volOf(h), 0), kc0 = Y.reduce((a, h) => a + (kcalOfH(h, kg) || 0), 0), extraDays = 0;
+  Object.entries(A || {}).forEach(([m, x]) => { if (m.startsWith(y)){ t += x.kg || 0; kc0 += x.kc || 0; extraDays += x.j || 0; } });
+  const M = Array(12).fill(0); days.forEach(d => M[+d.slice(5, 7) - 1]++);
+  const cnt = {}; Y.forEach(h => { const n = h.n.replace(/ \(minuteur\)$/, ''); cnt[n] = (cnt[n] || 0) + 1; });
+  const fav = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
+  const prog = Object.entries(Y.reduce((o, h) => { if ((h.t || 'f') !== 'f') return o; const s = scoreOf(h); if (!(s > 0)) return o; const x = o[h.n] = o[h.n] || { a: s, b: s }; x.b = Math.max(x.b, s); return o; }, {}))
+    .filter(([, x]) => x.b > x.a).map(([n, x]) => ({ n, a: x.a, b: x.b, p: Math.round((x.b - x.a) * 100 / x.a) })).sort((a, b) => b.p - a.p)[0];
+  let streak = 0, run = 0, prev = null; days.forEach(d => { run = prev && (new Date(d + 'T12:00') - new Date(prev + 'T12:00')) / 864e5 === 1 ? run + 1 : 1; streak = Math.max(streak, run); prev = d; });
+  const recs = recEvents(H).ev.filter(e => e.d.startsWith(y)).length;
+  return { y, days: days.length + extraDays, t, kc: kc0, M, fav, prog, streak, recs };
+}
+function storyYear(y){
+  const D = yearData(y, hist, coach && coach.arch), O = other && other.d ? yearData(y, other.d.hist || [], (other.d.coach || {}).arch, weightOf(ctxOf(other.p.id))) : null;
+  const a = eqOf(EQ_KG, D.t, 'an' + y + 'k'), b = eqOf(EQ_KC, D.kc, 'an' + y + 'c'), best = D.M.indexOf(Math.max(...D.M)), MN = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const mx = Math.max(1, ...D.M), nom = profile.nom && !/^moi$/i.test(profile.nom) ? ' ' + esc(profile.nom) : '';
+  const slides = [
+    `<div class="st-big">🎬</div><h2>Ton année ${y}${nom}</h2><p class="st-sub">Tu t’es entraîné${nut && nut.sexe === 'F' ? 'e' : ''}</p><div class="st-stats"><div><b data-cnt="${D.days}">${D.days}</b><small>jours</small></div><div><b data-cnt="${D.recs}">${D.recs}</b><small>record${D.recs > 1 ? 's' : ''} battu${D.recs > 1 ? 's' : ''}</small></div><div><b data-cnt="${D.streak}">${D.streak}</b><small>jours d’affilée max</small></div></div>`,
+    `<h2>Tu as soulevé</h2><div class="st-big">${a ? a.ic : '🏋️'}</div><p class="st-yr"><b>${fmtVol(D.t)}</b></p><p class="st-sub">${a ? 'l’équivalent ' + deOf(a.txt) : ''}</p>
+     <h2 style="margin-top:22px">et brûlé</h2><div class="st-big">${b ? b.ic : '🔥'}</div><p class="st-yr"><b>${kc(D.kc)} kcal</b></p><p class="st-sub">${b ? 'l’équivalent ' + deOf(b.txt) : ''}</p>`,
+    `<h2>Ton mois le plus fort</h2><p class="st-yr"><b>${MN[best]}</b></p><p class="st-sub">${D.M[best]} jour${D.M[best] > 1 ? 's' : ''} d’entraînement</p><div class="ymon">${D.M.map((v, i) => `<div class="${i === best ? 'on' : ''}"><i style="height:${Math.max(3, v * 100 / mx)}%"></i><span>${'JFMAMJJASOND'[i]}</span></div>`).join('')}</div>`,
+    `<div class="st-big">❤️</div><h2>Ton exercice préféré</h2>${D.fav ? `<p class="st-yr"><b>${esc(D.fav[0])}</b></p><p class="st-sub">fait ${D.fav[1]} fois</p>` : ''}
+     ${D.prog ? `<h2 style="margin-top:22px">Ta plus belle progression</h2><p class="st-yr"><b>${esc(D.prog.n)}</b></p><p class="st-sub">${fr(D.prog.a)} → ${fr(D.prog.b)} kg · <b>+${D.prog.p} %</b></p>` : ''}`,
+    ...(O && (O.days || D.days) ? [`<div class="st-big">👫</div><h2>Le duel de l’année</h2><div class="yduel"><div><small>${esc(profile.nom)}</small><b>${D.days}</b><small>jours</small><b>${fmtVol(D.t)}</b><small>soulevés</small></div><div><small>${esc(other.p.nom)}</small><b>${O.days}</b><small>jours</small><b>${fmtVol(O.t)}</b><small>soulevés</small></div></div>
+     <p class="st-sub">${D.days === O.days ? 'Égalité parfaite sur la régularité !' : (D.days > O.days ? esc(profile.nom) : esc(other.p.nom)) + ' a été le plus régulier 👑'}</p>`] : []),
+    `<div class="st-big">💪</div><h2>Bravo pour ${y} !</h2><p class="st-sub">Partage ton année ou lance-toi un objectif pour la suivante.</p>
+     <div class="row" style="justify-content:center;margin-top:18px;gap:10px"><button class="btn" data-x="stshare">📤 Partager</button><button class="btn pri" data-x="stend">Fermer</button></div>`];
+  STORY = { year: y, i: 0, n: slides.length, t: null, D, a, b };
+  openFull(`<div class="story"><div class="st-bars">${slides.map(() => '<i><b></b></i>').join('')}</div><button class="st-x" data-x="stend" aria-label="Fermer">✕</button>
+    <div class="st-track">${slides.map((h, j) => `<section class="st-sl" data-j="${j}">${h}</section>`).join('')}</div><div class="st-tap"><span data-x="stprev"></span><span data-x="stnext"></span></div></div>`);
+  storyGo(0);
+}
+function yearImage(){
+  const { D, a, b, year: y } = STORY, c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const x = c.getContext('2d'), F = 'system-ui, sans-serif';
+  const cs = getComputedStyle(document.documentElement), a1 = cs.getPropertyValue('--a1').trim() || '#22d3ee', a2 = cs.getPropertyValue('--a2').trim() || '#a78bfa';
+  const g = x.createLinearGradient(0, 0, 1080, 1350); g.addColorStop(0, '#0b0f19'); g.addColorStop(1, '#1a2338'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
+  const gr = x.createLinearGradient(0, 0, 1080, 0); gr.addColorStop(0, a1); gr.addColorStop(1, a2); x.fillStyle = gr; x.fillRect(0, 0, 1080, 14);
+  x.fillStyle = '#eef2f8'; x.font = `800 76px ${F}`; x.fillText(`Mon année ${y} 🎬`, 70, 150);
+  x.fillStyle = '#8b9ab4'; x.font = `500 38px ${F}`; x.fillText(profile.nom && !/^moi$/i.test(profile.nom) ? profile.nom : 'Mon Programme', 70, 210);
+  const T = [[String(D.days), 'jours d’entraînement', '#f472b6'], [fmtVol(D.t), 'soulevés', '#22d3ee'], [kc(D.kc), 'kcal brûlées', '#fb923c'], [String(D.recs), 'records battus', '#fbbf24']];
+  T.forEach(([v, l, col], j) => { const X = 70 + (j % 2) * 480, Y = 270 + Math.floor(j / 2) * 230; x.fillStyle = '#141b2d'; x.beginPath(); x.roundRect ? x.roundRect(X, Y, 460, 200, 28) : x.rect(X, Y, 460, 200); x.fill();
+    x.fillStyle = col; x.fillRect(X, Y + 30, 8, 140); fitText(x, v, X + 40, Y + 115, 400, 86, 900); x.fillStyle = '#8b9ab4'; x.font = `600 32px ${F}`; x.fillText(l, X + 40, Y + 165); });
+  x.fillStyle = '#22d3ee'; let Y = 800;
+  if (a){ fitText(x, `${a.ic} L’équivalent ${deOf(a.txt)} soulevé`, 70, Y, 940, 38, 700); Y += 60; }
+  if (b){ x.fillStyle = '#fb923c'; fitText(x, `${b.ic} L’équivalent ${deOf(b.txt)} brûlé`, 70, Y, 940, 38, 700); Y += 60; }
+  x.fillStyle = '#eef2f8'; if (D.fav){ fitText(x, `❤️ Exercice préféré : ${D.fav[0]} (${D.fav[1]} fois)`, 70, Y + 20, 940, 34, 600); Y += 60; }
+  if (D.prog){ fitText(x, `📈 Plus belle progression : ${D.prog.n} +${D.prog.p} %`, 70, Y + 20, 940, 34, 600); Y += 60; }
+  if (D.streak > 1){ fitText(x, `🔥 ${D.streak} jours d’affilée au maximum`, 70, Y + 20, 940, 34, 600); }
+  x.fillStyle = '#8b9ab4'; x.font = `500 30px ${F}`; x.fillText('Mon Programme', 70, 1315);
+  return c;
+}
+function yearBtns(){
+  const d = new Date(), y = d.getFullYear(), L = [];
+  if (d.getMonth() === 0 && hist.some(h => h.d.startsWith(String(y - 1)))) L.push(y - 1);
+  if (hist.some(h => h.d.startsWith(String(y)))) L.push(y);
+  return L.map(v => `<button class="btn ${v === y && d.getMonth() < 11 ? '' : 'pri'} block" data-x="yearstory" data-y="${v}" style="margin-top:10px">🎬 Mon année ${v} en story</button>`).join('');
+}
 function storyRecap(k){
   const b = bilanData(k), H = hist.filter(h => h.d === b.d && (data[k] || []).some(e => e.n === h.n)), S = setsByMuscle(H);
   const diff = b.prev && b.prev.vol ? Math.round((b.vol - b.prev.vol) * 100 / b.prev.vol) : null;
@@ -2374,7 +2517,7 @@ function storyGo(i){
   const cur = document.querySelector(`.story .st-sl[data-j="${i}"]`); if (cur){ cur.querySelectorAll('[data-cnt]').forEach(el => { const to = +el.dataset.cnt, t0 = performance.now(); const f = t => { const p = Math.min(1, (t - t0) / 900); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }); }
   if (i < STORY.n - 1) STORY.t = setTimeout(() => storyGo(i + 1), 4200);
 }
-function storyEnd(){ if (!STORY) return; const k = STORY.k; clearTimeout(STORY.t); STORY = null; closeFull(); sheetBilan(k, true); }
+function storyEnd(){ if (!STORY) return; if (STORY.year){ clearTimeout(STORY.t); STORY = null; closeFull(); return; } const k = STORY.k; clearTimeout(STORY.t); STORY = null; closeFull(); sheetBilan(k, true); }
 // image à partager (1080 × 1350)
 async function storyShare(){
   if (!STORY) return; const { b, S, k } = STORY, c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const x = c.getContext('2d');
@@ -2617,7 +2760,9 @@ function tabSynth(){
       ${big(kgP ? kg0 / kgP : kg0 ? 1 : 0, '#22d3ee', kg0 >= 10000 ? fr(+(kg0 / 1000).toFixed(1)) : kc(kg0), kg0 >= 10000 ? 'tonnes' : 'kg', 'Soulevés', vs(kg0, kgP))}
       ${big(mn0 / 150, '#34d399', Math.round(mn0), 'min', 'Cardio', `objectif santé : 150 min (${Math.round(mn0 * 100 / 150)} %)`)}
     </div>
+    ${goalsCard()}
     ${eqCard()}
+    ${yearBtns()}
     ${eatBurnCard()}
     ${defiCard()}
     ${synthCard()}`;
@@ -2784,7 +2929,7 @@ function tabBilan(){
   const cmp = (a, b, f) => b || a ? `<small class="${a > b ? 'up' : a < b ? 'down' : ''}">${a > b ? '▲' : a < b ? '▼' : '='} ${a === b ? 'pareil' : f(Math.abs(a - b))}</small>` : '';
   const per = { jour: 'à la veille', semaine: 'à la semaine d’avant', mois: 'au mois d’avant', trimestre: 'au trimestre d’avant', semestre: 'au semestre d’avant', annee: 'à l’année d’avant' }[bilanP];
   const bars = (key, col, f) => { const V = r.days.map(k => S.byDay[k][key]), M = Math.max(1, ...V); return `<div class="bbars" style="--bc:${col}">${V.map((v, i) => `<div class="bb" title="${fmtD(r.days[i])} : ${f(v)}"><i style="height:${v ? Math.max(4, v * 100 / M) : 0}%"></i><span>${r.short[i]}</span></div>`).join('')}</div>`; };
-  return `${goalsCard()}${weekBodyCard()}<div class="seg small seg6" style="margin-top:14px">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['trimestre','Trimestre'],['semestre','Semestre'],['annee','Année']].map(([k, l]) => `<button class="${bilanP === k ? 'on' : ''}" data-x="bp" data-p="${k}">${l}</button>`).join('')}</div>
+  return `${weekBodyCard()}<div class="seg small seg6" style="margin-top:14px">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['trimestre','Trimestre'],['semestre','Semestre'],['annee','Année']].map(([k, l]) => `<button class="${bilanP === k ? 'on' : ''}" data-x="bp" data-p="${k}">${l}</button>`).join('')}</div>
   <div class="bnav"><button class="btn sm" data-x="bo" data-d="-1" aria-label="Période précédente">‹</button><b>${r.lbl}</b><button class="btn sm" data-x="bo" data-d="1" ${bilanOff >= 0 ? 'disabled' : ''} aria-label="Période suivante">›</button></div>
   <div class="stats">
     <div class="stat"><span class="si">🏋️</span><div class="v">${fmtVol(S.kg)}</div><div class="l">soulevés</div><div class="dl">${cmp(S.kg, pv.kg, fmtVol)}</div></div>
@@ -3422,20 +3567,13 @@ function strengthTrend(name){
   return { perMonth: sl * 30, now: P[n - 1][1], fit: my + sl * (P[n - 1][0] - mx) };
 }
 function goalBox(e){
-  if (typ(e) !== 'f') return '';
+  if (typ(e) !== 'f'){ const g = coach && coach.goals && coach.goals[e.n], L = lastOf(e.n), u = unitOf(typ(e), L); if (!L) return '';
+    return `<div class="box"><h4>🎯 Objectif</h4>${g ? `<p>${fr(bestOf(e.n))} → <b>${fr(g)} ${u}</b> · ${goalInfo(e.n, g).eta}</p>` : ''}<form class="row" data-goal="${esc(e.n)}" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" name="g" inputmode="decimal" placeholder="🎯 Objectif (${u})" value="${g ? fr(g) : ''}" style="flex:1;min-width:0"><button class="btn sm" type="submit">OK</button></form></div>`; }
   const tr = strengthTrend(e.n), g = coach && coach.goals && coach.goals[e.n];
   let eta = '';
   if (g && tr){ if (tr.now >= g) eta = '✅ Objectif atteint !'; else if (tr.perMonth > .2){ const d = new Date(); d.setDate(d.getDate() + Math.round((g - tr.fit) / tr.perMonth * 30)); eta = `À ce rythme : <b>${fr(g)} kg vers le ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</b>`; } else eta = 'Progression à l’arrêt : il faudra relancer (plus de reps, de séries ou une variante).'; }
   return `<div class="box"><h4>📈 Prévision</h4><p>${tr ? `Tendance : <b>${tr.perMonth >= 0 ? '+' : ''}${fr(+tr.perMonth.toFixed(1))} kg par mois</b>${tr.perMonth > .2 ? ` · dans 3 mois : ~${fr(Math.round((tr.fit + tr.perMonth * 3) * 2) / 2)} kg` : ''}` : 'Il faut au moins 3 séances sur 2 semaines pour estimer ta progression.'}${eta ? '\n' + eta : ''}</p>
     <form class="row" data-goal="${esc(e.n)}" style="margin-top:8px;flex-wrap:nowrap"><input class="inp" name="g" inputmode="decimal" placeholder="🎯 Objectif (kg)" value="${g ? fr(g) : ''}" style="flex:1;min-width:0"><button class="btn sm" type="submit">OK</button></form></div>`;
-}
-function goalsCard(){
-  const G2 = Object.entries((coach && coach.goals) || {}), P = weightProj();
-  if (!G2.length && !P) return '';
-  const rows = G2.map(([n, g]) => { const tr = strengthTrend(n); let t = 'pas encore assez de séances';
-    if (tr){ if (tr.now >= g) t = '✅ atteint'; else if (tr.perMonth > .2){ const d = new Date(); d.setDate(d.getDate() + Math.round((g - tr.fit) / tr.perMonth * 30)); t = `vers le ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`; } else t = 'progression à l’arrêt'; }
-    return `<p>🏋️ <b>${esc(n)}</b> : ${tr ? fr(tr.now) : '–'} → ${fr(g)} kg · ${t}</p>`; }).join('');
-  return `<h3 class="sec">🎯 Mes objectifs</h3><div class="card tips-list">${P ? `<p>${projTxt(P)}</p>` : ''}${rows}<p class="muted" style="font-size:12px">Ajoute un objectif de charge depuis la fiche d’un exercice (touche son nom).</p></div>`;
 }
 // coach nutrition : rythme visé (% du poids par semaine : mini, cible, maxi) selon l'objectif
 const RATE = { perte: [-1, -.5, -.25], muscle: [.1, .25, .5], recompo: [-.25, 0, .25], maintien: [-.3, 0, .3] };
@@ -5482,7 +5620,13 @@ function evoAct(a, b){
     case 'stnext': storyGo(STORY ? STORY.i + 1 : 0); break;
     case 'stprev': storyGo(STORY ? STORY.i - 1 : 0); break;
     case 'stend': storyEnd(); break;
-    case 'stshare': if (STORY) clearTimeout(STORY.t); storyShare(); break;
+    case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
+    case 'yearstory': storyYear(b.dataset.y); break;
+    case 'goaladd': sheetGoal(); break;
+    case 'goaldel': { const n = b.dataset.n; if (!confirm('Retirer cet objectif ?')) break; coach = Object.assign({}, coach); if (n === '__poids'){ nut = Object.assign({}, nut); delete nut.cible; } else { coach.goals = Object.assign({}, coach.goals); delete coach.goals[n]; } save(); render(); toast('Objectif retiré'); break; }
+    case 'cheer': { const e = b.dataset.e, d = b.dataset.d, L = ((coach && coach.cheers) || []).slice(), j = L.findIndex(c => c.to === other.p.id && c.d === d && c.e === e);
+      if (j >= 0) L.splice(j, 1); else { L.push({ to: other.p.id, d, e, at: Date.now() }); toast(`${e} envoyé à ${other.p.nom}`); } coach = Object.assign({}, coach, { cheers: L.slice(-60) }); save(); render(); break; }
+    case 'cheerok': { const got = (((other.d.coach || {}).cheers) || []).filter(c => c.to === profile.id); coach = Object.assign({}, coach, { cheerSeen: Math.max(0, ...got.map(c => c.at)) }); save(); render(); break; }
     case 'wod': wodLoad(WODS[+b.dataset.w]); break;
     case 'wodrand': wodLoad(wodRandom()); break;
     case 'mwnew': MW = null; sheetMyWod('new'); break;
@@ -5563,7 +5707,7 @@ function evoAct(a, b){
   }
 }
 document.addEventListener('submit', e => { const f = e.target.closest('form[data-goal]'); if (!f) return; e.preventDefault(); const n = f.dataset.goal, v = num(f.elements.g.value);
-  coach = Object.assign({}, coach); coach.goals = Object.assign({}, coach.goals); if (v) coach.goals[n] = v; else delete coach.goals[n]; save(); toast(v ? `🎯 Objectif ${n} : ${fr(v)} kg` : 'Objectif retiré'); const i = (data['day' + currentDay] || []).findIndex(x => x.n === n); if (i >= 0) sheetDetail(i); });
+  coach = Object.assign({}, coach); coach.goals = Object.assign({}, coach.goals); if (v){ coach.goals[n] = v; coach.goalMeta = Object.assign({}, coach.goalMeta, { [n]: { from: bestOf(n), d: today() } }); } else delete coach.goals[n]; save(); const L = lastOf(n); toast(v ? `🎯 Objectif ${n} : ${fr(v)} ${unitOf(L ? L.t || 'f' : 'f', L)}` : 'Objectif retiré'); const i = (data['day' + currentDay] || []).findIndex(x => x.n === n); if (i >= 0) sheetDetail(i); });
 document.addEventListener('click', e => { const b = e.target.closest('[data-x]'); if (!b || b.disabled) return; evoAct(b.dataset.x, b); });
 
 /* ============================================================
@@ -6126,7 +6270,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 81;
+const APP_VERSION = 82;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
