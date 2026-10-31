@@ -129,6 +129,8 @@ button{cursor:pointer;border:none;background:none}
 .phsl .phl::after{content:'⟷';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;color:#0b0f19;border-radius:50%;width:34px;height:34px;display:grid;place-items:center;font-weight:800}
 .phsl .phd{position:absolute;bottom:8px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:700}.phsl .phd.a{left:8px}.phsl .phd.b{right:8px}
 .phsl input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}.phsel{gap:8px;align-items:center;margin:8px 0 2px}.phsel .sel{flex:1}
+.dmus{margin-top:12px}.bodymap+.meta{display:flex;flex-wrap:wrap;gap:6px}.dmus summary{cursor:pointer;font-weight:800;font-size:14px;list-style:none;display:flex;align-items:center;gap:6px}.dmus summary::-webkit-details-marker{display:none}
+.dmus summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}.dmus:not([open]) summary::after{transform:rotate(-90deg)}.dmus[open] summary{margin-bottom:10px}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -1870,6 +1872,20 @@ function todayCard(){
     <div class="tr"><button class="ringsbtn" data-go2="nutrition" data-nd="${d}" aria-label="Voir la nutrition du jour">${rings3(R)}</button>
       <ul class="rleg">${R.map(x => `<li style="--c:${x.col}"><i></i><span><b>${x.l}</b><small>${x.v}</small></span></li>`).join('')}</ul></div></section>`;
 }
+// muscles de la séance d'un jour : séries prévues sur le muscle principal, 40 % sur les muscles secondaires
+function dayMuscles(list){
+  const S = {}, P = {};
+  list.forEach(e => { if (isSkip(e) || typ(e) === 'c') return; const n = effS(e) || 1;
+    Object.entries(musclesOf(e)).forEach(([m, w]) => { S[m] = (S[m] || 0) + n * (w >= 10 ? 1 : .4); if (w >= 10) P[m] = (P[m] || 0) + n; }); });
+  return { S, P };
+}
+function dayMusCard(k, list){
+  const { S, P } = dayMuscles(list); if (!Object.keys(S).length) return '';
+  const mx = Math.max(...Object.values(S)), prim = Object.entries(P).sort((a, b) => b[1] - a[1]), sec = Object.keys(S).filter(m => !P[m]);
+  return `<details class="card dmus" ${settings.dmOff ? '' : 'open'}><summary>💪 Muscles travaillés ${currentDay === todayIdx() ? 'aujourd’hui' : DAY_NAMES[currentDay].toLowerCase()}</summary>
+    ${bodyMap(S, mx)}<div class="meta" style="justify-content:center;margin-top:8px">${prim.map(([m, n]) => `<span class="mus" style="--c:${mcol(m)}">${esc(m)} · ${n} série${n > 1 ? 's' : ''}</span>`).join('')}</div>
+    ${sec.length ? `<p class="muted" style="font-size:12px;text-align:center;margin-top:6px">Aussi sollicités : ${sec.map(esc).join(', ')}</p>` : ''}</details>`;
+}
 function viewSeance(){
   const k = 'day' + currentDay, list = data[k] || [], dn = done[k] || [];
   const nDone = list.filter((x, i) => dn[i] || isSkip(x)).length, fm = modeToday();
@@ -1893,6 +1909,7 @@ function viewSeance(){
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
   </section>
   ${!storyOn && list.length > 1 ? stripRow(k, list) : ''}
+  ${dayMusCard(k, list)}
   ${adaptBanner(k)}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" data-act="guide" style="flex:1">▶️ Séance guidée</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
@@ -1904,6 +1921,7 @@ function viewSeance(){
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
   </div>`;
   const cur = $('#app .exstrip .cur'); if (cur) cur.parentElement.scrollLeft = Math.max(0, cur.offsetLeft - 24);
+  const dm = $('#app .dmus'); if (dm) dm.ontoggle = () => { settings.dmOff = !dm.open; safeSet('mp_settings', settings); };
 }
 // séance commencée aujourd'hui ? (une série notée ou un exercice coché)
 function sessStarted(k){ const L = data[k] || []; return L.some((_, i) => (done[k] || [])[i] || setsOf(k, i).length) || !!(sess[k] && sess[k].start && ymd(new Date(sess[k].start)) === today()); }
@@ -6318,7 +6336,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 83;
+const APP_VERSION = 84;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
