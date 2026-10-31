@@ -120,6 +120,15 @@ button{cursor:pointer;border:none;background:none}
 .st-yr{font-size:30px;margin:6px 0}.ymon{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;height:140px;margin-top:18px;align-items:end}.ymon div{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
 .ymon i{width:100%;border-radius:4px 4px 0 0;background:rgba(255,255,255,.25)}.ymon .on i{background:var(--grad)}.ymon span{font-size:11px;margin-top:4px;opacity:.7}
 .yduel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.yduel div{display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.06);border-radius:16px;padding:12px}.yduel b{font-size:28px}.yduel small{font-size:12px;opacity:.75}
+.cal{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px;margin-top:6px}.cm b{display:block;font-size:12px;margin-bottom:4px}.cm b small{color:var(--a1);font-weight:800}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.cg i,.cg button{aspect-ratio:1;border-radius:3px;background:var(--line);display:block;padding:0}.cg i.e{background:none}.cg i.f{opacity:.35}
+.cg .l1{background:color-mix(in srgb,#fb923c 40%,var(--line))}.cg .l2{background:color-mix(in srgb,#fb923c 70%,var(--line))}.cg .l3{background:#fb923c}.cg .td{outline:2px solid var(--a1);outline-offset:-1px}
+.calc .hleg i.l1{background:color-mix(in srgb,#fb923c 40%,var(--line))}.calc .hleg i.l2{background:color-mix(in srgb,#fb923c 70%,var(--line))}.calc .hleg i.l3{background:#fb923c}
+.phsl{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:3/4;touch-action:pan-y}.phsl img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.phsl .phb{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--x)) 0 0)}.phsl .phl{position:absolute;top:0;bottom:0;left:var(--x);width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 8px rgba(0,0,0,.6)}
+.phsl .phl::after{content:'⟷';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;color:#0b0f19;border-radius:50%;width:34px;height:34px;display:grid;place-items:center;font-weight:800}
+.phsl .phd{position:absolute;bottom:8px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:700}.phsl .phd.a{left:8px}.phsl .phd.b{right:8px}
+.phsl input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}.phsel{gap:8px;align-items:center;margin:8px 0 2px}.phsel .sel{flex:1}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -2765,7 +2774,8 @@ function tabSynth(){
     ${yearBtns()}
     ${eatBurnCard()}
     ${defiCard()}
-    ${synthCard()}`;
+    ${synthCard()}
+    ${calCard()}`;
 }
 /* ---------- défi du mois (Chris vs Béa) : même objectif pour les deux, un nouveau chaque mois ---------- */
 const DEFIS = [
@@ -2908,6 +2918,33 @@ function eatBurnCard(){
     ${part ? `<p class="muted" style="font-size:12px;text-align:center;margin-top:4px">${part} jour${part > 1 ? 's' : ''} avec des repas manquants (barre verte pâle) : pas compté${part > 1 ? 's' : ''} dans le bilan.</p>` : ''}
     <p class="muted" style="font-size:11.5px;margin-top:6px">Dépensé = ton métabolisme estimé × ton activité de tous les jours + les calories de tes séances. Ce sont des estimations (± 10 à 15 %) : regarde surtout la tendance sur plusieurs semaines.</p></div>`;
 }
+
+/* ---------- calendrier de l'année : 12 mois, une case par jour, couleur selon la séance ---------- */
+let calY = null;
+function calCard(){
+  const y = calY || new Date().getFullYear(), td = today(), by = {};
+  hist.forEach(h => { if (h.d && h.d.startsWith(y)){ const x = by[h.d] = by[h.d] || { kc: 0, n: 0 }; x.kc += kcalOfH(h) || 0; x.n++; } });
+  const lvl = d => { const x = by[d]; return !x ? 0 : x.kc >= 350 ? 3 : x.kc >= 180 ? 2 : 1; };
+  const MN = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+  const months = MN.map((m, i) => { const first = new Date(y, i, 1), nd = new Date(y, i + 1, 0).getDate(), off = (first.getDay() + 6) % 7, cells = [];
+    for (let j = 0; j < off; j++) cells.push('<i class="e"></i>');
+    for (let d = 1; d <= nd; d++){ const k = `${y}-${String(i + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, l = lvl(k);
+      cells.push(l ? `<button class="l${l}${k === td ? ' td' : ''}" data-x="calday" data-d="${k}" aria-label="${fmtD(k)}"></button>` : `<i class="${k > td ? 'f' : ''}${k === td ? ' td' : ''}"></i>`); }
+    const n = Object.keys(by).filter(d => d.slice(5, 7) == i + 1).length;
+    return `<div class="cm"><b>${m}${n ? ` <small>${n}</small>` : ''}</b><div class="cg">${cells.join('')}</div></div>`; }).join('');
+  const D = Object.keys(by).sort(); let best = 0, run = 0, prev = null; D.forEach(d => { run = prev && (new Date(d + 'T12:00') - new Date(prev + 'T12:00')) / 864e5 === 1 ? run + 1 : 1; best = Math.max(best, run); prev = d; });
+  const el = y < +td.slice(0, 4) ? (y % 4 ? 365 : 366) : Math.round((new Date(td + 'T12:00') - new Date(y, 0, 1, 12)) / 864e5) + 1, first = hist.length ? hist.reduce((a, h) => h.d < a ? h.d : a, td) : td;
+  return `<h3 class="sec cal-sec">📅 Mon année</h3><div class="card calc"><div class="bnav"><button class="btn sm" data-x="caly" data-d="-1" ${+first.slice(0, 4) >= y ? 'disabled' : ''} aria-label="Année précédente">‹</button><b>${y}</b><button class="btn sm" data-x="caly" data-d="1" ${y >= new Date().getFullYear() ? 'disabled' : ''} aria-label="Année suivante">›</button></div>
+    <p class="hsum"><b>${D.length}</b> jour${D.length > 1 ? 's' : ''} d’entraînement${y === +td.slice(0, 4) ? ` sur ${el} écoulés` : ''} · plus longue série : <b>${best}</b> jour${best > 1 ? 's' : ''}</p>
+    <div class="cal">${months}</div><div class="hleg"><span>Léger</span><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>Grosse séance</span></div>
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Couleur selon les calories de la journée. Touche un jour pour voir ce que tu as fait.</p></div>`;
+}
+function sheetDay(d){
+  const H = hist.filter(h => h.d === d), kcal = H.reduce((a, h) => a + (kcalOfH(h) || 0), 0), kg = H.reduce((a, h) => a + volOf(h), 0), s = seances.find(x => x.d === d);
+  openSheet(`<h2>${new Date(d + 'T12:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h2>
+    <p class="muted">${s && s.titre ? esc(s.titre) + ' · ' : ''}${s && s.dur ? s.dur + ' min · ' : ''}🔥 ${kc(kcal)} kcal${kg ? ' · ' + fmtVol(kg) + ' soulevés' : ''}${s && s.feel != null ? ' · ' + FEELS[s.feel][0] : ''}</p>
+    <div class="card" style="margin-top:10px">${H.map(h => `<div class="rec"><span class="mus" style="--c:${mcol(h.m)}">${esc(h.m || '')}</span><div class="t"><b>${esc(h.n)}</b><small>${esc(lastTxt(h))}</small></div></div>`).join('')}</div>`);
+}
 function synthCard(){
   const td = today(), pc = (a, b) => b ? Math.round((a - b) * 100 / b) : null;
   const dl = v => v == null ? '' : `<small class="${v >= 0 ? 'up' : 'down'}">${v >= 0 ? '▲ +' : '▼ '}${v} %</small>`;
@@ -3021,12 +3058,21 @@ const photoAdd = o => photoTx('readwrite', st => st.add(o));
 const photoDel = id => photoTx('readwrite', st => st.delete(id));
 const photoAll = () => photoTx('readonly', st => st.getAll());
 function shrink(file, max){ return new Promise((res, rej) => { const fr2 = new FileReader(); fr2.onload = () => { const im = new Image(); im.onload = () => { const s = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', .78)); }; im.onerror = rej; im.src = fr2.result; }; fr2.onerror = rej; fr2.readAsDataURL(file); }); }
+let phCmp = {};
 async function paintPhotos(){
   const box = $('#photos'); if (!box) return;
   let all = []; try{ all = (await photoAll() || []).filter(p => p.pid === profile.id).sort((a, b) => a.d < b.d ? -1 : 1); }catch(e){ box.innerHTML = '<p class="muted">Photos indisponibles dans ce navigateur.</p>'; return; }
   if (!all.length){ box.innerHTML = '<p class="muted" style="font-size:13px;margin-top:10px">Aucune photo pour l’instant. Une par mois, de face et de profil, avec la même lumière : l’idéal pour comparer.</p>'; return; }
-  const cmp = all.length > 1 ? `<div class="cmp"><figure><img src="${all[0].img}" alt="Première photo"><figcaption>${fmtD(all[0].d)}</figcaption></figure><figure><img src="${all[all.length - 1].img}" alt="Dernière photo"><figcaption>${fmtD(all[all.length - 1].d)}</figcaption></figure></div>` : '';
+  // comparaison : les 2 photos superposées, un curseur révèle l'avant ou l'après
+  const opt = sel => all.map(p => `<option value="${p.id}" ${p.id === sel ? 'selected' : ''}>${fmtD(p.d)}</option>`).join('');
+  const A0 = all.find(p => p.id === phCmp.a) || all[0], B0 = all.find(p => p.id === phCmp.b) || all[all.length - 1];
+  const cmp = all.length > 1 ? `<div class="phsl"><img src="${B0.img}" alt="Photo du ${fmtD(B0.d)}"><div class="phb" style="--x:50%"><img src="${A0.img}" alt="Photo du ${fmtD(A0.d)}"></div><i class="phl" style="--x:50%"></i>
+      <span class="phd a">${fmtD(A0.d)}</span><span class="phd b">${fmtD(B0.d)}</span><input type="range" min="0" max="100" value="50" aria-label="Glisser pour comparer"></div>
+    <div class="row phsel"><select class="sel" id="phA" aria-label="Photo d’avant">${opt(A0.id)}</select><span>→</span><select class="sel" id="phB" aria-label="Photo d’après">${opt(B0.id)}</select></div>
+    <p class="muted" style="font-size:12px;text-align:center">Glisse le doigt sur la photo pour passer de l’avant à l’après.</p>` : '';
   box.innerHTML = cmp + `<div class="pgrid">${all.slice().reverse().map(p => `<button data-ph="${p.id}"><img src="${p.img}" alt="Photo du ${fmtD(p.d)}"><span>${fmtD(p.d)}</span></button>`).join('')}</div>`;
+  const sl = box.querySelector('.phsl'); if (sl){ const r = sl.querySelector('input'); r.oninput = () => sl.querySelectorAll('.phb,.phl').forEach(el => el.style.setProperty('--x', r.value + '%'));
+    $('#phA').onchange = () => { phCmp.a = +$('#phA').value; paintPhotos(); }; $('#phB').onchange = () => { phCmp.b = +$('#phB').value; paintPhotos(); }; }
   box.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => { const p = all.find(x => x.id === +b.dataset.ph);
     openSheet(`<h2>📷 ${fmtD(p.d)}</h2><img src="${p.img}" alt="Photo du ${fmtD(p.d)}" style="width:100%;border-radius:16px"><div class="row" style="margin-top:12px"><span class="spacer"></span><button class="btn danger" id="phDel">🗑️ Supprimer</button></div>`);
     $('#phDel').onclick = async () => { await photoDel(p.id); closeSheet(); paintPhotos(); toast('Photo supprimée'); }; });
@@ -5622,6 +5668,8 @@ function evoAct(a, b){
     case 'stend': storyEnd(); break;
     case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
     case 'yearstory': storyYear(b.dataset.y); break;
+    case 'calday': sheetDay(b.dataset.d); break;
+    case 'caly': calY = (calY || new Date().getFullYear()) + +b.dataset.d; viewProgres(); setTimeout(() => { const el = document.querySelector('.cal-sec'); if (el) el.scrollIntoView({ block: 'start' }); }, 50); break;
     case 'goaladd': sheetGoal(); break;
     case 'goaldel': { const n = b.dataset.n; if (!confirm('Retirer cet objectif ?')) break; coach = Object.assign({}, coach); if (n === '__poids'){ nut = Object.assign({}, nut); delete nut.cible; } else { coach.goals = Object.assign({}, coach.goals); delete coach.goals[n]; } save(); render(); toast('Objectif retiré'); break; }
     case 'cheer': { const e = b.dataset.e, d = b.dataset.d, L = ((coach && coach.cheers) || []).slice(), j = L.findIndex(c => c.to === other.p.id && c.d === d && c.e === e);
@@ -6270,7 +6318,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 82;
+const APP_VERSION = 83;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
