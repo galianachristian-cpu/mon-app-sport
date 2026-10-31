@@ -1840,8 +1840,12 @@ function todayCard(){
     kP = t.kcal ? eaten / t.kcal : 0; kTxt = `${kc(eaten)} / ${kc(t.kcal)} kcal`; }
   const eau = (forme[date] || {}).eau || 0, g = eauGoal(), st = streakDays(), h = new Date().getHours();
   const hello = h < 5 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir', nom = profile.nom && !/^moi$/i.test(profile.nom) ? ' ' + esc(profile.nom) : '';
-  const R = [{ p: list.length ? nEx / list.length : 0, col: '#f472b6', l: 'Séance', v: list.length ? `${nEx} / ${list.length} exercices` : 'repos' },
-             { p: kP, col: '#34d399', l: 'Calories', v: kTxt },
+  // activités hors programme du jour (WOD, minuteur, course…) : elles comptent aussi
+  const extra = hist.filter(x => x.d === date && (x.k === 'it' || x.k === 'run' || !list.some(e => e.n === x.n))), xMin = Math.round(extra.reduce((a, x) => a + ((x.t || 'f') === 'c' ? num(x.r) || 0 : 0), 0));
+  const xTxt = extra.length === 1 ? `${extra[0].n.replace(/ \(minuteur\)$/, '')}${xMin ? ' · ' + xMin + ' min' : ''}` : extra.length ? `${extra.length} activités${xMin ? ' · ' + xMin + ' min' : ''}` : '';
+  const R = [{ p: list.length ? Math.max(nEx / list.length, extra.length ? Math.min(1, nEx / list.length + .25) : 0) : extra.length ? 1 : 0, col: '#f472b6', l: 'Séance',
+               v: list.length ? `${nEx} / ${list.length} exercices${xTxt ? ' + ' + xTxt : ''}` : xTxt ? '✓ ' + xTxt : 'repos' },
+             { p: kP, col: '#34d399', l: 'Repas', v: kTxt },
              { p: g ? eau / g : 0, col: '#38bdf8', l: 'Eau', v: `${eau} / ${g} verres` }];
   return `<section class="today">
     <div class="tg"><p class="tdate">${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p><h2>${hello}${nom} 👋</h2>${st ? `<span class="streak">🔥 ${st} jour${st > 1 ? 's' : ''} d’affilée</span>` : '<span class="streak off">Lance ta série aujourd’hui 💪</span>'}</div>
@@ -6122,7 +6126,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 80;
+const APP_VERSION = 81;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
