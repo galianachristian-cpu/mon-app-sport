@@ -131,6 +131,7 @@ button{cursor:pointer;border:none;background:none}
 .phsl input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}.phsel{gap:8px;align-items:center;margin:8px 0 2px}.phsel .sel{flex:1}
 .dmus{margin-top:12px}.bodymap+.meta{display:flex;flex-wrap:wrap;gap:6px}.dmus summary{cursor:pointer;font-weight:800;font-size:14px;list-style:none;display:flex;align-items:center;gap:6px}.dmus summary::-webkit-details-marker{display:none}
 .dmus summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}.dmus:not([open]) summary::after{transform:rotate(-90deg)}.dmus[open] summary{margin-bottom:10px}
+.aisles .aisle{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.aisles .aisle b{flex:1;min-width:0;font-size:14.5px}.aisles .an{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#0b0f19;font-weight:800;font-size:13px}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -4215,13 +4216,14 @@ function nutCourses(){
     <div class="seg small">${[['semaine','Toute la semaine'],['reste','À partir d’aujourd’hui']].map(([k, l]) => `<button class="${coursesScope === k ? 'on' : ''}" data-cs="${k}">${l}</button>`).join('')}</div>
     <div class="seg small" style="margin-top:8px">${[['tous','Pour nous 2'],['moi','Pour moi']].map(([k, l]) => `<button class="${coursesWho === k ? 'on' : ''}" data-cw="${k}">${l}</button>`).join('')}</div>
     <button class="btn block" data-x="awaysheet" style="margin-top:8px">🧳 Absences : ${nAway ? `${nAway} repas hors de la maison` : 'aucune'}</button>
+    <button class="btn block" data-x="aisles" style="margin-top:8px">🗺️ Ordre des rayons : ${rayOrder().map(r => [...r][0]).join(' → ')}</button>
     <button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste : ${nSt ? `${nSt} aliment${nSt > 1 ? 's' : ''}` : 'rien de noté'}</button>
     <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
   ${budgetCard()}
   <div class="card" style="margin-top:12px"><p style="font-size:14px">🛒 Total estimé de la liste : <b>${eur(total)}</b>${saved >= .5 ? ` · <span style="color:var(--ok)">${eur(saved)} économisés grâce à vos restes</span>` : ''}</p></div>
   ${have.length || mine.length ? `<h3 class="sec">🏠 Déjà à la maison</h3><div class="card">${have.length ? `<p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}` : ''}
     ${mine.map(x => `<div class="shopit got hvd"><span>${esc(x.n)}</span><button class="btn sm" data-hv="${x.f}" aria-label="Remettre ${esc(x.n)} dans la liste">↩️ À acheter</button></div>`).join('')}</div>` : ''}
-  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
+  ${byAisle(groups).map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
   <button class="btn pri block" id="pdfBtn" style="margin-top:16px;padding:15px;font-size:16px">📄 Envoyer la liste en PDF</button>
@@ -4231,7 +4233,7 @@ function coursesText(){
   const wk = curWk(), { groups, dates, from } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
   const nAway = awayCount(wk, coursesList().pids, from);
   let s = `Liste de courses du ${fmtD(dates[from])} au ${fmtD(dates[6])}${nAway ? ` (sans les ${nAway} repas hors de la maison)` : ''}\n`;
-  Object.entries(groups).sort().forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q} (≈ ${eur(x.c)})`).join('\n') + '\n'; });
+  byAisle(groups).forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q} (≈ ${eur(x.c)})`).join('\n') + '\n'; });
   s += `\nTotal estimé : ≈ ${eur(Object.values(groups).flat().filter(x => !ck[x.f]).reduce((a, x) => a + x.c, 0))}\n`;
   const E = ex.filter((_, i) => !ck['x' + i]); if (E.length) s += '\n➕ Autres\n' + E.map(x => '- ' + x).join('\n') + '\n';
   return s + '\nEnvoyé depuis Mon Programme 🏋️';
@@ -4255,10 +4257,21 @@ function pdfFromJpegs(J){
   push(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
   return new Blob(parts, { type: 'application/pdf' });
 }
+// ordre des rayons dans le sens de la visite du magasin (réglable, partagé par le foyer) ; par défaut l'ordre le plus courant en France, surgelés en dernier pour le froid
+const RAY_DEF = ['🥦 Fruits & légumes frais', '🥖 Boulangerie', '🥩 Boucherie & charcuterie', '🥛 Crémerie & œufs', '🥫 Épicerie', '🧊 Surgelés'];
+function rayOrder(){ const O = ((foyer && foyer.rayOrder) || []).filter(r => RAY_DEF.includes(r)); return O.concat(RAY_DEF.filter(r => !O.includes(r))); }
+const byAisle = groups => { const O = rayOrder(); return Object.entries(groups).sort((a, b) => (O.indexOf(a[0]) + 1 || 99) - (O.indexOf(b[0]) + 1 || 99)); };
+function sheetAisles(){
+  const O = rayOrder();
+  openSheet(`<h2>🗺️ Ordre des rayons</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Range les rayons dans l’ordre où tu les traverses dans ton magasin : la liste, le texte envoyé et le PDF suivront cet ordre. Réglage commun pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}.</p>
+    <div class="card aisles">${O.map((r, i) => `<div class="aisle"><span class="an">${i + 1}</span><b>${esc(r)}</b><button class="btn sm" data-x="aisle" data-i="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="Monter ${esc(r)}">⬆️</button><button class="btn sm" data-x="aisle" data-i="${i}" data-d="1" ${i < O.length - 1 ? '' : 'disabled'} aria-label="Descendre ${esc(r)}">⬇️</button></div>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 0">🚪 Entrée en haut, 🧾 caisses en bas. Astuce : garde les surgelés pour la fin, ils restent au froid plus longtemps.</p>
+    <button class="btn block" data-x="aislereset">↩️ Ordre par défaut</button>`);
+}
 const RAY_COL = { '🥦': '#16a34a', '🥩': '#dc2626', '🥛': '#2563eb', '🧊': '#0891b2', '🥫': '#d97706', '🥖': '#ea580c' };
 async function coursesPDF(){
   const wk = curWk(), { groups, dates, from, pids, have, mine } = coursesList(), ck = foyer.checked[wk] || {}, ex = (foyer.extra[wk] || []).filter((_, i) => !ck['x' + i]);
-  const G = Object.entries(groups).sort().map(([g, L]) => [g, L.filter(x => !ck[x.f])]).filter(([, L]) => L.length);
+  const G = byAisle(groups).map(([g, L]) => [g, L.filter(x => !ck[x.f])]).filter(([, L]) => L.length);
   const nItems = G.reduce((a, [, L]) => a + L.length, 0) + ex.length, total = G.flat(2).filter(x => x && x.c != null).reduce((a, x) => a + x.c, 0);
   const W = 1240, H = 1754, M = 80, GAP = 40, CW = (W - 2 * M - GAP) / 2, F = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
   const cs = getComputedStyle(document.documentElement), a1 = cs.getPropertyValue('--a1').trim() || '#22d3ee', a2 = cs.getPropertyValue('--a2').trim() || '#a78bfa';
@@ -5777,6 +5790,9 @@ function evoAct(a, b){
     case 'stend': storyEnd(); break;
     case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
     case 'yearstory': storyYear(b.dataset.y); break;
+    case 'aisles': sheetAisles(); break;
+    case 'aisle': { const O = rayOrder(), i = +b.dataset.i, j = i + +b.dataset.d; if (j < 0 || j >= O.length) break; [O[i], O[j]] = [O[j], O[i]]; foyer.rayOrder = O; saveFoyer(); sheetAisles(); if (view === 'nutrition') viewNutrition(); break; }
+    case 'aislereset': delete foyer.rayOrder; saveFoyer(); sheetAisles(); if (view === 'nutrition') viewNutrition(); toast('↩️ Ordre par défaut'); break;
     case 'calday': sheetDay(b.dataset.d); break;
     case 'caly': calY = (calY || new Date().getFullYear()) + +b.dataset.d; viewProgres(); setTimeout(() => { const el = document.querySelector('.cal-sec'); if (el) el.scrollIntoView({ block: 'start' }); }, 50); break;
     case 'goaladd': sheetGoal(); break;
@@ -6427,7 +6443,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 85;
+const APP_VERSION = 86;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
