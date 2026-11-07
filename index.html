@@ -143,6 +143,7 @@ button{cursor:pointer;border:none;background:none}
 .phsl input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}.phsel{gap:8px;align-items:center;margin:8px 0 2px}.phsel .sel{flex:1}
 .dmus{margin-top:12px}.bodymap+.meta{display:flex;flex-wrap:wrap;gap:6px}.dmus summary{cursor:pointer;font-weight:800;font-size:14px;list-style:none;display:flex;align-items:center;gap:6px}.dmus summary::-webkit-details-marker{display:none}
 .dmus summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}.dmus:not([open]) summary::after{transform:rotate(-90deg)}.dmus[open] summary{margin-bottom:10px}
+.aisles .aisle{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.aisles .aisle b{flex:1;min-width:0;font-size:14.5px}.aisles .an{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#0b0f19;font-weight:800;font-size:13px}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -4228,25 +4229,127 @@ function nutCourses(){
     <div class="seg small">${[['semaine','Toute la semaine'],['reste','À partir d’aujourd’hui']].map(([k, l]) => `<button class="${coursesScope === k ? 'on' : ''}" data-cs="${k}">${l}</button>`).join('')}</div>
     <div class="seg small" style="margin-top:8px">${[['tous','Pour nous 2'],['moi','Pour moi']].map(([k, l]) => `<button class="${coursesWho === k ? 'on' : ''}" data-cw="${k}">${l}</button>`).join('')}</div>
     <button class="btn block" data-x="awaysheet" style="margin-top:8px">🧳 Absences : ${nAway ? `${nAway} repas hors de la maison` : 'aucune'}</button>
+    <button class="btn block" data-x="aisles" style="margin-top:8px">🗺️ Ordre des rayons : ${rayOrder().map(r => [...r][0]).join(' → ')}</button>
     <button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste : ${nSt ? `${nSt} aliment${nSt > 1 ? 's' : ''}` : 'rien de noté'}</button>
     <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
   ${budgetCard()}
   <div class="card" style="margin-top:12px"><p style="font-size:14px">🛒 Total estimé de la liste : <b>${eur(total)}</b>${saved >= .5 ? ` · <span style="color:var(--ok)">${eur(saved)} économisés grâce à vos restes</span>` : ''}</p></div>
   ${have.length || mine.length ? `<h3 class="sec">🏠 Déjà à la maison</h3><div class="card">${have.length ? `<p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}` : ''}
     ${mine.map(x => `<div class="shopit got hvd"><span>${esc(x.n)}</span><button class="btn sm" data-hv="${x.f}" aria-label="Remettre ${esc(x.n)} dans la liste">↩️ À acheter</button></div>`).join('')}</div>` : ''}
-  ${Object.entries(groups).sort().map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
+  ${byAisle(groups).map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
-  <div class="row" style="margin-top:16px">${navigator.share ? '<button class="btn pri" id="shareBtn">📤 Envoyer</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn pri" id="mailBtn">✉️ Envoyer par mail</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
+  <button class="btn pri block" id="pdfBtn" style="margin-top:16px;padding:15px;font-size:16px">📄 Envoyer la liste en PDF</button>
+  <div class="row" style="margin-top:8px">${navigator.share ? '<button class="btn" id="shareBtn">💬 En texte</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn" id="mailBtn">✉️ Mail (texte)</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
 }
 function coursesText(){
   const wk = curWk(), { groups, dates, from } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
   const nAway = awayCount(wk, coursesList().pids, from);
   let s = `Liste de courses du ${fmtD(dates[from])} au ${fmtD(dates[6])}${nAway ? ` (sans les ${nAway} repas hors de la maison)` : ''}\n`;
-  Object.entries(groups).sort().forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q} (≈ ${eur(x.c)})`).join('\n') + '\n'; });
+  byAisle(groups).forEach(([g, L]) => { const R2 = L.filter(x => !ck[x.f]); if (R2.length) s += `\n${g}\n` + R2.map(x => `- ${x.n} : ${x.q} (≈ ${eur(x.c)})`).join('\n') + '\n'; });
   s += `\nTotal estimé : ≈ ${eur(Object.values(groups).flat().filter(x => !ck[x.f]).reduce((a, x) => a + x.c, 0))}\n`;
   const E = ex.filter((_, i) => !ck['x' + i]); if (E.length) s += '\n➕ Autres\n' + E.map(x => '- ' + x).join('\n') + '\n';
   return s + '\nEnvoyé depuis Mon Programme 🏋️';
+}
+/* ---------- liste de courses en PDF : pages A4 dessinées puis assemblées en PDF (hors ligne, sans service externe) ---------- */
+// PDF minimal : une image JPEG pleine page par page
+function pdfFromJpegs(J){
+  const enc = new TextEncoder(), parts = [], offs = []; let len = 0;
+  const push = p => { const b = typeof p === 'string' ? enc.encode(p) : p; parts.push(b); len += b.length; };
+  const obj = (n, body) => { offs[n] = len; push(`${n} 0 obj\n`); body(); push('\nendobj\n'); };
+  push('%PDF-1.4\n%âãÏÓ\n');
+  const N = J.length;
+  obj(1, () => push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2, () => push(`<< /Type /Pages /Kids [${J.map((_, i) => `${3 + i * 3} 0 R`).join(' ')}] /Count ${N} >>`));
+  J.forEach((j, i) => { const p = 3 + i * 3, cs = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    obj(p, () => push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${p + 1} 0 R >> >> /Contents ${p + 2} 0 R >>`));
+    obj(p + 1, () => { push(`<< /Type /XObject /Subtype /Image /Width ${j.w} /Height ${j.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${j.bytes.length} >>\nstream\n`); push(j.bytes); push('\nendstream'); });
+    obj(p + 2, () => push(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`)); });
+  const n = 3 + N * 3, xref = len;
+  push(`xref\n0 ${n}\n0000000000 65535 f \n` + offs.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n \n').join(''));
+  push(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+// ordre des rayons dans le sens de la visite du magasin (réglable, partagé par le foyer) ; par défaut l'ordre le plus courant en France, surgelés en dernier pour le froid
+const RAY_DEF = ['🥦 Fruits & légumes frais', '🥖 Boulangerie', '🥩 Boucherie & charcuterie', '🥛 Crémerie & œufs', '🥫 Épicerie', '🧊 Surgelés'];
+function rayOrder(){ const O = ((foyer && foyer.rayOrder) || []).filter(r => RAY_DEF.includes(r)); return O.concat(RAY_DEF.filter(r => !O.includes(r))); }
+const byAisle = groups => { const O = rayOrder(); return Object.entries(groups).sort((a, b) => (O.indexOf(a[0]) + 1 || 99) - (O.indexOf(b[0]) + 1 || 99)); };
+function sheetAisles(){
+  const O = rayOrder();
+  openSheet(`<h2>🗺️ Ordre des rayons</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Range les rayons dans l’ordre où tu les traverses dans ton magasin : la liste, le texte envoyé et le PDF suivront cet ordre. Réglage commun pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}.</p>
+    <div class="card aisles">${O.map((r, i) => `<div class="aisle"><span class="an">${i + 1}</span><b>${esc(r)}</b><button class="btn sm" data-x="aisle" data-i="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="Monter ${esc(r)}">⬆️</button><button class="btn sm" data-x="aisle" data-i="${i}" data-d="1" ${i < O.length - 1 ? '' : 'disabled'} aria-label="Descendre ${esc(r)}">⬇️</button></div>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 0">🚪 Entrée en haut, 🧾 caisses en bas. Astuce : garde les surgelés pour la fin, ils restent au froid plus longtemps.</p>
+    <button class="btn block" data-x="aislereset">↩️ Ordre par défaut</button>`);
+}
+const RAY_COL = { '🥦': '#16a34a', '🥩': '#dc2626', '🥛': '#2563eb', '🧊': '#0891b2', '🥫': '#d97706', '🥖': '#ea580c' };
+async function coursesPDF(){
+  const wk = curWk(), { groups, dates, from, pids, have, mine } = coursesList(), ck = foyer.checked[wk] || {}, ex = (foyer.extra[wk] || []).filter((_, i) => !ck['x' + i]);
+  const G = byAisle(groups).map(([g, L]) => [g, L.filter(x => !ck[x.f])]).filter(([, L]) => L.length);
+  const nItems = G.reduce((a, [, L]) => a + L.length, 0) + ex.length, total = G.flat(2).filter(x => x && x.c != null).reduce((a, x) => a + x.c, 0);
+  const W = 1240, H = 1754, M = 80, GAP = 40, CW = (W - 2 * M - GAP) / 2, F = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  const cs = getComputedStyle(document.documentElement), a1 = cs.getPropertyValue('--a1').trim() || '#22d3ee', a2 = cs.getPropertyValue('--a2').trim() || '#a78bfa';
+  const who = pids.length > 1 ? 'Pour ' + PROFILES.map(p => p.nom).join(' & ') : 'Pour ' + profile.nom;
+  // contenu en blocs : en-tête de rayon, articles, puis « à ajouter » et « déjà à la maison »
+  const B = [];
+  G.forEach(([g, L]) => { const ic = [...g][0], col = RAY_COL[ic] || '#64748b'; B.push({ k: 'h', t: g, col, sub: eur(L.reduce((a, x) => a + x.c, 0)) }); L.forEach(x => B.push({ k: 'i', t: x.n, q: x.q, p: eur(x.c), col })); });
+  if (ex.length){ B.push({ k: 'h', t: '➕ À ajouter', col: '#7c3aed' }); ex.forEach(x => B.push({ k: 'i', t: x, col: '#7c3aed' })); }
+  const home = have.filter(x => x.all).map(x => x.n).concat(mine.map(x => x.n));
+  if (home.length){ B.push({ k: 'h', t: '🏠 Déjà à la maison', col: '#94a3b8' }); B.push({ k: 'p', t: home.join(' · ') }); }
+  const pages = []; let c, x, col = 0, y = 0, top = 0;
+  const fit = (t, maxW, size, weight) => { let z = size; do { x.font = `${weight} ${z}px ${F}`; z -= 1; } while (x.measureText(t).width > maxW && z > 18); if (x.measureText(t).width <= maxW) return t; let s = t; while (s.length > 3 && x.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s + '…'; };
+  const rr = (X, Y, w, h, r) => { x.beginPath(); x.roundRect ? x.roundRect(X, Y, w, h, r) : x.rect(X, Y, w, h); };
+  const newPage = () => { c = document.createElement('canvas'); c.width = W; c.height = H; x = c.getContext('2d'); pages.push(c); x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H);
+    if (pages.length === 1){
+      const g = x.createLinearGradient(0, 0, W, 300); g.addColorStop(0, a1); g.addColorStop(1, a2); x.fillStyle = g; x.fillRect(0, 0, W, 300);
+      x.fillStyle = 'rgba(255,255,255,.12)'; x.beginPath(); x.arc(W - 120, 60, 190, 0, 7); x.fill(); x.beginPath(); x.arc(W - 330, 290, 90, 0, 7); x.fill();
+      x.fillStyle = '#ffffff'; x.font = `800 78px ${F}`; x.fillText('🛒 Liste de courses', M, 130);
+      x.font = `600 34px ${F}`; x.fillText(`Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${who}`, M, 188);
+      x.font = `500 28px ${F}`; x.globalAlpha = .9; x.fillText(`${nItems} article${nItems > 1 ? 's' : ''} · ${G.length} rayon${G.length > 1 ? 's' : ''}${home.length ? ` · ${home.length} déjà à la maison` : ''}`, M, 238); x.globalAlpha = 1;
+      // total estimé
+      x.fillStyle = '#ffffff'; rr(W - M - 300, 330, 300, 110, 28); x.fill(); x.strokeStyle = '#e2e8f0'; x.lineWidth = 2; x.stroke();
+      x.fillStyle = '#64748b'; x.font = `600 24px ${F}`; x.fillText('Total estimé', W - M - 270, 372); x.fillStyle = '#0f172a'; x.font = `800 46px ${F}`; x.fillText('≈ ' + eur(total), W - M - 270, 420);
+      x.fillStyle = '#0f172a'; x.font = `700 30px ${F}`; x.fillText('Bonnes courses ! 💪', M, 380); x.fillStyle = '#64748b'; x.fillText(fit('Coche au fur et à mesure : les menus de la semaine sont déjà comptés.', W - 2 * M - 340, 24, 500), M, 420);
+      top = 490;
+    } else { x.fillStyle = a1; x.fillRect(0, 0, W, 14); x.fillStyle = '#0f172a'; x.font = `800 40px ${F}`; x.fillText('🛒 Liste de courses (suite)', M, 100); top = 150; }
+    col = 0; y = top; };
+  const nextCol = () => { if (col === 0){ col = 1; y = top; } else newPage(); };
+  newPage();
+  const pLines = t => { x.font = `500 22px ${F}`; const L = []; let l = ''; t.split(' ').forEach(w => { const u = l ? l + ' ' + w : w; if (x.measureText(u).width > CW - 10){ L.push(l); l = w; } else l = u; }); if (l) L.push(l); return L; };
+  const est = B.reduce((a, b) => a + (b.k === 'h' ? 86 : b.k === 'i' ? 62 : pLines(b.t).length * 32), 0), one = est <= 2 * (H - 110 - top) - 120;
+  const lim = () => one && col === 0 && pages.length === 1 ? Math.min(H - 110, top + est / 2 + 60) : H - 110;
+  B.forEach((b, i) => { if (b.k === 'p') return drawP(b); const h = b.k === 'h' ? 86 : 62;
+    // un en-tête de rayon ne reste pas seul en bas de colonne
+    if (y + h + (b.k === 'h' ? 62 : 0) > lim()){ nextCol(); if (b.k === 'i'){ const hd = [...B.slice(0, i)].reverse().find(z => z.k === 'h'); if (hd){ drawH(Object.assign({}, hd, { t: hd.t + ' (suite)', sub: '' })); } } }
+    if (b.k === 'h') drawH(b); else drawI(b); });
+  // paragraphe gris (déjà à la maison), coupé en lignes
+  function drawP(b){ pLines(b.t).forEach(t => { if (y + 32 > lim()){ nextCol(); drawH({ t: '🏠 Déjà à la maison (suite)', col: '#94a3b8' }); } x.font = `500 22px ${F}`; x.fillStyle = '#94a3b8'; x.fillText(t, M + col * (CW + GAP) + 6, y + 22); y += 32; }); }
+  function drawH(b){ const X = M + col * (CW + GAP); if (y > top) y += 14;
+    x.fillStyle = b.col + '1f'; rr(X, y, CW, 58, 16); x.fill(); x.fillStyle = b.col; rr(X, y, 10, 58, 5); x.fill();
+    let sw = 0; if (b.sub){ x.font = `700 24px ${F}`; sw = x.measureText(b.sub).width; }
+    const t = fit(b.t, CW - 60 - sw, 30, 800); x.fillStyle = '#0f172a'; x.fillText(t, X + 28, y + 40);
+    if (b.sub){ x.fillStyle = b.col; x.font = `700 24px ${F}`; x.fillText(b.sub, X + CW - 22 - sw, y + 38); }
+    y += 72; }
+  function drawI(b){ const X = M + col * (CW + GAP);
+    x.strokeStyle = b.col; x.lineWidth = 3; rr(X + 8, y + 7, 30, 30, 8); x.stroke();
+    x.font = `700 25px ${F}`; const qw = b.q ? x.measureText(b.q).width : 0;
+    x.fillStyle = '#1e293b'; x.fillText(fit(b.t, CW - 70 - qw - 14, 27, 600), X + 54, y + 30);
+    if (b.q){ x.font = `700 25px ${F}`; x.fillStyle = '#0f172a'; x.fillText(b.q, X + CW - qw, y + 30); }
+    if (b.p){ x.font = `500 19px ${F}`; x.fillStyle = '#94a3b8'; x.fillText('≈ ' + b.p, X + 54, y + 52); }
+    x.strokeStyle = '#f1f5f9'; x.lineWidth = 2; x.beginPath(); x.moveTo(X + 54, y + 60); x.lineTo(X + CW, y + 60); x.stroke();
+    y += 62; }
+  // pied de page
+  pages.forEach((p, i) => { const q = p.getContext('2d'); q.fillStyle = '#94a3b8'; q.font = `500 22px ${F}`;
+    q.fillText(`Mon Programme · ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} · prix estimés à titre indicatif`, M, H - 50);
+    const t = `${i + 1} / ${pages.length}`, w = q.measureText(t).width; q.fillText(t, W - M - w, H - 50); });
+  const J = await Promise.all(pages.map(p => new Promise(r => p.toBlob(async bl => r({ w: W, h: H, bytes: new Uint8Array(await bl.arrayBuffer()) }), 'image/jpeg', .9))));
+  return { blob: pdfFromJpegs(J), name: `liste-de-courses-${dates[from]}.pdf`, pages: pages.length };
+}
+async function coursesSharePDF(){
+  toast('📄 Préparation du PDF…');
+  try{ const { blob, name } = await coursesPDF(), file = new File([blob], name, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'Liste de courses' }).catch(() => {});
+    else { const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('📄 PDF enregistré'); } }
+  catch(e){ toast('Le PDF n’a pas pu être créé sur cet appareil'); }
 }
 function bindCourses(){
   const wk = curWk();
@@ -4259,6 +4362,7 @@ function bindCourses(){
   const bS = $('#bSt'); if (bS) bS.onchange = () => { foyer.budget = Object.assign({}, budgetCfg(), { store: bS.value }); saveFoyer(); viewNutrition(); };
   const bM = $('#bMax'); if (bM) bM.onchange = () => { const v = num(bM.value); foyer.budget = Object.assign({}, budgetCfg(), { max: v && v > 0 ? v : null }); saveFoyer(); viewNutrition(); };
   $('#exf').onsubmit = ev => { ev.preventDefault(); const v = $('#exIn').value.trim(); if (!v) return; (foyer.extra[wk] = foyer.extra[wk] || []).push(v); saveFoyer(); viewNutrition(); };
+  $('#pdfBtn').onclick = () => coursesSharePDF();
   $('#mailBtn').onclick = () => { location.href = 'mailto:?subject=' + encodeURIComponent('🛒 Liste de courses') + '&body=' + encodeURIComponent(coursesText()); };
   // menu de partage du téléphone : Gmail, Messages, WhatsApp… (ne dépend pas du compte configuré dans Mail)
   const sh = $('#shareBtn'); if (sh) sh.onclick = () => navigator.share({ title: 'Liste de courses', text: coursesText() }).catch(() => {});
@@ -5699,6 +5803,9 @@ function evoAct(a, b){
     case 'stend': storyEnd(); break;
     case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
     case 'yearstory': storyYear(b.dataset.y); break;
+    case 'aisles': sheetAisles(); break;
+    case 'aisle': { const O = rayOrder(), i = +b.dataset.i, j = i + +b.dataset.d; if (j < 0 || j >= O.length) break; [O[i], O[j]] = [O[j], O[i]]; foyer.rayOrder = O; saveFoyer(); sheetAisles(); if (view === 'nutrition') viewNutrition(); break; }
+    case 'aislereset': delete foyer.rayOrder; saveFoyer(); sheetAisles(); if (view === 'nutrition') viewNutrition(); toast('↩️ Ordre par défaut'); break;
     case 'calday': sheetDay(b.dataset.d); break;
     case 'caly': calY = (calY || new Date().getFullYear()) + +b.dataset.d; viewProgres(); setTimeout(() => { const el = document.querySelector('.cal-sec'); if (el) el.scrollIntoView({ block: 'start' }); }, 50); break;
     case 'goaladd': sheetGoal(); break;
@@ -6349,7 +6456,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 85;
+const APP_VERSION = 87;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

@@ -18,7 +18,7 @@ L'application Montée en véhicule du CS Cruzy / Quarante a son propre projet : 
 - Vitamines et minéraux : table de composition nutritionnelle **Ciqual** de l'ANSES (données publiques), repères du jour ANSES 2021. Lait, miel, oignon et une partie du jambon : valeurs moyennes approchées.
 - Silhouettes des muscles travaillés (homme et femme, face et dos) : [react-muscle-highlighter](https://github.com/soroojshehryar/react-muscle-highlighter), licence MIT, © 2024 My Muscle Contributors (texte de la licence dans `licences/`).
 
-## Sécurité de la base (connexion obligatoire, version 85)
+## Sécurité de la base (connexion obligatoire, version 87)
 
 L'appli demande maintenant une connexion (email + mot de passe Firebase) avant de lire ou
 d'enregistrer en ligne. Le téléphone reste connecté ensuite. Mise en place dans la console Firebase :
