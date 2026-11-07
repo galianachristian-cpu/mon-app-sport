@@ -837,7 +837,7 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
    CONFIGURATION FIREBASE (inchangée : mêmes données qu'avant)
    ============================================================ */
 const firebaseConfig = {
-  apiKey: "AIzaSyAcqFFFbRlKgnL7LQLY6YFoGV8oYSqBSWA",
+  apiKey: "AIzaSyAcqFFFbRIkgnL7lQLY6YFoGV8oYSqBSWA",
   authDomain: "mon-app-sport-2cba3.firebaseapp.com",
   projectId: "mon-app-sport-2cba3",
   storageBucket: "mon-app-sport-2cba3.firebasestorage.app",
@@ -6457,7 +6457,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 88;
+const APP_VERSION = 89;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
