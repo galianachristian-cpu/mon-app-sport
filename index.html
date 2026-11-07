@@ -16,7 +16,19 @@
 <!-- Firebase SDK (sauvegarde en ligne) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
+#cnx{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 0%,rgba(167,139,250,.25),transparent 60%),var(--bg,#0b0f19)}
+#cnx.on{display:flex}
+.cnx-box{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;text-align:center;color:var(--text,#eef2f8);font-family:Outfit,system-ui,sans-serif}
+.cnx-logo{width:84px;height:84px;margin:0 auto;border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.cnx-box h2{margin:4px 0 0;font-size:26px}
+.cnx-box .muted{margin:0 0 6px;font-size:14px;color:var(--muted,#8b9ab4);line-height:1.45}
+.cnx-box input{padding:14px 16px;border-radius:14px;border:1px solid var(--line,#24304a);background:var(--card,#141b2d);color:inherit;font:inherit;font-size:16px}
+.cnx-btn{padding:14px;border:0;border-radius:14px;font:inherit;font-size:16px;font-weight:800;color:#0b0f19;background:var(--grad,linear-gradient(135deg,#22d3ee,#a78bfa));cursor:pointer}
+.cnx-btn:disabled{opacity:.6}
+.cnx-lien{background:none;border:0;color:var(--a1,#22d3ee);font:inherit;font-size:14px;cursor:pointer}
+.cnx-err{min-height:20px;margin:0;font-size:14px;color:var(--warn,#fbbf24)}
 :root{
   --bg:#0b0f19;--bg2:#0f1524;--card:#141b2d;--card2:#1a2338;--line:#24304a;--text:#eef2f8;--muted:#8b9ab4;
   --soft:#c9d4e6;--a1:#22d3ee;--a2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--ko:#f87171;
@@ -831,8 +843,8 @@ const firebaseConfig = {
   appId: "1:841648877986:web:9a70279ba4edafca8c2fb",
   measurementId: "G-EVPMSD8YBW"
 };
-let db = null;
-try { if (window.firebase) { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); try { if (db.enablePersistence) db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {} } } catch (e) { db = null; }
+let db = null, auth = null;
+try { if (window.firebase) { firebase.initializeApp(firebaseConfig); try { auth = firebase.auth(); } catch (e) { auth = null; } db = firebase.firestore(); try { if (db.enablePersistence) db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {} } } catch (e) { db = null; }
 /* Profils : chacun a son propre document Firebase. « user1 » = ton document d'origine. */
 const PROFILES = [
   { id:'user1', nom:'Moi', a1:'#22d3ee', a2:'#a78bfa' },
@@ -1646,6 +1658,7 @@ async function switchProfile(id, unlocked){
 function sheetProfiles(){
   openSheet(`<h2>Qui s’entraîne ?</h2>
     <div class="profs">${PROFILES.map(p => `<button class="prof ${p.id === profile.id ? 'on' : ''}" data-prof="${p.id}" style="--p1:${p.a1};--p2:${p.a2}"><span class="av big">${esc(p.nom.slice(0, 1).toUpperCase())}</span><b>${esc(p.nom)}</b>${p.id === profile.id ? '<small>Profil actuel</small>' : '<small>Changer</small>'}</button>`).join('')}</div>
+    ${auth && auth.currentUser ? `<p class="muted" style="font-size:12px;text-align:center;margin-top:14px">Connecté : ${esc(auth.currentUser.email || '')} · <a href="#" onclick="seDeconnecter();return false" style="color:var(--a1)">se déconnecter</a></p>` : ''}
     <p class="muted" style="font-size:11.5px;text-align:center;margin-top:14px">Version ${APP_VERSION}${/deploy-preview/.test(location.hostname) ? ' · ⚠️ aperçu de test : ne se met pas à jour, ouvre l’adresse principale' : ''}</p>
     <p style="color:var(--muted);font-size:13px;margin:14px 0 10px">Chaque profil a son programme, ses charges et ses progrès.</p>
     <p style="color:var(--muted);font-size:13px;margin:4px 0 8px">Ta couleur</p>
@@ -6336,7 +6349,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 84;
+const APP_VERSION = 85;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -6345,12 +6358,66 @@ if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
     document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
   }).catch(() => {}));
 }
+/* ============================================================
+   CONNEXION : la base en ligne n'est lisible qu'avec ton compte.
+   Une fois connecté, le téléphone s'en souvient (pas besoin de recommencer).
+   ============================================================ */
+function attendreConnexion(){
+  return new Promise(ok => {
+    if (!db || !auth) return ok();
+    let fini = false;
+    const fin = () => { if (!fini){ fini = true; ok(); } };
+    const stop = auth.onAuthStateChanged(u => { if (u){ stop(); cacherConnexion(); fin(); } else { stop(); afficherConnexion(fin); } });
+    // hors ligne et jamais connecté sur ce téléphone : on garde les données locales
+    setTimeout(() => { if (!fini && navigator.onLine === false) fin(); }, 4000);
+  });
+}
+function afficherConnexion(suite){
+  let el = document.getElementById('cnx');
+  if (!el){ el = document.createElement('div'); el.id = 'cnx'; document.body.appendChild(el); }
+  el.innerHTML = `<form class="cnx-box" autocomplete="on">
+    <img src="icon-192-v2.png" alt="" class="cnx-logo">
+    <h2>Mon Programme</h2>
+    <p class="muted">Connecte-toi pour retrouver tes séances. Tes données ne sont plus lisibles sans ce compte.</p>
+    <input type="email" id="cnxEmail" placeholder="Adresse email" autocomplete="username" required>
+    <input type="password" id="cnxMdp" placeholder="Mot de passe" autocomplete="current-password" required>
+    <button type="submit" class="cnx-btn">Se connecter</button>
+    <button type="button" class="cnx-lien" id="cnxOubli">Mot de passe oublié ?</button>
+    <p class="cnx-err" id="cnxErr"></p></form>`;
+  el.classList.add('on');
+  const err = m => { document.getElementById('cnxErr').textContent = m; };
+  el.querySelector('form').onsubmit = async ev => {
+    ev.preventDefault();
+    const b = el.querySelector('.cnx-btn'); b.disabled = true; b.textContent = 'Connexion…'; err('');
+    try{
+      await auth.signInWithEmailAndPassword(document.getElementById('cnxEmail').value.trim(), document.getElementById('cnxMdp').value);
+      cacherConnexion(); suite();
+    }catch(e){
+      const c = e && e.code || '';
+      err(/operation-not-allowed/.test(c) ? 'La connexion par email n’est pas encore activée dans Firebase.' : /network/.test(c) ? 'Pas de réseau : réessaie quand tu es connecté.' : /too-many/.test(c) ? 'Trop d’essais : patiente quelques minutes.' : 'Email ou mot de passe incorrect.');
+    }finally{ b.disabled = false; b.textContent = 'Se connecter'; }
+  };
+  document.getElementById('cnxOubli').onclick = async () => {
+    const m = document.getElementById('cnxEmail').value.trim();
+    if (!m){ err('Écris d’abord ton adresse email.'); return; }
+    try{ await auth.sendPasswordResetEmail(m); err('📧 Email envoyé : suis le lien pour choisir un nouveau mot de passe.'); }
+    catch(e){ err('Envoi impossible : vérifie l’adresse.'); }
+  };
+  setTimeout(() => { const i = document.getElementById('cnxEmail'); if (i) i.focus(); }, 300);
+}
+function cacherConnexion(){ const el = document.getElementById('cnx'); if (el) el.classList.remove('on'); }
+async function seDeconnecter(){
+  if (!auth || !confirm('Se déconnecter de Mon Programme sur ce téléphone ?')) return;
+  try{ await auth.signOut(); }catch(e){}
+  location.reload();
+}
 (async function init(){
   applyTheme(); applyProfileTheme();
   if (lockOf(profile.id)) showLock(profile.id, null, false);
   T.total = T.left = settings.preset;
   currentDay = todayIdx();
   render();
+  await attendreConnexion();
   await load();
   render();
   const on = document.querySelector('.day.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
