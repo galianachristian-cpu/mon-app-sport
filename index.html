@@ -6406,7 +6406,9 @@ document.addEventListener('click', e => {
   if (k === 'cancel'){ hideLock(); return; }
   if (k === 'forgot'){ $('#lock .lk-in').innerHTML = `<h2>Code oublié ?</h2><p class="lk-msg" style="max-width:320px">On peut supprimer le code de ce profil sur ce téléphone. Tes données ne sont pas touchées ; tu pourras choisir un nouveau code dans la fenêtre des profils.</p><div class="lk-foot"><button data-lk="back">Retour</button><button data-lk="reset" class="danger">Supprimer le code</button></div>`; return; }
   if (k === 'back'){ paintLock(); return; }
-  if (k === 'reset'){ lockPut(st.pid, null); location.reload(); return; }
+  // code supprimé : on ouvre directement le profil voulu (avant, la page se rechargeait et revenait sur l'autre profil)
+  if (k === 'reset'){ const pid = st.pid, fn = st.onOk, nom = (PROFILES.find(x => x.id === pid) || {}).nom || ''; lockPut(pid, null); hideLock();
+    if (fn) fn(); else render(); setTimeout(() => toast(`🔓 Code de ${nom} supprimé : tu peux en choisir un nouveau dans la fenêtre des profils`), 700); return; }
   const L = lockOf(st.pid) || {}; if ((L.until || 0) > Date.now() || st.buf.length >= (L.n || 4)) return;
   st.buf += k; paintLock(); if (st.buf.length === (L.n || 4)) setTimeout(lockTry, 120);
 });
@@ -6457,7 +6459,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 89;
+const APP_VERSION = 90;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
