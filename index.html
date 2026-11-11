@@ -4007,7 +4007,7 @@ function nutJour(){
 }
 // même plat pour les deux : tableau ingrédient par ingrédient (moi · l'autre · total)
 const sameDish = (x, ox) => !!(ox && !x.away && !ox.away && x.por && ox.por && x.por.r.id === ox.por.r.id);
-function duoTable(x, ox){
+function duoTable(x, ox, ro){
   const me = profile, o = ox.op, A = x.por, B = ox.por, mA = Object.fromEntries(A.ing), mB = Object.fromEntries(B.ing);
   const foods = [...new Set([...A.ing.map(([f]) => f), ...B.ing.map(([f]) => f)])];
   const cell = (f, g, side) => g ? `<b>${qty(f, g)}</b>${CUIT[f] ? `<small>≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === side ? `<small>${x.meal === 'col' ? 'en plus' : 'dessert'}</small>` : ''}` : '<span class="muted">–</span>';
@@ -4015,11 +4015,11 @@ function duoTable(x, ox){
   return `<p class="dt-lead">👫 Même plat, chacun sa portion${ready ? '' : ` <small class="muted">(${esc(o.nom)} : portion standard, profil nutrition à remplir)</small>`}</p>
   <div class="dtab-w"><table class="dtab" style="--c1:${me.a1};--c2:${o.a1}"><thead><tr><th></th><th class="c1">${esc(me.nom)}</th><th class="c2">${esc(o.nom)}</th><th>Total</th></tr></thead><tbody>
   ${foods.map(f => `<tr><th>${esc(FOODS[f].n)}${CUIT[f] ? ' <small>(cru)</small>' : ''}</th>
-    <td class="c1">${mA[f] ? `<button class="dt-sw" data-act="swap" data-meal="${x.meal}" data-f="${f}" aria-label="Remplacer ${esc(FOODS[f].n)}">${cell(f, mA[f], A.side)}</button>` : cell(f, 0)}</td>
+    <td class="c1">${mA[f] ? (ro ? cell(f, mA[f], A.side) : `<button class="dt-sw" data-act="swap" data-meal="${x.meal}" data-f="${f}" aria-label="Remplacer ${esc(FOODS[f].n)}">${cell(f, mA[f], A.side)}</button>`) : cell(f, 0)}</td>
     <td class="c2">${cell(f, mB[f], B.side)}</td><td class="tot">${cell(f, (mA[f] || 0) + (mB[f] || 0))}</td></tr>`).join('')}
   </tbody><tfoot><tr><th>Calories</th><td class="c1">${kc(A.m.k)}</td><td class="c2">${kc(B.m.k)}</td><td class="tot">${kc(A.m.k + B.m.k)}</td></tr>
   <tr><th>Protéines</th><td class="c1">${Math.round(A.m.p)} g</td><td class="c2">${Math.round(B.m.p)} g</td><td class="tot">${Math.round(A.m.p + B.m.p)} g</td></tr></tfoot></table></div>
-  <p class="muted" style="font-size:11.5px;margin-top:6px">🍳 Cuisine le total, puis sers chaque assiette avec sa colonne. Touche une de tes quantités pour remplacer l’aliment.</p>`;
+  <p class="muted" style="font-size:11.5px;margin-top:6px">🍳 Cuisine le total, puis sers chaque assiette avec sa colonne.${ro ? '' : ' Touche une de tes quantités pour remplacer l’aliment.'}</p>`;
 }
 // plat différent, ou absence : ce que mange l'autre
 function duoBlock(x, ox){
@@ -4053,12 +4053,17 @@ function bindJour(){
 }
 function sheetRecette(meal){
   const wk = curWk(), rid = ridOf(planOf(wk), nutDay, meal, profile.id), p = portion(rid, profile.id, meal, nutDay, wk);
+  // l'autre profil : même plat → les deux portions côte à côte ; sinon une ligne pour dire ce qu'il mange
+  const op = otherProfile(); let ox = null; try{ ox = op ? Object.assign(dayPortions(op.id, nutDay, wk).find(z => z.meal === meal) || {}, { op }) : null; }catch(e){ ox = null; }
+  const duo = sameDish({ por: p, meal, away: false }, ox), B = duo ? ox.por : null;
   openSheet(`<h2>${p.r.e} ${esc(p.r.n)}</h2>
-    <div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
-    <div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p>${p.ing.map(([f, g]) => `• ${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>
+    ${duo ? `<div class="three"><div><b>${kc(p.m.k)} · ${kc(B.m.k)}</b><small>kcal ${esc(profile.nom)} · ${esc(op.nom)}</small></div><div><b>${Math.round(p.m.p)} · ${Math.round(B.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
+    <div class="box">${duoTable({ por: p, meal }, ox, true)}</div>` : `<div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
+    ${ox && op ? (ox.away ? `<p class="duo-por" style="--c2:${op.a1}">🧳 <b>${esc(op.nom)}</b> n’est pas à la maison : seule ta portion est à préparer.</p>` : ox.por ? `<p class="duo-por" style="--c2:${op.a1}">🍽️ <b>${esc(op.nom)}</b> mange autre chose : ${ox.por.r.e} ${esc(ox.por.r.n)}</p>` : '') : ''}`}
+    ${duo ? '' : `<div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p>${p.ing.map(([f, g]) => `• ${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>`}
     <div class="box"><h4>👩‍🍳 Préparation</h4><p>${esc(p.r.steps)}</p></div>
     <div class="row" style="margin:4px 0 10px"><button class="btn sm ${favOf()[p.r.id] ? 'pri' : ''}" data-x="fav" data-rid="${p.r.id}" data-meal="${meal}">${favOf()[p.r.id] ? '❤️ Favori' : '🤍 J’adore'}</button><button class="btn sm ${banOf()[p.r.id] ? 'danger' : ''}" data-x="ban" data-rid="${p.r.id}" data-meal="${meal}">${banOf()[p.r.id] ? '👎 Écarté (annuler)' : '👎 Ne plus proposer'}</button></div>
-    <p class="muted" style="font-size:12px">Glucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
+    <p class="muted" style="font-size:12px">${duo ? 'Ta portion : g' : 'G'}lucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
 }
 function sheetSwap(meal, f){
   const wk = curWk(), key = [wk, nutDay, meal, profile.id].join('|'), alts = (SUBS[f] || []).filter(x => !(nut.excl || []).includes(x));
@@ -6459,7 +6464,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 90;
+const APP_VERSION = 91;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
