@@ -13,6 +13,11 @@ L'application Mon Garage a maintenant son propre projet : https://github.com/gal
 L'application Montée en véhicule du CS Cruzy / Quarante a son propre projet : https://github.com/galianachristian-cpu/monter-vehicule
 (adresse : https://galianachristian-cpu.github.io/monter-vehicule/). L'ancienne adresse `mon-app-sport/pompiers/` redirige vers la nouvelle.
 
+## Vérifications automatiques
+Avant chaque publication, GitHub ouvre l'application dans un navigateur et lance `tests/smoke.cjs` : parcours de tous les écrans, ouverture des fenêtres, contrôle des recettes et des fonctions principales. Si une vérification échoue, la nouvelle version n'est pas publiée et l'ancienne reste en ligne.
+
+Pour les lancer à la main : `npm install --no-save playwright && npx playwright install chromium && node tests/smoke.cjs`.
+
 ## Crédits
 - Animations de `img/anim/` (seulement pour les exercices absents de docteur-fitness) : photos de [Free Exercise DB](https://github.com/yuhonas/free-exercise-db) (domaine public, Unlicense), assemblées en GIF.
 - Vitamines et minéraux : table de composition nutritionnelle **Ciqual** de l'ANSES (données publiques), repères du jour ANSES 2021. Lait, miel, oignon et une partie du jambon : valeurs moyennes approchées.
