@@ -145,6 +145,8 @@ button{cursor:pointer;border:none;background:none}
 .dmus{margin-top:12px}.bodymap+.meta{display:flex;flex-wrap:wrap;gap:6px}.dmus summary{cursor:pointer;font-weight:800;font-size:14px;list-style:none;display:flex;align-items:center;gap:6px}.dmus summary::-webkit-details-marker{display:none}
 .dmus summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}.dmus:not([open]) summary::after{transform:rotate(-90deg)}.dmus[open] summary{margin-bottom:10px}
 .aisles .aisle{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.aisles .aisle b{flex:1;min-width:0;font-size:14.5px}.aisles .an{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#0b0f19;font-weight:800;font-size:13px}
+.hiitc{margin-top:12px;border-color:color-mix(in srgb,#fbbf24 40%,var(--line))}.hih{display:flex;align-items:center;gap:10px}.hih>div{flex:1;min-width:0}.hih h3{font-size:19px;margin:0}.hii{font-size:34px}
+.hib{margin:10px 0 8px}.hib div{padding:8px 10px;border-radius:12px;background:var(--bg2);margin-bottom:6px}.hib b{display:block;font-size:13.5px}.hib span{font-size:12.5px;color:var(--soft)}.his{font-size:12.5px;margin-top:8px;color:var(--soft);text-align:center}
 .homecfg{display:block;margin:18px auto 4px;font-size:12.5px;color:var(--muted);padding:8px 12px}
 .newsv{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 2px 4px}.news .nw{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.news .nw:last-child{border:0}
 .news .nw span{font-size:22px}.news .nw b{display:block;font-size:14px}.news .nw small{font-size:12px;color:var(--muted)}
@@ -1663,6 +1665,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [93, [['⚡', 'Vraies séances HIIT guidées par le chrono', 'Séance → un jour HIIT → « Lancer le HIIT guidé »'], ['🔄', '10 formats HIIT qui changent chaque semaine, 3 niveaux', 'Séance → jour HIIT']]],
   [92, [['⚙️', 'Accueil personnalisable', 'Séance → tout en bas → « Personnaliser l’accueil »'], ['🍽️', '33 nouvelles recettes', 'Nutrition → Semaine → « Nouveaux menus »'], ['🔤', 'Bibliothèque par ordre alphabétique', 'Séance → Bibliothèque'], ['🆕', 'Cet écran « Quoi de neuf »', 'Rond du profil en haut → « Quoi de neuf »']]],
   [91, [['👫', 'Recette : vos deux portions côte à côte', 'Nutrition → touche le nom d’un plat « En commun »']]],
   [86, [['🗺️', 'Liste de courses dans le sens du magasin', 'Nutrition → Courses → « Ordre des rayons »'], ['📄', 'Liste de courses en PDF', 'Nutrition → Courses → « Envoyer la liste en PDF »']]],
@@ -1970,9 +1973,10 @@ function viewSeance(){
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
   </section>
   ${!storyOn && list.length > 1 ? stripRow(k, list) : ''}
-  ${hOn('mus') ? dayMusCard(k, list) : ''}
+  ${hiitSessCard(currentDay)}
+  ${hOn('mus') && !isHiitDay(currentDay) ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
-  ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" data-act="guide" style="flex:1">▶️ Séance guidée</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
+  ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
@@ -3286,6 +3290,7 @@ function wodBestOf(L){
   L = L || []; const ft = L.filter(r => r.mode === 'fortime' && !r.cap), am = L.filter(r => r.mode === 'amrap');
   if (ft.length){ const t = Math.min(...ft.map(r => r.t)); return { txt: fmtT(t), v: -t }; }
   if (am.length){ const n = Math.max(...am.map(r => r.r)); return { txt: `${n} tours`, v: n }; }
+  const hs = L.filter(r => r.sc); if (hs.length){ const b = hs.reduce((a, r) => r.sc > a.sc ? r : a); return { txt: `${b.sc} ${b.u || 'cal'}`, v: b.sc }; }
   const cp = L.filter(r => r.cap); if (cp.length){ const n = Math.max(...cp.map(r => r.r)); return { txt: `${n} tours (limite)`, v: -1e6 + n }; }
   return null;
 }
@@ -4700,6 +4705,65 @@ function hiitList(v){
     if (e && !canDo(e.n)){ const a = altDoable(e, used); e = a ? exFromLib(a, { s: e.s, r: LIB_BY[a].r, ph: x.ph }) : null; }
     if (e) used.add(e.n); return e; }).filter(Boolean);
 }
+/* ---------- séances HIIT guidées : une rotation de formats, 3 niveaux, pilotées par le minuteur ---------- */
+// bloc : ex = exercices enchaînés, w / r = effort / repos (s), ws = durées d'effort tour par tour (pyramide), n = tours selon le niveau, p = pause après le bloc
+const HM = ['Assault bike', 'Rameur', 'SkiErg', 'Vélo'];
+const HIIT_S = [
+  { id: '3030', n: '30/30 machine', ic: '🚴', d: '30 s à fond, 30 s tranquille, sur la même machine.', u: 'cal', B: [{ ex: ['@0'], w: 30, r: 30, n: [8, 10, 14] }] },
+  { id: 'tabata2', n: 'Tabata double', ic: '⚡', d: '20 s d’effort, 10 s de repos : deux blocs très courts et très intenses.', B: [{ ex: ['Burpees'], w: 20, r: 10, n: [6, 8, 8], p: 90 }, { ex: ['Kettlebell swing'], w: 20, r: 10, n: [6, 8, 8], p: 90 }, { ex: ['Mountain climbers'], w: 20, r: 10, n: [0, 0, 8] }] },
+  { id: 'pyramide', n: 'La pyramide', ic: '🔺', d: 'L’effort s’allonge puis redescend ; repos égal à l’effort.', u: 'cal', B: [{ ex: ['@1'], ws: [[20, 30, 40, 30, 20], [20, 30, 40, 50, 40, 30, 20], [20, 30, 40, 50, 60, 50, 40, 30, 20]] }] },
+  { id: '4postes', n: 'Les 4 postes', ic: '🔁', d: '40 s par poste, 20 s pour changer. Machine, kettlebell, ballon, gainage.', B: [{ ex: ['@0', 'Kettlebell swing', 'Wall ball', 'Gainage'], w: 40, r: 20, n: [3, 4, 5], p: 60 }] },
+  { id: 'sprints', n: 'Sprints d’une minute', ic: '🚣', d: '1 min soutenue, 1 min de récupération.', u: 'cal', B: [{ ex: ['@1'], w: 60, r: 60, n: [5, 6, 8] }] },
+  { id: 'pompier', n: 'Circuit pompier', ic: '🚒', d: 'Lancer, porter, pousser : 30 s d’effort, 30 s de repos.', B: [{ ex: ['Slam médecine-ball', 'Marche du fermier', 'Wall ball', 'Burpees'], w: 30, r: 30, n: [3, 4, 5], p: 60 }] },
+  { id: 'jambes', n: 'Jambes de feu', ic: '🦵', d: '30 s de sauts, 30 s de repos. Réceptions souples, genoux dans l’axe.', B: [{ ex: ['Squat sauté', 'Sauts latéraux (skater)', 'Mountain climbers', 'Jumping jacks'], w: 30, r: 30, n: [2, 3, 4], p: 60 }] },
+  { id: '4515', n: '45/15 mixte', ic: '🔥', d: '45 s d’effort, 15 s pour changer : deux machines, pompes et gainage.', B: [{ ex: ['@2', 'Pompes', '@1', 'Gainage'], w: 45, r: 15, n: [3, 4, 5], p: 60 }] },
+  { id: 'courts', n: 'Sprints courts', ic: '💥', d: '15 s au maximum, 45 s très lent. La qualité du sprint avant tout.', u: 'cal', B: [{ ex: ['@0'], w: 15, r: 45, n: [8, 10, 12] }] },
+  { id: 'duo', n: 'Duo de machines', ic: '🎛️', d: '40 s sur une machine, 20 s pour passer à l’autre.', u: 'cal', B: [{ ex: ['@0', '@2'], w: 40, r: 20, n: [4, 5, 6] }] }];
+// « @0 » = 1re machine disponible à partir de ce rang ; les autres exercices sont remplacés si le matériel manque
+function hiitEx(x){
+  if (x[0] === '@'){ const i = +x[1]; return HM.slice(i).concat(HM.slice(0, i)).find(m => LIB_BY[m] && canDo(m)) || HM[i]; }
+  if (LIB_BY[x] && !canDo(x)){ const a = altDoable(LIB_BY[x], new Set()); if (a) return a; }
+  return x;
+}
+// séance du jour : change chaque semaine, différente pour les deux jours HIIT, la même pour les deux profils
+function hiitOfDay(di){
+  const days = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay), slot = Math.max(0, days.indexOf(di)), wn = +String(curWk()).slice(-2) || 0;
+  return HIIT_S[(wn * 3 + slot * 5) % HIIT_S.length];
+}
+function hiitSeq(H, l){
+  const S = [], m0 = hiitEx('@1'); S.push({ k: 'work', l: `Échauffement · ${m0} tranquille`, nm: m0, s: [240, 180, 180][l] });
+  const Bk = H.B.map(b => ({ b, n: b.ws ? b.ws[l].length : b.n[l], ex: b.ex.map(hiitEx) })).filter(x => x.n > 0);
+  Bk.forEach((x, bi) => { const { b, n, ex } = x; S.push({ k: 'rest', l: bi ? 'Pause' : 'Prépare-toi pour le bloc', s: bi ? (Bk[bi - 1].b.p || 60) : 15, next: ex[0] });
+    for (let t = 1; t <= n; t++) ex.forEach((e, j) => { const w = b.ws ? b.ws[l][t - 1] : b.w, r = b.ws ? w : b.r, last = t === n && j === ex.length - 1;
+      S.push({ k: 'work', l: e, nm: e, s: w, tour: t, n }); if (!last && r) S.push({ k: 'rest', l: 'Repos', s: r, tour: t, n, next: ex[(j + 1) % ex.length] }); }); });
+  S.push({ k: 'rest', l: 'Retour au calme · marche et respire', s: 120 });
+  return S;
+}
+const hiitKey = (H, l) => `⚡ ${H.n} · ${LVL[l]}`;
+function hiitSessCard(di){
+  if (!isHiitDay(di)) return '';
+  const H = hiitOfDay(di), l = settings.hiitLvl ?? 1, S = hiitSeq(H, l), tot = S.reduce((a, x) => a + x.s, 0) + 10, eff = S.filter(x => x.k === 'work').slice(1).reduce((a, x) => a + x.s, 0);
+  const key = hiitKey(H, l), mine = ((coach && coach.wods) || {})[key] || [], ot = other && other.d && other.d.coach ? (other.d.coach.wods || {})[key] || [] : [], bm = wodBestOf(mine), bo = wodBestOf(ot);
+  const Bk = H.B.map(b => ({ n: b.ws ? b.ws[l].length : b.n[l], ex: b.ex.map(hiitEx), t: b.ws ? b.ws[l].join(' · ') + ' s' : `${b.w} s / ${b.r} s` })).filter(x => x.n > 0);
+  return `<section class="card hiitc"><div class="hih"><span class="hii">${H.ic}</span><div><small class="muted">⚡ Séance HIIT de la semaine</small><h3>${esc(H.n)}</h3></div><span class="chip">⏱️ ${Math.round(tot / 60)} min</span></div>
+    <p class="muted" style="font-size:13px;margin:6px 0 10px">${esc(H.d)}</p>
+    <div class="seg small">${LVL.map((x, i) => `<button class="${i === l ? 'on' : ''}" data-x="hiitlvl" data-l="${i}">${x}</button>`).join('')}</div>
+    <div class="hib">${Bk.map((b, i) => `<div><b>${Bk.length > 1 ? `Bloc ${i + 1} · ` : ''}${b.n} tour${b.n > 1 ? 's' : ''} · ${b.t}</b><span>${b.ex.map(esc).join(' → ')}</span></div>`).join('')}</div>
+    <p class="muted" style="font-size:12px">Échauffement et retour au calme compris · ${Math.round(eff / 60)} min d’effort réel. 🗣️ Pendant l’effort, tu ne dois pas pouvoir tenir une conversation.</p>
+    ${di === todayIdx() ? `<button class="btn pri block" data-x="hiitrun" style="margin-top:10px;padding:15px;font-size:16px">▶️ Lancer le HIIT guidé</button>` : '<p class="muted" style="font-size:12.5px;margin-top:8px">Le bouton pour lancer la séance apparaît le jour même.</p>'}
+    ${mine.length || ot.length ? `<p class="his">${mine.length ? `✅ Fait ${mine.length} fois${bm ? ' · record ' + esc(bm.txt) : ''}` : 'Pas encore fait'}${ot.length ? ` · ${esc(other.p.nom)} : ${bo ? esc(bo.txt) : 'fait ' + ot.length + ' fois'}` : ''}</p>` : ''}</section>`;
+}
+function hiitRun(){
+  const di = todayIdx(), H = hiitOfDay(di), l = settings.hiitLvl ?? 1, key = hiitKey(H, l);
+  itStart(Object.assign({}, itCfg(), { mode: 'hiit', seq: hiitSeq(H, l), wod: key, then: () => hiitAfter(key, H) }));
+}
+// fin du HIIT guidé : le jour est validé, puis on note le score s'il y en a un
+function hiitAfter(key, H){
+  const k = 'day' + todayIdx(); done[k] = (data[k] || []).map(() => true); save(); render(); confetti();
+  openSheet(`<div style="text-align:center"><div style="font-size:54px">🏁</div><h2 style="padding:0">${esc(H.n)} terminé !</h2><p class="muted">La séance est enregistrée et ton jour HIIT est validé.</p></div>
+    ${H.u === 'cal' ? `<form id="hsF" style="margin-top:14px"><div class="fg"><label for="hsV">Calories affichées par la machine (facultatif)</label><div class="row"><input id="hsV" class="inp" inputmode="numeric" style="flex:1" placeholder="ex. 180"><span class="muted">cal</span></div></div><button class="btn pri block" type="submit">💾 Enregistrer mon score</button></form>` : '<button class="btn pri block" data-act="close" style="margin-top:14px">Terminé</button>'}`);
+  const F = $('#hsF'); if (F) F.onsubmit = ev => { ev.preventDefault(); const v = Math.round(num($('#hsV').value) || 0); if (v > 0){ const L = (coach.wods[key] || []).slice(), i = L.length - 1; if (i >= 0){ const best = Math.max(0, ...L.slice(0, i).map(r => r.sc || 0)); L[i] = Object.assign({}, L[i], { sc: v, u: 'cal' }); coach = Object.assign({}, coach, { wods: Object.assign({}, coach.wods, { [key]: L }) }); save(); toast(best && v > best ? `🏆 Record : ${v} cal (avant ${best})` : `💾 ${v} cal enregistrées`); } } closeSheet(); render(); };
+}
 // muscles proches : où ranger les exercices d'un jour supprimé
 const REL = { 'Épaules':['Pectoraux','Triceps'], 'Triceps':['Pectoraux','Épaules'], 'Pectoraux':['Triceps','Épaules'], 'Biceps':['Dos'], 'Dos':['Biceps'],
   'Fessiers':['Quadriceps','Ischio-jambiers'], 'Ischio-jambiers':['Quadriceps','Fessiers'], 'Quadriceps':['Ischio-jambiers','Fessiers'], 'Mollets':['Quadriceps','Ischio-jambiers'] };
@@ -5394,6 +5458,7 @@ const ITM = { echauf:['Échauffement','🔥','2 min de cardio léger + mobilité
 const itCfg = () => (settings.it = Object.assign({ eZone:'auto', eSec:30, eN:8, eDuo:false, mode:'tabata', tRounds:8, work:30, rest:30, rounds:10, emom:10, emomEx:'10 burpees', circ:'Pompes\nSquats sautés\nMountain climbers\nGainage', cWork:40, cRest:20, cRounds:3, cPause:60, aDur:12, aList:'10 kettlebell swings\n10 burpees\n12 cal assault bike', fRounds:3, fCap:20, fList:'15 cal rameur\n15 squats goblet\n10 pompes', wod:null }, settings.it || {}));
 const itLines = v => String(v || '').split('\n').map(x => x.trim()).filter(Boolean);
 function itSeq(c){
+  if (c.seq) return [{ k:'prep', l:'Prépare-toi', s:10 }].concat(c.seq); // séance toute faite (HIIT guidé)
   const S = [{ k:'prep', l:'Prépare-toi', s:10 }];
   if (c.mode === 'tabata' || c.mode === 'hiit'){ const n = c.mode === 'tabata' ? c.tRounds : c.rounds, w = c.mode === 'tabata' ? 20 : c.work, r = c.mode === 'tabata' ? 10 : c.rest;
     for (let i = 1; i <= n; i++){ S.push({ k:'work', l:'Effort', s:w, tour:i, n }); if (i < n && r) S.push({ k:'rest', l:'Repos', s:r, tour:i, n }); } }
@@ -5437,7 +5502,8 @@ const wodScore = r => r.mode === 'fortime' ? (r.cap ? `Limite de temps · ${r.r}
 function wodBest(n){
   const L = ((coach && coach.wods) || {})[n] || []; if (!L.length) return '';
   const ft = L.filter(r => r.mode === 'fortime' && !r.cap), am = L.filter(r => r.mode === 'amrap');
-  return ft.length ? fmtT(Math.min(...ft.map(r => r.t))) : am.length ? `${Math.max(...am.map(r => r.r))} tours` : '';
+  const hs = L.filter(r => r.sc);
+  return ft.length ? fmtT(Math.min(...ft.map(r => r.t))) : am.length ? `${Math.max(...am.map(r => r.r))} tours` : hs.length ? `${Math.max(...hs.map(r => r.sc))} cal` : '';
 }
 function wodSave(n, res, c){
   coach = Object.assign({}, coach); coach.wods = Object.assign({}, coach.wods);
@@ -5551,7 +5617,7 @@ function itStart(cOver){
 function itEnter(i, over){
   IT.i = i; const s = IT.S[i]; IT.end = Date.now() + (s.s - (over || 0)) * 1000; IT.left = s.s - (over || 0); IT.beeped = -1;
   if (i){ beep(s.k === 'work' ? 1175 : 660, .45, .35); if (navigator.vibrate && settings.vibe) navigator.vibrate(s.k === 'work' ? [250] : [120, 80, 120]); }
-  speak(s.k === 'work' ? (s.amrap || s.ft ? 'Go ! ' + s.list.join(', ') : IT.c.mode === 'emom' ? 'Minute ' + s.tour + ', ' + s.l : (IT.c.mode === 'circuit' || IT.c.mode === 'etir' || IT.c.mode === 'echauf') ? s.l : 'Go !') : s.k === 'rest' ? (s.next ? 'Repos. Ensuite, ' + s.next : 'Repos') : 'Prépare-toi');
+  speak(s.k === 'work' ? (s.amrap || s.ft ? 'Go ! ' + s.list.join(', ') : IT.c.mode === 'emom' ? 'Minute ' + s.tour + ', ' + s.l : (IT.c.seq || IT.c.mode === 'circuit' || IT.c.mode === 'etir' || IT.c.mode === 'echauf') ? s.l : 'Go !') : s.k === 'rest' ? (s.next ? 'Repos. Ensuite, ' + s.next : 'Repos') : 'Prépare-toi');
   itRender();
 }
 function itTick(){
@@ -5596,7 +5662,7 @@ function itFinish(early){
   clearInterval(IT.iv); const mode = IT.c.mode, w = IT.S[IT.i], timed = w && (w.amrap || w.ft);
   const sec = timed ? Math.round(w.ft && early ? w.s - Math.max(0, (IT.end - Date.now()) / 1000) : w.s) : IT.S.reduce((a, x) => a + x.s, 0) - 10;
   if (timed){ const res = { d: today(), mode, r: IT.rounds }; if (w.ft){ res.t = sec; res.cap = !early; } wodSave(IT.c.wod || `${ITM[mode][0]} ${Math.round(w.s / 60)} min`, res, IT.c); }
-  else if (IT.c.wod && (mode === 'emom' || mode === 'circuit')) wodSave(IT.c.wod, { d: today(), mode, done: 1 }, IT.c);
+  else if (IT.c.wod && (IT.c.seq || mode === 'emom' || mode === 'circuit')) wodSave(IT.c.wod, { d: today(), mode, done: 1 }, IT.c);
   beep(1318, .8, .35); speak('Terminé, bravo !'); if (navigator.vibrate && settings.vibe) navigator.vibrate([300, 100, 300, 100, 600]);
   const then = IT.c.then; itLog(sec); IT = null;
   if (then){ closeFull(); setTimeout(then, 400); return; }
@@ -5898,6 +5964,8 @@ function evoAct(a, b){
     case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
     case 'yearstory': storyYear(b.dataset.y); break;
     case 'homecfg': sheetHome(); break;
+    case 'hiitlvl': settings.hiitLvl = +b.dataset.l; safeSet('mp_settings', settings); render(); break;
+    case 'hiitrun': hiitRun(); break;
     case 'hometog': { const c = homeCfg(), id = b.dataset.id; if (c.hide[id]) delete c.hide[id]; else c.hide[id] = 1; safeSet('mp_settings', settings); render(); sheetHome(); break; }
     case 'homelow': { const c = homeCfg(); c.low = !c.low; safeSet('mp_settings', settings); render(); sheetHome(); break; }
     case 'homereset': settings.home = { hide: {}, low: false }; safeSet('mp_settings', settings); render(); sheetHome(); break;
@@ -6558,7 +6626,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 92;
+const APP_VERSION = 93;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

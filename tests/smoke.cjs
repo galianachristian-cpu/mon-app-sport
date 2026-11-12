@@ -43,6 +43,7 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('remplacements : tous les aliments existent', await p.evaluate(() => Object.entries(SUBS).every(([a, L]) => FOODS[a] && L.every(b => FOODS[b]))));
   check('bibliothèque : noms uniques', await p.evaluate(() => new Set(LIB.map(x => x.n)).size === LIB.length));
   check('équivalences : listes triées', await p.evaluate(() => [EQ_KG, EQ_KC].every(L => L.every((x, i) => !i || L[i - 1][0] <= x[0]))));
+  check('HIIT : exercices connus, durées plausibles aux 3 niveaux', await p.evaluate(() => HIIT_S.every(H => [0, 1, 2].every(l => { const S = hiitSeq(H, l), t = S.reduce((a, x) => a + x.s, 0); return t >= 480 && t <= 2100 && S.filter(x => x.k === 'work').every(x => !x.nm || LIB_BY[x.nm]) && S.every(x => x.s > 0); })) && new Set(HIIT_S.map(H => H.id)).size === HIIT_S.length));
   check('progressions « plus facile / plus dur » : exercices connus', await p.evaluate(() => PROG.flat().every(n => LIB_BY[n])));
 
   console.log('3. Tous les écrans');
@@ -65,6 +66,12 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('accueil : masquer une carte', await p.evaluate(() => { go('seance'); const a = !!document.querySelector('.wkhero'); homeCfg().hide.week = 1; render(); const b = !!document.querySelector('.wkhero'); settings.home = { hide: {}, low: false }; render(); return a && !b && !!document.querySelector('.wkhero'); }));
   check('accueil : « Séance d’abord » place les cartes après les exercices', await p.evaluate(() => { const pos = () => { const l = document.querySelector('#app .list'), c = document.querySelector('#app .cheer, #app .duo'); return c ? !!(l.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING) : null; }; const a = pos(); homeCfg().low = true; render(); const b = pos(); settings.home = { hide: {}, low: false }; render(); return a === false && b === true; }));
   check('plus facile : Tractions → Tractions négatives, puis retour', await p.evaluate(() => { const k = 'day' + currentDay; swapLevel(k, 1, -1); const a = data[k][1].n; swapLevel(k, 1, 1); return a === 'Tractions négatives' && data[k][1].n === 'Tractions'; }));
+  check('HIIT guidé : carte, lancement, jour validé et score', await p.evaluate(async () => { const di = todayIdx(), k = 'day' + di; titles[k] = HIIT_T[0]; done[k] = []; currentDay = di; go('seance');
+    if (!document.querySelector('.hiitc [data-x="hiitrun"]')) return 'carte absente'; const H = hiitOfDay(di), key = hiitKey(H, settings.hiitLvl ?? 1); hiitRun();
+    if (!IT || !IT.c.seq || IT.S.length < 8) return 'minuteur'; IT.i = IT.S.length - 1; itFinish(); await new Promise(r => setTimeout(r, 700));
+    const ok = (done[k] || []).length === data[k].length && done[k].every(Boolean) && (coach.wods[key] || []).length === 1 && hist.some(h => h.d === today() && h.k === 'it');
+    const f = document.querySelector('#hsV'); if (f){ f.value = '180'; document.querySelector('#hsF button').click(); await new Promise(r => setTimeout(r, 200)); if (wodBest(key) !== '180 cal') return 'score ' + wodBest(key); }
+    closeSheet(); closeFull(); delete titles[k]; done[k] = []; return ok || 'validation'; }) === true);
   check('WOD collé : AMRAP 20 min reconnu', await p.evaluate(() => { const r = wodParse('AMRAP 20 min\n10 burpees\n15 squats'); return r.mode === 'amrap' && r.cfg.aDur === 20 && r.ex.split('\n').length === 2; }));
   check('équivalence : 12,8 t donne un résultat', await p.evaluate(() => !!eqOf(EQ_KG, 12800, 'test') && eqLine(12800, 1200, 'test').includes('équivalent')));
   check('muscles du jour calculés', await p.evaluate(() => Object.keys(dayMuscles(data['day' + currentDay]).S).length >= 3));
