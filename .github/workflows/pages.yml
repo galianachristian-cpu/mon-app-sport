@@ -1,24 +1,45 @@
-# Publie l'application sur GitHub Pages à chaque mise à jour de main
+# Vérifie l'application, puis la publie sur GitHub Pages à chaque mise à jour de main
 # Adresse : https://galianachristian-cpu.github.io/mon-app-sport/
-name: Publier sur GitHub Pages
+name: Vérifier et publier
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # Ouvre l'application dans un navigateur et vérifie les écrans et les fonctions principales (tests/smoke.cjs)
+  test:
+    name: Vérifications automatiques
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.63.0
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/smoke.cjs
+
+  # Publication : seulement sur main, et seulement si les vérifications passent
+  deploy:
+    name: Publication
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -145,6 +145,10 @@ button{cursor:pointer;border:none;background:none}
 .dmus{margin-top:12px}.bodymap+.meta{display:flex;flex-wrap:wrap;gap:6px}.dmus summary{cursor:pointer;font-weight:800;font-size:14px;list-style:none;display:flex;align-items:center;gap:6px}.dmus summary::-webkit-details-marker{display:none}
 .dmus summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}.dmus:not([open]) summary::after{transform:rotate(-90deg)}.dmus[open] summary{margin-bottom:10px}
 .aisles .aisle{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.aisles .aisle b{flex:1;min-width:0;font-size:14.5px}.aisles .an{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#0b0f19;font-weight:800;font-size:13px}
+.homecfg{display:block;margin:18px auto 4px;font-size:12.5px;color:var(--muted);padding:8px 12px}
+.newsv{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 2px 4px}.news .nw{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.news .nw:last-child{border:0}
+.news .nw span{font-size:22px}.news .nw b{display:block;font-size:14px}.news .nw small{font-size:12px;color:var(--muted)}
+.libl{font-size:13px;font-weight:800;color:var(--a1);margin:12px 4px 4px;position:sticky;top:0;background:var(--card);padding:4px 0;z-index:1}
 .defl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;width:100%;margin-top:10px;padding:10px 12px;border-radius:14px;text-align:left;font-size:13px;background:color-mix(in srgb,#fbbf24 7%,transparent);border:1px solid color-mix(in srgb,#fbbf24 25%,transparent)}
 .defl>span:first-child{grid-column:1/-1}.defl small{font-size:11.5px;color:var(--soft);white-space:nowrap}
 .dfm,.dft{display:block;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.dfm i,.dft i{display:block;height:100%;width:var(--w);border-radius:5px;transition:width .8s}
@@ -1657,11 +1661,38 @@ async function switchProfile(id, unlocked){
   currentDay = todayIdx(); view = 'seance'; render();
   await load(); render(); toast('👋 Profil de ' + profile.nom);
 }
+/* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
+const NEWS = [
+  [92, [['⚙️', 'Accueil personnalisable', 'Séance → tout en bas → « Personnaliser l’accueil »'], ['🍽️', '33 nouvelles recettes', 'Nutrition → Semaine → « Nouveaux menus »'], ['🔤', 'Bibliothèque par ordre alphabétique', 'Séance → Bibliothèque'], ['🆕', 'Cet écran « Quoi de neuf »', 'Rond du profil en haut → « Quoi de neuf »']]],
+  [91, [['👫', 'Recette : vos deux portions côte à côte', 'Nutrition → touche le nom d’un plat « En commun »']]],
+  [86, [['🗺️', 'Liste de courses dans le sens du magasin', 'Nutrition → Courses → « Ordre des rayons »'], ['📄', 'Liste de courses en PDF', 'Nutrition → Courses → « Envoyer la liste en PDF »']]],
+  [84, [['💪', 'Muscles travaillés du jour', 'Séance → sous l’en-tête du jour']]],
+  [83, [['📅', 'Calendrier de l’année', 'Progrès → Synthèse → tout en bas'], ['🔀', 'Photos avant / après avec curseur', 'Progrès → Corps']]],
+  [82, [['👏', 'Encouragements entre vous', 'Séance → sous « Béa aujourd’hui »'], ['🎯', 'Objectifs avec date probable', 'Progrès → Synthèse → « Ajouter un objectif »'], ['🎬', 'Mon année en story', 'Progrès → Synthèse']]],
+  [80, [['🧍', 'Nouvelles silhouettes des muscles', 'Fin de séance, fiche d’un exercice'], ['🐘', 'Équivalences (éléphants, burgers…)', 'Accueil et Progrès → Synthèse']]],
+  [77, [['✍️', 'Mes WOD : recopier un WOD et garder ses scores', 'Chrono → « Mes WOD »']]],
+  [76, [['🔥', 'Calories : mangées ou dépensées, par exercice', 'Progrès → Synthèse et Perfs']]],
+  [75, [['🏃', 'Défi du mois à deux', 'Accueil'], ['🥇', 'Page Records', 'Progrès → Records'], ['📤', 'Ma semaine en image', 'Progrès → Synthèse']]],
+  [74, [['📅', 'WOD de la semaine en 3 niveaux', 'Chrono'], ['⬇️', 'Trop dur ? / Trop facile ?', 'Sur chaque exercice de la séance']]]];
+function sheetNews(since, all){
+  const L = NEWS.filter(([v]) => all || v > (since || 0)), cut = all ? L : L.slice(0, 4), more = !all && NEWS.length > cut.length;
+  openSheet(`<h2>🆕 Quoi de neuf</h2><p class="muted" style="font-size:13px;margin-bottom:8px">${all ? 'Toutes les nouveautés, de la plus récente à la plus ancienne.' : 'Les nouveautés depuis ta dernière visite, et où les trouver.'}</p>
+    ${cut.map(([v, I]) => `<h4 class="newsv">Version ${v}</h4><div class="card news">${I.map(([ic, t, w]) => `<div class="nw"><span>${ic}</span><div><b>${t}</b><small>📍 ${w}</small></div></div>`).join('')}</div>`).join('') || '<p class="muted">Rien de nouveau depuis ta dernière visite.</p>'}
+    <div class="row" style="margin-top:14px">${more ? '<button class="btn" data-x="newsall">Tout voir</button>' : ''}<span class="spacer"></span><button class="btn pri" data-act="close">J’ai compris</button></div>`);
+}
+// après une mise à jour : on attend que l'écran soit libre (pas de code, pas de connexion, pas de fenêtre ouverte)
+function newsCheck(){
+  const seen = safeGet('mp_news', 0); if (seen >= APP_VERSION) return; let n = 0;
+  const iv = setInterval(() => { const cnx = document.getElementById('cnx'), busy = lockState || (cnx && cnx.classList.contains('on')) || $('#sheet').classList.contains('show') || $('#full').classList.contains('show') || view !== 'seance';
+    if (++n > 90) return clearInterval(iv); if (busy) return;
+    clearInterval(iv); safeSet('mp_news', APP_VERSION); if (NEWS.some(([v]) => v > seen)) sheetNews(seen); }, 2000);
+}
 function sheetProfiles(){
   openSheet(`<h2>Qui s’entraîne ?</h2>
     <div class="profs">${PROFILES.map(p => `<button class="prof ${p.id === profile.id ? 'on' : ''}" data-prof="${p.id}" style="--p1:${p.a1};--p2:${p.a2}"><span class="av big">${esc(p.nom.slice(0, 1).toUpperCase())}</span><b>${esc(p.nom)}</b>${p.id === profile.id ? '<small>Profil actuel</small>' : '<small>Changer</small>'}</button>`).join('')}</div>
     ${auth && auth.currentUser ? `<p class="muted" style="font-size:12px;text-align:center;margin-top:14px">Connecté : ${esc(auth.currentUser.email || '')} · <a href="#" onclick="seDeconnecter();return false" style="color:var(--a1)">se déconnecter</a></p>` : ''}
-    <p class="muted" style="font-size:11.5px;text-align:center;margin-top:14px">Version ${APP_VERSION}${/deploy-preview/.test(location.hostname) ? ' · ⚠️ aperçu de test : ne se met pas à jour, ouvre l’adresse principale' : ''}</p>
+    <p style="text-align:center;margin-top:14px"><button class="btn sm" data-x="news">🆕 Quoi de neuf</button></p>
+    <p class="muted" style="font-size:11.5px;text-align:center;margin-top:10px">Version ${APP_VERSION}${/deploy-preview/.test(location.hostname) ? ' · ⚠️ aperçu de test : ne se met pas à jour, ouvre l’adresse principale' : ''}</p>
     <p style="color:var(--muted);font-size:13px;margin:14px 0 10px">Chaque profil a son programme, ses charges et ses progrès.</p>
     <p style="color:var(--muted);font-size:13px;margin:4px 0 8px">Ta couleur</p>
     <div class="swatches">${PALETTES.map(([a, b, n], i) => `<button class="swatch ${profile.a1 === a && profile.a2 === b ? 'on' : ''}" data-pal="${i}" style="--s1:${a};--s2:${b}" aria-label="${n}" title="${n}"></button>`).join('')}</div>
@@ -1864,6 +1895,19 @@ function cumulRow(){
     <span><b>${kgTxt[0]}</b><small>${kgTxt[1]}</small></span>
     <em>${lbl} · synthèse ›</em></button>`;
 }
+/* ---------- accueil personnalisable : cartes à afficher ou masquer (réglage gardé sur ce téléphone) ---------- */
+const HOME_CARDS = [['week', '🔥 Ma semaine', 'Flammes des jours et compteurs'], ['defi', '🏃 Défi du mois', 'La ligne avec vos deux barres'], ['rings', '⭕ Cercles du jour', 'Séance, repas, eau'],
+  ['mus', '💪 Muscles du jour', 'La silhouette des muscles travaillés'], ['duo', '👫 Partenaire', 'Sa séance du jour et les encouragements'], ['actions', '🎯 Mes 3 actions', 'Les actions de la semaine'],
+  ['defis', '🏆 Défis de la semaine', 'Le tableau à deux'], ['bilan', '📊 Bilan de la semaine', 'Le bandeau vers le bilan']];
+const homeCfg = () => (settings.home = Object.assign({ hide: {}, low: false }, settings.home || {}));
+const hOn = id => !homeCfg().hide[id];
+function sheetHome(){
+  const c = homeCfg(), n = HOME_CARDS.filter(([id]) => !c.hide[id]).length;
+  openSheet(`<h2>⚙️ Mon accueil</h2><p class="muted" style="font-size:13px;margin-bottom:6px">Choisis ce que tu veux voir sur l’écran Séance. ${n} carte${n > 1 ? 's' : ''} affichée${n > 1 ? 's' : ''} sur ${HOME_CARDS.length}. Réglage propre à ce téléphone.</p>
+    <div class="toggle"><span><b>⬇️ Séance d’abord</b><small>Place partenaire, actions, défis et bilan sous la liste des exercices</small></span><button type="button" class="sw ${c.low ? 'on' : ''}" data-x="homelow" role="switch" aria-checked="${!!c.low}" aria-label="Séance d’abord"></button></div>
+    ${HOME_CARDS.map(([id, l, d]) => `<div class="toggle"><span><b>${l}</b><small>${d}</small></span><button type="button" class="sw ${c.hide[id] ? '' : 'on'}" data-x="hometog" data-id="${id}" role="switch" aria-checked="${!c.hide[id]}" aria-label="${l}"></button></div>`).join('')}
+    <div class="row" style="margin-top:14px"><button class="btn" data-x="homereset">↩️ Tout afficher</button><span class="spacer"></span><button class="btn pri" data-act="close">Terminé</button></div>`);
+}
 function todayCard(){
   const d = todayIdx(), date = ymd(new Date()), k = 'day' + d, list = data[k] || [], dn = done[k] || [];
   const nEx = list.filter((x, i) => dn[i] || isSkip(x)).length;
@@ -1882,10 +1926,10 @@ function todayCard(){
              { p: g ? eau / g : 0, col: '#38bdf8', l: 'Eau', v: `${eau} / ${g} verres` }];
   return `<section class="today">
     <div class="tg"><p class="tdate">${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p><h2>${hello}${nom} 👋</h2>${st ? `<span class="streak">🔥 ${st} jour${st > 1 ? 's' : ''} d’affilée</span>` : '<span class="streak off">Lance ta série aujourd’hui 💪</span>'}</div>
-    ${weekHero()}
-    ${defiLine()}
-    <div class="tr"><button class="ringsbtn" data-go2="nutrition" data-nd="${d}" aria-label="Voir la nutrition du jour">${rings3(R)}</button>
-      <ul class="rleg">${R.map(x => `<li style="--c:${x.col}"><i></i><span><b>${x.l}</b><small>${x.v}</small></span></li>`).join('')}</ul></div></section>`;
+    ${hOn('week') ? weekHero() : ''}
+    ${hOn('defi') ? defiLine() : ''}
+    ${hOn('rings') ? `<div class="tr"><button class="ringsbtn" data-go2="nutrition" data-nd="${d}" aria-label="Voir la nutrition du jour">${rings3(R)}</button>
+      <ul class="rleg">${R.map(x => `<li style="--c:${x.col}"><i></i><span><b>${x.l}</b><small>${x.v}</small></span></li>`).join('')}</ul></div>` : ''}</section>`;
 }
 // muscles de la séance d'un jour : séries prévues sur le muscle principal, 40 % sur les muscles secondaires
 function dayMuscles(list){
@@ -1909,6 +1953,8 @@ function viewSeance(){
   const muscles = [...new Set(list.map(e => e.m))];
   if (list.length && nDone === list.length && sess[k] && sess[k].start && !sess[k].end){ sess[k].end = Date.now(); setTimeout(() => save(), 0); }
   const s = sess[k], storyOn = currentDay === todayIdx() && list.length > 0 && !sessStarted(k);
+  // cartes secondaires : avant les exercices (par défaut) ou après (« Séance d'abord »)
+  const social = currentDay === todayIdx() ? (hOn('duo') ? duoLine() + cheerCard() : '') + (hOn('actions') ? actionsCard() : '') + (hOn('defis') ? duoChallenges() : '') + (hOn('bilan') ? reportBanner() : '') : '';
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
   ${storyOn ? storyRow(k, list) : ''}
@@ -1924,16 +1970,18 @@ function viewSeance(){
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
   </section>
   ${!storyOn && list.length > 1 ? stripRow(k, list) : ''}
-  ${dayMusCard(k, list)}
+  ${hOn('mus') ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn pri" data-act="guide" style="flex:1">▶️ Séance guidée</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
-  ${currentDay === todayIdx() ? duoLine() + cheerCard() + actionsCard() + duoChallenges() + reportBanner() : ''}
+  ${homeCfg().low ? '' : social}
   ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p><button class="btn pri" data-x="wwopen" style="margin-top:10px">📅 Faire le WOD de la semaine</button></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
+  ${homeCfg().low ? social : ''}
+  <button class="homecfg" data-x="homecfg">⚙️ Personnaliser l’accueil</button>
   </div>`;
   const cur = $('#app .exstrip .cur'); if (cur) cur.parentElement.scrollLeft = Math.max(0, cur.offsetLeft - 24);
   const dm = $('#app .dmus'); if (dm) dm.ontoggle = () => { settings.dmOff = !dm.open; safeSet('mp_settings', settings); };
@@ -3339,8 +3387,12 @@ function sheetLib(rep){
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const R = LIB.filter(x => (!o || x.n !== o.n) && (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || (libE === 'Mine' ? canDo(x.n) : eqOf(x) === libE)) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
     // remplacement : même type, puis mots en commun avec l'exercice d'origine (« Relevé », « Squat »…), puis animation docteur-fitness
-    if (o){ const W = new Set(o.n.toLowerCase().split(/[\s()]+/).filter(w => w.length > 3)), sc = x => ((x.t || 'f') !== typ(o)) * 4 + (x.n.toLowerCase().split(/[\s()]+/).some(w => W.has(w)) ? 0 : 2) + (/docteur/.test(x.gif || '') ? 0 : 1); R.sort((a, b) => sc(a) - sc(b)); }
-    $('#lres').innerHTML = R.length ? R.map(x => `<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">${o ? '🔁' : '＋'}</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
+    const az = (a, b) => a.n.localeCompare(b.n, 'fr', { sensitivity: 'base' });
+    if (o){ const W = new Set(o.n.toLowerCase().split(/[\s()]+/).filter(w => w.length > 3)), sc = x => ((x.t || 'f') !== typ(o)) * 4 + (x.n.toLowerCase().split(/[\s()]+/).some(w => W.has(w)) ? 0 : 2) + (/docteur/.test(x.gif || '') ? 0 : 1); R.sort((a, b) => sc(a) - sc(b) || az(a, b)); }
+    else R.sort(az);
+    // repères A, B, C… quand la liste est longue (pas en remplacement, où l'ordre est par ressemblance)
+    const ini = x => x.n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^Œ/i, 'O').charAt(0).toUpperCase(), letters = !o && R.length > 15;
+    $('#lres').innerHTML = R.length ? R.map((x, j) => `${letters && (!j || ini(R[j - 1]) !== ini(x)) ? `<h4 class="libl">${ini(x)}</h4>` : ''}<button class="libit" data-ln="${esc(x.n)}"><span class="emo pkb">${exVis(x, true)}</span><span class="t"><b>${esc(x.n)}</b><small><span class="mus" style="--c:${mcol(x.m)}">${esc(x.m)}</span> ${x.t === 'c' ? esc(x.r) : x.s + ' × ' + esc(x.r)} · ${TYPES[x.t].split(' (')[0]}</small></span><span class="plus">${o ? '🔁' : '＋'}</span></button>`).join('') : '<p class="muted" style="padding:16px 0">Aucun exercice trouvé. Tu peux le créer avec « ➕ Ajouter ».</p>';
     $('#lcnt').textContent = R.length + (R.length > 1 ? ' exercices' : ' exercice');
     $('#lres').querySelectorAll('[data-ln]').forEach(b => b.onclick = () => { if (o) return replaceEx(k, rep, b.dataset.ln); const x = LIB_BY[b.dataset.ln], p = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') p.t = x.t; sheetEdit(-1, p); });
   };
@@ -3578,7 +3630,43 @@ const RECIPES = [
   R('wok-dinde','Wok de dinde, nouilles & légumes','plat',20,[['dinde',130],['pates',80],['poelee',200],['soja',10],['huile',5]],'Saisir la dinde en lanières, ajouter les légumes 5 min, puis les pâtes cuites et la sauce soja.','🥢'),
   R('soupe-lentilles','Soupe lentilles-carottes & pain','plat',30,[['lentille',70],['carotte',200],['oignon',50],['pain',50],['fblanc',60]],'Cuire lentilles, carottes et oignon dans 1 L d’eau 25 min, mixer. Servir avec une cuillère de fromage blanc et le pain.','🍲'),
   R('omelette-champi','Omelette aux champignons & tartines','plat',15,[['oeuf',180],['champignon',150],['pain',70],['salade',50],['emmental',20]],'Poêler les champignons, ajouter les œufs battus et le fromage. Servir avec le pain et la salade.','🍄'),
-  R('burger','Burger maison & potatoes','plat',30,[['pain',80],['boeuf',125],['tomate',60],['salade',30],['emmental',20],['pdt',200],['huile',5]],'Pommes de terre en quartiers au four 25 min avec l’huile et le paprika. Cuire le steak, monter le burger.','🍔')
+  R('burger','Burger maison & potatoes','plat',30,[['pain',80],['boeuf',125],['tomate',60],['salade',30],['emmental',20],['pdt',200],['huile',5]],'Pommes de terre en quartiers au four 25 min avec l’huile et le paprika. Cuire le steak, monter le burger.','🍔'),
+  // Ajouts : petits-déjeuners
+  R('tartines-oeuf','Tartines, œufs durs & tomate','pdj',12,[['oeuf',120],['pain',70],['tomate',100]],'Cuire les œufs 9 min à l’eau bouillante. Les écraser sur les tartines, ajouter la tomate en rondelles.','🥚'),
+  R('porridge-pomme','Porridge pomme & amandes','pdj',8,[['avoine',60],['lait',200],['pomme',150],['amande',10]],'Chauffer l’avoine dans le lait 3-4 min. Ajouter la pomme en dés et les amandes concassées.','🍎'),
+  R('bol-skyr-banane','Bol skyr, banane & cacahuète','pdj',3,[['skyr',250],['banane',120],['avoine',30],['cacahuete',10]],'Verser le skyr dans un bol, ajouter la banane en rondelles, l’avoine et le beurre de cacahuète.','🥣'),
+  R('galettes-fb-orange','Galettes de riz, fromage blanc & orange','pdj',3,[['galette',36],['fblanc',200],['miel',10],['orange',150]],'Tartiner les galettes de fromage blanc et de miel. Servir avec l’orange.','🍊'),
+  R('wrap-oeuf','Wrap œufs brouillés & emmental','pdj',8,[['tortilla',60],['oeuf',120],['emmental',15],['tomate',80]],'Brouiller les œufs à la poêle. Garnir la tortilla avec les œufs, l’emmental et la tomate, rouler.','🌯'),
+  R('yaourt-rouges-amandes','Yaourts, fruits rouges & avoine','pdj',3,[['yaourt',250],['fruitrouge',100],['avoine',40],['amande',10]],'Mélanger les yaourts avec l’avoine, ajouter les fruits rouges et les amandes.','🍓'),
+  R('pain-perdu','Pain perdu aux fruits rouges','pdj',12,[['pain',80],['oeuf',120],['lait',100],['miel',10],['fruitrouge',80]],'Battre les œufs avec le lait, y tremper le pain. Dorer à la poêle 2 min par face. Servir avec le miel et les fruits rouges.','🍞'),
+  // Ajouts : collations
+  R('skyr-banane','Skyr & banane','col',1,[['skyr',200],['banane',120]],'Couper la banane dans le skyr.','🍌'),
+  R('tartine-cacahuete','Tartine cacahuète & banane','col',2,[['pain',40],['cacahuete',15],['banane',120]],'Tartiner le pain de beurre de cacahuète, ajouter la banane en rondelles.','🥜'),
+  R('fb-pomme-amandes','Fromage blanc, pomme & amandes','col',2,[['fblanc',200],['pomme',150],['amande',10]],'Couper la pomme en dés dans le fromage blanc, ajouter les amandes.','🍏'),
+  R('galettes-thon','Galettes de riz au thon','col',3,[['galette',27],['thon',80],['fblanc',30]],'Mélanger le thon et le fromage blanc, tartiner sur les galettes.','🐟'),
+  R('yaourt-rouges','Yaourts & fruits rouges','col',1,[['yaourt',250],['fruitrouge',100],['miel',5]],'Mélanger les yaourts, les fruits rouges et le miel.','🍒'),
+  R('wrap-jambon','Mini-wrap jambon & crudités','col',3,[['tortilla',60],['jambon',80],['fblanc',30],['salade',20]],'Tartiner la tortilla de fromage blanc, ajouter le jambon et la salade, rouler.','🌯'),
+  // Ajouts : plats
+  R('poulet-patate-brocoli','Poulet, patate douce & brocoli','plat',25,[['poulet',150],['patate',250],['brocoli',200],['huile',5]],'Rôtir la patate douce en dés 20 min au four. Griller le poulet à la poêle, cuire le brocoli à la vapeur.','🍗'),
+  R('pates-poulet-champi','Pâtes au poulet & champignons','plat',20,[['pates',80],['poulet',130],['champignon',150],['fblanc',50],['oignon',30],['huile',5]],'Cuire les pâtes. Dorer le poulet avec l’oignon et les champignons, lier avec le fromage blanc hors du feu, mélanger aux pâtes.','🍝'),
+  R('boulettes-semoule','Boulettes de bœuf à la tomate & semoule','plat',25,[['boeuf',150],['concassee',200],['oignon',40],['semoule',70],['courgette',150]],'Former des boulettes, les dorer. Ajouter l’oignon, la courgette en dés et la tomate, mijoter 12 min. Servir sur la semoule.','🧆'),
+  R('saumon-pdt-haricots','Saumon, pommes de terre & haricots verts','plat',25,[['saumon',130],['pdt',250],['haricotvert',200]],'Cuire les pommes de terre et les haricots verts à l’eau ou à la vapeur. Poêler le saumon 3 min par face.','🐟'),
+  R('colin-riz-courgette','Colin, riz & courgettes','plat',20,[['colin',180],['riz',70],['courgette',200],['huile',5]],'Cuire le riz. Poêler les courgettes en rondelles, ajouter le colin 4 min par face.','🐠'),
+  R('dinde-riz-poivrons','Émincé de dinde, riz & poivrons','plat',20,[['dinde',150],['riz',70],['poivron',150],['oignon',40],['concassee',100],['huile',5]],'Cuire le riz. Faire sauter la dinde en lanières avec l’oignon et les poivrons, ajouter la tomate, mijoter 8 min.','🫑'),
+  R('salade-pates-poulet','Salade de pâtes au poulet & feta','plat',20,[['pates',80],['poulet',120],['tomate',150],['concombre',100],['feta',30],['huile',5]],'Cuire les pâtes, les refroidir. Griller le poulet en dés. Mélanger avec les crudités, la feta et l’huile.','🥗'),
+  R('bowl-tofu-riz','Bowl tofu, riz & brocoli','plat',20,[['tofu',180],['riz',70],['brocoli',200],['carotte',100],['soja',10],['huile',5]],'Cuire le riz et le brocoli. Dorer le tofu en cubes, ajouter la sauce soja. Servir en bol avec la carotte râpée.','🥢'),
+  R('oeufs-epinards','Œufs aux épinards gratinés & pain','plat',20,[['oeuf',180],['epinard',250],['fblanc',50],['emmental',15],['pain',70]],'Faire revenir les épinards, ajouter le fromage blanc. Casser les œufs dessus, parsemer d’emmental, couvrir 5 min.','🍳'),
+  R('salade-pdt-thon','Salade de pommes de terre, thon & œuf','plat',25,[['pdt',250],['thon',120],['oeuf',60],['tomate',100],['salade',50],['huile',5]],'Cuire les pommes de terre et l’œuf dur. Mélanger avec le thon, la tomate, la salade et l’huile.','🥔'),
+  R('chili-vege','Chili végétarien & riz','plat',25,[['haricotrouge',200],['concassee',200],['poivron',100],['oignon',40],['riz',60],['huile',5]],'Faire revenir l’oignon et le poivron, ajouter les haricots et la tomate, mijoter 15 min. Servir avec le riz.','🌶️'),
+  R('poulet-semoule-courgette','Poulet grillé, semoule & courgettes','plat',20,[['poulet',150],['semoule',70],['courgette',200],['tomate',100],['huile',5]],'Griller le poulet. Poêler les courgettes avec la tomate. Gonfler la semoule 5 min à l’eau bouillante.','🍗'),
+  R('gratin-chou-jambon','Gratin de chou-fleur au jambon','plat',35,[['chou',300],['jambon',120],['lait',100],['emmental',25],['pain',50]],'Cuire le chou-fleur 10 min. Le mettre dans un plat avec le jambon en dés et le lait, parsemer d’emmental, gratiner 15 min.','🧀'),
+  R('pates-saumon-epinard','Pâtes au saumon & épinards','plat',20,[['pates',80],['saumon',110],['epinard',200],['fblanc',50]],'Cuire les pâtes. Poêler le saumon en dés avec les épinards, lier avec le fromage blanc, mélanger.','🍝'),
+  R('boeuf-pdt-carottes','Bœuf, pommes de terre & carottes à la tomate','plat',35,[['boeuf',150],['pdt',250],['carotte',150],['oignon',40],['concassee',100]],'Dorer le bœuf avec l’oignon. Ajouter les pommes de terre et les carottes en dés, la tomate et un verre d’eau, mijoter 25 min.','🥘'),
+  R('quesadilla-thon','Quesadillas thon-mozzarella & salade','plat',15,[['tortilla',120],['thon',120],['mozza',40],['tomate',100],['salade',50]],'Garnir une tortilla de thon, tomate et mozzarella, couvrir de la seconde. Dorer 2 min par face à sec. Servir avec la salade.','🫓'),
+  R('salade-pc-feta','Salade de pois chiches, concombre & feta','plat',10,[['poischiche',200],['concombre',150],['tomate',150],['feta',40],['huile',5],['pain',50]],'Mélanger les pois chiches rincés avec le concombre et la tomate en dés, la feta et l’huile. Servir avec le pain.','🥒'),
+  R('dinde-pdt-haricots','Escalope de dinde, pommes de terre & haricots verts','plat',25,[['dinde',150],['pdt',250],['haricotvert',200],['huile',5]],'Cuire les pommes de terre et les haricots verts. Poêler l’escalope 4 min par face.','🍽️'),
+  R('soupe-poulet','Soupe de poulet, légumes & petites pâtes','plat',30,[['poulet',130],['carotte',100],['courgette',100],['oignon',40],['pates',50],['pain',40]],'Faire revenir l’oignon, ajouter le poulet et les légumes en dés, couvrir d’eau, cuire 15 min. Ajouter les pâtes 8 min.','🍲'),
+  R('riz-sardines','Riz aux sardines, tomate & poivron','plat',20,[['sardine',100],['riz',70],['concassee',150],['poivron',100],['oignon',30]],'Cuire le riz. Faire revenir l’oignon et le poivron, ajouter la tomate 8 min, puis les sardines émiettées. Servir sur le riz.','🐟'),
 ];
 const REC_BY = Object.fromEntries(RECIPES.map(r => [r.id, r]));
 const MEALS = [['pdj','Petit-déjeuner','☀️',.25],['dej','Déjeuner','🍽️',.35],['col','Collation','🍎',.10],['din','Dîner','🌙',.30]];
@@ -5809,6 +5897,12 @@ function evoAct(a, b){
     case 'stend': storyEnd(); break;
     case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
     case 'yearstory': storyYear(b.dataset.y); break;
+    case 'homecfg': sheetHome(); break;
+    case 'hometog': { const c = homeCfg(), id = b.dataset.id; if (c.hide[id]) delete c.hide[id]; else c.hide[id] = 1; safeSet('mp_settings', settings); render(); sheetHome(); break; }
+    case 'homelow': { const c = homeCfg(); c.low = !c.low; safeSet('mp_settings', settings); render(); sheetHome(); break; }
+    case 'homereset': settings.home = { hide: {}, low: false }; safeSet('mp_settings', settings); render(); sheetHome(); break;
+    case 'news': sheetNews(0, true); break;
+    case 'newsall': sheetNews(0, true); break;
     case 'aisles': sheetAisles(); break;
     case 'aisle': { const O = rayOrder(), i = +b.dataset.i, j = i + +b.dataset.d; if (j < 0 || j >= O.length) break; [O[i], O[j]] = [O[j], O[i]]; foyer.rayOrder = O; saveFoyer(); sheetAisles(); if (view === 'nutrition') viewNutrition(); break; }
     case 'aislereset': delete foyer.rayOrder; saveFoyer(); sheetAisles(); if (view === 'nutrition') viewNutrition(); toast('↩️ Ordre par défaut'); break;
@@ -6464,7 +6558,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 91;
+const APP_VERSION = 92;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -6538,7 +6632,7 @@ async function seDeconnecter(){
   await load();
   render();
   const on = document.querySelector('.day.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
-  setTimeout(remCheck, 3000);
+  setTimeout(remCheck, 3000); setTimeout(newsCheck, 2500);
   if (/deploy-preview/.test(location.hostname)) setTimeout(() => toast('⚠️ Version d’aperçu figée : ouvre l’adresse principale de l’appli'), 2500);
 })();
 </script>
