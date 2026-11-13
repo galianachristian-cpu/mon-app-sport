@@ -1666,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
   [94, [['🔥', 'Abdos en fin de séance (ajoutés pour Béa)', 'Programme → Mon programme → « Abdos en fin de séance »'], ['🧮', 'Calories des séances recalculées pour la nutrition', 'Nutrition → objectif du jour, plus juste les jours de cardio et de mobilité'], ['🍳', 'Menus : les nouvelles recettes riches en protéines sont proposées', 'Nutrition → Semaine']]],
   [93, [['⚡', 'Vraies séances HIIT guidées par le chrono', 'Séance → un jour HIIT → « Lancer le HIIT guidé »'], ['🔄', '10 formats HIIT qui changent chaque semaine, 3 niveaux', 'Séance → jour HIIT']]],
   [92, [['⚙️', 'Accueil personnalisable', 'Séance → tout en bas → « Personnaliser l’accueil »'], ['🍽️', '33 nouvelles recettes', 'Nutrition → Semaine → « Nouveaux menus »'], ['🔤', 'Bibliothèque par ordre alphabétique', 'Séance → Bibliothèque'], ['🆕', 'Cet écran « Quoi de neuf »', 'Rond du profil en haut → « Quoi de neuf »']]],
@@ -2038,7 +2039,7 @@ function exCard(k, e, i){
       <button class="name" data-act="exopen" data-i="${i}" aria-expanded="false"><b>${esc(e.n)}</b><span class="sub">${dots}<span class="sr">${info}</span>${isPR ? '<span class="pr">🏆</span>' : ''}</span></button>
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button></div></article>`;
   }
-  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : '⏭️ Mis de côté aujourd’hui (douleur)'}</span></span></div></div></article>`;
+  if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : formeOf() && (formeOf().pain || []).length ? '⏭️ Mis de côté aujourd’hui (douleur)' : '⏭️ Pas cette fois · il revient la semaine prochaine'}</span></span></div><button class="btn sm" data-act="unskip" data-i="${i}" style="margin-left:auto">↩️ Reprendre</button></div></article>`;
   return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span>
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
@@ -3783,7 +3784,9 @@ function nutCoachCard(){
   const c = nutCoach(), f = x => (x > 0 ? '+' : '') + fr(+x.toFixed(2)), lg = (nut.log || []).slice(-1)[0];
   const target = c.R[1] === 0 ? 'stable (±' + fr(c.R[2]) + ' %)' : `entre ${f(c.R[0])} et ${f(c.R[2])} % par semaine`;
   let st;
-  if (num(nut.kcalMan)) st = '✍️ Tu as choisi tes calories toi-même : l’ajustement automatique est en pause.';
+  if (num(nut.kcalMan)){ const t0 = targets(ctxOf(profile.id), todayIdx()), m0 = num(nut.kcalMan), lo = Math.max(t0.floor, t0.bmr);
+    st = m0 < lo ? `⚠️ <b>${kc(m0)} kcal choisies : c’est sous ${m0 < t0.bmr ? `ton métabolisme de base (≈ ${kc(t0.bmr)} kcal, ce que ton corps brûle au repos)` : `le minimum conseillé (${kc(t0.floor)} kcal)`}.</b> Risque de fatigue, de perte de muscle et de fringales. Le calcul automatique propose <b>${kc(t0.auto)} kcal</b> pour ton objectif : Nutrition → Profil → Calories → « Automatique ».`
+      : '✍️ Tu as choisi tes calories toi-même : l’ajustement automatique est en pause.'; }
   else if (nut.auto === false) st = '⏸️ Ajustement automatique désactivé.';
   else if (!c.ok) st = `⚖️ Pèse-toi au moins 3 fois sur 2 semaines (Progrès → Corps) pour que j’ajuste tes calories. ${c.nW} pesée${c.nW > 1 ? 's' : ''} ces 14 derniers jours.`;
   else st = `Tendance : <b>${f(c.kgW)} kg/semaine</b> (${f(c.pct)} %) · visé : ${target}<br>${c.inRange ? '✅ Dans la cible, on ne touche à rien.' : lg && lg.wk === curWk() ? `🤖 Ajusté cette semaine : <b>${lg.delta > 0 ? '+' : ''}${lg.delta} kcal/jour</b> (${esc(lg.why)}). Prochain point lundi.` : '⚠️ Hors cible : ajustement automatique lundi.'}`;
@@ -5010,7 +5013,7 @@ const isTodayView = () => currentDay === todayIdx();
 const lightOn = () => !!coach && coach.light === curWk();
 const LIGHT = { id:'light', ico:'🪶', t:'Semaine allégée', d:'1 série en moins et charges −10 % toute la semaine : tu récupères pour repartir plus fort.', load:.9, dS:-1, noPlyo:true, avg:3 };
 const modeToday = () => { const f = isTodayView() ? formeMode(formeOf()) : null; return !lightOn() || (f && f.id === 'leger') ? f : LIGHT; };
-const isSkip = e => e && (e.skipD === today() || e.cutD === today());
+const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay] && e.skipD > today()));
 function effS(e){ const n = e.cutS && e.cutS.d === today() ? e.cutS.n : +e.s || 0, m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob') return n; return Math.max(1, n + m.dS); }
 // durée estimée d'une liste d'exercices (séries, effort ~45 s, repos ; super-séries : repos court après le 1er exercice)
 function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e)) return a; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
@@ -5020,7 +5023,7 @@ function restoreTemp(){
   const d = today();
   Object.values(data).forEach(L => (L || []).forEach((e, i) => {
     if (e.orig && e.tmpD !== d) L[i] = e.orig;
-    else if (e.skipD && e.skipD !== d) delete e.skipD;
+    else if (e.skipD && e.skipD < d) delete e.skipD;
   }));
 }
 function applyPain(pains){
@@ -6467,7 +6470,14 @@ document.addEventListener('click', e => {
     case 'lib': sheetLib(); break;
     case 'replace': sheetLib(i); break;
     case 'edit': sheetEdit(i); break;
-    case 'del': sheetConfirm('Supprimer « ' + esc(data[k][i].n) + ' » ?', 'Supprimer', () => delEx(i)); break;
+    case 'unskip': { const e = data[k][i]; delete e.skipD; delete e.cutD; render(); save(); break; }
+    case 'del': { const e = data[k][i], dd = weekDates(curWk())[currentDay];
+      openSheet(`<h2>« ${esc(e.n)} »</h2><p class="muted" style="font-size:13.5px;margin-bottom:12px">Tu ne fais pas cet exercice ${currentDay === todayIdx() ? 'aujourd’hui' : 'ce jour-là'}, ou tu veux l’enlever de ton programme pour de bon ?</p>
+        <button class="btn pri block" id="dSkip">⏭️ Pas ${currentDay === todayIdx() ? 'aujourd’hui' : 'cette semaine'} · le programme ne change pas</button>
+        <button class="btn danger block" id="dDel" style="margin-top:10px">🗑️ Retirer de mon programme (toutes les semaines)</button>
+        <p class="muted" style="font-size:12px;margin-top:10px">Pour remplacer cet exercice par un autre, utilise plutôt « Remplacer » dans sa fiche.</p>`);
+      $('#dSkip').onclick = () => { e.skipD = dd; if (dd === today()){ done[k] = done[k] || []; } closeSheet(); render(); save(); toast(`⏭️ ${e.n} : pas ${dd === today() ? 'aujourd’hui' : 'ce jour-là'}, il revient la semaine prochaine`); };
+      $('#dDel').onclick = () => { closeSheet(); delEx(i); }; break; }
     case 'move': moveEx(i, +b.dataset.d); break;
     case 'goday': currentDay = +b.dataset.day; go('seance'); break;
     case 'title': sheetTitle(+b.dataset.day); break;
@@ -6658,7 +6668,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 94;
+const APP_VERSION = 95;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
