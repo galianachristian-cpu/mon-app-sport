@@ -1564,6 +1564,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
+  absOnce();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1665,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [94, [['🔥', 'Abdos en fin de séance (ajoutés pour Béa)', 'Programme → Mon programme → « Abdos en fin de séance »'], ['🧮', 'Calories des séances recalculées pour la nutrition', 'Nutrition → objectif du jour, plus juste les jours de cardio et de mobilité'], ['🍳', 'Menus : les nouvelles recettes riches en protéines sont proposées', 'Nutrition → Semaine']]],
   [93, [['⚡', 'Vraies séances HIIT guidées par le chrono', 'Séance → un jour HIIT → « Lancer le HIIT guidé »'], ['🔄', '10 formats HIIT qui changent chaque semaine, 3 niveaux', 'Séance → jour HIIT']]],
   [92, [['⚙️', 'Accueil personnalisable', 'Séance → tout en bas → « Personnaliser l’accueil »'], ['🍽️', '33 nouvelles recettes', 'Nutrition → Semaine → « Nouveaux menus »'], ['🔤', 'Bibliothèque par ordre alphabétique', 'Séance → Bibliothèque'], ['🆕', 'Cet écran « Quoi de neuf »', 'Rond du profil en haut → « Quoi de neuf »']]],
   [91, [['👫', 'Recette : vos deux portions côte à côte', 'Nutrition → touche le nom d’un plat « En commun »']]],
@@ -1724,7 +1726,7 @@ function volOf(h){
   return (h.w || 0) * (parseInt(h.r) || 0) * (h.s || 1);
 }
 // calories d'un exercice : celles notées (machine de cardio), sinon une estimation selon la durée ou les séries et le poids
-const MET = [[/course|tapis|footing|run/i, 9.8], [/v[ée]lo|bike|spinning/i, 7.5], [/rameur|skierg/i, 7], [/elliptique/i, 5.5], [/escalier/i, 8.5], [/natation|nage/i, 7], [/marche/i, 4], [/corde/i, 11], [/hiit|burpee|tabata/i, 8]];
+const MET = [[/course|tapis|footing|run/i, 9.8], [/v[ée]lo|bike|spinning/i, 7.5], [/rameur|skierg/i, 7], [/elliptique/i, 5.5], [/escalier/i, 8.5], [/natation|nage/i, 7], [/marche/i, 4], [/corde/i, 11], [/hiit|burpee|tabata|⚡|circuit|wod|emom|amrap|for time|minuteur/i, 8]];
 const bodyKg = () => { const b = body.filter(x => x.p != null).slice(-1)[0]; return num(b && b.p) || num(nut && nut.poids) || 75; };
 function kcalEst(e, min, kg){ const t = e.t || 'f', w = kg || bodyKg();
   if (t === 'k') return (e.sl || []).reduce((a, x) => a + (num(x.r) || 0), 0) || (+e.s || 1) * topReps(e.r);
@@ -1952,7 +1954,8 @@ function viewSeance(){
   const k = 'day' + currentDay, list = data[k] || [], dn = done[k] || [];
   const nDone = list.filter((x, i) => dn[i] || isSkip(x)).length, fm = modeToday();
   const totalSets = list.reduce((a, e) => a + (typ(e) === 'c' || isSkip(e) ? 0 : effS(e)), 0);
-  const mins = estMin(list), shortOn = list.some(e => e.cutD === today() || (e.cutS && e.cutS.d === today()) || e.ssD === today());
+  const hiitD = isHiitDay(currentDay) ? (() => { try{ const S = hiitSeq(hiitOfDay(currentDay), settings.hiitLvl ?? 1); return Math.round((S.reduce((a, x) => a + x.s, 0) + 10) / 60); }catch(e){ return null; } })() : null;
+  const mins = hiitD || estMin(list), shortOn = list.some(e => e.cutD === today() || (e.cutS && e.cutS.d === today()) || e.ssD === today());
   const muscles = [...new Set(list.map(e => e.m))];
   if (list.length && nDone === list.length && sess[k] && sess[k].start && !sess[k].end){ sess[k].end = Date.now(); setTimeout(() => save(), 0); }
   const s = sess[k], storyOn = currentDay === todayIdx() && list.length > 0 && !sessStarted(k);
@@ -1967,7 +1970,7 @@ function viewSeance(){
     <div style="flex:1;min-width:0;position:relative;z-index:1">
       <h2>${DAY_NAMES[currentDay]}${currentDay === todayIdx() ? ' <span class="tday">aujourd’hui</span>' : ''}</h2>
       <p>${esc(dayTitle(currentDay))}</p>
-      <div class="meta"><span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}<span class="chip">⏱️ ~${mins} min</span>${prog && cycleIdx(prog) === 3 ? '<span class="chip">🪶 Décharge</span>' : ''}${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end && nDone < list.length ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
+      <div class="meta">${hiitD ? '<span class="chip">⚡ HIIT guidé</span>' : `<span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}`}<span class="chip">⏱️ ~${mins} min</span>${prog && cycleIdx(prog) === 3 ? '<span class="chip">🪶 Décharge</span>' : ''}${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end && nDone < list.length ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
       ${muscles.length ? `<div class="meta">${muscles.map(m => `<span class="mus" style="--c:${mcol(m)}">${esc(m)}</span>`).join('')}</div>` : ''}
     </div>
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
@@ -3691,16 +3694,20 @@ function weekDates(wk){ const d = new Date(); d.setDate(d.getDate() - todayIdx()
 
 // contexte d'une personne : profil courant ou l'autre profil (mode duo)
 function ctxOf(pid){
-  if (pid === profile.id) return { pid, nom: profile.nom, nut: nut, body, data };
+  if (pid === profile.id) return { pid, nom: profile.nom, nut: nut, body, data, titles };
   const p = PROFILES.find(x => x.id === pid);
   const d = other && other.p.id === pid ? other.d : {};
-  return { pid, nom: p ? p.nom : pid, nut: (d && d.nut) || null, body: (d && d.body) || [], data: (d && d.data) || {} };
+  return { pid, nom: p ? p.nom : pid, nut: (d && d.nut) || null, body: (d && d.body) || [], data: (d && d.data) || {}, titles: (d && d.titles) || {} };
 }
 const nutReady = n => n && n.sexe && n.age && n.taille && (n.poids || n.poids === 0);
 function weightOf(c){ const B = (c.body || []).filter(b => b.p != null).sort((a, b) => a.d < b.d ? -1 : 1); return B.length ? B[B.length - 1].p : num(c.nut && c.nut.poids) || 70; }
+// dépense prévue d'une séance, avec le même calcul que les séances enregistrées (poids de la personne) ;
+// mobilité et étirements ne comptent pas comme entraînement ; jour HIIT : la séance guidée du jour
 function sessionKcal(c, di){
-  const l = (c.data || {})['day' + di] || [];
-  return Math.round(l.reduce((a, e) => { const t = e.t || 'f'; return a + (t === 'c' ? topReps(e.r) * 8 : t === 'k' ? (+e.s || 3) * topReps(e.r) : (+e.s || 3) * (t === 's' ? 6 : 12)); }, 0));
+  const l = (c.data || {})['day' + di] || [], w = weightOf(c), T = c.pid === profile.id ? titles : (c.titles || {});
+  if (HIIT_T.includes(T['day' + di])){ const lv = c.pid === profile.id ? settings.hiitLvl ?? 1 : 1;
+    try{ return Math.round(hiitSeq(hiitOfDay(di), lv).reduce((a, x, i) => a + (i === 0 ? 5 : x.k === 'work' ? 9 : 3.5) * 3.5 * w / 200 * x.s / 60, 0)); }catch(e){} }
+  return Math.round(l.reduce((a, e) => isSkip(e) || ['Mobilité', 'Étirements'].includes(e.m) ? a : a + (kcalEst(e, topReps(e.r), w) || 0), 0));
 }
 function targets(c, di){
   const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
@@ -3886,6 +3893,8 @@ function pickW(list, rnd, ctx){
   const r = L[k]; r.ing.forEach(([f, g]) => { if (ctx.stock[f] > 0) ctx.stock[f] -= g * (ctx.n || 1); });
   return r.id;
 }
+// valeurs d'une recette pour sa portion de base
+const recMac = r => r.ing.reduce((a, [f, g]) => FOODS[f] ? { k: a.k + FOODS[f].k * g / 100, p: a.p + FOODS[f].p * g / 100, g: a.g + FOODS[f].g * g / 100 } : a, { k: 0, p: 0, g: 0 });
 function genPlan(wk, keep, from){
   const pids = PROFILES.map(p => p.id), excls = pids.map(id => exclOf(ctxOf(id))), S = wk + '#' + (foyer.salt || 0);
   const days = [], used = [], ctx = { used: new Set(), recent: platsOf(wkShift(wk, -1)), old: platsOf(wkShift(wk, -2)), stock: stockMap(), n: pids.length };
@@ -3895,9 +3904,10 @@ function genPlan(wk, keep, from){
     ['pdj','col'].forEach(meal => { day[meal] = {}; pids.forEach((pid, k) => {
       const c = ctxOf(pid), train = sessionKcal(c, d) > 0, rnd = rng(S + meal + d + pid);
       let L = RECIPES.filter(r => r.type === meal && recipeOk(r, [excls[k]]));
-      if (meal === 'col' && train){ const pre = L.filter(r => ['shake','banane-amandes','yaourt-avoine','fb-miel'].includes(r.id)); if (pre.length) L = pre; }
-      else if (meal === 'col' && c.nut && (c.nut.obj === 'perte' || c.nut.obj === 'recompo')){ const hp = L.filter(r => ['skyr-fruits','fb-miel','oeufs-durs','galettes-jambon'].includes(r.id)); if (hp.length) L = hp; }
-      if (meal === 'pdj' && c.nut && c.nut.obj === 'perte'){ const hp = L.filter(r => ['omelette-pain','fb-granola','oeufs-jambon','tartines-skyr','pancakes'].includes(r.id)); if (hp.length) L = hp; }
+      // jour de séance : collation avec glucides et protéines ; perte de poids : petit-déjeuner et collation riches en protéines
+      if (meal === 'col' && train){ const pre = L.filter(r => { const m = recMac(r); return m.g >= 25 && m.p >= 10; }); if (pre.length) L = pre; }
+      else if (meal === 'col' && c.nut && (c.nut.obj === 'perte' || c.nut.obj === 'recompo')){ const hp = L.filter(r => { const m = recMac(r); return m.p * 100 / m.k >= 6.5; }); if (hp.length) L = hp; }
+      if (meal === 'pdj' && c.nut && c.nut.obj === 'perte'){ const hp = L.filter(r => recMac(r).p >= 22); if (hp.length) L = hp; }
       const prev = d ? [days[d - 1][meal][pid]] : [];
       day[meal][pid] = pickW(L, rnd, { used: new Set(prev), recent: new Set(), stock: {}, n: 1 });
     }); });
@@ -4577,6 +4587,27 @@ function scheme(obj, niv, comp, first){
   return comp ? { s: 3, r: '8-10' } : { s: 3, r: '10-12' };
 }
 function exFromLib(name, extra){ const x = LIB_BY[name]; if (!x) return null; const o = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') o.t = x.t; return Object.assign(o, extra || {}); }
+// finisher abdos : 2 exercices au poids du corps, différents d'un jour à l'autre et de ceux déjà dans la séance
+const ABS_FIN = ['Crunch', 'Gainage latéral', 'Relevé de jambes au sol', 'Dead bug', 'Crunch bicyclette', 'Hollow hold', 'Russian twist', 'Planche latérale avec rotation', 'Gainage', 'Mountain climbers'];
+function absFinisher(L, i, niv){
+  const have = new Set(L.map(e => e.n)), C = ABS_FIN.filter(n => LIB_BY[n] && !have.has(n)), out = [];
+  for (let j = 0; out.length < 2 && j < C.length; j++){ const n = C[(i * 2 + j) % C.length]; if (out.some(e => e.n === n)) continue;
+    const x = exFromLib(n, { slot: 'abs', vi: j }); if (niv === 'deb') x.s = 2; x.bs = x.s; x.cmp = 0; x.fx = 1; x.abs = 1; out.push(x); }
+  return out;
+}
+// à ajouter avant les étirements de fin, sur les jours de musculation (pas HIIT, cardio léger ni mobilité)
+function withAbs(L, i, niv){
+  if (!musOf(L).size || L.some(e => e.abs)) return L;
+  const k = L.findIndex(e => e.ph === 'cool'), at = k < 0 ? L.length : k;
+  return [...L.slice(0, at), ...absFinisher(L, i, niv), ...L.slice(at)];
+}
+// Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
+function absOnce(){
+  if (profile.id !== 'bea' || (coach && coach.absFin)) return;
+  let n = 0; for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || []; if (isHiitDay(d)) continue; const L2 = withAbs(L, d, prog && prog.niv); if (L2 !== L && L2.length > L.length){ data[k] = L2; n++; } }
+  coach = Object.assign({}, coach, { absFin: today() }); if (prog) prog.abs = true;
+  if (n){ save(); setTimeout(() => toast(`🔥 Abdos ajoutés à la fin de tes ${n} séance${n > 1 ? 's' : ''}`), 1200); }
+}
 function buildProgram(cfg){
   const n = cfg.days.length, [keys, splitName] = SPLITS[n] || SPLITS[3];
   const tplKeys = n === 3 && cfg.niv !== 'deb' && (cfg.mat === 'salle' || cfg.mat === 'caserne') ? ['PUSH','PULL','LEGS'] : keys;
@@ -4619,7 +4650,7 @@ function buildProgram(cfg){
       pre.unshift(...w.slice(0, 2).map((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'warm', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; return x; }));
       cl.slice(0, 2).forEach((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'cool', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; post.push(x); });
     }
-    out['day' + day] = [...pre, ...list, ...post]; titles2['day' + day] = tpl.t + (cfg.plyo && pre.some(x => x.ph === 'plyo') ? ' + pliométrie' : '') + (cfg.obj === 'perte' ? ' + cardio' : '');
+    out['day' + day] = cfg.abs ? withAbs([...pre, ...list, ...post], i, cfg.niv) : [...pre, ...list, ...post]; titles2['day' + day] = tpl.t + (cfg.plyo && pre.some(x => x.ph === 'plyo') ? ' + pliométrie' : '') + (cfg.obj === 'perte' ? ' + cardio' : '');
   });
   // jours de cardio léger sur les jours de repos
   const rest = [0,1,2,3,4,5,6].filter(d => !cfg.days.includes(d)), nCardio = { perte: 2, recompo: 1, maintien: 1, muscle: 0 }[cfg.obj] || 0;
@@ -4843,21 +4874,22 @@ function sheetCoach(){
     <div class="fg"><label for="cMat">Matériel</label><select id="cMat">${Object.entries(MAT).map(([k, l]) => `<option value="${k}" ${(p.mat || 'caserne') === k ? 'selected' : ''}>${l}</option>`).join('')}</select><button type="button" class="btn sm" data-x="gear" style="margin-top:8px">🏋️ Mon matériel : les poids que j’ai</button></div>
     <div class="card" style="padding:4px 14px;margin-bottom:12px">
       <div class="toggle"><span>⚡ Pliométrie<small>Sauts explosifs en début de séance : puissance, détente, cardio</small></span><button type="button" class="sw ${p.plyo ? 'on' : ''}" id="cPly" role="switch" aria-checked="${!!p.plyo}"></button></div>
-      <div class="toggle"><span>🧘 Mobilité<small>Échauffement ciblé, étirements au retour au calme et une séance souplesse le jour de repos</small></span><button type="button" class="sw ${p.mob ? 'on' : ''}" id="cMob" role="switch" aria-checked="${!!p.mob}"></button></div></div>
+      <div class="toggle"><span>🧘 Mobilité<small>Échauffement ciblé, étirements au retour au calme et une séance souplesse le jour de repos</small></span><button type="button" class="sw ${p.mob ? 'on' : ''}" id="cMob" role="switch" aria-checked="${!!p.mob}"></button></div>
+      <div class="toggle"><span>🔥 Abdos en fin de séance<small>2 exercices d’abdos au poids du corps à la fin de chaque séance de musculation</small></span><button type="button" class="sw ${p.abs ? 'on' : ''}" id="cAbs" role="switch" aria-checked="${!!p.abs}"></button></div></div>
     <div id="cPrev" class="box"></div>
     <p class="muted" style="font-size:12px;margin-bottom:12px">⚠️ Le programme remplace tes séances actuelles (elles restent récupérables avec « Ancien programme »). Ton historique, tes records et tes poids sont gardés.</p>
     <div class="row"><button type="button" class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn pri" type="submit">✅ Appliquer</button></div></form>`);
-  const cfg = () => ({ obj: (document.querySelector('#cf input[name=cobj]:checked') || {}).value || obj, days: days.slice().sort((a, b) => a - b), dur: +$('#cDur').value, niv: $('#cNiv').value, mat: $('#cMat').value, plyo: $('#cPly').classList.contains('on'), mob: $('#cMob').classList.contains('on') });
+  const cfg = () => ({ obj: (document.querySelector('#cf input[name=cobj]:checked') || {}).value || obj, days: days.slice().sort((a, b) => a - b), dur: +$('#cDur').value, niv: $('#cNiv').value, mat: $('#cMat').value, plyo: $('#cPly').classList.contains('on'), mob: $('#cMob').classList.contains('on'), abs: $('#cAbs').classList.contains('on') });
   const prev = () => {
     $('#dpn').textContent = days.length < 2 ? 'Choisis au moins 2 jours.' : days.length > 6 ? 'Maximum 6 jours : garde au moins un jour de repos.' : `${days.length} jours par semaine`;
     if (days.length < 2 || days.length > 6){ $('#cPrev').innerHTML = ''; return; }
     const b = buildProgram(cfg());
-    $('#cPrev').innerHTML = `<h4>Aperçu · ${esc(b.split)}</h4><p>${DAY_NAMES.map((d, i) => { const L = b.data['day' + i]; return L.length ? `<b>${d}</b> · ${esc(b.titles['day' + i])}\n  ${L.map(e => `${e.ph === 'warm' ? '🧘 ' : e.ph === 'cool' ? '🌙 ' : e.ph === 'plyo' ? '⚡ ' : ''}${e.n} ${typ(e) === 'c' ? e.r : e.s + '×' + e.r}`).map(esc).join(' · ')}` : `<b>${d}</b> · Repos`; }).join('\n')}</p>`;
+    $('#cPrev').innerHTML = `<h4>Aperçu · ${esc(b.split)}</h4><p>${DAY_NAMES.map((d, i) => { const L = b.data['day' + i]; return L.length ? `<b>${d}</b> · ${esc(b.titles['day' + i])}\n  ${L.map(e => `${e.ph === 'warm' ? '🧘 ' : e.ph === 'cool' ? '🌙 ' : e.ph === 'plyo' ? '⚡ ' : e.abs ? '🔥 ' : ''}${e.n} ${typ(e) === 'c' ? e.r : e.s + '×' + e.r}`).map(esc).join(' · ')}` : `<b>${d}</b> · Repos`; }).join('\n')}</p>`;
   };
   $('#sheet').querySelectorAll('.obj input').forEach(r => r.onchange = () => { $('#sheet').querySelectorAll('.obj').forEach(l => l.classList.toggle('on', l.querySelector('input').checked)); prev(); });
   $('#sheet').querySelectorAll('[data-dp]').forEach(b => b.onclick = () => { const i = +b.dataset.dp; days = days.includes(i) ? days.filter(x => x !== i) : [...days, i]; b.classList.toggle('on'); prev(); });
   ['#cDur','#cNiv','#cMat'].forEach(s => $(s).onchange = prev);
-  ['#cPly','#cMob'].forEach(s => $(s).onclick = () => { const b = $(s); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); prev(); });
+  ['#cPly','#cMob','#cAbs'].forEach(s => $(s).onclick = () => { const b = $(s); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); prev(); });
   $('#cf').onsubmit = ev => {
     ev.preventDefault(); if (days.length < 2 || days.length > 6) return toast('Choisis entre 2 et 6 jours.');
     const c = cfg(), b = buildProgram(c);
@@ -6626,7 +6658,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 93;
+const APP_VERSION = 94;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
