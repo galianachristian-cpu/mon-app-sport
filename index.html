@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0f19">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -41,6 +41,7 @@
 html{background:var(--bg)}
 body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,color-mix(in srgb,var(--a2) 12%,transparent),transparent 60%),radial-gradient(900px 500px at -10% 10%,color-mix(in srgb,var(--a1) 10%,transparent),transparent 60%),var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(150px + var(--safe-b))}
 button,input,select,textarea{font:inherit;color:inherit}
+html,body,button,a,input,select,textarea,label,[data-act],[data-x]{touch-action:manipulation}
 button{cursor:pointer;border:none;background:none}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px}
 
@@ -1162,7 +1163,7 @@ const canDo = n => !gear || !gear.on || ((!NO_CASERNE.has(n)) && (!HOME.some(([h
 function altDoable(e, used, avoid){
   const t = typ(e), m = e.m, slot = Object.values(SLOTS).find(v => (v.caserne || []).includes(e.n) || Object.values(v).some(L => L.includes(e.n)));
   const pref = slot ? slot.caserne || [] : [];
-  return [...pref, ...LIB.filter(x => x.m === m && (x.t || 'f') === t).map(x => x.n)].find(n => LIB_BY[n] && canDo(n) && n !== e.n && !(used && used.has(n)) && !(avoid && avoid.has(n))) || null;
+  return [...pref, ...LIB.filter(x => x.m === m && (x.t || 'f') === t).map(x => x.n)].find(n => LIB_BY[n] && canDo(n) && !ANIM_SWAP[n] && n !== e.n && !(used && used.has(n)) && !(avoid && avoid.has(n))) || null;
 }
 function eqOf(x){
   if (EQ_FIX[x.n]) return EQ_FIX[x.n];
@@ -1246,7 +1247,7 @@ const DF_GIF = {
   "Curl haltères alterné": '2022/08/curl-biceps-avec-halteres-alterne.gif',
   "Curl pupitre": '2022/01/curl-au-pupitre-barre-ez-larry-scott.gif',
   "Curl poulie basse": '2021/10/curl-biceps-poulie-basse.gif',
-  "Dips": '2022/10/dips-aux-anneaux.gif',
+  "Dips": '2000/01/dips-triceps.gif',
   "Extension triceps poulie haute": '2021/10/extension-triceps-poulie-haute-corde.gif',
   "Extension triceps au-dessus tête": '2022/12/extensions-des-triceps-assis-avec-haltere.gif',
   "Barre au front": '2000/09/barre-front.gif',
@@ -1420,15 +1421,14 @@ const DF_GIF = {
   "Machine à escaliers": '2022/10/machine-a-escaliers.gif',
   "SkiErg": '2021/12/ergometre-de-ski.gif',
   "Vélo spinning": '2022/11/velo-stationnaire.gif',
-  "Abduction machine": '2024/07/abduction-de-la-hanche-assis-avec-elastique.gif',
-  "Pigeon (fessiers)": '2025/11/etirement-de-la-hanche-90-90.gif',
+  "Abduction machine": '2026/11/abduction-des-hanches-a-la-machine.gif',
   "Relevé de jambes à la chaise romaine": '2022/04/releve-jambes-chaise-romaine-abdominaux.gif',
   "Relevé de genoux à la chaise romaine": '2022/04/releve-jambes-flechies-musculation-abdos.gif'
 };
 LIB.forEach(x => { x.gif = DF_GIF[x.n] ? DF_GIF_BASE + DF_GIF[x.n] : ''; });
-// exercices sans animation sur docteur-fitness (vérifié sur tout le site) : photos début / fin du mouvement de Free Exercise DB (domaine public), animées
-const LOCAL_GIF = { 'Fentes sautées':'fentes-sautees', 'Relevé de jambes au sol':'releve-jambes', 'Saut en longueur sans élan':'saut-longueur', 'Sauts groupés':'sauts-groupes', 'Slam médecine-ball':'slam-medecine-ball' };
-LIB.forEach(x => { if (!x.gif && LOCAL_GIF[x.n]) x.gif = 'img/anim/' + LOCAL_GIF[x.n] + '.gif'; });
+// exercices sans animation sur docteur-fitness : jamais proposés, remplacés par un exercice proche qui en a une
+const ANIM_SWAP = { 'Relevé de jambes au sol':['Ciseaux'], 'Fentes sautées':['Squat sauté','Sauts latéraux (skater)'], 'Sauts groupés':['Box jump','Squat sauté'], 'Saut en longueur sans élan':['Box jump','Sauts latéraux (skater)'],
+  'Slam médecine-ball':['Wall ball','Thruster','Kettlebell swing'], 'Pigeon (fessiers)':['Rotation assise genou relevé'], 'Mobilité cheville genou au mur':['Étirement des chevilles assis'] };
 const gifOf = e => !e ? '' : LIB_BY[e.n] ? LIB_BY[e.n].gif : (e.gif || '');
 function exVis(e, still){
   const g = gifOf(e);
@@ -1564,7 +1564,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  absOnce();
+  absOnce(); animOnce();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1666,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [96, [['🎬', 'Toutes les animations viennent de docteur-fitness', 'les exercices qui n’en avaient pas sont remplacés par un équivalent'], ['🔍', 'Plus de zoom quand tu tapes vite sur les boutons', 'partout dans l’application']]],
   [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
   [94, [['🔥', 'Abdos en fin de séance (ajoutés pour Béa)', 'Programme → Mon programme → « Abdos en fin de séance »'], ['🧮', 'Calories des séances recalculées pour la nutrition', 'Nutrition → objectif du jour, plus juste les jours de cardio et de mobilité'], ['🍳', 'Menus : les nouvelles recettes riches en protéines sont proposées', 'Nutrition → Semaine']]],
   [93, [['⚡', 'Vraies séances HIIT guidées par le chrono', 'Séance → un jour HIIT → « Lancer le HIIT guidé »'], ['🔄', '10 formats HIIT qui changent chaque semaine, 3 niveaux', 'Séance → jour HIIT']]],
@@ -3251,7 +3252,7 @@ const PROG = [
   ['Pompes inclinées', 'Pompes', 'Pompes diamant', 'Pompes explosives'], ['Pompes piquées', 'Pompes en équilibre (HSPU)'],
   ['Tractions avec élastique', 'Tractions négatives', 'Tractions'], ['Dips sur banc', 'Dips'],
   ['Squat poids du corps', 'Squat cosaque', 'Pistol squat'], ['Step-up', 'Squat sauté', 'Box jump'],
-  ['Fentes croisées', 'Fentes marchées', 'Fentes sautées'], ['Pont fessier', 'Hip thrust unilatéral'],
+  ['Fentes croisées', 'Fentes marchées'], ['Pont fessier', 'Hip thrust unilatéral'],
   ['Crunch', 'Relevé de genoux à la chaise romaine', 'Relevé de jambes à la chaise romaine', 'Relevé de genoux suspendu', 'Relevé de jambes suspendu'],
   ['Gainage', 'Planche de l’ours', 'Planche latérale avec rotation'], ['Jumping jacks', 'Burpees']];
 function stepName(n, dir){
@@ -3394,7 +3395,7 @@ function sheetLib(rep){
     <div id="lres"></div>`);
   const paint = () => {
     const q = libQ.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const R = LIB.filter(x => (!o || x.n !== o.n) && (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || (libE === 'Mine' ? canDo(x.n) : eqOf(x) === libE)) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
+    const R = LIB.filter(x => !ANIM_SWAP[x.n] && (!o || x.n !== o.n) && (libM === 'Tous' || x.m === libM) && (libE === 'Tout' || (libE === 'Mine' ? canDo(x.n) : eqOf(x) === libE)) && (!q || (x.n + ' ' + x.m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(q)));
     // remplacement : même type, puis mots en commun avec l'exercice d'origine (« Relevé », « Squat »…), puis animation docteur-fitness
     const az = (a, b) => a.n.localeCompare(b.n, 'fr', { sensitivity: 'base' });
     if (o){ const W = new Set(o.n.toLowerCase().split(/[\s()]+/).filter(w => w.length > 3)), sc = x => ((x.t || 'f') !== typ(o)) * 4 + (x.n.toLowerCase().split(/[\s()]+/).some(w => W.has(w)) ? 0 : 2) + (/docteur/.test(x.gif || '') ? 0 : 1); R.sort((a, b) => sc(a) - sc(b) || az(a, b)); }
@@ -4554,14 +4555,14 @@ const SLOTS = {
   triceps:{ caserne:['Barre au front','Extension triceps poulie haute','Dips','Extension triceps au-dessus tête'], salle:['Extension triceps poulie haute','Barre au front','Dips'], halt:['Extension triceps au-dessus tête','Kickback haltère'], elas:['Extension triceps élastique vers le bas','Extension triceps élastique'], pdc:['Dips sur banc','Pompes diamant'] },
   cuisse: { caserne:['Leg extension','Fentes marchées','Step-up','Leg curl élastique'], salle:['Leg extension','Curl jambes allongé','Curl jambes assis'], halt:['Fentes marchées','Step-up'], elas:['Leg curl élastique','Leg extension élastique','Marche latérale élastique'], pdc:['Chaise','Squat poids du corps'] },
   mollet: { caserne:['Mollets sur une marche'], salle:['Mollets debout','Mollets assis'], halt:['Mollets debout'], elas:['Mollets sur une marche'], pdc:['Mollets sur une marche','Mollets debout'] },
-  core:   { caserne:['Gainage','Relevé de genoux suspendu','Relevé de jambes suspendu','Russian twist','Windmill kettlebell'], salle:['Gainage','Relevé de jambes suspendu','Crunch aux câbles','Roue abdominale'], halt:['Gainage','Russian twist','Gainage latéral','Crunch'], elas:['Gainage','Pallof press élastique','Dead bug','Crunch bicyclette'], pdc:['Gainage','Relevé de jambes au sol','Russian twist','Mountain climbers','Dead bug'] },
+  core:   { caserne:['Gainage','Relevé de genoux suspendu','Relevé de jambes suspendu','Russian twist','Windmill kettlebell'], salle:['Gainage','Relevé de jambes suspendu','Crunch aux câbles','Roue abdominale'], halt:['Gainage','Russian twist','Gainage latéral','Crunch'], elas:['Gainage','Pallof press élastique','Dead bug','Crunch bicyclette'], pdc:['Gainage','Ciseaux','Russian twist','Mountain climbers','Dead bug'] },
   cardio: { caserne:['Rameur','Assault bike','SkiErg','Vélo'], salle:['Rameur','Elliptique','Vélo'], halt:['HIIT 30/30','Corde à sauter','Burpees'], elas:['HIIT 30/30','Jumping jacks','Burpees'], pdc:['HIIT 30/30','Burpees','Mountain climbers'] }
 };
 const COMPOUND = ['squat','hinge','pushH','pushV','pullV','pullH'];
-const PLYO = { low: { deb:['Squat sauté','Sauts latéraux (skater)'], inter:['Box jump','Fentes sautées','Saut en longueur sans élan'], conf:['Box jump','Sauts groupés','Saut en longueur sans élan'] }, up: { deb:[], inter:['Pompes explosives'], conf:['Pompes explosives','Slam médecine-ball'] } };
-const MOB = { warmLow:['World’s greatest stretch','Mobilité de hanches 90/90','Mobilité cheville genou au mur'], warmUp:['Rotation thoracique (open book)','Dislocations d’épaules (bâton)','Chat-vache'],
-  coolLow:['Étirement du psoas','Pigeon (fessiers)','Étirement des ischios'], coolUp:['Étirement des pectoraux au mur','Posture de l’enfant'],
-  day:['Chat-vache','World’s greatest stretch','Mobilité de hanches 90/90','Rotation thoracique (open book)','Mobilité cheville genou au mur','Squat profond tenu','Pigeon (fessiers)','Étirement du psoas','Posture de l’enfant'] };
+const PLYO = { low: { deb:['Squat sauté','Sauts latéraux (skater)'], inter:['Box jump','Squat sauté','Sauts latéraux (skater)'], conf:['Box jump','Squat sauté','Sauts latéraux (skater)'] }, up: { deb:[], inter:['Pompes explosives'], conf:['Pompes explosives'] } };
+const MOB = { warmLow:['World’s greatest stretch','Mobilité de hanches 90/90','Cercles de hanches'], warmUp:['Rotation thoracique (open book)','Dislocations d’épaules (bâton)','Chat-vache'],
+  coolLow:['Étirement du psoas','Rotation assise genou relevé','Étirement des ischios'], coolUp:['Étirement des pectoraux au mur','Posture de l’enfant'],
+  day:['Chat-vache','World’s greatest stretch','Mobilité de hanches 90/90','Rotation thoracique (open book)','Étirement des chevilles assis','Squat profond tenu','Rotation assise genou relevé','Étirement du psoas','Posture de l’enfant'] };
 const KIND = { FBA:'full', FBB:'full', FBC:'full', PUSH:'up', PULL:'up', LEGS:'low', UP:'up', LOW:'low', UP2:'up', LOW2:'low' };
 // Séances types : familles dans l'ordre de priorité (":1" = deuxième variante)
 const TPL = {
@@ -4591,7 +4592,7 @@ function scheme(obj, niv, comp, first){
 }
 function exFromLib(name, extra){ const x = LIB_BY[name]; if (!x) return null; const o = { n:x.n, m:x.m, s:x.s, r:x.r, e:x.e, gif:x.gif, desc:x.desc, tips:x.tips }; if (x.t !== 'f') o.t = x.t; return Object.assign(o, extra || {}); }
 // finisher abdos : 2 exercices au poids du corps, différents d'un jour à l'autre et de ceux déjà dans la séance
-const ABS_FIN = ['Crunch', 'Gainage latéral', 'Relevé de jambes au sol', 'Dead bug', 'Crunch bicyclette', 'Hollow hold', 'Russian twist', 'Planche latérale avec rotation', 'Gainage', 'Mountain climbers'];
+const ABS_FIN = ['Crunch', 'Gainage latéral', 'Ciseaux', 'Dead bug', 'Crunch bicyclette', 'Hollow hold', 'Russian twist', 'Planche latérale avec rotation', 'Gainage', 'Mountain climbers'];
 function absFinisher(L, i, niv){
   const have = new Set(L.map(e => e.n)), C = ABS_FIN.filter(n => LIB_BY[n] && !have.has(n)), out = [];
   for (let j = 0; out.length < 2 && j < C.length; j++){ const n = C[(i * 2 + j) % C.length]; if (out.some(e => e.n === n)) continue;
@@ -4603,6 +4604,16 @@ function withAbs(L, i, niv){
   if (!musOf(L).size || L.some(e => e.abs)) return L;
   const k = L.findIndex(e => e.ph === 'cool'), at = k < 0 ? L.length : k;
   return [...L.slice(0, at), ...absFinisher(L, i, niv), ...L.slice(at)];
+}
+// programmes enregistrés : les exercices sans animation docteur-fitness sont remplacés une fois (séries et répétitions gardées)
+function animOnce(){
+  if (coach && coach.animSwap) return;
+  let n = 0; const fix = L => (L || []).map(e => { const to = e && ANIM_SWAP[e.n]; if (!to) return e; const used = new Set(L.map(x => x.n)), nm = to.find(x => LIB_BY[x] && !used.has(x)) || to[0];
+    const x = exFromLib(nm, {}); ['s','bs','ph','abs','fx','cmp','slot','vi','sup','note'].forEach(f => { if (e[f] != null) x[f] = e[f]; }); if (typ(x) === typ(e) && /chaque/.test(e.r) === /chaque/.test(x.r)) x.r = e.r; n++; return x; });
+  Object.keys(data).forEach(k => { if (Array.isArray(data[k])) data[k] = fix(data[k]); });
+  [coach && coach.prevHiit, coach && coach.prevData].forEach(P => { const D = P && (P.data || P); if (D && typeof D === 'object') Object.keys(D).forEach(k => { if (Array.isArray(D[k])) D[k] = fix(D[k]); }); });
+  coach = Object.assign({}, coach, { animSwap: 1 });
+  if (n){ save(); setTimeout(() => toast(`🎬 ${n} exercice${n > 1 ? 's' : ''} remplacé${n > 1 ? 's' : ''} par un équivalent avec son animation`), 1600); }
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 function absOnce(){
@@ -4643,7 +4654,7 @@ function buildProgram(cfg){
     // pliométrie : après l'échauffement, avant la musculation (on est frais)
     const pre = [], post = [];
     if (cfg.plyo){
-      const lo = PLYO.low[cfg.niv] || [], hi = PLYO.up[cfg.niv] || [], pick2 = (L, n) => L.filter(x => cfg.mat === 'salle' || cfg.mat === 'caserne' || x !== 'Slam médecine-ball' && x !== 'Box jump').slice(0, n);
+      const lo = PLYO.low[cfg.niv] || [], hi = PLYO.up[cfg.niv] || [], pick2 = (L, n) => L.filter(x => cfg.mat === 'salle' || cfg.mat === 'caserne' || x !== 'Box jump').slice(0, n);
       let names = kind === 'low' ? pick2(lo, cfg.niv === 'deb' ? 1 : 2) : kind === 'up' ? pick2(hi, 1) : [...pick2(lo, 1), ...pick2(hi, cfg.niv === 'deb' ? 0 : 1)];
       if (!names.length && kind !== 'up') names = ['Squat sauté'];
       names.forEach((nm, j) => { const x = exFromLib(nm, { slot: 'plyo', vi: j, ph: 'plyo' }); if (cfg.niv === 'deb'){ x.s = 2; } x.bs = x.s; x.cmp = 0; x.fx = 1; pre.push(x); });
@@ -4748,7 +4759,7 @@ const HIIT_S = [
   { id: 'pyramide', n: 'La pyramide', ic: '🔺', d: 'L’effort s’allonge puis redescend ; repos égal à l’effort.', u: 'cal', B: [{ ex: ['@1'], ws: [[20, 30, 40, 30, 20], [20, 30, 40, 50, 40, 30, 20], [20, 30, 40, 50, 60, 50, 40, 30, 20]] }] },
   { id: '4postes', n: 'Les 4 postes', ic: '🔁', d: '40 s par poste, 20 s pour changer. Machine, kettlebell, ballon, gainage.', B: [{ ex: ['@0', 'Kettlebell swing', 'Wall ball', 'Gainage'], w: 40, r: 20, n: [3, 4, 5], p: 60 }] },
   { id: 'sprints', n: 'Sprints d’une minute', ic: '🚣', d: '1 min soutenue, 1 min de récupération.', u: 'cal', B: [{ ex: ['@1'], w: 60, r: 60, n: [5, 6, 8] }] },
-  { id: 'pompier', n: 'Circuit pompier', ic: '🚒', d: 'Lancer, porter, pousser : 30 s d’effort, 30 s de repos.', B: [{ ex: ['Slam médecine-ball', 'Marche du fermier', 'Wall ball', 'Burpees'], w: 30, r: 30, n: [3, 4, 5], p: 60 }] },
+  { id: 'pompier', n: 'Circuit pompier', ic: '🚒', d: 'Lancer, porter, pousser : 30 s d’effort, 30 s de repos.', B: [{ ex: ['Thruster', 'Marche du fermier', 'Wall ball', 'Burpees'], w: 30, r: 30, n: [3, 4, 5], p: 60 }] },
   { id: 'jambes', n: 'Jambes de feu', ic: '🦵', d: '30 s de sauts, 30 s de repos. Réceptions souples, genoux dans l’axe.', B: [{ ex: ['Squat sauté', 'Sauts latéraux (skater)', 'Mountain climbers', 'Jumping jacks'], w: 30, r: 30, n: [2, 3, 4], p: 60 }] },
   { id: '4515', n: '45/15 mixte', ic: '🔥', d: '45 s d’effort, 15 s pour changer : deux machines, pompes et gainage.', B: [{ ex: ['@2', 'Pompes', '@1', 'Gainage'], w: 45, r: 15, n: [3, 4, 5], p: 60 }] },
   { id: 'courts', n: 'Sprints courts', ic: '💥', d: '15 s au maximum, 45 s très lent. La qualité du sprint avant tout.', u: 'cal', B: [{ ex: ['@0'], w: 15, r: 45, n: [8, 10, 12] }] },
@@ -6668,7 +6679,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 95;
+const APP_VERSION = 96;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
