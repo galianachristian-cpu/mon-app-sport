@@ -116,6 +116,9 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const noMuscu = !Object.values(data).flat().some(e => e && ['Développé couché', 'Squat', 'Rowing barre', 'Tirage vertical (Lat Pulldown)', 'Soulevé de terre'].includes(e.n));
     const ok1 = tab && noMuscu && isHiitDay(1) && isHiitDay(3) && !canRepair(); const j = JSON.stringify(data); beaFitOnce(); const ok2 = JSON.stringify(data) === j && !!coach.prevMuscu;
     profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; save = sv.save; return ok1 && ok2; }));
+  check('Béa : 1 260 kcal strictes chaque jour, une seule fois', await p.evaluate(() => { const sv = { profile, nut: clone(nut), save }; save = () => {}; profile = PROFILES[1]; nut = { sexe: 'F', age: 49, taille: 165, poids: 62, obj: 'perte', act: 1.35 };
+    beaKcalOnce(); const K = [0, 1, 2, 3, 4, 5, 6].map(d => targets(ctxOf(profile.id), d).kcal), ok = K.every(k => k === 1260); nut.kcalMan = 1400; beaKcalOnce(); const ok2 = nut.kcalMan === 1400;
+    profile = sv.profile; nut = sv.nut; save = sv.save; return ok && ok2; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
