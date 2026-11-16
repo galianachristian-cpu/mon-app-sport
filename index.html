@@ -1666,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton']]],
   [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
   [100, [['🔥', 'Béa : programme fitness, plus de musculation', 'que du fitness : 3 séances Tabata variées + 2 HIIT, abdos à chaque séance']]],
   [99, [['💪', 'Béa : 4 séances de musculation, 3 séances Tabata, 2 HIIT', 'Tabata de 25 min après la musculation, 5 exercices différents qui changent chaque semaine']]],
@@ -1985,7 +1986,7 @@ function viewSeance(){
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
   </section>
   ${!storyOn && list.length > 1 ? stripRow(k, list) : ''}
-  ${hiitSessCard(currentDay)}${tabSessCard(currentDay)}
+  ${fullCard(currentDay)}${hiitSessCard(currentDay)}${tabSessCard(currentDay)}
   ${hOn('mus') && !isHiitDay(currentDay) ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
@@ -4718,12 +4719,55 @@ function tabataSession(pk, seed, excl, nb){
   return out;
 }
 function tabSessCard(di){
+  if (di === todayIdx()) return ''; // le jour même, la séance complète guidée la remplace
   const L = data['day' + di] || [], T = L.map((e, i) => [e, i]).filter(([e]) => e && e.tab); if (!T.length) return '';
   const pk = T[0][0].tabP, all = T.every(([, i]) => (done['day' + di] || [])[i]), min = Math.round((T.length * 230 + (T.length - 1) * 60 + 10) / 60);
   return `<section class="card hiitc"><div class="hih"><span class="hii">⏱️</span><div><small class="muted">Séance Tabata</small><h3>${esc((TAB_POOL[pk] || {}).t || 'Tabata')}</h3></div><span class="chip">⏱️ ${min} min</span></div>
     <p class="muted" style="font-size:13px;margin:6px 0 10px">${T.length} blocs de 4 min : 20 s à fond, 10 s de repos, 8 tours. 1 min de repos entre les blocs. Un exercice différent à chaque bloc.</p>
     <div class="hib">${T.map(([e], j) => `<div><b>Bloc ${j + 1} · 8 × 20 s / 10 s</b><span>${esc(e.n)}</span></div>`).join('')}</div>
     ${all ? '<p class="his">✅ Séance Tabata faite</p>' : `<button class="btn pri block" data-x="tabrun" style="margin-top:10px;padding:15px;font-size:16px">▶️ Lancer la séance Tabata</button>`}</section>`;
+}
+/* ---------- SÉANCE COMPLÈTE GUIDÉE (Tabata ou HIIT) : échauffement → corps de séance → abdos → étirements, sans rien toucher ---------- */
+const FULL_COOL = ['Étirement du psoas', 'Étirement des ischios', 'Étirement des pectoraux au mur', 'Posture de l’enfant'];
+const FULL_WARM = ['Jumping jacks', 'World’s greatest stretch', 'Rotation thoracique (open book)'];
+function fullPlan(di){
+  const L = (data['day' + di] || []).filter(e => e && !isSkip(e)), hiit = isHiitDay(di), T = L.filter(e => e.tab);
+  if (!hiit && !T.length) return null;
+  const l = settings.hiitLvl ?? 1, H = hiit ? hiitOfDay(di) : null;
+  let W = L.filter(e => e.ph === 'warm' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!W.length) W = FULL_WARM.filter(n => LIB_BY[n]);
+  let C = L.filter(e => e.ph === 'cool' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!C.length) C = FULL_COOL.filter(n => LIB_BY[n]);
+  const A = L.filter(e => e.abs && LIB_BY[e.n]).map(e => e.n);
+  const S = [];
+  // 1. échauffement : 45 s par mouvement (1 min de jumping jacks)
+  W.forEach((n, j) => { S.push({ k: 'work', l: `Échauffement · ${n}`, nm: n, s: /jumping/i.test(n) ? 60 : 45, tour: j + 1, n: W.length }); S.push({ k: 'rest', l: 'On enchaîne', s: 8, next: W[j + 1] || (hiit ? 'HIIT' : T[0].n) }); });
+  // 2. corps de séance
+  if (hiit) hiitSeq(H, l).forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
+  else T.forEach((e, b) => { if (b) S.push({ k: 'rest', l: 'Repos entre les blocs', s: 60, next: e.n }); else S.push({ k: 'rest', l: 'Prépare-toi pour le Tabata', s: 15, next: e.n });
+    for (let t = 1; t <= 8; t++){ S.push({ k: 'work', l: `Tabata ${b + 1}/${T.length} · ${e.n}`, nm: e.n, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: e.n }); } });
+  // 3. abdos : 3 tours de 40 s / 20 s
+  if (A.length){ S.push({ k: 'rest', l: 'Respire, on passe aux abdos', s: 45, next: A[0] });
+    for (let t = 1; t <= 3; t++) A.forEach((n, j) => { S.push({ k: 'work', l: `Abdos · ${n}`, nm: n, s: 40, tour: t, n: 3 }); if (!(t === 3 && j === A.length - 1)) S.push({ k: 'rest', l: 'Repos', s: 20, next: A[(j + 1) % A.length] }); }); }
+  // 4. étirements : 40 s chacun
+  S.push({ k: 'rest', l: 'Retour au calme · on s’étire', s: 15, next: C[0] });
+  C.forEach((n, j) => { S.push({ k: 'work', l: `Étirement · ${n}`, nm: n, s: 40, tour: j + 1, n: C.length }); if (C[j + 1]) S.push({ k: 'rest', l: 'On change', s: 8, next: C[j + 1] }); });
+  const sec = S.reduce((a, x) => a + x.s, 0) + 10;
+  return { S, hiit, H, l, T, W, A, C, min: Math.round(sec / 60), name: hiit ? H.n : 'Tabata · ' + ((TAB_POOL[(T[0] || {}).tabP] || {}).t || '') };
+}
+function fullCard(di){
+  if (di !== todayIdx()) return '';
+  const P = fullPlan(di); if (!P) return '';
+  const k = 'day' + di, all = (data[k] || []).every((e, i) => (done[k] || [])[i] || isSkip(e));
+  const step = (ic, t, d) => `<div><b>${ic} ${t}</b><span>${d}</span></div>`;
+  return `<section class="card hiitc" style="border-color:var(--a1)"><div class="hih"><span class="hii">🎧</span><div><small class="muted">Séance complète guidée · sans prise de tête</small><h3>${esc(P.name)}</h3></div><span class="chip">⏱️ ${P.min} min</span></div>
+    <p class="muted" style="font-size:13px;margin:6px 0 10px">Un seul bouton : le minuteur te guide du début à la fin, avec la voix, les bips et l’animation de chaque exercice. Tu n’as rien à toucher.</p>
+    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? 'HIIT' : `Tabata · ${P.T.length} blocs de 4 min`, esc(P.hiit ? P.H.d : P.T.map(e => e.n).join(' → ')))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
+    ${all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button>`}</section>`;
+}
+function fullRun(){
+  const di = todayIdx(), k = 'day' + di, P = fullPlan(di); if (!P) return;
+  chronoTab = 'it'; go('chrono');
+  itStart(Object.assign({}, itCfg(), { mode: P.hiit ? 'hiit' : 'tabata', title: '🎧 ' + P.name, seq: P.S, wod: P.hiit ? hiitKey(P.H, P.l) : 'Séance ' + P.name,
+    then: () => { done[k] = (data[k] || []).map(() => true); save(); go('seance'); confetti(); toast('🏁 Séance complète terminée, bravo !'); } }));
 }
 function tabataRun(){
   const k = 'day' + currentDay, T = (data[k] || []).map((e, i) => [e, i]).filter(([e]) => e && e.tab), S = [];
@@ -5829,7 +5873,7 @@ function itTick(){
 }
 function itRender(){
   const s = IT.S[IT.i], nx = IT.S[IT.i + 1];
-  openFull(`<div class="itv ${s.k}"><div class="g-top"><div><b>${ITM[IT.c.mode][1]} ${ITM[IT.c.mode][0]}</b><small>reste <span id="itRem">${fmtDur(IT.S.slice(IT.i).reduce((a, x) => a + x.s, 0))}</span></small></div><span class="spacer"></span><button data-x="itvoice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-x="itstop" aria-label="Arrêter">✕</button></div>
+  openFull(`<div class="itv ${s.k}"><div class="g-top"><div><b>${IT.c.title ? esc(IT.c.title) : ITM[IT.c.mode][1] + ' ' + ITM[IT.c.mode][0]}</b><small>reste <span id="itRem">${fmtDur(IT.S.slice(IT.i).reduce((a, x) => a + x.s, 0))}</span></small></div><span class="spacer"></span><button data-x="itvoice" aria-label="Voix">${settings.voice ? '🔊' : '🔇'}</button><button data-x="itstop" aria-label="Arrêter">✕</button></div>
     <div class="itmain"><small>${s.k === 'work' ? (s.tour ? (IT.c.mode === 'circuit' ? `Tour ${s.tour}/${s.n} · exercice ${s.ex}/${s.ne}` : `${IT.c.mode === 'emom' ? 'Minute' : 'Tour'} ${s.tour}/${s.n}`) : '') : s.k === 'rest' ? 'Récupère' : 'Ça commence'}</small>
       ${s.nm && LIB_BY[s.nm] && s.k === 'work' ? `<div class="itvis">${exVis(LIB_BY[s.nm])}</div>` : s.k === 'rest' && s.next && LIB_BY[String(s.next).split(' · ')[0]] ? `<div class="itvis sm">${exVis(LIB_BY[String(s.next).split(' · ')[0]], true)}</div>` : ''}
       ${s.amrap || s.ft ? `<ul class="wodl">${s.list.map(x => `<li>${esc(x)}</li>`).join('')}</ul><b id="itT">${fmtT(s.ft ? s.s - IT.left : IT.left)}</b><div class="bar"><i id="itB" style="width:0%"></i></div>
@@ -6143,6 +6187,7 @@ function evoAct(a, b){
     case 'repairprog': sheetConfirm('Restaurer ton programme complet ? Tes jours HIIT sont gardés, tes charges et ton historique aussi.', 'Restaurer', repairProg); break;
     case 'nextwk': sheetNextWeek(); break;
     case 'tabrun': closeSheet(); tabataRun(); break;
+    case 'fullrun': fullRun(); break;
     case 'muscuundo': sheetConfirm('Revenir à ton ancien programme (musculation + HIIT) ?', 'Revenir', () => { const o = coach.prevMuscu; data = o.data; titles = o.titles; prog = o.prog; coach = Object.assign({}, coach, { prevMuscu: null }); done = {}; sets = {}; sl = {}; logs = {}; render(); save(); toast('↩️ Ancien programme remis'); }); break;
     case 'rotundo': if (coach.rot){ data = coach.rot.prev; coach = Object.assign({}, coach, { rot: null }); render(); save(); toast('↩️ Exercices de la semaine dernière gardés'); } break;
     case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
@@ -6834,7 +6879,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 101;
+const APP_VERSION = 102;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
