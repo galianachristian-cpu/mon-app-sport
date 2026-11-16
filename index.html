@@ -1666,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [98, [['🔥', 'Béa : des abdos à chaque séance', 'aussi après le HIIT, et ils reviennent s’ils ont disparu']]],
   [97, [['🔀', 'Chaque lundi, de nouveaux exercices secondaires', 'les gros exercices restent pour suivre tes progrès, ils changent toutes les 4 semaines'], ['👀', 'Le week-end, vois les séances de la semaine prochaine', 'Séance (samedi et dimanche) ou Programme → Voir la semaine prochaine'], ['🛠️', 'Programme vidé ? Un bouton le restaure', 'Programme → Coach']]],
   [96, [['🎬', 'Toutes les animations viennent de docteur-fitness', 'les exercices qui n’en avaient pas sont remplacés par un équivalent'], ['🔍', 'Plus de zoom quand tu tapes vite sur les boutons', 'partout dans l’application']]],
   [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
@@ -4698,9 +4699,15 @@ function rotCard(){
     <button class="btn sm" data-x="rotundo" style="margin-top:8px">↩️ Garder les exercices de la semaine dernière</button></div>`;
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
+// Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
+const hasAbs = L => (L || []).some(e => e && (e.abs || (e.m === 'Abdos' && !e.ph)));
 function absOnce(){
-  if (profile.id !== 'bea' || (coach && coach.absFin)) return;
-  let n = 0; for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || []; if (isHiitDay(d)) continue; const L2 = withAbs(L, d, prog && prog.niv); if (L2 !== L && L2.length > L.length){ data[k] = L2; n++; } }
+  if (profile.id !== 'bea' || (prog && prog.abs === false && prog.absOffD)) return;
+  let n = 0; for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || [];
+    if (isHiitDay(d)){ // après le HIIT guidé : 2 exercices d'abdos avant le retour au calme
+      if (!L.length || L.some(e => e && e.abs)) continue; const c = L.findIndex(e => e && e.ph === 'cool'), at = c < 0 ? L.length : c;
+      data[k] = [...L.slice(0, at), ...absFinisher(L, d, prog && prog.niv), ...L.slice(at)]; n++; continue; }
+    if (hasAbs(L)) continue; const L2 = withAbs(L, d, prog && prog.niv); if (L2 !== L && L2.length > L.length){ data[k] = L2; n++; } }
   coach = Object.assign({}, coach, { absFin: today() }); if (prog) prog.abs = true;
   if (n){ save(); setTimeout(() => toast(`🔥 Abdos ajoutés à la fin de tes ${n} séance${n > 1 ? 's' : ''}`), 1200); }
 }
@@ -4971,7 +4978,7 @@ function sheetCoach(){
     <div class="card" style="padding:4px 14px;margin-bottom:12px">
       <div class="toggle"><span>⚡ Pliométrie<small>Sauts explosifs en début de séance : puissance, détente, cardio</small></span><button type="button" class="sw ${p.plyo ? 'on' : ''}" id="cPly" role="switch" aria-checked="${!!p.plyo}"></button></div>
       <div class="toggle"><span>🧘 Mobilité<small>Échauffement ciblé, étirements au retour au calme et une séance souplesse le jour de repos</small></span><button type="button" class="sw ${p.mob ? 'on' : ''}" id="cMob" role="switch" aria-checked="${!!p.mob}"></button></div>
-      <div class="toggle"><span>🔥 Abdos en fin de séance<small>2 exercices d’abdos au poids du corps à la fin de chaque séance de musculation</small></span><button type="button" class="sw ${p.abs ? 'on' : ''}" id="cAbs" role="switch" aria-checked="${!!p.abs}"></button></div></div>
+      <div class="toggle"><span>🔥 Abdos en fin de séance<small>2 exercices d’abdos au poids du corps à la fin de chaque séance de musculation</small></span><button type="button" class="sw ${(p.abs ?? profile.id === 'bea') ? 'on' : ''}" id="cAbs" role="switch" aria-checked="${!!(p.abs ?? profile.id === 'bea')}"></button></div></div>
     <div id="cPrev" class="box"></div>
     <p class="muted" style="font-size:12px;margin-bottom:12px">⚠️ Le programme remplace tes séances actuelles (elles restent récupérables avec « Ancien programme »). Ton historique, tes records et tes poids sont gardés.</p>
     <div class="row"><button type="button" class="btn" data-act="close">Annuler</button><span class="spacer"></span><button class="btn pri" type="submit">✅ Appliquer</button></div></form>`);
@@ -4990,7 +4997,7 @@ function sheetCoach(){
     ev.preventDefault(); if (days.length < 2 || days.length > 6) return toast('Choisis entre 2 et 6 jours.');
     const c = cfg(), b = buildProgram(c);
     const keep = prog && prog.prev ? prog.prev : { data: clone(data), titles: clone(titles) };
-    prog = Object.assign(c, { split: b.split, start: curWk(), lastWk: curWk(), gen: ymd(new Date()), prev: keep, adh: (prog && prog.adh) || [], log: [] });
+    prog = Object.assign(c, { absOffD: c.abs ? null : today(), split: b.split, start: curWk(), lastWk: curWk(), gen: ymd(new Date()), prev: keep, adh: (prog && prog.adh) || [], log: [] });
     data = b.data; titles = b.titles; done = {}; sets = {}; sl = {}; sess = {}; logs = {};
     applyCycle();
     settings.preset = REST[c.obj]; safeSet('mp_settings', settings); if (!T.run){ T.total = T.left = settings.preset; }
@@ -6764,7 +6771,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 97;
+const APP_VERSION = 98;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
