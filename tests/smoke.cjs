@@ -140,6 +140,10 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     prog = Object.assign({}, prog || {}, { split: 'Fitness : 3 Tabata + 2 HIIT' }); const H = hiitOfDay(1, '2026-W48'), H2 = hiitOfDay(1, '2026-W49'), ex = H.B.flatMap(b => b.ex.map(hiitEx));
     const okFit = H.id === 'mix' && H.B.length === 4 && new Set(H.B.map(b => b.t)).size === 4 && new Set(ex).size === ex.length && ex.every(n => LIB_BY[n] && canDo(n)) && JSON.stringify(H.B) !== JSON.stringify(H2.B);
     prog = null; const okChris = HIIT_S.includes(hiitOfDay(1, '2026-W48')); prog = sv.prog; titles = sv.titles; return okFit && okChris; }));
+  check('Béa : plus aucune pompe (même sur les genoux)', await p.evaluate(() => { const sv = { profile, data: clone(data), coach, save }; save = () => {}; profile = PROFILES[1]; coach = {};
+    data = { day0: [tabEx('Pompes sur les genoux', 'haut', 0), tabEx('Burpees', 'haut', 1)], day1: [exFromLib('Pompes diamant', { s: 3 })], day2: [], day3: [], day4: [], day5: [], day6: [] }; beaPompesOnce();
+    const all = Object.values(data).flat(), ok = !all.some(e => POMPES.has(e.n)) && data.day0.length === 2 && data.day0[0].tab && !data.day1.length && ![...TAB_POOL.haut.L, ...TAB_POOL.jambes.L, ...TAB_POOL.cardio.L, ...HIIT_POOL.force, ...HIIT_POOL.cardio].some(n => POMPES.has(n));
+    profile = sv.profile; data = sv.data; coach = sv.coach; save = sv.save; return ok; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
