@@ -1677,6 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [106, [['⚡', 'Béa : HIIT variés comme les Tabata', '4 blocs de formats différents (machine, circuit, pyramide, duo…), exercices qui changent chaque semaine, séance complète guidée']]],
   [105, [['🔒', 'Bouton « Annuler l’adaptation à la caserne » retiré', 'il remettait un programme très ancien']]],
   [104, [['🔥', 'Programme fitness de Béa plus clair', 'plus de conseils de musculation, une seule carte coach, un seul bouton de séance'], ['🛠️', 'Petites corrections', 'fenêtre du coach qui glissait de côté, boutons « trop facile » retirés de l’échauffement']]],
   [103, [['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['🔀', 'Tabata mixé', 'chaque bloc de 4 min alterne 4 exercices différents'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
@@ -4709,7 +4710,7 @@ function nextWeekPlan(){
 function sheetNextWeek(){
   const P = nextWeekPlan(), dd = wkDates(P.wk), f = x => new Date(x + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   openSheet(`<h2>👀 La semaine prochaine</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Du ${f(dd[0])} au ${f(dd[6])} · ${P.ch.length ? `${P.ch.length} nouvel${P.ch.length > 1 ? 's' : ''} exercice${P.ch.length > 1 ? 's' : ''} 🆕` : 'mêmes exercices'}${canRepair() ? ' · ⚠️ restaure d’abord ton programme' : ''}</p>
-    <div class="card tips-list">${DAY_NAMES.map((n, d) => { const L = (P.D['day' + d] || []).filter(Boolean); return `<p><b>${n}</b> · ${esc(dayTitle(d))}<br><small class="muted">${L.length ? L.map((e, i) => P.isNew.has(d + '_' + i) ? `<b style="color:var(--a1)">🆕 ${esc(e.n)}</b>` : esc(e.n)).join(' · ') : 'repos'}</small></p>`; }).join('')}</div>
+    <div class="card tips-list">${DAY_NAMES.map((n, d) => { const L = (P.D['day' + d] || []).filter(Boolean); return `<p><b>${n}</b> · ${esc(dayTitle(d))}<br><small class="muted">${isHiitDay(d) ? '⚡ ' + esc(hiitOfDay(d, P.wk).B.map(b => `${hiitBT(b)} : ${b.ex.map(hiitEx).join(', ')}`).join(' · ')) : L.length ? L.map((e, i) => P.isNew.has(d + '_' + i) ? `<b style="color:var(--a1)">🆕 ${esc(e.n)}</b>` : esc(e.n)).join(' · ') : 'repos'}</small></p>`; }).join('')}</div>
     <p class="muted" style="font-size:12px;margin:8px 2px">Les exercices 🆕 remplacent ceux de cette semaine, lundi à l’ouverture de l’application. ${isHiitDay(1) || isHiitDay(3) ? 'Les séances HIIT changent de format chaque semaine. ' : ''}${prog ? 'Le nombre de séries suit ton cycle de 4 semaines.' : ''}</p>`);
 }
 function nextWeekCard(){
@@ -4786,7 +4787,8 @@ function fullCard(di){
   const step = (ic, t, d) => `<div><b>${ic} ${t}</b><span>${d}</span></div>`;
   return `<section class="card hiitc" style="border-color:var(--a1)"><div class="hih"><span class="hii">🎧</span><div><small class="muted">Séance complète guidée · sans prise de tête</small><h3>${esc(P.name)}</h3></div><span class="chip">⏱️ ${P.min} min</span></div>
     <p class="muted" style="font-size:13px;margin:6px 0 10px">Un seul bouton : le minuteur te guide du début à la fin, avec la voix, les bips et l’animation de chaque exercice. Tu n’as rien à toucher.</p>
-    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? 'HIIT' : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? esc(P.H.d) : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
+    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? (P.H.id === 'mix' ? `HIIT · ${P.H.B.length} blocs variés` : 'HIIT · ' + P.H.n) : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? P.H.B.map(b => `<span style="font-weight:800">${esc(hiitBT(b))}</span> : ${esc(b.ex.map(hiitEx).join(' / '))}`).join('<br>') : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
+    ${P.hiit ? `<div class="seg small" style="margin-top:10px">${LVL.map((x, i) => `<button class="${i === P.l ? 'on' : ''}" data-x="hiitlvl" data-l="${i}">${x}</button>`).join('')}</div>` : ''}
     ${all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button><button class="btn block" data-x="tvhelp" style="margin-top:8px">📺 La suivre sur la télé</button>`}</section>`;
 }
 function fullRun(){
@@ -4991,9 +4993,31 @@ function hiitEx(x){
   return x;
 }
 // séance du jour : change chaque semaine, différente pour les deux jours HIIT, la même pour les deux profils
-function hiitOfDay(di){
-  const days = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay), slot = Math.max(0, days.indexOf(di)), wn = +String(curWk()).slice(-2) || 0;
-  return HIIT_S[(wn * 3 + slot * 5) % HIIT_S.length];
+/* ---------- HIIT MIXÉ : 4 blocs de formats différents, exercices variés qui changent chaque semaine (comme les Tabata) ---------- */
+const HIIT_POOL = {
+  cardio: ['Burpees', 'Mountain climbers', 'Jumping jacks', 'Squat sauté', 'Sauts latéraux (skater)', 'Corde à sauter', 'Marche de l’ours', 'Box jump'],
+  force:  ['Kettlebell swing', 'Wall ball', 'Thruster', 'Fentes marchées', 'Pompes', 'Renegade row', 'Squat goblet kettlebell', 'Planche de l’ours'] };
+const HIIT_FMT = [
+  { n: 'Machine 30/30', f: (M, X) => ({ t: 'Machine 30/30', ex: [M()], w: 30, r: 30, n: [6, 8, 10], p: 60 }) },
+  { n: 'Circuit 40/20', f: (M, X) => ({ t: 'Circuit 40/20', ex: [X('cardio'), X('force'), X('cardio'), X('force')], w: 40, r: 20, n: [2, 2, 3], p: 60 }) },
+  { n: 'Pyramide', f: (M, X) => ({ t: 'Pyramide', ex: [M()], ws: [[20, 30, 40, 30, 20], [20, 30, 40, 50, 40, 30, 20], [20, 30, 40, 50, 60, 50, 40, 30, 20]], p: 60 }) },
+  { n: 'Duo 45/15', f: (M, X) => ({ t: 'Duo 45/15', ex: [X('force'), X('cardio')], w: 45, r: 15, n: [3, 4, 5], p: 60 }) },
+  { n: 'Tabata express', f: (M, X) => ({ t: 'Tabata express', ex: [X('cardio'), X('force')], w: 20, r: 10, n: [3, 4, 4], p: 60 }) },
+  { n: 'Sprints machine', f: (M, X) => ({ t: 'Sprints 15/45', ex: [M()], w: 15, r: 45, n: [6, 8, 10], p: 60 }) }];
+const hiitBT = b => b.t || (b.ws ? 'Pyramide' : `${b.w} s / ${b.r} s`);
+function hiitOfDay(di, wkT){
+  const wk = wkT || curWk();
+  if (!isFitProg()){ // HIIT classique (Chris) : un format par séance, qui tourne chaque semaine
+    const days = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay), slot = Math.max(0, days.indexOf(di)), wn = +String(wk).slice(-2) || 0;
+    return HIIT_S[(wn * 3 + slot * 5) % HIIT_S.length]; }
+  // HIIT varié (programme fitness de Béa)
+  const r = rng('hiit' + wk + '_' + di), used = new Set();
+  const pick = L => { const C = L.filter(n => LIB_BY[n] && canDo(n) && DF_GIF[n] && !used.has(n)); const n = C.length ? C[Math.floor(r() * C.length)] : L[0]; used.add(n); return n; };
+  const M = () => pick(HM), X = k => pick(HIIT_POOL[k]);
+  const F = HIIT_FMT.map((x, i) => [x, r()]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+  const fm = [F.find(x => /Machine|Sprints/.test(x.n)), ...F.filter(x => !/Machine|Sprints/.test(x.n))].filter(Boolean).slice(0, 4); // toujours un bloc machine, puis 3 formats différents
+  const B = fm.map(x => x.f(M, X));
+  return { id: 'mix', n: 'HIIT varié', ic: '⚡', d: `${B.length} blocs : ${B.map(b => b.t).join(', ')}. Les exercices changent chaque semaine.`, u: '', B };
 }
 function hiitSeq(H, l){
   const S = [], m0 = hiitEx('@1'); S.push({ k: 'work', l: `Échauffement · ${m0} tranquille`, nm: m0, s: [240, 180, 180][l] });
@@ -5006,7 +5030,7 @@ function hiitSeq(H, l){
 }
 const hiitKey = (H, l) => `⚡ ${H.n} · ${LVL[l]}`;
 function hiitSessCard(di){
-  if (!isHiitDay(di)) return '';
+  if (!isHiitDay(di) || di === todayIdx()) return ''; // le jour même : la séance complète guidée la remplace
   const H = hiitOfDay(di), l = settings.hiitLvl ?? 1, S = hiitSeq(H, l), tot = S.reduce((a, x) => a + x.s, 0) + 10, eff = S.filter(x => x.k === 'work').slice(1).reduce((a, x) => a + x.s, 0);
   const key = hiitKey(H, l), mine = ((coach && coach.wods) || {})[key] || [], ot = other && other.d && other.d.coach ? (other.d.coach.wods || {})[key] || [] : [], bm = wodBestOf(mine), bo = wodBestOf(ot);
   const Bk = H.B.map(b => ({ n: b.ws ? b.ws[l].length : b.n[l], ex: b.ex.map(hiitEx), t: b.ws ? b.ws[l].join(' · ') + ' s' : `${b.w} s / ${b.r} s` })).filter(x => x.n > 0);
@@ -6924,7 +6948,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 105;
+const APP_VERSION = 106;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
