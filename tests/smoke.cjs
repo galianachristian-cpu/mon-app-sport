@@ -124,6 +124,12 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const P = fullPlan(d), L = P.S.map(x => x.l).join('|'), ok = /^Échauffement/.test(P.S[0].l) && /Tabata 3\/3/.test(L) && /Abdos · Crunch/.test(L) && /Étirement · Étirement du psoas$/.test(P.S[P.S.length - 1].l);
     currentDay = d; go('seance'); const btn = !!document.querySelector('[data-x="fullrun"]'); fullRun(); IT.c.then(); clearInterval(IT && IT.iv); const all = data[k].every((e, i) => done[k][i]);
     data = sv.data; titles = sv.titles; done = sv.done; save = sv.save; closeFull && closeFull(); go('seance'); return ok && btn && all; }));
+  check('faire défiler les cartes d’exercices ne change pas de jour', await p.evaluate(() => { currentDay = todayIdx(); go('seance'); const el = document.querySelector('.exstory button'); if (!el) return true; const d = currentDay;
+    const T = x => new Touch({ identifier: 1, target: el, clientX: x, clientY: 100 }); el.dispatchEvent(new TouchEvent('touchstart', { touches: [T(300)], changedTouches: [T(300)], bubbles: true })); el.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [T(80)], bubbles: true }));
+    return currentDay === d; }));
+  check('Tabata mixé : chaque bloc alterne 4 exercices, combinaisons toutes différentes', await p.evaluate(() => { const N = ['A', 'B', 'C', 'D', 'E', 'F'], B = tabBlocks(N); const S = []; tabSeq(N, S, 'T');
+    const W = S.filter(x => x.k === 'work'), blocs = []; for (let i = 0; i < W.length; i += 8) blocs.push(W.slice(i, i + 8).map(x => x.nm));
+    return B.length === 6 && B.every(Q => Q.length === 4) && new Set(B.map(Q => Q.slice().sort().join())).size === 6 && blocs.every(b => new Set(b).size === 4 && b[0] !== b[1]); }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 

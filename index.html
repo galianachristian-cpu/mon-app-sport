@@ -751,6 +751,17 @@ textarea.inp{width:100%;resize:vertical;font:inherit;line-height:1.4}
 .itv.rest .itmain>b{color:var(--a1)}.itv.prep .itmain>b{color:var(--warn)}
 .full.show:has(.itv.work){background:radial-gradient(900px 600px at 50% 30%,color-mix(in srgb,var(--ok) 22%,transparent),transparent 70%),var(--bg)}
 .itctl{justify-content:center;gap:10px}.itctl .btn{padding:16px 20px;font-size:17px}.itctl .pri{flex:0 1 220px}
+/* téléphone à l'horizontale (recopie d'écran sur la télé) : animation à gauche, minuteur géant à droite */
+@media (orientation: landscape) and (max-height: 620px){
+  .itv .g-top{padding-top:4px;padding-bottom:0}
+  .itmain:has(>.itvis){display:grid;grid-template-columns:auto minmax(0,1fr);grid-auto-rows:min-content;column-gap:4vw;align-content:center;justify-items:center}
+  .itmain:has(>.itvis)>.itvis{grid-column:1;grid-row:1/span 6;width:min(74vh,44vw);height:min(74vh,44vw);margin:0}
+  .itmain:has(>.itvis)>*:not(.itvis){grid-column:2}
+  .itmain>b,.itv:has(.itvis) .itmain>b{font-size:min(30vh,16vw)}
+  .itmain h2{font-size:min(8vh,4.2vw);max-width:100%}
+  .itmain p{font-size:min(5vh,2.6vw)}
+  .itctl .btn{padding:8px 18px;font-size:15px}
+}
 
 /* Course */
 .runlive{margin-top:12px;padding:16px;border-radius:20px;background:var(--card);border:1.5px solid color-mix(in srgb,var(--a1) 45%,var(--line))}
@@ -1666,6 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [103, [['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['🔀', 'Tabata mixé', 'chaque bloc de 4 min alterne 4 exercices différents'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
   [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton']]],
   [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
   [100, [['🔥', 'Béa : programme fitness, plus de musculation', 'que du fitness : 3 séances Tabata variées + 2 HIIT, abdos à chaque séance']]],
@@ -4718,13 +4730,21 @@ function tabataSession(pk, seed, excl, nb){
   for (let j = 0; out.length < (nb || TAB_N) && j < P.length; j++) out.push(tabEx(P[(st + j) % P.length], pk, out.length));
   return out;
 }
+// blocs mixés : chaque bloc de 4 min alterne 4 exercices différents (A B C D A B C D), et chaque bloc commence par un exercice différent
+function tabBlocks(names){ const n = names.length, off = n >= 6 ? [0, 1, 2, 4] : [0, 1, 2, 3]; return names.map((_, b) => [...new Set(off.slice(0, Math.min(4, n)).map(o => names[(b + o) % n]))]); }
+function tabSeq(names, S, lbl){
+  const B = tabBlocks(names);
+  B.forEach((Q, b) => { S.push({ k: 'rest', l: b ? 'Repos entre les blocs' : 'Prépare-toi pour le Tabata', s: b ? 60 : 15, next: Q[0] });
+    for (let t = 1; t <= 8; t++){ const nm = Q[(t - 1) % Q.length]; S.push({ k: 'work', l: `${lbl} ${b + 1}/${B.length} · ${nm}`, nm, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: Q[t % Q.length] }); } });
+  return B;
+}
 function tabSessCard(di){
   if (di === todayIdx()) return ''; // le jour même, la séance complète guidée la remplace
   const L = data['day' + di] || [], T = L.map((e, i) => [e, i]).filter(([e]) => e && e.tab); if (!T.length) return '';
   const pk = T[0][0].tabP, all = T.every(([, i]) => (done['day' + di] || [])[i]), min = Math.round((T.length * 230 + (T.length - 1) * 60 + 10) / 60);
   return `<section class="card hiitc"><div class="hih"><span class="hii">⏱️</span><div><small class="muted">Séance Tabata</small><h3>${esc((TAB_POOL[pk] || {}).t || 'Tabata')}</h3></div><span class="chip">⏱️ ${min} min</span></div>
-    <p class="muted" style="font-size:13px;margin:6px 0 10px">${T.length} blocs de 4 min : 20 s à fond, 10 s de repos, 8 tours. 1 min de repos entre les blocs. Un exercice différent à chaque bloc.</p>
-    <div class="hib">${T.map(([e], j) => `<div><b>Bloc ${j + 1} · 8 × 20 s / 10 s</b><span>${esc(e.n)}</span></div>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin:6px 0 10px">${T.length} blocs de 4 min : 20 s à fond, 10 s de repos, 8 tours. 1 min de repos entre les blocs. Chaque bloc mélange 4 exercices.</p>
+    <div class="hib">${tabBlocks(T.map(([e]) => e.n)).map((Q, j) => `<div><b>Bloc ${j + 1} · 8 × 20 s / 10 s</b><span>${esc(Q.join(' → '))} (×2)</span></div>`).join('')}</div>
     ${all ? '<p class="his">✅ Séance Tabata faite</p>' : `<button class="btn pri block" data-x="tabrun" style="margin-top:10px;padding:15px;font-size:16px">▶️ Lancer la séance Tabata</button>`}</section>`;
 }
 /* ---------- SÉANCE COMPLÈTE GUIDÉE (Tabata ou HIIT) : échauffement → corps de séance → abdos → étirements, sans rien toucher ---------- */
@@ -4742,8 +4762,7 @@ function fullPlan(di){
   W.forEach((n, j) => { S.push({ k: 'work', l: `Échauffement · ${n}`, nm: n, s: /jumping/i.test(n) ? 60 : 45, tour: j + 1, n: W.length }); S.push({ k: 'rest', l: 'On enchaîne', s: 8, next: W[j + 1] || (hiit ? 'HIIT' : T[0].n) }); });
   // 2. corps de séance
   if (hiit) hiitSeq(H, l).forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
-  else T.forEach((e, b) => { if (b) S.push({ k: 'rest', l: 'Repos entre les blocs', s: 60, next: e.n }); else S.push({ k: 'rest', l: 'Prépare-toi pour le Tabata', s: 15, next: e.n });
-    for (let t = 1; t <= 8; t++){ S.push({ k: 'work', l: `Tabata ${b + 1}/${T.length} · ${e.n}`, nm: e.n, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: e.n }); } });
+  else tabSeq(T.map(e => e.n), S, 'Tabata');
   // 3. abdos : 3 tours de 40 s / 20 s
   if (A.length){ S.push({ k: 'rest', l: 'Respire, on passe aux abdos', s: 45, next: A[0] });
     for (let t = 1; t <= 3; t++) A.forEach((n, j) => { S.push({ k: 'work', l: `Abdos · ${n}`, nm: n, s: 40, tour: t, n: 3 }); if (!(t === 3 && j === A.length - 1)) S.push({ k: 'rest', l: 'Repos', s: 20, next: A[(j + 1) % A.length] }); }); }
@@ -4760,8 +4779,8 @@ function fullCard(di){
   const step = (ic, t, d) => `<div><b>${ic} ${t}</b><span>${d}</span></div>`;
   return `<section class="card hiitc" style="border-color:var(--a1)"><div class="hih"><span class="hii">🎧</span><div><small class="muted">Séance complète guidée · sans prise de tête</small><h3>${esc(P.name)}</h3></div><span class="chip">⏱️ ${P.min} min</span></div>
     <p class="muted" style="font-size:13px;margin:6px 0 10px">Un seul bouton : le minuteur te guide du début à la fin, avec la voix, les bips et l’animation de chaque exercice. Tu n’as rien à toucher.</p>
-    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? 'HIIT' : `Tabata · ${P.T.length} blocs de 4 min`, esc(P.hiit ? P.H.d : P.T.map(e => e.n).join(' → ')))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
-    ${all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button>`}</section>`;
+    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? 'HIIT' : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? esc(P.H.d) : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
+    ${all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button><button class="btn block" data-x="tvhelp" style="margin-top:8px">📺 La suivre sur la télé</button>`}</section>`;
 }
 function fullRun(){
   const di = todayIdx(), k = 'day' + di, P = fullPlan(di); if (!P) return;
@@ -4771,8 +4790,7 @@ function fullRun(){
 }
 function tabataRun(){
   const k = 'day' + currentDay, T = (data[k] || []).map((e, i) => [e, i]).filter(([e]) => e && e.tab), S = [];
-  T.forEach(([e], b) => { for (let t = 1; t <= 8; t++){ S.push({ k: 'work', l: `Bloc ${b + 1}/${T.length} · ${e.n}`, nm: e.n, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: e.n }); }
-    if (b < T.length - 1) S.push({ k: 'rest', l: 'Repos entre les blocs', s: 60, next: T[b + 1][0].n }); });
+  tabSeq(T.map(([e]) => e.n), S, 'Bloc');
   chronoTab = 'it'; go('chrono');
   itStart(Object.assign({}, itCfg(), { mode: 'tabata', seq: S, wod: 'Séance Tabata · ' + ((TAB_POOL[T[0][0].tabP] || {}).t || ''), then: () => { done[k] = done[k] || []; T.forEach(([, i]) => done[k][i] = true); save(); go('seance'); toast('⚡ Séance Tabata faite, bravo !'); } }));
 }
@@ -6187,7 +6205,19 @@ function evoAct(a, b){
     case 'repairprog': sheetConfirm('Restaurer ton programme complet ? Tes jours HIIT sont gardés, tes charges et ton historique aussi.', 'Restaurer', repairProg); break;
     case 'nextwk': sheetNextWeek(); break;
     case 'tabrun': closeSheet(); tabataRun(); break;
-    case 'fullrun': fullRun(); break;
+    case 'fullrun': closeSheet(); fullRun(); break;
+    case 'tvhelp': { const and = /android/i.test(navigator.userAgent);
+      const ios = `<p><b>1.</b> Ouvre le <b>centre de contrôle</b> : glisse du coin en haut à droite de l’écran vers le bas.</p><p><b>2.</b> Touche <b>Recopie de l’écran</b> (les deux rectangles) et choisis ta télé. Si un code s’affiche sur la télé, tape-le sur l’iPhone.</p>
+        <p><b>3.</b> <b>Tourne le téléphone à l’horizontale</b> (verrou de rotation désactivé).</p><p><b>4.</b> Lance <b>▶️ Ma séance complète</b>.</p><p><b>Pour arrêter :</b> centre de contrôle → Recopie de l’écran → Arrêter la recopie.</p>`;
+      const andr = `<p><b>1.</b> Glisse <b>deux fois</b> du haut de l’écran vers le bas pour ouvrir les réglages rapides.</p>
+        <p><b>2.</b> Touche <b>Smart View</b> (Samsung), <b>Caster</b>, <b>Diffuser l’écran</b> ou <b>Partage d’écran</b> selon le téléphone. Pas de bouton ? Touche le crayon ✏️ pour l’ajouter, ou va dans Paramètres → Appareils connectés → Caster.</p>
+        <p><b>3.</b> Choisis la télé dans la liste et accepte sur la télé si elle le demande.</p><p><b>4.</b> Active la <b>rotation automatique</b> (réglages rapides) et <b>tourne le téléphone à l’horizontale</b>.</p><p><b>5.</b> Lance <b>▶️ Ma séance complète</b>.</p>
+        <p><b>La télé n’apparaît pas ?</b> Téléphone et télé doivent être sur le même Wi-Fi. Sur une Samsung, LG ou Sony, la recopie d’écran (« Screen Mirroring », « Partage d’écran ») doit être autorisée dans les réglages de la télé. Une box Apple TV seule ne reçoit pas l’écran d’un Android.</p>`;
+      openSheet(`<h2>📺 Ta séance sur la télé</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Le téléphone et la télé doivent être sur le même Wi-Fi. La voix et les bips passent par la télé ; le téléphone reste allumé et sert de télécommande (pause, suivant).</p>
+        <div class="seg small" style="margin-bottom:10px"><button type="button" class="${and ? 'on' : ''}" onclick="this.parentNode.nextElementSibling.innerHTML=window.__tvA;this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">🤖 Android</button><button type="button" class="${and ? '' : 'on'}" onclick="this.parentNode.nextElementSibling.innerHTML=window.__tvI;this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">🍏 iPhone</button></div>
+        <div class="card tips-list">${and ? andr : ios}</div>
+        <button class="btn pri block" data-x="fullrun" style="margin-top:12px">▶️ Lancer ma séance complète</button>`);
+      window.__tvA = andr; window.__tvI = ios; break; }
     case 'muscuundo': sheetConfirm('Revenir à ton ancien programme (musculation + HIIT) ?', 'Revenir', () => { const o = coach.prevMuscu; data = o.data; titles = o.titles; prog = o.prog; coach = Object.assign({}, coach, { prevMuscu: null }); done = {}; sets = {}; sl = {}; logs = {}; render(); save(); toast('↩️ Ancien programme remis'); }); break;
     case 'rotundo': if (coach.rot){ data = coach.rot.prev; coach = Object.assign({}, coach, { rot: null }); render(); save(); toast('↩️ Exercices de la semaine dernière gardés'); } break;
     case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
@@ -6749,7 +6779,9 @@ document.addEventListener('change', e => {
 document.addEventListener('focusin', e => { const t = e.target; if (t && t.matches && t.matches('[data-log], #sW, #sR')) setTimeout(() => { try{ t.select(); }catch(x){} }, 0); });
 // balayage gauche / droite pour changer de jour
 let sx = null, sy = null;
-$('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice,.dragh')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+// un geste dans une zone qui défile de gauche à droite (cartes d'exercices, jours…) ne change pas de jour
+const inHScroll = el => { for (let n = el; n && n !== document.body; n = n.parentElement){ if (n.scrollWidth > n.clientWidth + 4){ const o = getComputedStyle(n).overflowX; if (o === 'auto' || o === 'scroll') return true; } } return false; };
+$('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice,.dragh,.exstory,.story') || inHScroll(e.target)) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 $('#app').addEventListener('touchend', e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){ currentDay = (currentDay + (dx < 0 ? 1 : 6)) % 7; render(); } sx = null; }, { passive: true });
 window.addEventListener('pagehide', () => { flushSave(); });
 
@@ -6879,7 +6911,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 102;
+const APP_VERSION = 103;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
