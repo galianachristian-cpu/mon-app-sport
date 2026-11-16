@@ -1666,7 +1666,8 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [98, [['💪', 'Béa : plus de musculation, des Tabata et du HIIT', '4 séances haut / bas, 3 Tabata de 4 min en fin de séance, 2 HIIT'], ['🔥', 'Béa : des abdos à chaque séance', 'aussi après le HIIT, et ils reviennent s’ils ont disparu']]],
+  [99, [['💪', 'Béa : plus de musculation, des Tabata et du HIIT', '4 séances haut / bas, 3 Tabata de 4 min en fin de séance, 2 HIIT']]],
+  [98, [['🔥', 'Béa : des abdos à chaque séance', 'aussi après le HIIT, et ils reviennent s’ils ont disparu']]],
   [97, [['🔀', 'Chaque lundi, de nouveaux exercices secondaires', 'les gros exercices restent pour suivre tes progrès, ils changent toutes les 4 semaines'], ['👀', 'Le week-end, vois les séances de la semaine prochaine', 'Séance (samedi et dimanche) ou Programme → Voir la semaine prochaine'], ['🛠️', 'Programme vidé ? Un bouton le restaure', 'Programme → Coach']]],
   [96, [['🎬', 'Toutes les animations viennent de docteur-fitness', 'les exercices qui n’en avaient pas sont remplacés par un équivalent'], ['🔍', 'Plus de zoom quand tu tapes vite sur les boutons', 'partout dans l’application']]],
   [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
@@ -6802,7 +6803,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 98;
+const APP_VERSION = 99;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
