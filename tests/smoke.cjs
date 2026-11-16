@@ -109,6 +109,11 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     absOnce(); const ok1 = data.day0.some(e => e.abs) && data.day1.filter(e => e.abs).length === 2 && data.day1[data.day1.length - 1].ph === 'cool'; const n = data.day0.length; absOnce(); const ok2 = data.day0.length === n;
     data.day0 = data.day0.filter(e => !e.abs); absOnce(); const ok3 = data.day0.some(e => e.abs);
     Object.assign(window, {}); profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; save = sv.save; return ok1 && ok2 && ok3; }));
+  check('Béa : programme plus musculation (4 séances + 1 HIIT), une seule fois, retour possible', await p.evaluate(() => { const sv = { profile, data: clone(data), titles: clone(titles), coach, prog, save }; save = () => {}; profile = PROFILES[1]; coach = {};
+    prog = { obj: 'perte', days: [0, 2, 4], mat: 'caserne', dur: 60, niv: 'inter', plyo: true, mob: true, abs: true, start: curWk(), lastWk: curWk() };
+    beaMuscuOnce(); const mus = [0, 1, 3, 4].every(d => musOf(data['day' + d]).size >= 2 && data['day' + d].some(e => e.fin)), ok1 = mus && isHiitDay(2) && !Object.values(data).flat().some(e => e.ph === 'plyo') && prog.days.join() === '0,1,3,4';
+    const j = JSON.stringify(data); beaMuscuOnce(); const ok2 = JSON.stringify(data) === j && !!coach.prevMuscu;
+    profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; save = sv.save; return ok1 && ok2; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
