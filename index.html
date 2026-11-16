@@ -1677,7 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton'], ['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['📺', 'La séance guidée sur la télé', 'recopie d’écran AirPlay + iPhone à l’horizontale : affichage plein écran']]],
+  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton'], ['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
   [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
   [100, [['🔥', 'Béa : programme fitness, plus de musculation', 'que du fitness : 3 séances Tabata variées + 2 HIIT, abdos à chaque séance']]],
   [99, [['💪', 'Béa : 4 séances de musculation, 3 séances Tabata, 2 HIIT', 'Tabata de 25 min après la musculation, 5 exercices différents qui changent chaque semaine']]],
@@ -6199,11 +6199,18 @@ function evoAct(a, b){
     case 'nextwk': sheetNextWeek(); break;
     case 'tabrun': closeSheet(); tabataRun(); break;
     case 'fullrun': closeSheet(); fullRun(); break;
-    case 'tvhelp': openSheet(`<h2>📺 Ta séance sur la télé</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Avec une Apple TV ou une télé compatible AirPlay (Samsung, LG, Sony, Philips… récentes), sur le même Wi-Fi que l’iPhone.</p>
-      <div class="card tips-list"><p><b>1.</b> Ouvre le <b>centre de contrôle</b> : glisse du coin en haut à droite de l’écran vers le bas.</p><p><b>2.</b> Touche <b>Recopie de l’écran</b> (les deux rectangles) et choisis ta télé. Si un code s’affiche sur la télé, tape-le sur l’iPhone.</p>
-      <p><b>3.</b> <b>Tourne l’iPhone à l’horizontale</b> (le verrou de rotation doit être désactivé dans le centre de contrôle) : la séance remplit l’écran, l’animation à gauche et le minuteur en grand à droite.</p><p><b>4.</b> Lance <b>▶️ Ma séance complète</b> : le son passe par la télé, l’iPhone reste allumé et sert de télécommande (pause, suivant).</p>
-      <p><b>Pour arrêter :</b> centre de contrôle → Recopie de l’écran → Arrêter la recopie.</p></div>
-      <button class="btn pri block" data-x="fullrun" style="margin-top:12px">▶️ Lancer ma séance complète</button>`); break;
+    case 'tvhelp': { const and = /android/i.test(navigator.userAgent);
+      const ios = `<p><b>1.</b> Ouvre le <b>centre de contrôle</b> : glisse du coin en haut à droite de l’écran vers le bas.</p><p><b>2.</b> Touche <b>Recopie de l’écran</b> (les deux rectangles) et choisis ta télé. Si un code s’affiche sur la télé, tape-le sur l’iPhone.</p>
+        <p><b>3.</b> <b>Tourne le téléphone à l’horizontale</b> (verrou de rotation désactivé).</p><p><b>4.</b> Lance <b>▶️ Ma séance complète</b>.</p><p><b>Pour arrêter :</b> centre de contrôle → Recopie de l’écran → Arrêter la recopie.</p>`;
+      const andr = `<p><b>1.</b> Glisse <b>deux fois</b> du haut de l’écran vers le bas pour ouvrir les réglages rapides.</p>
+        <p><b>2.</b> Touche <b>Smart View</b> (Samsung), <b>Caster</b>, <b>Diffuser l’écran</b> ou <b>Partage d’écran</b> selon le téléphone. Pas de bouton ? Touche le crayon ✏️ pour l’ajouter, ou va dans Paramètres → Appareils connectés → Caster.</p>
+        <p><b>3.</b> Choisis la télé dans la liste et accepte sur la télé si elle le demande.</p><p><b>4.</b> Active la <b>rotation automatique</b> (réglages rapides) et <b>tourne le téléphone à l’horizontale</b>.</p><p><b>5.</b> Lance <b>▶️ Ma séance complète</b>.</p>
+        <p><b>La télé n’apparaît pas ?</b> Téléphone et télé doivent être sur le même Wi-Fi. Sur une Samsung, LG ou Sony, la recopie d’écran (« Screen Mirroring », « Partage d’écran ») doit être autorisée dans les réglages de la télé. Une box Apple TV seule ne reçoit pas l’écran d’un Android.</p>`;
+      openSheet(`<h2>📺 Ta séance sur la télé</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Le téléphone et la télé doivent être sur le même Wi-Fi. La voix et les bips passent par la télé ; le téléphone reste allumé et sert de télécommande (pause, suivant).</p>
+        <div class="seg small" style="margin-bottom:10px"><button type="button" class="${and ? 'on' : ''}" onclick="this.parentNode.nextElementSibling.innerHTML=window.__tvA;this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">🤖 Android</button><button type="button" class="${and ? '' : 'on'}" onclick="this.parentNode.nextElementSibling.innerHTML=window.__tvI;this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">🍏 iPhone</button></div>
+        <div class="card tips-list">${and ? andr : ios}</div>
+        <button class="btn pri block" data-x="fullrun" style="margin-top:12px">▶️ Lancer ma séance complète</button>`);
+      window.__tvA = andr; window.__tvI = ios; break; }
     case 'muscuundo': sheetConfirm('Revenir à ton ancien programme (musculation + HIIT) ?', 'Revenir', () => { const o = coach.prevMuscu; data = o.data; titles = o.titles; prog = o.prog; coach = Object.assign({}, coach, { prevMuscu: null }); done = {}; sets = {}; sl = {}; logs = {}; render(); save(); toast('↩️ Ancien programme remis'); }); break;
     case 'rotundo': if (coach.rot){ data = coach.rot.prev; coach = Object.assign({}, coach, { rot: null }); render(); save(); toast('↩️ Exercices de la semaine dernière gardés'); } break;
     case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
