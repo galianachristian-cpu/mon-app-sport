@@ -1666,7 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [97, [['🔀', 'Chaque lundi, de nouveaux exercices secondaires', 'les gros exercices restent pour suivre tes progrès, ils changent toutes les 4 semaines'], ['🛠️', 'Programme vidé ? Un bouton le restaure', 'Programme → Coach']]],
+  [97, [['🔀', 'Chaque lundi, de nouveaux exercices secondaires', 'les gros exercices restent pour suivre tes progrès, ils changent toutes les 4 semaines'], ['👀', 'Le week-end, vois les séances de la semaine prochaine', 'Séance (samedi et dimanche) ou Programme → Voir la semaine prochaine'], ['🛠️', 'Programme vidé ? Un bouton le restaure', 'Programme → Coach']]],
   [96, [['🎬', 'Toutes les animations viennent de docteur-fitness', 'les exercices qui n’en avaient pas sont remplacés par un équivalent'], ['🔍', 'Plus de zoom quand tu tapes vite sur les boutons', 'partout dans l’application']]],
   [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
   [94, [['🔥', 'Abdos en fin de séance (ajoutés pour Béa)', 'Programme → Mon programme → « Abdos en fin de séance »'], ['🧮', 'Calories des séances recalculées pour la nutrition', 'Nutrition → objectif du jour, plus juste les jours de cardio et de mobilité'], ['🍳', 'Menus : les nouvelles recettes riches en protéines sont proposées', 'Nutrition → Semaine']]],
@@ -1967,6 +1967,7 @@ function viewSeance(){
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
   ${progFixCard()}
+  ${todayIdx() >= 5 && currentDay === todayIdx() ? nextWeekCard() : ''}
   ${storyOn ? storyRow(k, list) : ''}
   <div class="days">${DAY_SHORT.map((d, i) => { const l = data['day'+i] || [], f = l.length && l.every((_, j) => (done['day'+i] || [])[j]);
     return `<button class="day ${i === currentDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''} ${f ? 'full' : ''}" data-day="${i}"><b>${d}</b><span>${esc(dayTitle(i))}</span></button>`; }).join('')}</div>
@@ -2675,7 +2676,7 @@ function viewSemaine(){
   $('#app').innerHTML = `<div class="fade">
   <section class="hero" style="margin-top:16px"><div style="flex:1;position:relative;z-index:1"><h2>Ma semaine</h2><p>${dn} exercices faits sur ${tot}</p><div class="bar" style="margin-top:12px"><i style="width:${tot ? Math.round(dn * 100 / tot) : 0}%"></i></div></div>
   <div class="ring">${ring(tot ? dn / tot : 0, 86, 9, 'r2')}<div class="v">${tot ? Math.round(dn * 100 / tot) : 0}%<small>semaine</small></div></div></section>
-  <h3 class="sec">Coach</h3>${progFixCard()}${rotCard()}${coachCard()}${hiitCard()}${balanceCard()}
+  <h3 class="sec">Coach</h3>${progFixCard()}${rotCard()}${nextWeekCard()}${coachCard()}${hiitCard()}${balanceCard()}
   <h3 class="sec">Les 7 jours</h3>
   <div class="wk">${DAY_NAMES.map((d, i) => { const l = data['day'+i] || [], n = l.filter((_, j) => (done['day'+i] || [])[j]).length;
     return `<div class="wkday ${i === todayIdx() ? 'today' : ''}"><button class="n" data-act="goday" data-day="${i}">${DAY_SHORT[i]}</button>
@@ -4635,19 +4636,17 @@ function progFixCard(){
 }
 /* ---------- chaque lundi : les exercices secondaires changent (les gros exercices tous les 4 semaines) ---------- */
 function slotOf(n){ for (const [k, v] of Object.entries(SLOTS)) if (Object.values(v).some(L => L.includes(n))) return k; return null; }
-function rotateWeek(force, wkT){
-  const wk = wkT || curWk(); if (!force && coach && coach.rotWk === wk) return;
-  if (!Object.values(data).some(L => musOf(L).size)) return;
-  if (canRepair()) return; // d'abord restaurer
-  const mat = prog && prog.mat || 'caserne', num = +String(wk).split('-W')[1] || 0, big = prog ? cycleIdx(prog) === 0 : num % 4 === 1;
+// calcul des changements d'une semaine (le même pour l'aperçu du dimanche et pour le lundi) : modifie D, renvoie [ancien, nouveau, jour, rang]
+function rotPlan(D, wk, future){
+  const mat = prog && prog.mat || 'caserne', num = +String(wk).split('-W')[1] || 0, big = prog ? cycleIdx(prog, wk) === 0 : num % 4 === 1;
   const pool = []; Object.entries(SLOTS).forEach(([sl0, v]) => (v[mat] || []).forEach(n => { if (LIB_BY[n] && !pool.some(x => x.n === n)) pool.push({ n, slot: sl0, comp: COMPOUND.includes(sl0) }); }));
   const absPool = [...new Set([...ABS_FIN, ...((SLOTS.core || {})[mat] || [])])];
   const ok = n => LIB_BY[n] && canDo(n) && DF_GIF[n] && !ANIM_SWAP[n];
-  const before = clone(data), ch = [], weekUsed = new Set(Object.values(data).flat().filter(Boolean).map(e => e.n));
-  for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || []; if (isHiitDay(d) || !musOf(L).size) continue;
+  const ch = [], weekUsed = new Set(Object.values(D).flat().filter(Boolean).map(e => e.n));
+  for (let d = 0; d < 7; d++){ const k = 'day' + d, L = D[k] || []; if (isHiitDay(d) || !musOf(L).size) continue;
     const firstComp = L.findIndex(e => e && !e.ph && !NOT_MAIN.has(e.m) && (e.cmp || COMPOUND.includes(e.slot && SLOTS[e.slot] ? e.slot : slotOf(e.n))));
     L.forEach((e, i) => {
-      if (!e || isSkip(e) || e.orig || e.ph || typ(e) === 'c') return;
+      if (!e || (!future && isSkip(e)) || e.orig || e.ph || typ(e) === 'c') return;
       let C;
       if (e.m === 'Abdos') C = absPool.filter(n => ok(n) && !weekUsed.has(n));
       else { if (NOT_MAIN.has(e.m)) return; const sl0 = e.slot && SLOTS[e.slot] ? e.slot : slotOf(e.n), comp = !!(e.cmp || COMPOUND.includes(sl0));
@@ -4660,12 +4659,37 @@ function rotateWeek(force, wkT){
       ['s', 'bs', 'cmp', 'fx', 'abs', 'fin', 'sup', 'note'].forEach(f => { if (e[f] != null) x[f] = e[f]; });
       const sl1 = slotOf(nm); if (sl1) x.slot = e.m === 'Abdos' && e.slot === 'abs' ? 'abs' : sl1;
       if (typ(x) === typ(e) && /chaque/.test(e.r) === /chaque/.test(x.r)) x.r = e.r;
-      L[i] = x; weekUsed.add(nm); ch.push([e.n, nm, d]);
-      const key = keyOf(k, i); [logs, sets, sl].forEach(o => delete o[key]); if (done[k]) done[k][i] = false;
+      L[i] = x; weekUsed.add(nm); ch.push([e.n, nm, d, i]);
     }); }
+  return ch;
+}
+function rotateWeek(force, wkT){
+  const wk = wkT || curWk(); if (!force && coach && coach.rotWk === wk) return;
+  if (!Object.values(data).some(L => musOf(L).size)) return;
+  if (canRepair()) return; // d'abord restaurer
+  const before = clone(data), ch = rotPlan(data, wk, false);
+  ch.forEach(([, , d, i]) => { const k = 'day' + d, key = keyOf(k, i); [logs, sets, sl].forEach(o => delete o[key]); if (done[k]) done[k][i] = false; });
   coach = Object.assign({}, coach, { rotWk: wk, rot: ch.length ? { wk, ch, prev: before } : null });
   if (ch.length && !force){ save(); setTimeout(() => toast(`🔀 Nouvelle semaine : ${ch.length} exercice${ch.length > 1 ? 's' : ''} changé${ch.length > 1 ? 's' : ''} pour varier`), 2200); }
   else if (!force) save();
+}
+// aperçu de la semaine prochaine : le programme tel qu'il sera lundi (changements temporaires et « pas aujourd'hui » retirés)
+function nextWeekPlan(){
+  const wk = wkShift(curWk(), 1), D = {};
+  Object.keys(data).forEach(k => { D[k] = (data[k] || []).map(e => { const x = clone(e && e.orig ? e.orig : e); if (x){ delete x.skipD; delete x.cutD; delete x.tmpD; } return x; }); });
+  const ch = canRepair() ? [] : rotPlan(D, wk, true);
+  return { wk, D, ch, isNew: new Set(ch.map(([, , d, i]) => d + '_' + i)) };
+}
+function sheetNextWeek(){
+  const P = nextWeekPlan(), dd = wkDates(P.wk), f = x => new Date(x + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  openSheet(`<h2>👀 La semaine prochaine</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Du ${f(dd[0])} au ${f(dd[6])} · ${P.ch.length ? `${P.ch.length} nouvel${P.ch.length > 1 ? 's' : ''} exercice${P.ch.length > 1 ? 's' : ''} 🆕` : 'mêmes exercices'}${canRepair() ? ' · ⚠️ restaure d’abord ton programme' : ''}</p>
+    <div class="card tips-list">${DAY_NAMES.map((n, d) => { const L = (P.D['day' + d] || []).filter(Boolean); return `<p><b>${n}</b> · ${esc(dayTitle(d))}<br><small class="muted">${L.length ? L.map((e, i) => P.isNew.has(d + '_' + i) ? `<b style="color:var(--a1)">🆕 ${esc(e.n)}</b>` : esc(e.n)).join(' · ') : 'repos'}</small></p>`; }).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 2px">Les exercices 🆕 remplacent ceux de cette semaine, lundi à l’ouverture de l’application. ${isHiitDay(1) || isHiitDay(3) ? 'Les séances HIIT changent de format chaque semaine. ' : ''}${prog ? 'Le nombre de séries suit ton cycle de 4 semaines.' : ''}</p>`);
+}
+function nextWeekCard(){
+  if (todayIdx() < 5) return `<button class="btn block" data-x="nextwk" style="margin:8px 0">👀 Voir la semaine prochaine</button>`;
+  const P = nextWeekPlan();
+  return `<div class="card"><h3 style="margin:0 0 6px">👀 La semaine prochaine</h3><p class="muted" style="font-size:13px">${P.ch.length ? `${P.ch.length} nouvel${P.ch.length > 1 ? 's' : ''} exercice${P.ch.length > 1 ? 's' : ''} : ${esc(P.ch.slice(0, 3).map(x => x[1]).join(', '))}${P.ch.length > 3 ? '…' : ''}` : 'Tes séances de la semaine prochaine sont prêtes.'}</p><button class="btn pri block" data-x="nextwk" style="margin-top:10px">👀 Voir mes séances</button></div>`;
 }
 function rotCard(){
   const r = coach && coach.rot; if (!r || r.wk !== curWk() || !r.ch.length) return '';
@@ -4740,7 +4764,7 @@ function buildProgram(cfg){
   }
   return { data: out, titles: titles2, split: tplKeys === keys ? splitName : 'Push / Pull / Legs', nEx };
 }
-const cycleIdx = p => { if (!p || !p.start) return 0; const a = p.start.split('-W'), b = curWk().split('-W'); const w = (+b[0] - +a[0]) * 52 + (+b[1] - +a[1]); return ((w % 4) + 4) % 4; };
+const cycleIdx = (p, wk) => { if (!p || !p.start) return 0; const a = p.start.split('-W'), b = (wk || curWk()).split('-W'); const w = (+b[0] - +a[0]) * 52 + (+b[1] - +a[1]); return ((w % 4) + 4) % 4; };
 function applyCycle(){
   if (!prog) return;
   const ci = cycleIdx(prog);
@@ -6049,6 +6073,7 @@ function evoAct(a, b){
     case 'hiitwe': hiitWe = !hiitWe; sheetHiit(); break;
     case 'hiitgo': applyHiit(); break;
     case 'repairprog': sheetConfirm('Restaurer ton programme complet ? Tes jours HIIT sont gardés, tes charges et ton historique aussi.', 'Restaurer', repairProg); break;
+    case 'nextwk': sheetNextWeek(); break;
     case 'rotundo': if (coach.rot){ data = coach.rot.prev; coach = Object.assign({}, coach, { rot: null }); render(); save(); toast('↩️ Exercices de la semaine dernière gardés'); } break;
     case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
