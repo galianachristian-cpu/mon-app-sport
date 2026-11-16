@@ -1679,6 +1679,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [109, [['🌱', 'Repas avec des produits de saison', 'courgettes, tomates, poivrons… seulement à leur saison ; le menu de la semaine est refait à partir de demain']]],
   [108, [['🤸', 'Béa : plus aucune pompe', 'remplacées par d’autres exercices dans les Tabata et les HIIT']]],
   [107, [['🎧', 'La séance complète visible à l’avance', 'même carte tous les jours ; le bouton de départ apparaît le jour de la séance']]],
   [106, [['⚡', 'Béa : HIIT variés comme les Tabata', '4 blocs de formats différents (machine, circuit, pyramide, duo…), exercices qui changent chaque semaine, séance complète guidée']]],
@@ -3931,7 +3932,13 @@ function pickW(list, rnd, ctx){
 }
 // valeurs d'une recette pour sa portion de base
 const recMac = r => r.ing.reduce((a, [f, g]) => FOODS[f] ? { k: a.k + FOODS[f].k * g / 100, p: a.p + FOODS[f].p * g / 100, g: a.g + FOODS[f].g * g / 100 } : a, { k: 0, p: 0, g: 0 });
+/* ---------- PRODUITS DE SAISON (France) : fruits et légumes frais, mois où on les trouve en saison ; surgelés, conserves et produits de garde toute l'année ---------- */
+const SEASON = { courgette: [6, 7, 8, 9], tomate: [6, 7, 8, 9], poivron: [7, 8, 9, 10], concombre: [5, 6, 7, 8, 9], chou: [9, 10, 11, 12, 1, 2, 3, 4], patate: [9, 10, 11, 12, 1, 2, 3], pomme: [8, 9, 10, 11, 12, 1, 2, 3, 4, 5], orange: [11, 12, 1, 2, 3, 4] };
+const monthOfWk = wk => new Date(wkDates(wk)[3] + 'T12:00').getMonth() + 1;
+const seasonOk = (r, m) => r.ing.every(([f]) => !SEASON[f] || SEASON[f].includes(m));
+const seasonal = (L, m) => { const S = L.filter(r => seasonOk(r, m)); return S.length ? S : L; };
 function genPlan(wk, keep, from){
+  const mo = monthOfWk(wk);
   const pids = PROFILES.map(p => p.id), excls = pids.map(id => exclOf(ctxOf(id))), S = wk + '#' + (foyer.salt || 0);
   const days = [], used = [], ctx = { used: new Set(), recent: platsOf(wkShift(wk, -1)), old: platsOf(wkShift(wk, -2)), stock: stockMap(), n: pids.length };
   for (let d = 0; d < 7; d++){
@@ -3939,7 +3946,7 @@ function genPlan(wk, keep, from){
     const day = {};
     ['pdj','col'].forEach(meal => { day[meal] = {}; pids.forEach((pid, k) => {
       const c = ctxOf(pid), train = sessionKcal(c, d) > 0, rnd = rng(S + meal + d + pid);
-      let L = RECIPES.filter(r => r.type === meal && recipeOk(r, [excls[k]]));
+      let L = seasonal(RECIPES.filter(r => r.type === meal && recipeOk(r, [excls[k]])), mo);
       // jour de séance : collation avec glucides et protéines ; perte de poids : petit-déjeuner et collation riches en protéines
       if (meal === 'col' && train){ const pre = L.filter(r => { const m = recMac(r); return m.g >= 25 && m.p >= 10; }); if (pre.length) L = pre; }
       else if (meal === 'col' && c.nut && (c.nut.obj === 'perte' || c.nut.obj === 'recompo')){ const hp = L.filter(r => { const m = recMac(r); return m.p * 100 / m.k >= 6.5; }); if (hp.length) L = hp; }
@@ -3948,16 +3955,21 @@ function genPlan(wk, keep, from){
       day[meal][pid] = pickW(L, rnd, { used: new Set(prev), recent: new Set(), stock: {}, n: 1 });
     }); });
     ['dej','din'].forEach(meal => {
-      if (foyer.commun){ const L = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls)); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
-      else { day[meal] = {}; pids.forEach((pid, k) => { const L = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, [excls[k]])); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
+      if (foyer.commun){ const L = seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls)), mo); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
+      else { day[meal] = {}; pids.forEach((pid, k) => { const L = seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, [excls[k]])), mo); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
   }
-  return { days, commun: foyer.commun, v: 2 };
+  return { days, commun: foyer.commun, v: 2, season: 1 };
 }
 const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
 function planOf(wk){
   if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
+  // menu créé avant les produits de saison : les jours à venir (à partir de demain) sont refaits s'ils contiennent un produit hors saison
+  const P0 = foyer.plans[wk];
+  if (!P0.season && wk === curWk() && foyer.plans){ const from = todayIdx() + 1, mo = monthOfWk(wk), R0 = Object.fromEntries(RECIPES.map(r => [r.id, r]));
+    const off = P0.days.slice(from).some(day => Object.values(day).some(v => (typeof v === 'string' ? [v] : Object.values(v || {})).some(id => R0[id] && !seasonOk(R0[id], mo))));
+    foyer.plans[wk] = off && from < 7 ? genPlan(wk, P0, from) : Object.assign(P0, { season: 1 }); saveFoyer(); }
   return foyer.plans[wk];
 }
 function dayPortions(pid, d, wk){ const plan = planOf(wk); return MEALS.map(([meal]) => { const rid = ridOf(plan, d, meal, pid), away = isAway(pid, d, meal, wk); return { meal, rid, away, por: rid && !away ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
@@ -4215,7 +4227,7 @@ function sheetSwap(meal, f){
 function changeMeal(meal){
   const wk = curWk(), plan = planOf(wk), cur = ridOf(plan, nutDay, meal, profile.id), shared = typeof plan.days[nutDay][meal] === 'string';
   const type = meal === 'pdj' || meal === 'col' ? meal : 'plat', ex = shared ? PROFILES.map(p => exclOf(ctxOf(p.id))) : [exclOf(ctxOf(profile.id))];
-  const L = RECIPES.filter(r => r.type === type && r.id !== cur && recipeOk(r, ex) && !banOf()[r.id]).sort((a, b) => (favOf()[b.id] ? 1 : 0) - (favOf()[a.id] ? 1 : 0));
+  const L = seasonal(RECIPES.filter(r => r.type === type && r.id !== cur && recipeOk(r, ex) && !banOf()[r.id]), monthOfWk(wk)).sort((a, b) => (favOf()[b.id] ? 1 : 0) - (favOf()[a.id] ? 1 : 0));
   openSheet(`<h2>Choisir un autre plat</h2>${shared ? '<p class="muted" style="font-size:13px;margin-bottom:8px">👫 Repas en commun : le changement vaut pour vous deux.</p>' : ''}
     <div>${L.map(r => { const k2 = kcalOf(r.ing); return `<button class="libit" data-rid="${r.id}"><span class="emo">${r.e}</span><span class="t"><b>${favOf()[r.id] ? '❤️ ' : ''}${esc(r.n)}</b><small>${r.min} min · base ${kc(k2)} kcal</small></span><span class="plus">＋</span></button>`; }).join('')}</div>`);
   $('#sheet').querySelectorAll('[data-rid]').forEach(b => b.onclick = () => { const v = plan.days[nutDay][meal]; if (typeof v === 'string') plan.days[nutDay][meal] = b.dataset.rid; else v[profile.id] = b.dataset.rid; saveFoyer(); closeSheet(); viewNutrition(); toast('🔄 Plat changé'); });
@@ -6964,7 +6976,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 108;
+const APP_VERSION = 109;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

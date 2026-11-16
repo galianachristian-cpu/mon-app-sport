@@ -144,6 +144,11 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     data = { day0: [tabEx('Pompes sur les genoux', 'haut', 0), tabEx('Burpees', 'haut', 1)], day1: [exFromLib('Pompes diamant', { s: 3 })], day2: [], day3: [], day4: [], day5: [], day6: [] }; beaPompesOnce();
     const all = Object.values(data).flat(), ok = !all.some(e => POMPES.has(e.n)) && data.day0.length === 2 && data.day0[0].tab && !data.day1.length && ![...TAB_POOL.haut.L, ...TAB_POOL.jambes.L, ...TAB_POOL.cardio.L, ...HIIT_POOL.force, ...HIIT_POOL.cardio].some(n => POMPES.has(n));
     profile = sv.profile; data = sv.data; coach = sv.coach; save = sv.save; return ok; }));
+  check('menus : seulement des produits de saison (novembre sans tomates fraîches ni courgettes)', await p.evaluate(() => { const R0 = Object.fromEntries(RECIPES.map(r => [r.id, r])), sv = foyer.plans; foyer.plans = {};
+    const wk = '2026-W47', P = genPlan(wk), ids = P.days.flatMap(day => Object.values(day).flatMap(v => typeof v === 'string' ? [v] : Object.values(v || {}))).filter(Boolean);
+    const ok = monthOfWk(wk) === 11 && ids.every(id => seasonOk(R0[id], 11)) && !ids.some(id => R0[id].ing.some(([f]) => f === 'tomate' || f === 'courgette')) && P.season === 1;
+    const juillet = RECIPES.filter(r => r.type === 'plat' && seasonOk(r, 7)).length > RECIPES.filter(r => r.type === 'plat' && seasonOk(r, 1)).length;
+    foyer.plans = sv; return ok && juillet; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
