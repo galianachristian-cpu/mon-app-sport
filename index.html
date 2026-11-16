@@ -1677,6 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [107, [['🎧', 'La séance complète visible à l’avance', 'même carte tous les jours ; le bouton de départ apparaît le jour de la séance']]],
   [106, [['⚡', 'Béa : HIIT variés comme les Tabata', '4 blocs de formats différents (machine, circuit, pyramide, duo…), exercices qui changent chaque semaine, séance complète guidée']]],
   [105, [['🔒', 'Bouton « Annuler l’adaptation à la caserne » retiré', 'il remettait un programme très ancien']]],
   [104, [['🔥', 'Programme fitness de Béa plus clair', 'plus de conseils de musculation, une seule carte coach, un seul bouton de séance'], ['🛠️', 'Petites corrections', 'fenêtre du coach qui glissait de côté, boutons « trop facile » retirés de l’échauffement']]],
@@ -4747,7 +4748,7 @@ function tabSeq(names, S, lbl){
   return B;
 }
 function tabSessCard(di){
-  if (di === todayIdx()) return ''; // le jour même, la séance complète guidée la remplace
+  if (fullPlan(di)) return ''; // la carte « séance complète guidée » la remplace (tous les jours)
   const L = data['day' + di] || [], T = L.map((e, i) => [e, i]).filter(([e]) => e && e.tab); if (!T.length) return '';
   const pk = T[0][0].tabP, all = T.every(([, i]) => (done['day' + di] || [])[i]), min = Math.round((T.length * 230 + (T.length - 1) * 60 + 10) / 60);
   return `<section class="card hiitc"><div class="hih"><span class="hii">⏱️</span><div><small class="muted">Séance Tabata</small><h3>${esc((TAB_POOL[pk] || {}).t || 'Tabata')}</h3></div><span class="chip">⏱️ ${min} min</span></div>
@@ -4781,7 +4782,6 @@ function fullPlan(di){
   return { S, hiit, H, l, T, W, A, C, min: Math.round(sec / 60), name: hiit ? H.n : 'Tabata · ' + ((TAB_POOL[(T[0] || {}).tabP] || {}).t || '') };
 }
 function fullCard(di){
-  if (di !== todayIdx()) return '';
   const P = fullPlan(di); if (!P) return '';
   const k = 'day' + di, all = (data[k] || []).every((e, i) => (done[k] || [])[i] || isSkip(e));
   const step = (ic, t, d) => `<div><b>${ic} ${t}</b><span>${d}</span></div>`;
@@ -4789,7 +4789,7 @@ function fullCard(di){
     <p class="muted" style="font-size:13px;margin:6px 0 10px">Un seul bouton : le minuteur te guide du début à la fin, avec la voix, les bips et l’animation de chaque exercice. Tu n’as rien à toucher.</p>
     <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? (P.H.id === 'mix' ? `HIIT · ${P.H.B.length} blocs variés` : 'HIIT · ' + P.H.n) : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? P.H.B.map(b => `<span style="font-weight:800">${esc(hiitBT(b))}</span> : ${esc(b.ex.map(hiitEx).join(' / '))}`).join('<br>') : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
     ${P.hiit ? `<div class="seg small" style="margin-top:10px">${LVL.map((x, i) => `<button class="${i === P.l ? 'on' : ''}" data-x="hiitlvl" data-l="${i}">${x}</button>`).join('')}</div>` : ''}
-    ${all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button><button class="btn block" data-x="tvhelp" style="margin-top:8px">📺 La suivre sur la télé</button>`}</section>`;
+    ${di !== todayIdx() ? `<p class="his" style="text-align:center">▶️ Le bouton « Lancer ma séance complète » apparaîtra ${DAY_NAMES[di].toLowerCase()}, le jour de la séance.</p>` : all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button><button class="btn block" data-x="tvhelp" style="margin-top:8px">📺 La suivre sur la télé</button>`}</section>`;
 }
 function fullRun(){
   const di = todayIdx(), k = 'day' + di, P = fullPlan(di); if (!P) return;
@@ -5030,7 +5030,7 @@ function hiitSeq(H, l){
 }
 const hiitKey = (H, l) => `⚡ ${H.n} · ${LVL[l]}`;
 function hiitSessCard(di){
-  if (!isHiitDay(di) || di === todayIdx()) return ''; // le jour même : la séance complète guidée la remplace
+  if (!isHiitDay(di) || fullPlan(di)) return ''; // la carte « séance complète guidée » la remplace (tous les jours)
   const H = hiitOfDay(di), l = settings.hiitLvl ?? 1, S = hiitSeq(H, l), tot = S.reduce((a, x) => a + x.s, 0) + 10, eff = S.filter(x => x.k === 'work').slice(1).reduce((a, x) => a + x.s, 0);
   const key = hiitKey(H, l), mine = ((coach && coach.wods) || {})[key] || [], ot = other && other.d && other.d.coach ? (other.d.coach.wods || {})[key] || [] : [], bm = wodBestOf(mine), bo = wodBestOf(ot);
   const Bk = H.B.map(b => ({ n: b.ws ? b.ws[l].length : b.n[l], ex: b.ex.map(hiitEx), t: b.ws ? b.ws[l].join(' · ') + ' s' : `${b.w} s / ${b.r} s` })).filter(x => x.n > 0);
@@ -6948,7 +6948,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 106;
+const APP_VERSION = 107;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
