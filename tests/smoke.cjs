@@ -130,6 +130,11 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('Tabata mixé : chaque bloc alterne 4 exercices, combinaisons toutes différentes', await p.evaluate(() => { const N = ['A', 'B', 'C', 'D', 'E', 'F'], B = tabBlocks(N); const S = []; tabSeq(N, S, 'T');
     const W = S.filter(x => x.k === 'work'), blocs = []; for (let i = 0; i < W.length; i += 8) blocs.push(W.slice(i, i + 8).map(x => x.nm));
     return B.length === 6 && B.every(Q => Q.length === 4) && new Set(B.map(Q => Q.slice().sort().join())).size === 6 && blocs.every(b => new Set(b).size === 4 && b[0] !== b[1]); }));
+  check('programme fitness : pas de conseils de musculation, carte coach fitness', await p.evaluate(() => { const sv = { profile, data: clone(data), titles: clone(titles), coach, prog, save }; save = () => {}; profile = PROFILES[1]; coach = {};
+    prog = { obj: 'perte', days: [0, 2, 4], mat: 'caserne', dur: 60, niv: 'inter', plyo: true, mob: true, abs: true, start: curWk(), lastWk: curWk() }; data = buildProgram(prog).data; beaFitOnce();
+    const ok = isFitProg() && !balanceIssues(planSets()).length && balanceCard() === '' && hiitCard() === '' && /Programme fitness/.test(coachCard()) && coachWeekly({}).length === 0;
+    profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; save = sv.save; return ok; }));
+  check('fenêtre du coach : rien ne dépasse sur le côté', await p.evaluate(() => { sheetCoach(); const sh = document.querySelector('#sheet'), ok = sh.scrollWidth <= sh.clientWidth + 2; closeSheet(); return ok; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
