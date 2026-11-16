@@ -1564,7 +1564,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  absOnce(); animOnce();
+  absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1666,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [97, [['🔀', 'Chaque lundi, de nouveaux exercices secondaires', 'les gros exercices restent pour suivre tes progrès, ils changent toutes les 4 semaines'], ['🛠️', 'Programme vidé ? Un bouton le restaure', 'Programme → Coach']]],
   [96, [['🎬', 'Toutes les animations viennent de docteur-fitness', 'les exercices qui n’en avaient pas sont remplacés par un équivalent'], ['🔍', 'Plus de zoom quand tu tapes vite sur les boutons', 'partout dans l’application']]],
   [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
   [94, [['🔥', 'Abdos en fin de séance (ajoutés pour Béa)', 'Programme → Mon programme → « Abdos en fin de séance »'], ['🧮', 'Calories des séances recalculées pour la nutrition', 'Nutrition → objectif du jour, plus juste les jours de cardio et de mobilité'], ['🍳', 'Menus : les nouvelles recettes riches en protéines sont proposées', 'Nutrition → Semaine']]],
@@ -1965,6 +1966,7 @@ function viewSeance(){
   const social = currentDay === todayIdx() ? (hOn('duo') ? duoLine() + cheerCard() : '') + (hOn('actions') ? actionsCard() : '') + (hOn('defis') ? duoChallenges() : '') + (hOn('bilan') ? reportBanner() : '') : '';
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
+  ${progFixCard()}
   ${storyOn ? storyRow(k, list) : ''}
   <div class="days">${DAY_SHORT.map((d, i) => { const l = data['day'+i] || [], f = l.length && l.every((_, j) => (done['day'+i] || [])[j]);
     return `<button class="day ${i === currentDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''} ${f ? 'full' : ''}" data-day="${i}"><b>${d}</b><span>${esc(dayTitle(i))}</span></button>`; }).join('')}</div>
@@ -2673,7 +2675,7 @@ function viewSemaine(){
   $('#app').innerHTML = `<div class="fade">
   <section class="hero" style="margin-top:16px"><div style="flex:1;position:relative;z-index:1"><h2>Ma semaine</h2><p>${dn} exercices faits sur ${tot}</p><div class="bar" style="margin-top:12px"><i style="width:${tot ? Math.round(dn * 100 / tot) : 0}%"></i></div></div>
   <div class="ring">${ring(tot ? dn / tot : 0, 86, 9, 'r2')}<div class="v">${tot ? Math.round(dn * 100 / tot) : 0}%<small>semaine</small></div></div></section>
-  <h3 class="sec">Coach</h3>${coachCard()}${hiitCard()}${balanceCard()}
+  <h3 class="sec">Coach</h3>${progFixCard()}${rotCard()}${coachCard()}${hiitCard()}${balanceCard()}
   <h3 class="sec">Les 7 jours</h3>
   <div class="wk">${DAY_NAMES.map((d, i) => { const l = data['day'+i] || [], n = l.filter((_, j) => (done['day'+i] || [])[j]).length;
     return `<div class="wkday ${i === todayIdx() ? 'today' : ''}"><button class="n" data-act="goday" data-day="${i}">${DAY_SHORT[i]}</button>
@@ -4615,6 +4617,62 @@ function animOnce(){
   coach = Object.assign({}, coach, { animSwap: 1 });
   if (n){ save(); setTimeout(() => toast(`🎬 ${n} exercice${n > 1 ? 's' : ''} remplacé${n > 1 ? 's' : ''} par un équivalent avec son animation`), 1600); }
 }
+/* ---------- programme vidé : jours de musculation sans aucun exercice de muscu ---------- */
+const brokenDays = () => [0, 1, 2, 3, 4, 5, 6].filter(i => { const t = titles['day' + i]; return t && t !== 'Repos' && !isHiitDay(i) && !musOf(data['day' + i]).size && /[A-Za-zÀ-ÿ]/.test(t) && !/cardio|mobilit|repos|étirement/i.test(t); });
+const canRepair = () => !!(coach && coach.prevHiit && brokenDays().length && Object.values(coach.prevHiit.data || {}).some(L => musOf(L).size));
+function repairProg(){
+  const hd = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay), before = { data: clone(data), titles: clone(titles) };
+  data = clone(coach.prevHiit.data); titles = clone(coach.prevHiit.titles || {});
+  if (hd.length){ const P = planHiit(hd, true); Object.entries(P).forEach(([i, x]) => { data['day' + i] = x.L; titles['day' + i] = x.t; }); }
+  coach = Object.assign({}, coach, { prevRepair: before, rotWk: null });
+  Object.keys(data).forEach(k => { const o = (before.data[k] || []).map(e => e.n); if (!o.every((n, j) => data[k][j] && data[k][j].n === n)){ done[k] = []; [logs, sets, sl].forEach(O => Object.keys(O).filter(y => y.startsWith(k + '_')).forEach(y => delete O[y])); } });
+  rotateWeek(true); render(); save(); toast('🛠️ Programme restauré');
+}
+function progFixCard(){
+  if (!canRepair()) return '';
+  const B = brokenDays().map(i => DAY_NAMES[i]).join(', ');
+  return `<div class="card" style="border-color:var(--warn,#f59e0b)"><h3 style="margin:0 0 6px">🛠️ Ton programme a été vidé</h3><p class="muted" style="font-size:13px">${esc(B)} : il ne reste plus d’exercice de musculation (exercices supprimés « pour toutes les semaines »). Je peux remettre tes séances complètes en gardant tes jours HIIT.</p><button class="btn pri block" data-x="repairprog" style="margin-top:10px">🛠️ Restaurer mon programme</button></div>`;
+}
+/* ---------- chaque lundi : les exercices secondaires changent (les gros exercices tous les 4 semaines) ---------- */
+function slotOf(n){ for (const [k, v] of Object.entries(SLOTS)) if (Object.values(v).some(L => L.includes(n))) return k; return null; }
+function rotateWeek(force, wkT){
+  const wk = wkT || curWk(); if (!force && coach && coach.rotWk === wk) return;
+  if (!Object.values(data).some(L => musOf(L).size)) return;
+  if (canRepair()) return; // d'abord restaurer
+  const mat = prog && prog.mat || 'caserne', num = +String(wk).split('-W')[1] || 0, big = prog ? cycleIdx(prog) === 0 : num % 4 === 1;
+  const pool = []; Object.entries(SLOTS).forEach(([sl0, v]) => (v[mat] || []).forEach(n => { if (LIB_BY[n] && !pool.some(x => x.n === n)) pool.push({ n, slot: sl0, comp: COMPOUND.includes(sl0) }); }));
+  const absPool = [...new Set([...ABS_FIN, ...((SLOTS.core || {})[mat] || [])])];
+  const ok = n => LIB_BY[n] && canDo(n) && DF_GIF[n] && !ANIM_SWAP[n];
+  const before = clone(data), ch = [], weekUsed = new Set(Object.values(data).flat().filter(Boolean).map(e => e.n));
+  for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || []; if (isHiitDay(d) || !musOf(L).size) continue;
+    const firstComp = L.findIndex(e => e && !e.ph && !NOT_MAIN.has(e.m) && (e.cmp || COMPOUND.includes(e.slot && SLOTS[e.slot] ? e.slot : slotOf(e.n))));
+    L.forEach((e, i) => {
+      if (!e || isSkip(e) || e.orig || e.ph || typ(e) === 'c') return;
+      let C;
+      if (e.m === 'Abdos') C = absPool.filter(n => ok(n) && !weekUsed.has(n));
+      else { if (NOT_MAIN.has(e.m)) return; const sl0 = e.slot && SLOTS[e.slot] ? e.slot : slotOf(e.n), comp = !!(e.cmp || COMPOUND.includes(sl0));
+        if (comp && (!big || i === firstComp)) return; // l'exercice principal du jour ne change jamais
+        const fit = x => (LIB_BY[x.n].t || 'f') === typ(e) && ok(x.n) && !weekUsed.has(x.n);
+        C = pool.filter(x => x.slot === sl0 && fit(x) && (!comp || LIB_BY[x.n].m === e.m)).map(x => x.n); // même famille de mouvement d'abord
+        if (!C.length && !comp) C = pool.filter(x => !x.comp && LIB_BY[x.n].m === e.m && fit(x)).map(x => x.n); }
+      if (!C.length) return;
+      const nm = C[hashN(wk + e.n) % C.length], x = exFromLib(nm, {});
+      ['s', 'bs', 'cmp', 'fx', 'abs', 'fin', 'sup', 'note'].forEach(f => { if (e[f] != null) x[f] = e[f]; });
+      const sl1 = slotOf(nm); if (sl1) x.slot = e.m === 'Abdos' && e.slot === 'abs' ? 'abs' : sl1;
+      if (typ(x) === typ(e) && /chaque/.test(e.r) === /chaque/.test(x.r)) x.r = e.r;
+      L[i] = x; weekUsed.add(nm); ch.push([e.n, nm, d]);
+      const key = keyOf(k, i); [logs, sets, sl].forEach(o => delete o[key]); if (done[k]) done[k][i] = false;
+    }); }
+  coach = Object.assign({}, coach, { rotWk: wk, rot: ch.length ? { wk, ch, prev: before } : null });
+  if (ch.length && !force){ save(); setTimeout(() => toast(`🔀 Nouvelle semaine : ${ch.length} exercice${ch.length > 1 ? 's' : ''} changé${ch.length > 1 ? 's' : ''} pour varier`), 2200); }
+  else if (!force) save();
+}
+function rotCard(){
+  const r = coach && coach.rot; if (!r || r.wk !== curWk() || !r.ch.length) return '';
+  return `<div class="card"><h3 style="margin:0 0 6px">🔀 Nouveautés de la semaine</h3><p class="muted" style="font-size:13px;margin-bottom:6px">Les exercices secondaires changent chaque lundi, toujours faisables avec ton matériel. Les gros exercices restent pour suivre tes progrès (ils changent toutes les 4 semaines).</p>
+    <div class="tips-list">${r.ch.map(([a, b, d]) => `<p><b>${DAY_SHORT[d]}</b> · ${esc(a)} → <b>${esc(b)}</b></p>`).join('')}</div>
+    <button class="btn sm" data-x="rotundo" style="margin-top:8px">↩️ Garder les exercices de la semaine dernière</button></div>`;
+}
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 function absOnce(){
   if (profile.id !== 'bea' || (coach && coach.absFin)) return;
@@ -5990,6 +6048,8 @@ function evoAct(a, b){
     case 'hiitd': { const d = +b.dataset.d; hiitDays = hiitDays.includes(d) ? hiitDays.filter(x => x !== d) : [...hiitDays, d].slice(-2).sort(); sheetHiit(); break; }
     case 'hiitwe': hiitWe = !hiitWe; sheetHiit(); break;
     case 'hiitgo': applyHiit(); break;
+    case 'repairprog': sheetConfirm('Restaurer ton programme complet ? Tes jours HIIT sont gardés, tes charges et ton historique aussi.', 'Restaurer', repairProg); break;
+    case 'rotundo': if (coach.rot){ data = coach.rot.prev; coach = Object.assign({}, coach, { rot: null }); render(); save(); toast('↩️ Exercices de la semaine dernière gardés'); } break;
     case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
     case 'ctab': chronoTab = b.dataset.t; render(); break;
@@ -6679,7 +6739,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 96;
+const APP_VERSION = 97;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
