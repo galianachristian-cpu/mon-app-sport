@@ -1666,7 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton']]],
+  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton'], ['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »']]],
   [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
   [100, [['🔥', 'Béa : programme fitness, plus de musculation', 'que du fitness : 3 séances Tabata variées + 2 HIIT, abdos à chaque séance']]],
   [99, [['💪', 'Béa : 4 séances de musculation, 3 séances Tabata, 2 HIIT', 'Tabata de 25 min après la musculation, 5 exercices différents qui changent chaque semaine']]],
@@ -6749,7 +6749,9 @@ document.addEventListener('change', e => {
 document.addEventListener('focusin', e => { const t = e.target; if (t && t.matches && t.matches('[data-log], #sW, #sR')) setTimeout(() => { try{ t.select(); }catch(x){} }, 0); });
 // balayage gauche / droite pour changer de jour
 let sx = null, sy = null;
-$('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice,.dragh')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+// un geste dans une zone qui défile de gauche à droite (cartes d'exercices, jours…) ne change pas de jour
+const inHScroll = el => { for (let n = el; n && n !== document.body; n = n.parentElement){ if (n.scrollWidth > n.clientWidth + 4){ const o = getComputedStyle(n).overflowX; if (o === 'auto' || o === 'scroll') return true; } } return false; };
+$('#app').addEventListener('touchstart', e => { if (view !== 'seance' || e.target.closest('.days,input,.sets,.advice,.dragh,.exstory,.story') || inHScroll(e.target)) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 $('#app').addEventListener('touchend', e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){ currentDay = (currentDay + (dx < 0 ? 1 : 6)) % 7; render(); } sx = null; }, { passive: true });
 window.addEventListener('pagehide', () => { flushSave(); });
 
