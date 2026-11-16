@@ -1564,7 +1564,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1666,6 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
   [100, [['🔥', 'Béa : programme fitness, plus de musculation', 'que du fitness : 3 séances Tabata variées + 2 HIIT, abdos à chaque séance']]],
   [99, [['💪', 'Béa : 4 séances de musculation, 3 séances Tabata, 2 HIIT', 'Tabata de 25 min après la musculation, 5 exercices différents qui changent chaque semaine']]],
   [98, [['🔥', 'Béa : des abdos à chaque séance', 'aussi après le HIIT, et ils reviennent s’ils ont disparu']]],
@@ -4752,6 +4753,12 @@ function muscuCard(){
   if (!coach || !coach.prevMuscu || coach.beaFit !== curWk()) return '';
   return `<div class="card"><h3 style="margin:0 0 6px">🔥 Ton nouveau programme fitness</h3><p class="muted" style="font-size:13px">Plus de musculation : que du brûle-graisse. Lundi, mercredi, vendredi : séance Tabata (6 blocs de 4 min, un exercice différent par bloc, qui changent chaque semaine). Mardi et jeudi : HIIT. Samedi et dimanche : repos. Abdos à chaque séance.</p><button class="btn sm" data-x="muscuundo" style="margin-top:8px">↩️ Revenir à mon ancien programme</button></div>`;
 }
+// Béa (demande de Chris, nov. 2026) : 1 260 kcal strictes tous les jours, séances non ajoutées. Une seule fois : elle peut changer ensuite dans Nutrition → Profil.
+function beaKcalOnce(){
+  if (profile.id !== 'bea' || !nut || nut.k1260) return;
+  nut.kcalMan = 1260; nut.kcalSeance = false; nut.k1260 = today();
+  save(); setTimeout(() => toast('🍽️ Objectif : 1 260 kcal par jour, tous les jours'), 1800);
+}
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 // Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
 const hasAbs = L => (L || []).some(e => e && (e.abs || (e.m === 'Abdos' && !e.ph && !e.tab)));
@@ -6827,7 +6834,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 100;
+const APP_VERSION = 101;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
