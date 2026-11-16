@@ -1677,7 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton'], ['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
+  [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton'], ['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['🔀', 'Tabata mixé', 'chaque bloc de 4 min alterne 4 exercices différents'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
   [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
   [100, [['🔥', 'Béa : programme fitness, plus de musculation', 'que du fitness : 3 séances Tabata variées + 2 HIIT, abdos à chaque séance']]],
   [99, [['💪', 'Béa : 4 séances de musculation, 3 séances Tabata, 2 HIIT', 'Tabata de 25 min après la musculation, 5 exercices différents qui changent chaque semaine']]],
@@ -4729,13 +4729,21 @@ function tabataSession(pk, seed, excl, nb){
   for (let j = 0; out.length < (nb || TAB_N) && j < P.length; j++) out.push(tabEx(P[(st + j) % P.length], pk, out.length));
   return out;
 }
+// blocs mixés : chaque bloc de 4 min alterne 4 exercices différents (A B C D A B C D), et chaque bloc commence par un exercice différent
+function tabBlocks(names){ const n = names.length, off = n >= 6 ? [0, 1, 2, 4] : [0, 1, 2, 3]; return names.map((_, b) => [...new Set(off.slice(0, Math.min(4, n)).map(o => names[(b + o) % n]))]); }
+function tabSeq(names, S, lbl){
+  const B = tabBlocks(names);
+  B.forEach((Q, b) => { S.push({ k: 'rest', l: b ? 'Repos entre les blocs' : 'Prépare-toi pour le Tabata', s: b ? 60 : 15, next: Q[0] });
+    for (let t = 1; t <= 8; t++){ const nm = Q[(t - 1) % Q.length]; S.push({ k: 'work', l: `${lbl} ${b + 1}/${B.length} · ${nm}`, nm, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: Q[t % Q.length] }); } });
+  return B;
+}
 function tabSessCard(di){
   if (di === todayIdx()) return ''; // le jour même, la séance complète guidée la remplace
   const L = data['day' + di] || [], T = L.map((e, i) => [e, i]).filter(([e]) => e && e.tab); if (!T.length) return '';
   const pk = T[0][0].tabP, all = T.every(([, i]) => (done['day' + di] || [])[i]), min = Math.round((T.length * 230 + (T.length - 1) * 60 + 10) / 60);
   return `<section class="card hiitc"><div class="hih"><span class="hii">⏱️</span><div><small class="muted">Séance Tabata</small><h3>${esc((TAB_POOL[pk] || {}).t || 'Tabata')}</h3></div><span class="chip">⏱️ ${min} min</span></div>
-    <p class="muted" style="font-size:13px;margin:6px 0 10px">${T.length} blocs de 4 min : 20 s à fond, 10 s de repos, 8 tours. 1 min de repos entre les blocs. Un exercice différent à chaque bloc.</p>
-    <div class="hib">${T.map(([e], j) => `<div><b>Bloc ${j + 1} · 8 × 20 s / 10 s</b><span>${esc(e.n)}</span></div>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin:6px 0 10px">${T.length} blocs de 4 min : 20 s à fond, 10 s de repos, 8 tours. 1 min de repos entre les blocs. Chaque bloc mélange 4 exercices.</p>
+    <div class="hib">${tabBlocks(T.map(([e]) => e.n)).map((Q, j) => `<div><b>Bloc ${j + 1} · 8 × 20 s / 10 s</b><span>${esc(Q.join(' → '))} (×2)</span></div>`).join('')}</div>
     ${all ? '<p class="his">✅ Séance Tabata faite</p>' : `<button class="btn pri block" data-x="tabrun" style="margin-top:10px;padding:15px;font-size:16px">▶️ Lancer la séance Tabata</button>`}</section>`;
 }
 /* ---------- SÉANCE COMPLÈTE GUIDÉE (Tabata ou HIIT) : échauffement → corps de séance → abdos → étirements, sans rien toucher ---------- */
@@ -4753,8 +4761,7 @@ function fullPlan(di){
   W.forEach((n, j) => { S.push({ k: 'work', l: `Échauffement · ${n}`, nm: n, s: /jumping/i.test(n) ? 60 : 45, tour: j + 1, n: W.length }); S.push({ k: 'rest', l: 'On enchaîne', s: 8, next: W[j + 1] || (hiit ? 'HIIT' : T[0].n) }); });
   // 2. corps de séance
   if (hiit) hiitSeq(H, l).forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
-  else T.forEach((e, b) => { if (b) S.push({ k: 'rest', l: 'Repos entre les blocs', s: 60, next: e.n }); else S.push({ k: 'rest', l: 'Prépare-toi pour le Tabata', s: 15, next: e.n });
-    for (let t = 1; t <= 8; t++){ S.push({ k: 'work', l: `Tabata ${b + 1}/${T.length} · ${e.n}`, nm: e.n, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: e.n }); } });
+  else tabSeq(T.map(e => e.n), S, 'Tabata');
   // 3. abdos : 3 tours de 40 s / 20 s
   if (A.length){ S.push({ k: 'rest', l: 'Respire, on passe aux abdos', s: 45, next: A[0] });
     for (let t = 1; t <= 3; t++) A.forEach((n, j) => { S.push({ k: 'work', l: `Abdos · ${n}`, nm: n, s: 40, tour: t, n: 3 }); if (!(t === 3 && j === A.length - 1)) S.push({ k: 'rest', l: 'Repos', s: 20, next: A[(j + 1) % A.length] }); }); }
@@ -4771,7 +4778,7 @@ function fullCard(di){
   const step = (ic, t, d) => `<div><b>${ic} ${t}</b><span>${d}</span></div>`;
   return `<section class="card hiitc" style="border-color:var(--a1)"><div class="hih"><span class="hii">🎧</span><div><small class="muted">Séance complète guidée · sans prise de tête</small><h3>${esc(P.name)}</h3></div><span class="chip">⏱️ ${P.min} min</span></div>
     <p class="muted" style="font-size:13px;margin:6px 0 10px">Un seul bouton : le minuteur te guide du début à la fin, avec la voix, les bips et l’animation de chaque exercice. Tu n’as rien à toucher.</p>
-    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? 'HIIT' : `Tabata · ${P.T.length} blocs de 4 min`, esc(P.hiit ? P.H.d : P.T.map(e => e.n).join(' → ')))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
+    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? 'HIIT' : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? esc(P.H.d) : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
     ${all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button><button class="btn block" data-x="tvhelp" style="margin-top:8px">📺 La suivre sur la télé</button>`}</section>`;
 }
 function fullRun(){
@@ -4782,8 +4789,7 @@ function fullRun(){
 }
 function tabataRun(){
   const k = 'day' + currentDay, T = (data[k] || []).map((e, i) => [e, i]).filter(([e]) => e && e.tab), S = [];
-  T.forEach(([e], b) => { for (let t = 1; t <= 8; t++){ S.push({ k: 'work', l: `Bloc ${b + 1}/${T.length} · ${e.n}`, nm: e.n, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: e.n }); }
-    if (b < T.length - 1) S.push({ k: 'rest', l: 'Repos entre les blocs', s: 60, next: T[b + 1][0].n }); });
+  tabSeq(T.map(([e]) => e.n), S, 'Bloc');
   chronoTab = 'it'; go('chrono');
   itStart(Object.assign({}, itCfg(), { mode: 'tabata', seq: S, wod: 'Séance Tabata · ' + ((TAB_POOL[T[0][0].tabP] || {}).t || ''), then: () => { done[k] = done[k] || []; T.forEach(([, i]) => done[k][i] = true); save(); go('seance'); toast('⚡ Séance Tabata faite, bravo !'); } }));
 }
