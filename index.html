@@ -896,6 +896,7 @@ const LIB = [
   ['Pec deck','Pectoraux','f','🎯',3,'12-15','Assis à la machine, ramener les bras devant soi en serrant les pectoraux.','Garde le dos contre le dossier.'],
   ['Pompes','Pectoraux','p','🤸',3,'15','En appui sur les mains et les pointes de pieds, corps gainé. Descendre la poitrine près du sol puis pousser.','Corps bien aligné, ne creuse pas le dos.'],
   ['Pompes inclinées','Pectoraux','p','🤸',3,'12','Mains sur un banc ou une marche. Plus facile que les pompes au sol.','Bon exercice pour débuter.'],
+  ['Pompes sur les genoux','Pectoraux','p','🤸',3,'10','En appui sur les mains et les genoux, corps gainé des genoux à la tête. Descendre la poitrine près du sol puis pousser.','La version la plus facile des pompes : garde le dos droit, ne creuse pas.'],
   ['Développé incliné barre','Pectoraux','f','🏋️',3,'8-10','Banc incliné à 30°. Descendre la barre vers le haut de la poitrine puis pousser à la verticale.','Omoplates serrées, coudes un peu sous la barre.'],
   ['Développé serré haltères','Pectoraux','f','💪',3,'10-12','Allongé, haltères collés l’un à l’autre en prise neutre au-dessus de la poitrine. Descendre ensemble puis pousser.','Les haltères restent en contact pendant tout le mouvement.'],
   ['Écartés inclinés haltères','Pectoraux','f','🎯',3,'12','Banc incliné à 30°, bras au-dessus de la poitrine. Ouvrir en arc de cercle puis refermer.','Cible le haut des pectoraux ; coudes légèrement fléchis.'],
@@ -1238,6 +1239,7 @@ const DF_GIF = {
   "Pec deck": '2000/06/pec-deck-butterfly-exercice-musculation.gif',
   "Pompes": '2020/10/pompe-musculation.gif',
   "Pompes inclinées": '2023/07/pompes-inclinees-sur-smith-machine.gif',
+  "Pompes sur les genoux": '2020/10/pompe-sur-les-genoux.gif',
   "Soulevé de terre": '2021/12/souleve-de-terre.gif',
   "Rowing barre": '2021/09/rowing-barre.gif',
   "Tirage vertical (Lat Pulldown)": '2021/11/tirage-vertical-poitrine.gif',
@@ -1575,7 +1577,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1677,6 +1679,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [108, [['🤸', 'Béa : pompes sur les genoux', 'à la place des pompes classiques, dans les Tabata et les HIIT']]],
   [107, [['🎧', 'La séance complète visible à l’avance', 'même carte tous les jours ; le bouton de départ apparaît le jour de la séance']]],
   [106, [['⚡', 'Béa : HIIT variés comme les Tabata', '4 blocs de formats différents (machine, circuit, pyramide, duo…), exercices qui changent chaque semaine, séance complète guidée']]],
   [105, [['🔒', 'Bouton « Annuler l’adaptation à la caserne » retiré', 'il remettait un programme très ancien']]],
@@ -3277,7 +3280,7 @@ function closeSheet(){ $('#sheet').classList.remove('show'); $('#ov').classList.
    PLUS FACILE / PLUS DUR : chaînes de progression (du plus facile au plus dur), changement pour aujourd'hui seulement
    ============================================================ */
 const PROG = [
-  ['Pompes inclinées', 'Pompes', 'Pompes diamant', 'Pompes explosives'], ['Pompes piquées', 'Pompes en équilibre (HSPU)'],
+  ['Pompes sur les genoux', 'Pompes inclinées', 'Pompes', 'Pompes diamant', 'Pompes explosives'], ['Pompes piquées', 'Pompes en équilibre (HSPU)'],
   ['Tractions avec élastique', 'Tractions négatives', 'Tractions'], ['Dips sur banc', 'Dips'],
   ['Squat poids du corps', 'Squat cosaque', 'Pistol squat'], ['Step-up', 'Squat sauté', 'Box jump'],
   ['Fentes croisées', 'Fentes marchées'], ['Pont fessier', 'Hip thrust unilatéral'],
@@ -4731,7 +4734,7 @@ function rotCard(){
 const TAB_POOL = {
   jambes: { t: 'Jambes & cardio', L: ['Squat sauté', 'Kettlebell swing', 'Jumping jacks', 'Fentes marchées', 'Sauts latéraux (skater)', 'Squat poids du corps', 'Wall ball', 'Box jump'] },
   cardio: { t: 'Machines & cardio', L: ['Rameur', 'Assault bike', 'Burpees', 'SkiErg', 'Corde à sauter', 'Mountain climbers', 'Vélo', 'Marche de l’ours'] },
-  haut:   { t: 'Full body & gainage', L: ['Burpees', 'Mountain climbers', 'Pompes', 'Russian twist', 'Planche de l’ours', 'Thruster', 'Jumping jacks', 'Marche de l’ours', 'Touche talons'] } };
+  haut:   { t: 'Full body & gainage', L: ['Burpees', 'Mountain climbers', 'Pompes sur les genoux', 'Russian twist', 'Planche de l’ours', 'Thruster', 'Jumping jacks', 'Marche de l’ours', 'Touche talons'] } };
 const TAB_N = 5;
 const tabEx = (n, pk, j) => exFromLib(n, { t: 's', s: 8, bs: 8, r: '20 s', ph: 'tab', tab: 1, tabP: pk, tabB: j, fx: 1, cmp: 0, desc: 'Bloc Tabata : 20 s à fond, 10 s de repos, 8 tours (4 min). Toute la séance se lance d’un coup avec « ▶️ Lancer la séance Tabata ».' });
 function tabataSession(pk, seed, excl, nb){
@@ -4829,6 +4832,19 @@ function beaKcalOnce(){
   if (profile.id !== 'bea' || !nut || nut.k1260) return;
   nut.kcalMan = 1260; nut.kcalSeance = false; nut.k1260 = today();
   save(); setTimeout(() => toast('🍽️ Objectif : 1 260 kcal par jour, tous les jours'), 1800);
+}
+// Béa n'arrive pas aux pompes : toutes les pompes de son programme deviennent des pompes sur les genoux (une fois)
+const POMPES = new Set(['Pompes', 'Pompes diamant', 'Pompes explosives', 'Pompes inclinées', 'Pompes piquées', 'Pompes en équilibre (HSPU)']);
+function beaPompesOnce(){
+  if (profile.id !== 'bea' || (coach && coach.noPompes)) return;
+  let n = 0; Object.keys(data).forEach(k => { const L = data[k]; if (!Array.isArray(L)) return;
+    const used = new Set(L.filter(Boolean).map(x => x.n));
+    data[k] = L.map(e => { if (!e || !POMPES.has(e.n)) return e; n++;
+      const nm = !used.has('Pompes sur les genoux') ? 'Pompes sur les genoux' : e.tab && TAB_POOL[e.tabP] ? TAB_POOL[e.tabP].L.find(x => !used.has(x) && !POMPES.has(x) && LIB_BY[x] && canDo(x)) : null;
+      if (!nm) return null; used.add(nm);
+      if (e.tab) return tabEx(nm, e.tabP, e.tabB);
+      const x = exFromLib(nm, {}); ['s', 'bs', 'ph', 'abs', 'fx', 'fin', 'cmp', 'slot'].forEach(f => { if (e[f] != null) x[f] = e[f]; }); return x; }).filter(Boolean); });
+  coach = Object.assign({}, coach, { noPompes: today() }); if (n) save();
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 // Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
@@ -4996,7 +5012,7 @@ function hiitEx(x){
 /* ---------- HIIT MIXÉ : 4 blocs de formats différents, exercices variés qui changent chaque semaine (comme les Tabata) ---------- */
 const HIIT_POOL = {
   cardio: ['Burpees', 'Mountain climbers', 'Jumping jacks', 'Squat sauté', 'Sauts latéraux (skater)', 'Corde à sauter', 'Marche de l’ours', 'Box jump'],
-  force:  ['Kettlebell swing', 'Wall ball', 'Thruster', 'Fentes marchées', 'Pompes', 'Renegade row', 'Squat goblet kettlebell', 'Planche de l’ours'] };
+  force:  ['Kettlebell swing', 'Wall ball', 'Thruster', 'Fentes marchées', 'Pompes sur les genoux', 'Renegade row', 'Squat goblet kettlebell', 'Planche de l’ours'] };
 const HIIT_FMT = [
   { n: 'Machine 30/30', f: (M, X) => ({ t: 'Machine 30/30', ex: [M()], w: 30, r: 30, n: [6, 8, 10], p: 60 }) },
   { n: 'Circuit 40/20', f: (M, X) => ({ t: 'Circuit 40/20', ex: [X('cardio'), X('force'), X('cardio'), X('force')], w: 40, r: 20, n: [2, 2, 3], p: 60 }) },
@@ -6948,7 +6964,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 107;
+const APP_VERSION = 108;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
