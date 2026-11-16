@@ -104,6 +104,11 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     coach = { prevHiit: { data: full, titles: { day0: 'Poitrine', day1: 'Dos', day2: 'Repos', day3: 'Repos', day4: 'Repos', day5: 'Repos', day6: 'Repos' } } };
     data = { day0: [exFromLib('Rameur', {})], day1: [], day2: [], day3: [], day4: [], day5: [], day6: [] }; titles = { day0: 'Poitrine', day3: '⚡ HIIT machines' };
     const before = canRepair(); repairProg(); const ok = before && !canRepair() && data.day0.length >= 3 && isHiitDay(3); data = sv.data; titles = sv.titles; coach = sv.coach; save = sv.save; return ok; }));
+  check('Béa : abdos sur chaque séance, HIIT compris, et ils reviennent', await p.evaluate(() => { const sv = { profile, data: clone(data), titles: clone(titles), coach, prog, save }; save = () => {}; profile = PROFILES[1]; coach = {}; prog = null;
+    data = { day0: ['Développé couché', 'Rowing barre'].map(n => exFromLib(n, {})), day1: hiitList(0), day2: [], day3: [], day4: [], day5: [], day6: [] }; titles = { day0: 'Haut', day1: HIIT_T[0] };
+    absOnce(); const ok1 = data.day0.some(e => e.abs) && data.day1.filter(e => e.abs).length === 2 && data.day1[data.day1.length - 1].ph === 'cool'; const n = data.day0.length; absOnce(); const ok2 = data.day0.length === n;
+    data.day0 = data.day0.filter(e => !e.abs); absOnce(); const ok3 = data.day0.some(e => e.abs);
+    Object.assign(window, {}); profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; save = sv.save; return ok1 && ok2 && ok3; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
