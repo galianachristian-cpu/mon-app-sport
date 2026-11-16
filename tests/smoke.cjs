@@ -119,6 +119,11 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('Béa : 1 260 kcal strictes chaque jour, une seule fois', await p.evaluate(() => { const sv = { profile, nut: clone(nut), save }; save = () => {}; profile = PROFILES[1]; nut = { sexe: 'F', age: 49, taille: 165, poids: 62, obj: 'perte', act: 1.35 };
     beaKcalOnce(); const K = [0, 1, 2, 3, 4, 5, 6].map(d => targets(ctxOf(profile.id), d).kcal), ok = K.every(k => k === 1260); nut.kcalMan = 1400; beaKcalOnce(); const ok2 = nut.kcalMan === 1400;
     profile = sv.profile; nut = sv.nut; save = sv.save; return ok && ok2; }));
+  check('séance complète guidée : échauffement, Tabata, abdos, étirements, tout coché à la fin', await p.evaluate(() => { const sv = { data: clone(data), titles: clone(titles), done: clone(done), save }; save = () => {}; const d = todayIdx(), k = 'day' + d;
+    data[k] = [exFromLib('Jumping jacks', { ph: 'warm', s: 1 }), ...tabataSession('jambes', 'x', null, 3), exFromLib('Crunch', { abs: 1, s: 3 }), exFromLib('Étirement du psoas', { ph: 'cool', s: 1 })]; titles[k] = 'Tabata';
+    const P = fullPlan(d), L = P.S.map(x => x.l).join('|'), ok = /^Échauffement/.test(P.S[0].l) && /Tabata 3\/3/.test(L) && /Abdos · Crunch/.test(L) && /Étirement · Étirement du psoas$/.test(P.S[P.S.length - 1].l);
+    currentDay = d; go('seance'); const btn = !!document.querySelector('[data-x="fullrun"]'); fullRun(); IT.c.then(); clearInterval(IT && IT.iv); const all = data[k].every((e, i) => done[k][i]);
+    data = sv.data; titles = sv.titles; done = sv.done; save = sv.save; closeFull && closeFull(); go('seance'); return ok && btn && all; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
