@@ -632,6 +632,14 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .chips2 button.no{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.6);color:#fecaca}
 .shop{padding:6px 14px}
 .shopit{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.shopm{padding:0 2px}.shoph{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:2;background:var(--grad);color:#0b1020;margin:-4px -2px 0;padding:14px 16px;border-radius:0 0 18px 18px}
+.shoph b{display:block;font-size:19px;font-weight:900}.shoph small{display:block;font-size:12.5px;font-weight:700;opacity:.8}.shoph .btn{background:rgba(255,255,255,.35);border-color:transparent;color:#0b1020}
+.shopp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:14px 2px 4px}.shopp .bar{flex:1 1 100%;height:10px}.shopp span{flex:1;font-size:14px}
+.shopg{font-size:13px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;margin:18px 4px 6px;color:var(--a1)}.shopg small{color:var(--muted);font-weight:700;margin-left:4px}
+.shopi{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 14px;margin-bottom:6px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:16px;color:inherit}
+.shopi .ck{flex:0 0 28px;height:28px;border-radius:50%;border:2.5px solid var(--a1);display:grid;place-items:center;font-weight:900;font-size:16px;color:#0b1020}
+.shopi .n{flex:1;font-weight:700}.shopi .q{font-weight:800;color:var(--soft);font-size:14.5px;white-space:nowrap}
+.shopi.got{opacity:.55}.shopi.got .ck{background:var(--ok);border-color:var(--ok)}.shopi.got .n{text-decoration:line-through}
 .shopit:last-of-type{border-bottom:none}
 .shopit input{width:20px;height:20px;accent-color:var(--ok);flex:0 0 auto}
 .shopit span{flex:1;font-size:14.5px}.shopit b{font-size:13.5px;color:var(--soft)}
@@ -1679,6 +1687,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [110, [['🛒', 'Mode magasin', 'la liste de courses rangée par rayon, à cocher sur le téléphone, partagée entre vous deux']]],
   [109, [['🌱', 'Repas avec des produits de saison', 'courgettes, tomates, poivrons… seulement à leur saison ; le menu de la semaine est refait à partir de demain']]],
   [108, [['🤸', 'Béa : plus aucune pompe', 'remplacées par d’autres exercices dans les Tabata et les HIIT']]],
   [107, [['🎧', 'La séance complète visible à l’avance', 'même carte tous les jours ; le bouton de départ apparaît le jour de la séance']]],
@@ -4396,7 +4405,8 @@ function nutCourses(){
   ${byAisle(groups).map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
-  <button class="btn pri block" id="pdfBtn" style="margin-top:16px;padding:15px;font-size:16px">📄 Envoyer la liste en PDF</button>
+  <button class="btn pri block" data-x="shopgo" style="margin-top:16px;padding:15px;font-size:16px">🛒 Mode magasin : cocher sur le téléphone</button>
+  <button class="btn block" id="pdfBtn" style="margin-top:8px;padding:13px;font-size:15px">📄 Envoyer la liste en PDF</button>
   <div class="row" style="margin-top:8px">${navigator.share ? '<button class="btn" id="shareBtn">💬 En texte</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn" id="mailBtn">✉️ Mail (texte)</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
 }
 function coursesText(){
@@ -4439,6 +4449,35 @@ function sheetAisles(){
     <button class="btn block" data-x="aislereset">↩️ Ordre par défaut</button>`);
 }
 const RAY_COL = { '🥦': '#16a34a', '🥩': '#dc2626', '🥛': '#2563eb', '🧊': '#0891b2', '🥫': '#d97706', '🥖': '#ea580c' };
+/* ---------- MODE MAGASIN : la même liste que le PDF, à cocher sur le téléphone ; cochée à deux (chaque case est enregistrée seule, sans écraser celles de l'autre) ---------- */
+let SHOP = null;
+function shopKeyCk(wk, k, on){
+  const ck = foyer.checked[wk] = foyer.checked[wk] || {}; if (on) ck[k] = 1; else delete ck[k]; foyer._t = Date.now(); safeSet('mp_foyer', foyer);
+  if (db && foyerReady) try{ DOC(FOYER_ID).update(new firebase.firestore.FieldPath('checked', wk, k), on ? 1 : firebase.firestore.FieldValue.delete()).catch(() => saveFoyer()); }catch(e){ saveFoyer(); }
+  else saveFoyer();
+}
+async function shopPull(){
+  if (!SHOP || !db || !foyerReady) return;
+  try{ const d = await DOC(FOYER_ID).get(); if (!SHOP) return; const c = ((fsDec(d.data() || {}).checked) || {})[SHOP.wk] || {};
+    if (JSON.stringify(c) !== JSON.stringify(foyer.checked[SHOP.wk] || {})){ foyer.checked[SHOP.wk] = c; safeSet('mp_foyer', foyer); shopRender(); } }catch(e){}
+}
+function shopRender(){
+  if (!SHOP) return;
+  const wk = SHOP.wk, { groups, dates, from, pids } = coursesList(), ck = foyer.checked[wk] || {}, ex = foyer.extra[wk] || [];
+  const secs = byAisle(groups).map(([g, L]) => [g, L.map(x => ({ k: x.f, n: x.n, q: x.q }))]); if (ex.length) secs.push(['➕ À ajouter', ex.map((x, i) => ({ k: 'x' + i, n: x, q: '' }))]);
+  const all = secs.flatMap(x => x[1]), nd = all.filter(x => ck[x.k]).length, who = pids.map(id => ctxOf(id).nom || (PROFILES.find(p => p.id === id) || {}).nom).filter(Boolean).join(' & ');
+  const el = $('#full'), y = el.classList.contains('show') ? el.scrollTop : 0;
+  openFull(`<div class="shopm"><div class="shoph"><div style="flex:1;min-width:0"><b>🛒 Liste de courses</b><small>Pour ${esc(who)} · du ${fmtD(dates[from])} au ${fmtD(dates[6])}</small></div><button class="btn sm" data-x="shopclose" aria-label="Fermer">✕</button></div>
+    <div class="shopp"><div class="bar"><i style="width:${all.length ? Math.round(nd * 100 / all.length) : 0}%"></i></div><span><b>${nd}</b> / ${all.length} dans le caddie${nd === all.length && all.length ? ' 🎉' : ''}</span>
+      <button class="btn sm" data-x="shophide">${SHOP.hide ? '👁️ Tout afficher' : '🙈 Masquer ce qui est pris'}</button></div>
+    ${secs.map(([g, L]) => { const V = SHOP.hide ? L.filter(x => !ck[x.k]) : L; if (!V.length) return ''; return `<h3 class="shopg">${esc(g)} <small>${L.filter(x => ck[x.k]).length}/${L.length}</small></h3>
+      ${V.map(x => `<button class="shopi ${ck[x.k] ? 'got' : ''}" data-x="shopck" data-k="${esc(x.k)}"><span class="ck">${ck[x.k] ? '✓' : ''}</span><span class="n">${esc(x.n)}</span><span class="q">${esc(x.q)}</span></button>`).join('')}`; }).join('')}
+    ${nd === all.length && all.length ? '<p class="muted" style="text-align:center;margin:18px 0">Tout est pris, bonnes courses ! 🎉</p>' : ''}
+    <p class="muted" style="font-size:12px;text-align:center;margin:14px 0 30px">${db ? 'Liste partagée : ce que l’autre coche apparaît ici en quelques secondes.' : 'Hors connexion : les cases sont gardées sur ce téléphone.'}</p></div>`);
+  el.scrollTop = y;
+}
+function shopOpen(){ SHOP = { wk: curWk(), hide: false }; shopRender(); clearInterval(shopOpen.iv); shopOpen.iv = setInterval(shopPull, 6000); shopPull(); }
+function shopClose(){ SHOP = null; clearInterval(shopOpen.iv); closeFull(); if (view === 'nutrition') render(); }
 async function coursesPDF(){
   const wk = curWk(), { groups, dates, from, pids, have, mine } = coursesList(), ck = foyer.checked[wk] || {}, ex = (foyer.extra[wk] || []).filter((_, i) => !ck['x' + i]);
   const G = byAisle(groups).map(([g, L]) => [g, L.filter(x => !ck[x.f])]).filter(([, L]) => L.length);
@@ -6396,6 +6435,10 @@ function evoAct(a, b){
     case 'remopt': { const r = remCfg(); r[b.dataset.k] = !r[b.dataset.k]; safeSet('mp_settings', settings); viewSemaine(); break; }
     case 'remperm': if ('Notification' in window) Notification.requestPermission().then(p => { viewSemaine(); if (p === 'granted'){ notify('🔔 Notifications activées', 'Tu recevras tes rappels ici.', 'test'); } }); break;
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
+    case 'shopgo': shopOpen(); break;
+    case 'shopclose': shopClose(); break;
+    case 'shophide': if (SHOP){ SHOP.hide = !SHOP.hide; shopRender(); } break;
+    case 'shopck': if (SHOP){ const k = b.dataset.k, on = !(foyer.checked[SHOP.wk] || {})[k]; shopKeyCk(SHOP.wk, k, on); if (on && navigator.vibrate && settings.vibe) navigator.vibrate(15); shopRender(); } break;
     default:
       if (a.startsWith('it')) itAct(a, b);
       else if (a.startsWith('du')) duoAct(a, b);
@@ -6976,7 +7019,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 109;
+const APP_VERSION = 110;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

@@ -149,6 +149,12 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const ok = monthOfWk(wk) === 11 && ids.every(id => seasonOk(R0[id], 11)) && !ids.some(id => R0[id].ing.some(([f]) => f === 'tomate' || f === 'courgette')) && P.season === 1;
     const juillet = RECIPES.filter(r => r.type === 'plat' && seasonOk(r, 7)).length > RECIPES.filter(r => r.type === 'plat' && seasonOk(r, 1)).length;
     foyer.plans = sv; return ok && juillet; }));
+  check('mode magasin : liste par rayon, cases cochées partagées, masquer, fermer', await p.evaluate(() => { const wk = curWk(), sv = clone(foyer.checked || {}); foyer.checked[wk] = {};
+    nutTab = 'courses'; go('nutrition'); if (!document.querySelector('[data-x="shopgo"]')) return 'bouton absent'; shopOpen(); const n = document.querySelectorAll('.shopi').length;
+    document.querySelector('.shopi').click(); const ok1 = n > 5 && document.querySelectorAll('.shopi.got').length === 1 && Object.keys(foyer.checked[wk]).length === 1;
+    document.querySelector('[data-x="shophide"]').click(); const ok2 = document.querySelectorAll('.shopi').length === n - 1;
+    document.querySelector('[data-x="shopclose"]').click(); const ok3 = !SHOP && !document.querySelector('#full').classList.contains('show');
+    foyer.checked = sv; go('seance'); return ok1 && ok2 && ok3; }) === true);
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
