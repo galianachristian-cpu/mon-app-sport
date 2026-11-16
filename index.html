@@ -1677,6 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [105, [['🔒', 'Bouton « Annuler l’adaptation à la caserne » retiré', 'il remettait un programme très ancien']]],
   [104, [['🔥', 'Programme fitness de Béa plus clair', 'plus de conseils de musculation, une seule carte coach, un seul bouton de séance'], ['🛠️', 'Petites corrections', 'fenêtre du coach qui glissait de côté, boutons « trop facile » retirés de l’échauffement']]],
   [103, [['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['🔀', 'Tabata mixé', 'chaque bloc de 4 min alterne 4 exercices différents'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
   [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton']]],
@@ -4949,7 +4950,7 @@ function coachWeekly(prevDone){
   (prog.log = prog.log || []).push({ wk, msgs }); if (prog.log.length > 20) prog.log = prog.log.slice(-20);
   return msgs;
 }
-const adaptBtns = () => (caserneChanges().length ? '<button class="btn block" data-x="adapt" style="margin-top:8px">🚒 Garder mon programme, adapté à la caserne</button>' : '') + (coach && coach.prevData ? '<button class="btn block" data-x="adaptundo" style="margin-top:8px">↩️ Annuler l’adaptation à la caserne</button>' : '');
+const adaptBtns = () => (caserneChanges().length ? '<button class="btn block" data-x="adapt" style="margin-top:8px">🚒 Garder mon programme, adapté à la caserne</button>' : '');
 /* ============================================================
    SEMAINE AVEC 2 SÉANCES HIIT : jours choisis → HIIT, le reste de la muscu regroupé
    ============================================================ */
@@ -5099,7 +5100,7 @@ function coachCard(){
     ${adh ? `<p class="muted" style="font-size:12.5px;margin-top:6px">Semaine dernière : ${Math.round(adh.rate * 100)} % des exercices faits.</p>` : ''}
     ${objNut && objNut !== prog.obj ? `<div class="advice up" style="margin-top:10px"><span>🎯 Ton objectif nutrition est maintenant « ${OBJ[objNut][0]} ».</span><button class="btn sm pri" data-act="coach">Recalculer</button></div>` : ''}
     ${last && last.msgs.length > 1 ? `<div class="box" style="margin-top:10px"><h4>🤖 Ajustements de la semaine</h4><p>${last.msgs.slice(1).map(esc).join('\n')}</p></div>` : ''}
-    <div class="row" style="margin-top:12px"><button class="btn sm" data-act="coach">⚙️ Modifier mes réglages</button><button class="btn sm" data-x="gear">🏋️ Mon matériel</button>${caserneChanges().length ? '<button class="btn sm" data-x="adapt">🚒 Adapter à la caserne</button>' : ''}${coach && coach.prevData ? '<button class="btn sm" data-x="adaptundo">↩️ Annuler l’adaptation</button>' : ''}${prog.prev ? '<button class="btn sm" data-act="coach-undo">↩️ Ancien programme</button>' : ''}</div></div>`;
+    <div class="row" style="margin-top:12px"><button class="btn sm" data-act="coach">⚙️ Modifier mes réglages</button><button class="btn sm" data-x="gear">🏋️ Mon matériel</button>${caserneChanges().length ? '<button class="btn sm" data-x="adapt">🚒 Adapter à la caserne</button>' : ''}${prog.prev ? '<button class="btn sm" data-act="coach-undo">↩️ Ancien programme</button>' : ''}</div></div>`;
 }
 function sheetCoach(){
   const p = prog || {}, obj = p.obj || (nut && nut.obj) || 'muscle';
@@ -6923,7 +6924,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 104;
+const APP_VERSION = 105;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

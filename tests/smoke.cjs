@@ -135,6 +135,7 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const ok = isFitProg() && !balanceIssues(planSets()).length && balanceCard() === '' && hiitCard() === '' && /Programme fitness/.test(coachCard()) && coachWeekly({}).length === 0;
     profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; save = sv.save; return ok; }));
   check('fenêtre du coach : rien ne dépasse sur le côté', await p.evaluate(() => { sheetCoach(); const sh = document.querySelector('#sheet'), ok = sh.scrollWidth <= sh.clientWidth + 2; closeSheet(); return ok; }));
+  check('plus de bouton « Annuler l’adaptation à la caserne »', await p.evaluate(() => { const sv = coach; coach = Object.assign({}, coach, { prevData: { day0: [] } }); go('semaine'); const ok = !document.querySelector('[data-x="adaptundo"]'); coach = sv; go('seance'); return ok; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
