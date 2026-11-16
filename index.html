@@ -623,8 +623,8 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .tips-list p{font-size:13.5px;line-height:1.5;padding:8px 0;border-bottom:1px solid var(--line)}
 .tips-list p:last-child{border-bottom:none}
 .objs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.obj{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:16px;background:var(--card);border:2px solid var(--line);cursor:pointer;text-align:center}
-.obj input{position:absolute;opacity:0;pointer-events:none}
+.obj{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:16px;background:var(--card);border:2px solid var(--line);cursor:pointer;text-align:center}
+.obj input{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
 .obj span{font-size:26px}.obj b{font-size:13.5px}
 .obj.on{border-color:var(--a1);background:color-mix(in srgb,var(--a1) 10%,var(--card))}
 .exg{margin-bottom:8px}.exg small{font-size:11.5px;font-weight:700;color:var(--muted)}
@@ -1677,6 +1677,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [104, [['🔥', 'Programme fitness de Béa plus clair', 'plus de conseils de musculation, une seule carte coach, un seul bouton de séance'], ['🛠️', 'Petites corrections', 'fenêtre du coach qui glissait de côté, boutons « trop facile » retirés de l’échauffement']]],
   [103, [['👆', 'Faire défiler les exercices ne change plus de jour', 'Séance → cartes « Ta séance du jour »'], ['🔀', 'Tabata mixé', 'chaque bloc de 4 min alterne 4 exercices différents'], ['📺', 'La séance guidée sur la télé', 'diffusion d’écran Android ou AirPlay + téléphone à l’horizontale : plein écran']]],
   [102, [['🎧', 'Séance complète guidée', 'jours Tabata et HIIT : échauffement, séance, abdos et étirements avec un seul bouton']]],
   [101, [['🍽️', 'Béa : 1 260 kcal par jour, tous les jours', 'même objectif les jours de séance et de repos (Nutrition → Profil pour changer)']]],
@@ -2001,7 +2002,7 @@ function viewSeance(){
   ${fullCard(currentDay)}${hiitSessCard(currentDay)}${tabSessCard(currentDay)}
   ${hOn('mus') && !isHiitDay(currentDay) ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
-  ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px"><button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
+  ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px">${fullPlan(currentDay) ? '' : `<button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}`}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
@@ -2023,7 +2024,7 @@ function storyRow(k, L){
   const dn = done[k] || [], nx = openIdx(k), mins = estMin(L);
   return `<h3 class="sec">Ta séance du jour · ${L.length} exercice${L.length > 1 ? 's' : ''} · ~${mins} min</h3>
   <div class="exstory">${L.map((e, i) => `<button class="${dn[i] ? 'dn' : ''}${isSkip(e) ? ' sk' : ''}${i === nx ? ' cur' : ''}" data-x="exgo" data-i="${i}" aria-label="${esc(e.n)}"><span class="n">${dn[i] ? '✓' : isSkip(e) ? '⏭' : i + 1}</span><span class="v">${exVis(e)}</span><span class="t"><b>${esc(e.n)}</b><small>${exInfo(e)}</small></span></button>`).join('')}</div>
-  <button class="btn pri block" data-act="guide" style="margin-top:8px">▶️ Démarrer la séance guidée</button>`;
+  ${fullPlan(todayIdx()) && k === 'day' + todayIdx() ? '<button class="btn pri block" data-x="fullrun" style="margin-top:8px">▶️ Lancer ma séance complète</button>' : '<button class="btn pri block" data-act="guide" style="margin-top:8px">▶️ Démarrer la séance guidée</button>'}`;
 }
 // ① bandeau de vignettes pour naviguer pendant la séance
 function stripRow(k, L){
@@ -2068,7 +2069,7 @@ function exCard(k, e, i){
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button>
     </div>
     ${adv && adv.up && !isDone ? `<div class="advice up"><span>📈 ${adv.easy ? 'Toutes tes séries étaient faciles' : 'Tu as réussi 2 séances de suite'} : passe à <b>${fr(adv.w)} kg</b> !</span><button class="btn sm pri" data-act="apply" data-i="${i}" data-w="${adv.w}">Appliquer</button></div>` : adv && adv.txt && !isDone ? `<div class="advice">💡 ${esc(adv.txt)}</div>` : ''}
-    ${!isDone ? lvlBtns(e, `data-i="${i}" data-act`) : ''}
+    ${!isDone && (!e.ph || e.ph === 'plyo') ? lvlBtns(e, `data-i="${i}" data-act`) : ''}
     ${t === 'f' && !isDone ? loadHelp(e, num(lg.w) ?? sugW(e), S.length) : ''}
     ${setBtns}
     <div class="logrow">${inputs}
@@ -2247,7 +2248,10 @@ function sheetShort(){
 const MGRP = [['Pectoraux','Pecs'],['Dos','Dos'],['Épaules','Épaules'],['Biceps','Biceps'],['Triceps','Triceps'],['Quadriceps','Quadri'],['Ischio-jambiers','Ischios'],['Fessiers','Fessiers'],['Mollets','Mollets'],['Abdos','Abdos']];
 const MSLOT = { 'Pectoraux':'pushH', 'Dos':'pullH', 'Épaules':'epaule', 'Quadriceps':'squat', 'Ischio-jambiers':'hinge', 'Fessiers':'hinge', 'Biceps':'biceps', 'Triceps':'triceps', 'Mollets':'mollet', 'Abdos':'core' };
 function planSets(){ const S = {}; MGRP.forEach(([m]) => S[m] = 0); Object.values(data).forEach(L => (L || []).forEach(e => { if (S[e.m] != null && typ(e) !== 'c' && !e.ph) S[e.m] += +e.bs || +e.s || 0; })); return S; }
+// programme fitness (que du Tabata / HIIT) : pas de conseils ni de cycles de musculation
+const isFitProg = () => !!(prog && /^Fitness/.test(prog.split || ''));
 function balanceIssues(S){
+  if (isFitProg()) return [];
   const tot = Object.values(S).reduce((a, b) => a + b, 0); if (tot < 20) return [];
   const I = [], post = S['Ischio-jambiers'] + S['Fessiers'];
   if (S['Pectoraux'] >= 6 && S['Dos'] < S['Pectoraux'] * .8) I.push({ m:'Dos', t:`Dos : ${S['Dos']} séries contre ${S['Pectoraux']} pour les pecs. Un dos plus fort garde les épaules en place.` });
@@ -2256,6 +2260,7 @@ function balanceIssues(S){
   return I.slice(0, 3);
 }
 function balanceCard(){
+  if (isFitProg()) return '';
   const S = planSets(), I = balanceIssues(S); if (Object.values(S).reduce((a, b) => a + b, 0) < 10) return '';
   return `<div class="card" style="margin-top:12px"><b>⚖️ Équilibre musculaire</b><small class="muted" style="display:block;font-size:12px">Séries prévues par semaine</small>
     <div class="balg">${MGRP.map(([m, l]) => `<div class="${I.some(x => x.m === m || (m === 'Fessiers' && x.m === 'Ischio-jambiers')) ? 'lo' : ''}"><b>${S[m]}</b><small>${l}</small></div>`).join('')}</div>
@@ -4714,7 +4719,8 @@ function nextWeekCard(){
 function rotCard(){
   const r = coach && coach.rot; if (!r || r.wk !== curWk() || !r.ch.length) return '';
   return `<div class="card"><h3 style="margin:0 0 6px">🔀 Nouveautés de la semaine</h3><p class="muted" style="font-size:13px;margin-bottom:6px">Les exercices secondaires changent chaque lundi, toujours faisables avec ton matériel. Les gros exercices restent pour suivre tes progrès (ils changent toutes les 4 semaines).</p>
-    <div class="tips-list">${r.ch.map(([a, b, d]) => `<p><b>${DAY_SHORT[d]}</b> · ${esc(a)} → <b>${esc(b)}</b></p>`).join('')}</div>
+    <div class="tips-list">${(() => { const isT = ([, , d, i]) => ((data['day' + d] || [])[i] || {}).tab, td = [...new Set(r.ch.filter(isT).map(x => x[2]))];
+      return td.map(d => `<p><b>${DAY_SHORT[d]}</b> · ⏱️ Tabata : <b>${esc((data['day' + d] || []).filter(e => e && e.tab).map(e => e.n).join(', '))}</b></p>`).join('') + r.ch.filter(x => !isT(x)).map(([a, b, d]) => `<p><b>${DAY_SHORT[d]}</b> · ${esc(a)} → <b>${esc(b)}</b></p>`).join(''); })()}</div>
     <button class="btn sm" data-x="rotundo" style="margin-top:8px">↩️ Garder les exercices de la semaine dernière</button></div>`;
 }
 /* ---------- SÉANCES TABATA (méthode décrite par docteur-fitness : 20 s à fond, 10 s de repos, 8 tours = 4 min ; on varie les exercices) ----------
@@ -4812,7 +4818,7 @@ function beaFitOnce(){
   save(); setTimeout(() => toast('🔥 Nouveau programme fitness : 3 Tabata + 2 HIIT'), 1400);
 }
 function muscuCard(){
-  if (!coach || !coach.prevMuscu || coach.beaFit !== curWk()) return '';
+  if (isFitProg() || !coach || !coach.prevMuscu || coach.beaFit !== curWk()) return '';
   return `<div class="card"><h3 style="margin:0 0 6px">🔥 Ton nouveau programme fitness</h3><p class="muted" style="font-size:13px">Plus de musculation : que du brûle-graisse. Lundi, mercredi, vendredi : séance Tabata (6 blocs de 4 min, un exercice différent par bloc, qui changent chaque semaine). Mardi et jeudi : HIIT. Samedi et dimanche : repos. Abdos à chaque séance.</p><button class="btn sm" data-x="muscuundo" style="margin-top:8px">↩️ Revenir à mon ancien programme</button></div>`;
 }
 // Béa (demande de Chris, nov. 2026) : 1 260 kcal strictes tous les jours, séances non ajoutées. Une seule fois : elle peut changer ensuite dans Nutrition → Profil.
@@ -4924,6 +4930,7 @@ function coachWeekly(prevDone){
   let tot = 0, ok = 0; Object.entries(data).forEach(([k, L]) => (L || []).forEach((e, i) => { tot++; if ((prevDone[k] || [])[i]) ok++; }));
   const rate = tot ? ok / tot : 0;
   if (prog.lastWk){ (prog.adh = prog.adh || []).push({ wk: prog.lastWk, rate: +rate.toFixed(2) }); if (prog.adh.length > 12) prog.adh = prog.adh.slice(-12); }
+  if (isFitProg()){ prog.lastWk = wk; return msgs; } // fitness : pas de cycle de musculation ni de changement d'exercice au plateau
   // plateaux → variante (hors semaine de décharge)
   if (cycleIdx(prog) !== 3) Object.entries(data).forEach(([k, L]) => (L || []).forEach((e, i) => {
     if (!e.slot || ['cardio','core','mob','plyo'].includes(e.slot) || !stalled(e.n)) return;
@@ -5068,6 +5075,7 @@ function applyHiit(){
   closeSheet(); render(); save(); toast('⚡ 2 séances HIIT ajoutées à ta semaine');
 }
 function hiitCard(){
+  if (isFitProg()) return '';
   const H = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay);
   return `<div class="card" style="margin-top:12px"><div class="row"><span style="font-size:26px">⚡</span><div style="flex:1;min-width:0"><b>${H.length ? `HIIT : ${H.map(i => DAY_NAMES[i].toLowerCase()).join(' et ')}` : 'Ajouter 2 séances HIIT par semaine'}</b>
     <small class="muted" style="display:block;font-size:12.5px">${H.length ? 'Sprints machines, kettlebell et poids du corps, 30 à 40 min.' : 'Brûle plus de calories et améliore ton cardio, sans perdre ta muscu.'}</small></div></div>
@@ -5079,6 +5087,10 @@ function coachCard(){
   if (!prog) return `<div class="card coach"><div class="row" style="align-items:flex-start"><span style="font-size:34px">🧠</span><div style="flex:1;min-width:180px"><b style="font-size:16px">Coach : crée ton programme</b>
     <p class="muted" style="font-size:13px;margin-top:4px">Selon ton objectif${objNut ? ` (${OBJ[objNut][1]} ${OBJ[objNut][0]})` : ''}, tes jours dispo, ton niveau et ton matériel. Il se recalcule chaque semaine : cycles de 4 semaines, changement d’exercice en cas de plateau, adaptation à ton assiduité.</p></div></div>
     <button class="btn pri block" data-act="coach" style="margin-top:12px">🧠 Créer mon programme</button>${adaptBtns()}<button class="btn block" data-x="gear" style="margin-top:8px">🏋️ Mon matériel</button></div>`;
+  if (isFitProg()){ const T = [0, 1, 2, 3, 4, 5, 6].filter(d => (data['day' + d] || []).some(e => e && e.tab)), H = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay);
+    return `<div class="card coach"><div class="row"><span style="font-size:30px">🔥</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme fitness · ${T.length + H.length} séances / semaine</b><small class="muted" style="display:block;font-size:12.5px">Que du brûle-graisse : pas de musculation · ${nut && num(nut.kcalMan) ? kc(num(nut.kcalMan)) + ' kcal par jour' : 'calories automatiques'}</small></div></div>
+      <div class="tips-list" style="margin-top:10px"><p>⏱️ <b>Tabata</b> · ${T.map(d => DAY_NAMES[d].toLowerCase()).join(', ')} : 6 blocs mixés de 4 min, exercices qui changent chaque lundi</p><p>⚡ <b>HIIT</b> · ${H.map(d => DAY_NAMES[d].toLowerCase()).join(', ')} : un format différent chaque semaine</p><p>🎧 Chaque séance se lance d’un seul bouton : échauffement, séance, abdos, étirements</p></div>
+      <div class="row" style="margin-top:12px">${coach && coach.prevMuscu ? '<button class="btn sm" data-x="muscuundo">↩️ Revenir à mon ancien programme</button>' : ''}<button class="btn sm" data-x="gear">🏋️ Mon matériel</button></div></div>`; }
   const ci = cycleIdx(prog), c = CYCLE[ci], last = (prog.log || []).slice(-1)[0], adh = (prog.adh || []).slice(-1)[0];
   return `<div class="card coach">
     <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s${prog.plyo ? ' · ⚡ pliométrie' : ''}${prog.mob ? ' · 🧘 mobilité' : ''}${prog.mat === 'caserne' ? ' · 🚒 caserne' : ''}</small></div></div>
@@ -6911,7 +6923,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 103;
+const APP_VERSION = 104;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
