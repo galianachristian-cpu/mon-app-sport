@@ -1666,7 +1666,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [98, [['💪', 'Béa : plus de musculation', '4 séances haut / bas avec cardio en fin + 1 HIIT, toujours en perte de poids'], ['🔥', 'Béa : des abdos à chaque séance', 'aussi après le HIIT, et ils reviennent s’ils ont disparu']]],
+  [98, [['💪', 'Béa : plus de musculation, des Tabata et du HIIT', '4 séances haut / bas, 3 Tabata de 4 min en fin de séance, 2 HIIT'], ['🔥', 'Béa : des abdos à chaque séance', 'aussi après le HIIT, et ils reviennent s’ils ont disparu']]],
   [97, [['🔀', 'Chaque lundi, de nouveaux exercices secondaires', 'les gros exercices restent pour suivre tes progrès, ils changent toutes les 4 semaines'], ['👀', 'Le week-end, vois les séances de la semaine prochaine', 'Séance (samedi et dimanche) ou Programme → Voir la semaine prochaine'], ['🛠️', 'Programme vidé ? Un bouton le restaure', 'Programme → Coach']]],
   [96, [['🎬', 'Toutes les animations viennent de docteur-fitness', 'les exercices qui n’en avaient pas sont remplacés par un équivalent'], ['🔍', 'Plus de zoom quand tu tapes vite sur les boutons', 'partout dans l’application']]],
   [95, [['⏭️', 'Supprimer un exercice : « pas aujourd’hui » ou « du programme »', 'Séance → 🗑️ sur un exercice'], ['⚠️', 'Alerte si l’objectif calorique choisi à la main est trop bas', 'Nutrition → Profil']]],
@@ -3354,6 +3354,7 @@ function sheetDetail(i){
     ${barBox(e)}
     ${goalBox(e)}
     ${(t === 'c' || t === 'k') && ERGO.test(e.n) ? `<div class="box"><h4>🔥 Mode</h4><p>${t === 'k' ? 'Séries en calories : chaque série = un effort où tu notes les calories affichées par la machine.' : 'En continu : durée, distance et calories de la machine.'}</p><button class="btn sm" data-x="kmode" data-i="${i}" style="margin-top:8px">${t === 'k' ? '⏱️ Passer en continu (durée)' : '🔁 Passer en séries de calories'}</button></div>` : ''}
+    ${e.tab ? `<button class="btn pri block" data-act="tabrun" data-i="${i}" style="margin:10px 0">⏱️ Lancer le Tabata · 8 × 20 s / 10 s</button>` : ''}
     ${techCard(e)}
     <div class="row" style="margin-top:14px"><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n + ' exécution')}" target="_blank" rel="noopener">▶️ Vidéo</a><button class="btn" data-act="edit" data-i="${i}">✏️ Modifier</button><button class="btn pri" data-act="replace" data-i="${i}">🔁 Remplacer</button>
       <button class="btn" data-act="move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Monter">⬆️</button><button class="btn" data-act="move" data-i="${i}" data-d="1" ${i === n - 1 ? 'disabled' : ''} aria-label="Descendre">⬇️</button>
@@ -4647,7 +4648,7 @@ function rotPlan(D, wk, future){
   for (let d = 0; d < 7; d++){ const k = 'day' + d, L = D[k] || []; if (isHiitDay(d) || !musOf(L).size) continue;
     const firstComp = L.findIndex(e => e && !e.ph && !NOT_MAIN.has(e.m) && (e.cmp || COMPOUND.includes(e.slot && SLOTS[e.slot] ? e.slot : slotOf(e.n))));
     L.forEach((e, i) => {
-      if (!e || (!future && isSkip(e)) || e.orig || e.ph || typ(e) === 'c') return;
+      if (!e || (!future && isSkip(e)) || e.orig || e.ph || e.tab || typ(e) === 'c') return;
       let C;
       if (e.m === 'Abdos') C = absPool.filter(n => ok(n) && !weekUsed.has(n));
       else { if (NOT_MAIN.has(e.m)) return; const sl0 = e.slot && SLOTS[e.slot] ? e.slot : slotOf(e.n), comp = !!(e.cmp || COMPOUND.includes(sl0));
@@ -4698,14 +4699,25 @@ function rotCard(){
     <div class="tips-list">${r.ch.map(([a, b, d]) => `<p><b>${DAY_SHORT[d]}</b> · ${esc(a)} → <b>${esc(b)}</b></p>`).join('')}</div>
     <button class="btn sm" data-x="rotundo" style="margin-top:8px">↩️ Garder les exercices de la semaine dernière</button></div>`;
 }
-// Béa (demande de Chris, nov. 2026) : plus de musculation, toujours du cardio pour brûler — 4 séances haut / bas avec cardio en fin, 1 HIIT le mercredi, sans pliométrie. Une seule fois.
+// Tabata : 20 s à fond, 10 s de repos, 8 tours (4 min), lancé avec le minuteur depuis la fiche de l'exercice
+const tabataEx = n => exFromLib(n, { t: 's', s: 8, bs: 8, r: '20 s', tab: 1, fx: 1, fin: 1, cmp: 0, desc: 'Tabata : 20 s à fond, 10 s de repos, 8 tours (4 min). Lance le minuteur depuis la fiche de l’exercice.' });
+function tabataRun(k, i){
+  const e = data[k][i], S = []; for (let t = 1; t <= 8; t++){ S.push({ k: 'work', l: e.n, nm: e.n, s: 20, tour: t, n: 8 }); if (t < 8) S.push({ k: 'rest', l: 'Repos', s: 10, tour: t, n: 8, next: e.n }); }
+  closeSheet(); chronoTab = 'it'; go('chrono');
+  itStart(Object.assign({}, itCfg(), { mode: 'tabata', seq: S, wod: 'Tabata · ' + e.n, then: () => { (done[k] = done[k] || [])[i] = true; save(); go('seance'); toast('⚡ Tabata fait, bravo !'); } }));
+}
+// Béa (demande de Chris, nov. 2026) : plus de musculation + Tabata + HIIT — 4 séances haut / bas (Tabata en fin lundi, mardi, jeudi ; cardio vendredi), HIIT mercredi et samedi, sans pliométrie. Une seule fois.
 function beaMuscuOnce(){
   if (profile.id !== 'bea' || !prog || (coach && coach.beaMuscu)) return;
   const old = { data: clone(data), titles: clone(titles), prog: clone(prog) };
   const c = Object.assign({}, prog, { days: [0, 1, 3, 4], plyo: false, abs: true }); ['prev', 'log', 'adh'].forEach(f => delete c[f]);
   const b = buildProgram(c);
-  data = b.data; titles = b.titles; data.day2 = hiitList(0); titles.day2 = HIIT_T[0];
-  Object.assign(prog, { days: c.days, plyo: false, abs: true, absOffD: null, split: b.split + ' + 1 HIIT' });
+  data = b.data; titles = b.titles; data.day2 = hiitList(0); titles.day2 = HIIT_T[0]; data.day5 = hiitList(1); titles.day5 = HIIT_T[1];
+  // Tabata de 4 min à la place du cardio de fin : lundi, mardi, jeudi (vendredi garde son cardio)
+  [[0, 'Burpees'], [1, 'Kettlebell swing'], [3, 'Mountain climbers']].forEach(([d, n]) => { const k = 'day' + d, L = data[k] || [], j = L.findIndex(e => e.fin && e.slot === 'cardio'), x = tabataEx(n);
+    if (j >= 0) L.splice(j, 1, x); else { const c0 = L.findIndex(e => e.ph === 'cool' || e.abs); L.splice(c0 < 0 ? L.length : c0, 0, x); }
+    titles[k] = titles[k].replace(' + cardio', '') + ' + Tabata'; });
+  Object.assign(prog, { days: c.days, plyo: false, abs: true, absOffD: null, split: b.split + ' + Tabata + 2 HIIT' });
   done = {}; sets = {}; sl = {}; logs = {};
   applyCycle();
   coach = Object.assign({}, coach, { beaMuscu: curWk(), rotWk: curWk(), rot: null, prevMuscu: old });
@@ -4713,11 +4725,11 @@ function beaMuscuOnce(){
 }
 function muscuCard(){
   if (!coach || !coach.prevMuscu || coach.beaMuscu !== curWk()) return '';
-  return `<div class="card"><h3 style="margin:0 0 6px">💪 Ton nouveau programme</h3><p class="muted" style="font-size:13px">Plus de musculation : 4 séances haut du corps / bas du corps (lundi, mardi, jeudi, vendredi), chacune avec un cardio en fin pour continuer à brûler. Mercredi : HIIT. Samedi : cardio léger, dimanche : mobilité. Les abdos sont à chaque séance.</p><button class="btn sm" data-x="muscuundo" style="margin-top:8px">↩️ Revenir à mon ancien programme</button></div>`;
+  return `<div class="card"><h3 style="margin:0 0 6px">💪 Ton nouveau programme</h3><p class="muted" style="font-size:13px">Plus de musculation : 4 séances haut du corps / bas du corps (lundi, mardi, jeudi, vendredi). Lundi, mardi et jeudi finissent par un Tabata de 4 min (20 s à fond, 10 s de repos), vendredi par du cardio. HIIT le mercredi et le samedi, mobilité le dimanche. Les abdos sont à chaque séance.</p><button class="btn sm" data-x="muscuundo" style="margin-top:8px">↩️ Revenir à mon ancien programme</button></div>`;
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 // Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
-const hasAbs = L => (L || []).some(e => e && (e.abs || (e.m === 'Abdos' && !e.ph)));
+const hasAbs = L => (L || []).some(e => e && (e.abs || (e.m === 'Abdos' && !e.ph && !e.tab)));
 function absOnce(){
   if (profile.id !== 'bea' || (prog && prog.abs === false && prog.absOffD)) return;
   let n = 0; for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || [];
@@ -6098,7 +6110,7 @@ function evoAct(a, b){
     case 'hiitgo': applyHiit(); break;
     case 'repairprog': sheetConfirm('Restaurer ton programme complet ? Tes jours HIIT sont gardés, tes charges et ton historique aussi.', 'Restaurer', repairProg); break;
     case 'nextwk': sheetNextWeek(); break;
-    case 'muscuundo': sheetConfirm('Revenir à ton ancien programme (3 séances + 2 HIIT) ?', 'Revenir', () => { const o = coach.prevMuscu; data = o.data; titles = o.titles; prog = o.prog; coach = Object.assign({}, coach, { prevMuscu: null }); done = {}; sets = {}; sl = {}; logs = {}; render(); save(); toast('↩️ Ancien programme remis'); }); break;
+    case 'muscuundo': sheetConfirm('Revenir à ton ancien programme (3 séances + 2 HIIT, avec pliométrie) ?', 'Revenir', () => { const o = coach.prevMuscu; data = o.data; titles = o.titles; prog = o.prog; coach = Object.assign({}, coach, { prevMuscu: null }); done = {}; sets = {}; sl = {}; logs = {}; render(); save(); toast('↩️ Ancien programme remis'); }); break;
     case 'rotundo': if (coach.rot){ data = coach.rot.prev; coach = Object.assign({}, coach, { rot: null }); render(); save(); toast('↩️ Exercices de la semaine dernière gardés'); } break;
     case 'hiitundo': sheetConfirm('Revenir au programme d’avant les séances HIIT ?', 'Revenir', () => { data = coach.prevHiit.data; titles = coach.prevHiit.titles; coach = Object.assign({}, coach, { prevHiit: null }); done = {}; sets = {}; sl = {}; render(); save(); toast('↩️ Ancien programme restauré'); }); break;
     case 'report': sheetReport(b.dataset.wk || curWk()); if (view === 'seance') setTimeout(render, 0); break;
@@ -6591,6 +6603,7 @@ document.addEventListener('click', e => {
     case 'lib': sheetLib(); break;
     case 'replace': sheetLib(i); break;
     case 'edit': sheetEdit(i); break;
+    case 'tabrun': tabataRun(k, i); break;
     case 'unskip': { const e = data[k][i]; delete e.skipD; delete e.cutD; render(); save(); break; }
     case 'del': { const e = data[k][i], dd = weekDates(curWk())[currentDay];
       openSheet(`<h2>« ${esc(e.n)} »</h2><p class="muted" style="font-size:13.5px;margin-bottom:12px">Tu ne fais pas cet exercice ${currentDay === todayIdx() ? 'aujourd’hui' : 'ce jour-là'}, ou tu veux l’enlever de ton programme pour de bon ?</p>
