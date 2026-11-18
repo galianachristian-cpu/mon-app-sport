@@ -1591,7 +1591,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1693,6 +1693,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [114, [['🍽️', 'Béa : recomposition à 1 500 kcal', 'activité sédentaire, 1 500 kcal fixes par jour, 100 g de protéines']]],
   [113, [['📏', 'Mesures du corps', 'bras, taille, hanches, cuisse avec un schéma pour savoir exactement où mesurer, et l’évolution sur 4 semaines']]],
   [112, [['📷', 'Photos de progression guidées', 'face, profil et dos avec silhouette et minuteur de 10 s, protocole pour des photos comparables, comparaison par pose avec le poids, rappel tous les 28 jours']]],
   [111, [['💪', 'Béa : programme 12 semaines', 'jambes, hanches et silhouette : 3 séances de force, 2 HIIT machines, marche tous les jours, bilans 0 / 4 / 8 / 12'], ['🩺', 'Béa : rappel du bilan médical', 'médecin traitant et médecin vasculaire, jusqu’à ce que les rendez-vous soient pris'], ['🍽️', 'Béa : calories automatiques', 'léger déficit selon ses séances, environ 100 g de protéines par jour']]],
@@ -3861,7 +3862,8 @@ function sessionKcal(c, di){
   const l = (c.data || {})['day' + di] || [], w = weightOf(c), T = c.pid === profile.id ? titles : (c.titles || {});
   if (HIIT_T.includes(T['day' + di])){ const lv = c.pid === profile.id ? settings.hiitLvl ?? 1 : 1;
     try{ return Math.round(hiitSeq(hiitOfDay(di), lv).reduce((a, x, i) => a + (i === 0 ? 5 : x.k === 'work' ? 9 : 3.5) * 3.5 * w / 200 * x.s / 60, 0)); }catch(e){} }
-  return Math.round(l.reduce((a, e) => isSkip(e) || e.walk || ['Mobilité', 'Étirements'].includes(e.m) ? a : a + (kcalEst(e, topReps(e.r), w) || 0), 0));
+  const sed = +((c.nut || {}).act || 1.35) <= 1.25; // sédentaire : la marche du programme est une vraie dépense en plus ; sinon elle est déjà dans le niveau d'activité
+  return Math.round(l.reduce((a, e) => isSkip(e) || (e.walk && !sed) || ['Mobilité', 'Étirements'].includes(e.m) ? a : a + (kcalEst(e, topReps(e.r), w) || 0), 0));
 }
 function targets(c, di){
   const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
@@ -5090,6 +5092,12 @@ function sheetP12Bilan(){
     const r = { d: today(), t: v('#pT'), h: v('#pH'), c: v('#pC'), m: v('#pM'), ch: Object.fromEntries(P12_REF.map(([n]) => [n, p12Best(n)])) };
     prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t){ const E = body.find(b0 => b0.d === r.d); if (E) E.t = r.t; else body.push({ d: r.d, t: r.t }); }
     save(); closeSheet(); render(); toast('📏 Bilan enregistré'); };
+}
+// Béa (demande de Chris) : activité sédentaire, objectif recomposition, 1 500 kcal fixes par jour, 100 g de protéines. Une seule fois.
+function beaNut1500Once(){
+  if (profile.id !== 'bea' || !nut || nut.k1500) return;
+  Object.assign(nut, { act: 1.2, obj: 'recompo', kcalMan: 1500, kcalSeance: false, pFix: 100, k1500: today() });
+  save(); setTimeout(() => toast('🍽️ Objectif : recomposition, 1 500 kcal par jour'), 2200);
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 // Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
@@ -7223,7 +7231,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 113;
+const APP_VERSION = 114;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

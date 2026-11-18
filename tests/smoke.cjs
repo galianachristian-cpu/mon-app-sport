@@ -162,6 +162,9 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const ok3 = !nut.kcalMan && targets(ctxOf('bea'), 0).p === 100 && rotPlan(clone(data), wkShift(curWk(), 1), true).length === 0 && !canRepair() && !brokenDays().length && /12 semaines/.test(coachCard()) && /bilan médical/.test(p12MedCard()) && (prog.p12.med = { mt: today(), vasc: today() }, p12MedCard() === '');
     const st = prog.p12.start; prog.p12.start = wkShift(curWk(), -3); applyCycle(); const ok4 = data.day0.find(e => e.n === 'Squat goblet').s === 3; prog.p12.start = st;
     profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; nut = sv.nut; save = sv.save; gear = sv.gear; return ok1 && ok2 && ok3 && ok4; }));
+  check('Béa : sédentaire, recomposition, 1 500 kcal fixes et 100 g de protéines', await p.evaluate(() => { const sv = { profile, nut: clone(nut), save }; save = () => {}; profile = PROFILES[1]; nut = { sexe: 'F', age: 49, taille: 153, poids: 62, obj: 'perte', act: 1.5, kcalMan: 1260 };
+    beaNut1500Once(); const K = [0, 1, 2, 3, 4, 5, 6].map(d => targets(ctxOf(profile.id), d)), ok = nut.act === 1.2 && nut.obj === 'recompo' && K.every(t => t.kcal === 1500 && t.p === 100);
+    profile = sv.profile; nut = sv.nut; save = sv.save; return ok; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
