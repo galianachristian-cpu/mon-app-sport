@@ -3758,7 +3758,10 @@ function sessionKcal(c, di){
 function targets(c, di){
   const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
   const bc = c.pid === profile.id ? lastComp('bmr') : null, bcD = c.pid === profile.id ? body.filter(b => b.bmr != null).sort((a, b) => a.d < b.d ? -1 : 1).pop() : null;
-  const bmr = bc && bcD && (Date.now() - new Date(bcD.d + 'T12:00')) / 864e5 <= 60 ? Math.round(bc) : Math.round(10 * w + 6.25 * n.taille - 5 * n.age + sx);
+  const bmrF = Math.round(10 * w + 6.25 * n.taille - 5 * n.age + sx);
+  // métabolisme mesuré par la balance : ignoré s'il est incohérent avec la formule (ex. saisi en kJ au lieu de kcal)
+  const bmrOk = bc && bcD && (Date.now() - new Date(bcD.d + 'T12:00')) / 864e5 <= 60 && bc >= bmrF * .7 && bc <= bmrF * 1.4;
+  const bmr = bmrOk ? Math.round(bc) : bmrF;
   const act = +n.act || 1.35, sk = sessionKcal(c, di), train = sk > 0;
   const tdee = Math.round(bmr * act + sk);
   const f = { perte: .8, maintien: 1, muscle: 1.1, recompo: train ? 1.0 : .9 }[n.obj || 'maintien'];
@@ -3769,7 +3772,7 @@ function targets(c, di){
   // protéines : g/kg selon l'objectif, sans dépasser 30 % des calories (au moins 1,2 g/kg)
   const lk = c.pid === profile.id ? leanKg() : null, pBase = lk ? lk.lean * pk * 1.1 : w * pk;
   const p = num(n.pFix) || Math.round(Math.max(w * 1.2, Math.min(pBase, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
-  return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor, bmrScale: !!(bc && bmr === Math.round(bc)), lean: lk ? lk.lean : null };
+  return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor, bmrScale: !!(bmrOk && bmr === Math.round(bc)), lean: lk ? lk.lean : null };
 }
 // prévision : date estimée pour atteindre le poids visé
 function weightProj(){
