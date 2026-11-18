@@ -3724,6 +3724,15 @@ const RECIPES = [
 ];
 const REC_BY = Object.fromEntries(RECIPES.map(r => [r.id, r]));
 const MEALS = [['pdj','Petit-déjeuner','☀️',.25],['dej','Déjeuner','🍽️',.35],['col','Collation','🍎',.10],['din','Dîner','🌙',.30]];
+// réglages repas d'une personne : dessert au déjeuner et au dîner à la place de la collation ; pas de féculents le soir
+const dessertOn = n => !!(n && n.dessert), noFecSoir = n => !!(n && n.noFecSoir);
+function mealShare(n, meal){
+  let s = (MEALS.find(m => m[0] === meal) || [0, 0, 0, .3])[3];
+  if (dessertOn(n)){ if (meal === 'col') return 0; if (meal === 'dej' || meal === 'din') s += .05; }
+  if (noFecSoir(n)){ if (meal === 'dej') s += .05; if (meal === 'din') s -= .05; }
+  return s;
+}
+const FEC_GRP = ['fec', 'cereale', 'pain'];
 const OBJ = { perte:['Perte de poids','🔥'], maintien:['Maintien','⚖️'], muscle:['Prise de muscle','💪'], recompo:['Recomposition','🔄'] };
 const ACT = { 1.2:'Sédentaire (bureau, peu de marche)', 1.35:'Peu actif (marche, debout parfois)', 1.5:'Actif (métier physique, beaucoup debout)', 1.65:'Très actif (travail physique intense)' };
 
@@ -3912,13 +3921,23 @@ function portion(rid, pid, meal, di, wk){
     if (to !== f) subs.push([f, to]);
     ing.push([to, to === f ? g : convert(f, to, g)]);
   });
-  const share = (MEALS.find(m => m[0] === meal) || [0,0,0,.3])[3];
+  const share = mealShare(c.nut, meal);
+  // pas de féculents le soir : on les retire et on les remplace par des légumes
+  if (meal === 'din' && noFecSoir(c.nut) && ing.some(([f]) => FEC_GRP.includes(FOODS[f].grp))){
+    ing = ing.filter(([f]) => !FEC_GRP.includes(FOODS[f].grp));
+    const lg = ['haricotvert', 'courgette', 'brocoli', 'poelee', 'chou'].find(f => !excl.includes(f) && !ing.some(([x]) => x === f));
+    if (lg && ing.filter(([f]) => FOODS[f].grp === 'legume').reduce((a, [, g]) => a + g, 0) < 250) ing.push([lg, 200]);
+  }
+  // dessert (déjeuner, dîner) : fromage blanc ou skyr + un fruit, pris sur la part du repas
+  const dess = dessertOn(c.nut) && (meal === 'dej' || meal === 'din') ? { l: ['fblanc', 'skyr'].find(f => !excl.includes(f) && !ing.some(([x]) => x === f)), f: ['pomme', 'orange', 'fruitrouge', 'banane'].find(f => !excl.includes(f) && !ing.some(([x]) => x === f)) } : null;
+  const dessK = dess ? macrosOf([dess.l ? [dess.l, roundG(dess.l, 125)] : null, dess.f ? [dess.f, roundG(dess.f, 120)] : null].filter(Boolean)).k : 0;
   let factor = 1, t = null;
-  if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, t.kcal * share / Math.max(1, kcalOf(ing)))); }
+  if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, (t.kcal * share - dessK) / Math.max(1, kcalOf(ing)))); }
   const merged = {}; ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g * factor; });
   let side = null;
-  if (t) side = macroFix(merged, { k: t.kcal * share, p: t.p * share, l: t.l * share }, excl, true, meal);
+  if (t) side = macroFix(merged, { k: t.kcal * share - dessK, p: t.p * share, l: t.l * share }, excl, !dess, meal);
   Object.keys(merged).forEach(f => { if (MAXG[f]) merged[f] = Math.min(merged[f], MAXG[f]); });
+  if (dess){ if (dess.l){ merged[dess.l] = roundG(dess.l, 125); side = dess.l; } if (dess.f) merged[dess.f] = roundG(dess.f, 120); }
   ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
   return { r, ing, m: macrosOf(ing), subs, side, pT: t ? t.p * share : null };
 }
@@ -3986,7 +4005,7 @@ function planOf(wk){
     foyer.plans[wk] = off && from < 7 ? genPlan(wk, P0, from) : Object.assign(P0, { season: 1 }); saveFoyer(); }
   return foyer.plans[wk];
 }
-function dayPortions(pid, d, wk){ const plan = planOf(wk); return MEALS.map(([meal]) => { const rid = ridOf(plan, d, meal, pid), away = isAway(pid, d, meal, wk); return { meal, rid, away, por: rid && !away ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
+function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(pid).nut); return MEALS.filter(([m]) => !(dn && m === 'col')).map(([meal]) => { const rid = ridOf(plan, d, meal, pid), away = isAway(pid, d, meal, wk); return { meal, rid, away, por: rid && !away ? portion(rid, pid, meal, d, wk) : null, shared: typeof plan.days[d][meal] === 'string' }; }); }
 
 /* ============================================================
    BUDGET — prix moyens en supermarché (€ par kg, poids acheté), modifiables avec les prix de son magasin
@@ -4592,7 +4611,9 @@ function nutProfil(){
     <p class="muted" style="font-size:12px">Le poids se met aussi à jour depuis Progrès → Corps. Les séances du programme sont ajoutées automatiquement aux jours d’entraînement.</p></div>
   <h3 class="sec">Aliments que tu n’aimes pas</h3><div class="card"><p class="muted" style="font-size:12.5px;margin-bottom:8px">Ils sont remplacés automatiquement par un équivalent, et les quantités sont recalculées.</p>
     ${Object.entries(groupsF).map(([g, L]) => `<div class="exg"><small>${g}</small><div class="chips2 wrap">${L.map(f => `<button type="button" class="${(n.excl || []).includes(f.id) ? 'on no' : ''}" data-ex="${f.id}">${(n.excl || []).includes(f.id) ? '🚫 ' : ''}${esc(f.n)}</button>`).join('')}</div></div>`).join('')}</div>
-  <h3 class="sec">Repas</h3><div class="card"><div class="toggle"><span>Déjeuner et dîner en commun<small>Même plat pour vous deux, portions adaptées à chacun</small></span><button type="button" class="sw ${foyer.commun ? 'on' : ''}" id="nCom" role="switch" aria-checked="${foyer.commun}"></button></div></div>
+  <h3 class="sec">Repas</h3><div class="card"><div class="toggle"><span>Déjeuner et dîner en commun<small>Même plat pour vous deux, portions adaptées à chacun</small></span><button type="button" class="sw ${foyer.commun ? 'on' : ''}" id="nCom" role="switch" aria-checked="${foyer.commun}"></button></div>
+    <div class="toggle" style="margin-top:8px"><span>Pas de féculents le soir<small>Riz, pâtes, pommes de terre, pain… remplacés par des légumes au dîner</small></span><button type="button" class="sw ${noFecSoir(n) ? 'on' : ''}" id="nNF" role="switch" aria-checked="${noFecSoir(n)}"></button></div>
+    <div class="toggle" style="margin-top:8px"><span>Dessert au déjeuner et au dîner<small>Fromage blanc ou skyr + fruit, à la place de la collation</small></span><button type="button" class="sw ${dessertOn(n) ? 'on' : ''}" id="nDe" role="switch" aria-checked="${dessertOn(n)}"></button></div></div>
   <button class="btn pri block" type="submit" style="margin-top:16px">💾 Enregistrer et calculer</button></form>
   ${t ? `<h3 class="sec">Tes besoins calculés</h3><div class="card"><div class="three"><div><b>${kc(t.bmr)}</b><small>Métabolisme de base (sans bouger)</small></div><div><b>${kc(Math.round(t.bmr * (+n.act || 1.35)))}</b><small>Dépense calorique sur la journée (activité comprise)</small></div><div><b>${kc(t.kcal)}</b><small>Objectif aujourd’hui</small></div></div>
     ${t.man ? `<p style="font-size:13px;margin-bottom:6px">✍️ <b>Total choisi par toi</b>${t.train && nut.kcalSeance !== false ? ' + séance du jour' : ''} · calcul automatique : ${kc(t.auto)} kcal</p>` : ''}
@@ -4609,6 +4630,7 @@ function bindProfil(){
   $('#kMode').querySelectorAll('[data-km]').forEach(b => b.onclick = () => { $('#kMode').querySelectorAll('[data-km]').forEach(x => x.classList.toggle('on', x === b)); $('#kManBox').style.display = b.dataset.km === 'man' ? '' : 'none'; $('#kAutoTxt').textContent = b.dataset.km === 'man' ? 'Le réglage automatique du lundi est en pause tant que tu choisis toi-même.' : 'Calculé selon ton profil et tes séances, ajusté chaque lundi selon ton poids.'; hint(); });
   document.querySelectorAll('[data-kd]').forEach(b => b.onclick = () => { $('#nK').value = Math.max(1000, Math.min(5000, (num($('#nK').value) || 2000) + +b.dataset.kd)); hint(); });
   $('#nK').oninput = hint; hint();
+  ['#nNF', '#nDe'].forEach(id => { $(id).onclick = () => { const b = $(id); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); }; });
   $('#nKS').onclick = () => { const b = $('#nKS'); b.classList.toggle('on'); b.setAttribute('aria-checked', b.classList.contains('on')); };
   $('#nf').onsubmit = ev => {
     ev.preventDefault();
@@ -4618,7 +4640,7 @@ function bindProfil(){
     const oldExcl = JSON.stringify((nut || {}).excl || []), commun = $('#nCom').classList.contains('on');
     const manOn = $('#kMode [data-km="man"]').classList.contains('on'), kv = num($('#nK').value);
     if (manOn && (!kv || kv < 1000 || kv > 5000)) return toast('Choisis un total entre 1 000 et 5 000 kcal.');
-    nut = Object.assign(nut || {}, { sexe, age, taille, poids, act: +$('#nAc').value, obj: (document.querySelector('.obj input:checked') || {}).value || 'maintien', excl, kcalSeance: $('#nKS').classList.contains('on') });
+    nut = Object.assign(nut || {}, { sexe, age, taille, poids, act: +$('#nAc').value, obj: (document.querySelector('.obj input:checked') || {}).value || 'maintien', excl, kcalSeance: $('#nKS').classList.contains('on'), noFecSoir: $('#nNF').classList.contains('on'), dessert: $('#nDe').classList.contains('on') });
     if (manOn) nut.kcalMan = Math.round(kv); else delete nut.kcalMan;
     const lastW = body.filter(b => b.p != null).slice(-1)[0];
     if (!lastW || lastW.p !== poids){ const d = ymd(new Date()); body = body.filter(b => b.d !== d); body.push({ d, p: poids, t: (lastW && lastW.d === d) ? lastW.t : null }); }
