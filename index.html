@@ -1687,7 +1687,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [111, [['💪', 'Béa : programme 12 semaines', 'jambes, hanches et silhouette : 3 séances de force, 2 HIIT machines, marche tous les jours, bilans 0 / 4 / 8 / 12'], ['🍽️', 'Béa : calories automatiques', 'léger déficit selon ses séances, environ 100 g de protéines par jour']]],
+  [111, [['💪', 'Béa : programme 12 semaines', 'jambes, hanches et silhouette : 3 séances de force, 2 HIIT machines, marche tous les jours, bilans 0 / 4 / 8 / 12'], ['🩺', 'Béa : rappel du bilan médical', 'médecin traitant et médecin vasculaire, jusqu’à ce que les rendez-vous soient pris'], ['🍽️', 'Béa : calories automatiques', 'léger déficit selon ses séances, environ 100 g de protéines par jour']]],
   [110, [['🛒', 'Mode magasin', 'la liste de courses rangée par rayon, à cocher sur le téléphone, partagée entre vous deux']]],
   [109, [['🌱', 'Repas avec des produits de saison', 'courgettes, tomates, poivrons… seulement à leur saison ; le menu de la semaine est refait à partir de demain']]],
   [108, [['🤸', 'Béa : plus aucune pompe', 'remplacées par d’autres exercices dans les Tabata et les HIIT']]],
@@ -2002,6 +2002,7 @@ function viewSeance(){
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
   ${progFixCard()}
+  ${currentDay === todayIdx() ? p12MedCard() : ''}
   ${todayIdx() >= 5 && currentDay === todayIdx() ? nextWeekCard() : ''}
   ${storyOn ? storyRow(k, list) : ''}
   <div class="days">${DAY_SHORT.map((d, i) => { const l = data['day'+i] || [], f = l.length && l.every((_, j) => (done['day'+i] || [])[j]);
@@ -4700,7 +4701,7 @@ function animOnce(){
   if (n){ save(); setTimeout(() => toast(`🎬 ${n} exercice${n > 1 ? 's' : ''} remplacé${n > 1 ? 's' : ''} par un équivalent avec son animation`), 1600); }
 }
 /* ---------- programme vidé : jours de musculation sans aucun exercice de muscu ---------- */
-const brokenDays = () => [0, 1, 2, 3, 4, 5, 6].filter(i => { const t = titles['day' + i]; return t && t !== 'Repos' && !isHiitDay(i) && !(data['day' + i] || []).some(e => e && e.tab) && !musOf(data['day' + i]).size && /[A-Za-zÀ-ÿ]/.test(t) && !/cardio|mobilit|repos|étirement/i.test(t); });
+const brokenDays = () => isP12() || isFitProg() ? [] : [0, 1, 2, 3, 4, 5, 6].filter(i => { const t = titles['day' + i]; return t && t !== 'Repos' && !/marche/i.test(t) && !isHiitDay(i) && !(data['day' + i] || []).some(e => e && e.tab) && !musOf(data['day' + i]).size && /[A-Za-zÀ-ÿ]/.test(t) && !/cardio|mobilit|repos|étirement/i.test(t); });
 const canRepair = () => !!(coach && coach.prevHiit && brokenDays().length && Object.values(coach.prevHiit.data || {}).some(L => musOf(L).size));
 function repairProg(){
   const hd = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay), before = { data: clone(data), titles: clone(titles) };
@@ -4933,6 +4934,14 @@ function beaP12Once(){
 const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
 const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
 const P12_MS = [0, 4, 8, 12];
+// rappel du bilan médical conseillé par le programme (affiché jusqu'à ce que les deux rendez-vous soient pris)
+const P12_MED = [['mt', '👩‍⚕️ Médecin traitant', 'bilan sanguin (NFS, ferritine, TSH, vitamine D, glycémie) et discussion sur la périménopause'], ['vasc', '🦵 Phlébologue ou médecin vasculaire', 'avis sur les jambes et les hanches, notamment pour écarter un lipœdème']];
+function p12MedCard(){
+  if (!isP12() || profile.id !== 'bea') return '';
+  const M = prog.p12.med || {}; if (P12_MED.every(([k]) => M[k])) return '';
+  return `<div class="card" style="border-color:var(--warn,#f59e0b);margin-top:12px"><h3 style="margin:0 0 6px">🩺 Rappel : bilan médical</h3><p class="muted" style="font-size:13px;margin-bottom:8px">Le programme conseille de prendre rendez-vous dans les prochains jours. Apporte tes mesures, tes photos et ton carnet d’entraînement.</p>
+    <div class="tips-list">${P12_MED.map(([k, t, d]) => `<p><b>${t}</b> : ${d}.<br>${M[k] ? `<span style="color:var(--ok)">✅ Rendez-vous pris le ${fmtD(M[k])}</span>` : `<button class="btn sm pri" data-x="p12med" data-k="${k}" style="margin-top:6px">✅ Rendez-vous pris</button>`}</p>`).join('')}</div></div>`;
+}
 function p12Card(){
   const w = p12Week(), ph = p12Phase(w), B = prog.p12.b || {}, ms = w <= 1 ? 0 : P12_MS.includes(w) ? w : null, need = ms != null && !B[ms];
   const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td></tr>` : ''; };
@@ -4942,6 +4951,7 @@ function p12Card(){
     <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p><p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p></div>
     ${need ? `<div class="advice up" style="margin-top:10px"><span>📏 <b>Bilan semaine ${ms}</b> : tours de taille, hanches, cuisse, mollet, photos et charges repères.</span><button class="btn sm pri" data-x="p12bilan">Faire le bilan</button></div>` : ''}
     ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th></tr>${P12_MS.map(row).join('')}</table></div>` : ''}
+    ${p12MedCard()}
     <div class="row" style="margin-top:12px"><button class="btn sm" data-x="p12bilan">📏 Bilan / mesures</button>${coach && coach.prevMuscu ? '<button class="btn sm" data-x="muscuundo">↩️ Ancien programme</button>' : ''}<button class="btn sm" data-x="gear">🏋️ Mon matériel</button></div></div>`;
 }
 function sheetP12Bilan(){
@@ -6505,6 +6515,7 @@ function evoAct(a, b){
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
     case 'shopgo': shopOpen(); break;
     case 'p12bilan': sheetP12Bilan(); break;
+    case 'p12med': if (isP12()){ prog.p12.med = Object.assign({}, prog.p12.med, { [b.dataset.k]: today() }); save(); render(); toast('🩺 Noté, merci !'); } break;
     case 'shopclose': shopClose(); break;
     case 'shophide': if (SHOP){ SHOP.hide = !SHOP.hide; shopRender(); } break;
     case 'shopck': if (SHOP){ const k = b.dataset.k, on = !(foyer.checked[SHOP.wk] || {})[k]; shopKeyCk(SHOP.wk, k, on); if (on && navigator.vibrate && settings.vibe) navigator.vibrate(15); shopRender(); } break;
