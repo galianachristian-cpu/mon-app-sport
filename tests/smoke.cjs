@@ -170,6 +170,9 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const sv = { nut: clone(nut), body: clone(body) }; nut = Object.assign({}, nut, { sexe: 'F', age: 49, taille: 153, poids: 62, obj: 'recompo', act: 1.2, kcalMan: 1500 });
     const d = k => { const x = new Date(); x.setDate(x.getDate() - k); return ymd(x); }; body = [[21, 64], [14, 63], [7, 62], [0, 61]].map(([k, p]) => ({ d: d(k), p }));
     const ok3 = /perds vite/.test(nutCoachCard()); nut = sv.nut; body = sv.body; return ok1 && ok2 && ok3; }));
+  check('plats mélangés : poids de l’assiette cuite (pain et salade à part)', await p.evaluate(() => { const por = { r: REC_BY['chili'], ing: [['boeuf', 100], ['riz', 50], ['concassee', 100], ['oignon', 50]], side: null };
+    const g = plateG(por), sol = { r: REC_BY['minestrone'], ing: [['pates', 50], ['pain', 60]], side: null };
+    return isMix(por) && g === Math.round((75 + 130 + 100 + 40) / 10) * 10 && plateG(sol) === 110 && /pain/.test(plateSide(sol)) && !isMix({ r: REC_BY['poulet-riz'], ing: [] }); }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
