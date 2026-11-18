@@ -1693,6 +1693,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [113, [['📏', 'Mesures du corps', 'bras, taille, hanches, cuisse avec un schéma pour savoir exactement où mesurer, et l’évolution sur 4 semaines']]],
   [112, [['📷', 'Photos de progression guidées', 'face, profil et dos avec silhouette et minuteur de 10 s, protocole pour des photos comparables, comparaison par pose avec le poids, rappel tous les 28 jours']]],
   [111, [['💪', 'Béa : programme 12 semaines', 'jambes, hanches et silhouette : 3 séances de force, 2 HIIT machines, marche tous les jours, bilans 0 / 4 / 8 / 12'], ['🩺', 'Béa : rappel du bilan médical', 'médecin traitant et médecin vasculaire, jusqu’à ce que les rendez-vous soient pris'], ['🍽️', 'Béa : calories automatiques', 'léger déficit selon ses séances, environ 100 g de protéines par jour']]],
   [110, [['🛒', 'Mode magasin', 'la liste de courses rangée par rayon, à cocher sur le téléphone, partagée entre vous deux']]],
@@ -3168,13 +3169,18 @@ function tabCorps(){
   const B = body.slice().sort((a, b) => a.d < b.d ? -1 : 1), last = B[B.length - 1], first = B[0];
   const dp = last && first && last.p != null && first.p != null && B.length > 1 ? last.p - first.p : null;
   return `<h3 class="sec">Nouvelle mesure</h3>
-  <div class="card"><form id="bf"><div class="two"><div class="fg"><label for="bP">Poids (kg)</label><input id="bP" inputmode="decimal" placeholder="${last && last.p != null ? fr(last.p) : '75'}"></div><div class="fg"><label for="bT">Tour de taille (cm)</label><input id="bT" inputmode="decimal" placeholder="${last && last.t != null ? fr(last.t) : '85'}"></div></div>
+  <div class="card"><form id="bf"><div class="two"><div class="fg"><label for="bP">Poids (kg)</label><input id="bP" inputmode="decimal" placeholder="${last && last.p != null ? fr(last.p) : '75'}"></div><div class="fg"><label for="bT">Tour de taille (cm, au nombril)</label><input id="bT" inputmode="decimal" placeholder="${last && last.t != null ? fr(last.t) : '85'}"></div></div>
+    <details class="bcomp" open><summary>📏 Autres mesures du corps (facultatif)</summary>
+      <p style="margin:8px 0"><button type="button" class="btn sm" id="mGuide">📍 Où mesurer ? Voir le schéma</button></p>
+      <div class="three2"><div class="fg"><label for="bBr">Bras (cm)</label><input id="bBr" inputmode="decimal" placeholder="${last && last.br != null ? fr(last.br) : '28'}"></div><div class="fg"><label for="bH">Hanches (cm)</label><input id="bH" inputmode="decimal" placeholder="${last && last.h != null ? fr(last.h) : '100'}"></div><div class="fg"><label for="bCu">Cuisse (cm)</label><input id="bCu" inputmode="decimal" placeholder="${last && last.cu != null ? fr(last.cu) : '58'}"></div></div>
+      <p class="muted" style="font-size:12px">Une fois par mois suffit, avec le même mètre, au même moment que la photo.</p></details>
     <details class="bcomp"${lastComp() ? ' open' : ''}><summary>⚖️ Données de ta balance connectée (facultatif)</summary>
       <div class="two"><div class="fg"><label for="bG">Graisse corporelle (%)</label><input id="bG" inputmode="decimal" placeholder="${lastComp('g') != null ? fr(lastComp('g')) : '16'}"></div><div class="fg"><label for="bM">Masse musculaire (kg)</label><input id="bM" inputmode="decimal" placeholder="${lastComp('mm') != null ? fr(lastComp('mm')) : '70'}"></div></div>
       <div class="three2"><div class="fg"><label for="bV">Graisse viscérale</label><input id="bV" inputmode="decimal" placeholder="${lastComp('v') != null ? fr(lastComp('v')) : '9'}"></div><div class="fg"><label for="bB">Métab. de base (kcal)</label><input id="bB" inputmode="numeric" placeholder="${lastComp('bmr') != null ? fr(lastComp('bmr')) : '1900'}"></div><div class="fg"><label for="bE">Eau (%)</label><input id="bE" inputmode="decimal" placeholder="${lastComp('eau') != null ? fr(lastComp('eau')) : '60'}"></div></div>
       <p class="muted" style="font-size:12px">Graisse et métabolisme servent à affiner tes calories et tes protéines.</p></details>
     <button class="btn pri block" type="submit">➕ Enregistrer (${fmtD(ymd(new Date()))})</button></form></div>
   ${B.length ? `<h3 class="sec">Poids</h3><div class="card">${last && last.p != null ? `<div class="wbig"><b>${fr(last.p)}<small> kg</small></b>${dp != null ? `<span class="wd ${!dp ? '' : (nut && nut.obj === 'muscle' ? dp > 0 : dp < 0) ? 'down' : 'up'}">${dp > 0 ? '+' : ''}${fr(dp)} kg depuis le ${fmtD(first.d)}</span>` : ''}${nut && num(nut.cible) ? `<span class="wd goal">🎯 Objectif ${fr(num(nut.cible))} kg · encore ${fr(Math.abs(last.p - num(nut.cible)))} kg</span>` : ''}</div>` : ''}${lineChart(B.filter(b => b.p != null).map(b => ({ d: b.d, v: b.p })), 'kg', 'Évolution du poids', nut && num(nut.cible) ? num(nut.cible) : null)}</div>
+  ${mesCard(B)}
   ${compCard(B)}
   ${B.some(b => b.t != null) ? `<h3 class="sec">Tour de taille</h3><div class="card">${lineChart(B.filter(b => b.t != null).map(b => ({ d: b.d, v: b.t })), 'cm', 'Évolution du tour de taille')}</div>` : ''}
   <div class="card" style="margin-top:10px"><table class="tbl"><thead><tr><th>Date</th><th>Poids</th><th>Taille</th><th></th></tr></thead><tbody>${B.slice(-10).reverse().map(b => `<tr><td>${fmtD(b.d)}</td><td>${b.p != null ? fr(b.p) + ' kg' : '–'}</td><td>${b.t != null ? fr(b.t) + ' cm' : '–'}</td><td><button class="btn sm" data-act="bdel" data-d="${b.d}" aria-label="Supprimer la mesure du ${fmtD(b.d)}">🗑️</button></td></tr>`).join('')}</tbody></table></div>` : ''}
@@ -3188,11 +3194,12 @@ function tabCorps(){
 }
 function bindCorps(){
   $('#bf').onsubmit = ev => { ev.preventDefault(); const v = id => num(($('#' + id) || {}).value), p = v('bP'), t = v('bT');
-    const C = { g: v('bG'), mm: v('bM'), v: v('bV'), bmr: v('bB'), eau: v('bE') };
+    const C = { g: v('bG'), mm: v('bM'), v: v('bV'), bmr: v('bB'), eau: v('bE'), br: v('bBr'), h: v('bH'), cu: v('bCu') };
     if (p == null && t == null && Object.values(C).every(x => x == null)) return toast('Entre au moins une mesure.');
     const d = ymd(new Date()), old = body.find(b => b.d === d) || {}, e = { d, p: p ?? old.p ?? null, t: t ?? old.t ?? null };
     Object.entries(C).forEach(([k, x]) => { if (x != null) e[k] = x; else if (old[k] != null) e[k] = old[k]; });
     body = body.filter(b => b.d !== d); body.push(e); save(); viewProgres(); toast('⚖️ Mesure enregistrée'); };
+  $('#mGuide').onclick = sheetMesures;
   $('#phGo').onclick = phGuided;
   $('#phIn').onchange = async ev => { const f = ev.target.files[0]; if (!f) return; try{ const img = await shrink(f, 900); await phSave(phPose, img); toast('📷 Photo ajoutée (' + PH_POSES.find(x => x[0] === phPose)[1].toLowerCase() + ')'); paintPhotos(); }catch(e){ toast('Impossible d’ajouter cette photo.'); } ev.target.value = ''; };
   paintPhotos();
@@ -3205,6 +3212,28 @@ const photoAdd = o => photoTx('readwrite', st => st.add(o));
 const photoDel = id => photoTx('readwrite', st => st.delete(id));
 const photoAll = () => photoTx('readonly', st => st.getAll());
 function shrink(file, max){ return new Promise((res, rej) => { const fr2 = new FileReader(); fr2.onload = () => { const im = new Image(); im.onload = () => { const s = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', .78)); }; im.onerror = rej; im.src = fr2.result; }; fr2.onerror = rej; fr2.readAsDataURL(file); }); }
+/* Mesures du corps : où mesurer, et évolution sur 4 semaines */
+const MESURES = [['br', 'Bras', 'Bras droit relâché le long du corps. À mi-chemin entre la pointe de l’épaule et le coude.', 68], ['t', 'Taille', 'Au niveau du nombril, debout, après avoir expiré (ne rentre pas le ventre).', 88], ['h', 'Hanches', 'Autour de la partie la plus large des fesses, pieds joints.', 110], ['cu', 'Cuisse', 'Cuisse droite, à mi-chemin entre le pli de l’aine et le haut du genou, jambes légèrement écartées.', 140]];
+function sheetMesures(){
+  const fig = `<svg viewBox="0 0 100 200" style="width:100%;max-width:240px;display:block;margin:0 auto" role="img" aria-label="Où mesurer : bras, taille, hanches, cuisse"><g fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="24" r="10"/><path d="M44 34 L44 40 Q28 42 26 55 L20 100 L26 102 L32 62 L34 100 L34 120 L38 185 L48 185 L50 130 L52 185 L62 185 L66 120 L66 100 L68 62 L74 102 L80 100 L74 55 Q72 42 56 40 L56 34"/></g>
+    ${[['br', 24, 33, 68], ['t', 34, 66, 88], ['h', 33, 67, 110], ['cu', 35, 49, 140]].map(([k, x1, x2, y], i) => `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#f472b6" stroke-width="2.2" stroke-dasharray="3 2"/><circle cx="${k === 'br' || k === 'cu' ? x1 - 9 : x2 + 9}" cy="${y}" r="6.5" fill="#f472b6"/><text x="${k === 'br' || k === 'cu' ? x1 - 9 : x2 + 9}" y="${y + 3.5}" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">${i + 1}</text>`).join('')}</svg>`;
+  openSheet(`<h2>📏 Où mesurer ?</h2>${fig}
+    <ol style="padding-left:20px;margin:12px 0;line-height:1.45;font-size:14px">${MESURES.map(([, n, t]) => `<li style="margin-bottom:6px"><b>${n}</b> : ${esc(t)}</li>`).join('')}</ol>
+    <p class="muted" style="font-size:13px;line-height:1.5"><b>Toujours pareil</b> : mètre ruban souple (de couturière), directement sur la peau, bien à plat et parallèle au sol, serré sans comprimer. Côté droit, debout, détendue, le matin au même moment que la pesée. Lis la valeur en expirant, mesure deux fois et garde la moyenne. Note en cm, au demi-centimètre près.</p>`);
+}
+function mesCard(B){
+  const last = B[B.length - 1]; if (!last) return '';
+  const cut = (() => { const x = new Date(); x.setDate(x.getDate() - 28); return ymd(x); })();
+  const rows = [['p', 'Poids', 'kg'], ...MESURES.map(([k, n]) => [k, n, 'cm'])].map(([k, n, u]) => {
+    const L = B.filter(b => b[k] != null).slice(-1)[0]; if (!L) return null;
+    const R = B.filter(b => b[k] != null && b.d <= cut).slice(-1)[0] || B.filter(b => b[k] != null && b.d !== L.d)[0]; if (!R || R.d === L.d) return null;
+    const dv = L[k] - R[k]; return `<tr><td>${n}</td><td>${fr(R[k])} ${u}<br><small class="muted">${fmtD(R.d)}</small></td><td>${fr(L[k])} ${u}<br><small class="muted">${fmtD(L.d)}</small></td><td><b>${dv > 0 ? '+' : ''}${fr(+dv.toFixed(1))} ${u}</b></td></tr>`;
+  }).filter(Boolean);
+  if (!rows.length) return '';
+  const j = new Set(hist.filter(h => h.d >= cut).map(h => h.d)).size;
+  return `<h3 class="sec">Évolution sur 4 semaines</h3><div class="card"><table class="tbl"><thead><tr><th>Mesure</th><th>Avant</th><th>Maintenant</th><th>Écart</th></tr></thead><tbody>${rows.join('')}</tbody></table>
+    <p class="muted" style="font-size:12.5px;margin-top:8px">🏋️ ${j} jour${j > 1 ? 's' : ''} d’entraînement sur les 28 derniers jours. Compare avec tes photos : le corps change parfois avant la balance.</p></div>`;
+}
 let phCmp = {}, phPose = 'face', phCam = 'user', phStream = null;
 const PH_POSES = [['face', 'Face', 'Debout face au téléphone, bras le long du corps'], ['profil', 'Profil', 'Tourne-toi de côté (côté droit vers le téléphone), bras relâchés'], ['dos', 'Dos', 'Dos au téléphone, bras le long du corps']];
 const phPoseOf = p => p.pose || 'face';
@@ -4713,7 +4742,7 @@ function bindProfil(){
     nut = Object.assign(nut || {}, { sexe, age, taille, poids, act: +$('#nAc').value, obj: (document.querySelector('.obj input:checked') || {}).value || 'maintien', excl, kcalSeance: $('#nKS').classList.contains('on'), noFecSoir: $('#nNF').classList.contains('on'), dessert: $('#nDe').classList.contains('on') });
     if (manOn) nut.kcalMan = Math.round(kv); else delete nut.kcalMan;
     const lastW = body.filter(b => b.p != null).slice(-1)[0];
-    if (!lastW || lastW.p !== poids){ const d = ymd(new Date()); body = body.filter(b => b.d !== d); body.push({ d, p: poids, t: (lastW && lastW.d === d) ? lastW.t : null }); }
+    if (!lastW || lastW.p !== poids){ const d = ymd(new Date()); const o0 = body.find(b => b.d === d) || {}; body = body.filter(b => b.d !== d); body.push(Object.assign({}, o0, { d, p: poids, t: o0.t != null ? o0.t : null })); }
     if (oldExcl !== JSON.stringify(excl) || commun !== foyer.commun){ foyer.commun = commun; delete foyer.plans[curWk()]; saveFoyer(); }
     save(); nutTab = 'jour'; viewNutrition(); toast('✅ Profil nutrition enregistré');
   };
@@ -7194,7 +7223,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 112;
+const APP_VERSION = 113;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
