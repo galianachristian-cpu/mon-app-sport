@@ -575,7 +575,7 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .nav button .i{font-size:20px}
 .seg.small button{padding:7px 4px;font-size:12.5px}
 .seg.seg6{display:grid;grid-template-columns:repeat(3,1fr)}
-.seg.ptabs{display:grid;grid-template-columns:repeat(4,1fr)}.seg.ptabs button{padding:8px 2px;font-size:12.5px}
+.seg.ptabs{display:grid;grid-template-columns:repeat(4,1fr)}.p12t{width:100%;border-collapse:collapse;font-size:13px}.p12t th,.p12t td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line)}.p12t th{color:var(--muted);font-weight:700}.seg.ptabs button{padding:8px 2px;font-size:12.5px}
 .lvl{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.lvl .btn{font-size:12px;padding:6px 10px}.g-ex .lvl{justify-content:center;margin:2px 0 8px}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}.wit{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:0}
 .wit .wn{position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;background:var(--grad);color:#0b0f19;font-size:11px;font-weight:900;display:grid;place-items:center;z-index:1}
@@ -1585,7 +1585,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1687,6 +1687,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [111, [['💪', 'Béa : programme 12 semaines', 'jambes, hanches et silhouette : 3 séances de force, 2 HIIT machines, marche tous les jours, bilans 0 / 4 / 8 / 12'], ['🍽️', 'Béa : calories automatiques', 'léger déficit selon ses séances, environ 100 g de protéines par jour']]],
   [110, [['🛒', 'Mode magasin', 'la liste de courses rangée par rayon, à cocher sur le téléphone, partagée entre vous deux']]],
   [109, [['🌱', 'Repas avec des produits de saison', 'courgettes, tomates, poivrons… seulement à leur saison ; le menu de la semaine est refait à partir de demain']]],
   [108, [['🤸', 'Béa : plus aucune pompe', 'remplacées par d’autres exercices dans les Tabata et les HIIT']]],
@@ -2267,7 +2268,7 @@ function planSets(){ const S = {}; MGRP.forEach(([m]) => S[m] = 0); Object.value
 // programme fitness (que du Tabata / HIIT) : pas de conseils ni de cycles de musculation
 const isFitProg = () => !!(prog && /^Fitness/.test(prog.split || ''));
 function balanceIssues(S){
-  if (isFitProg()) return [];
+  if (isFitProg() || isP12()) return [];
   const tot = Object.values(S).reduce((a, b) => a + b, 0); if (tot < 20) return [];
   const I = [], post = S['Ischio-jambiers'] + S['Fessiers'];
   if (S['Pectoraux'] >= 6 && S['Dos'] < S['Pectoraux'] * .8) I.push({ m:'Dos', t:`Dos : ${S['Dos']} séries contre ${S['Pectoraux']} pour les pecs. Un dos plus fort garde les épaules en place.` });
@@ -2276,7 +2277,7 @@ function balanceIssues(S){
   return I.slice(0, 3);
 }
 function balanceCard(){
-  if (isFitProg()) return '';
+  if (isFitProg() || isP12()) return '';
   const S = planSets(), I = balanceIssues(S); if (Object.values(S).reduce((a, b) => a + b, 0) < 10) return '';
   return `<div class="card" style="margin-top:12px"><b>⚖️ Équilibre musculaire</b><small class="muted" style="display:block;font-size:12px">Séries prévues par semaine</small>
     <div class="balg">${MGRP.map(([m, l]) => `<div class="${I.some(x => x.m === m || (m === 'Fessiers' && x.m === 'Ischio-jambiers')) ? 'lo' : ''}"><b>${S[m]}</b><small>${l}</small></div>`).join('')}</div>
@@ -3751,7 +3752,7 @@ function sessionKcal(c, di){
   const l = (c.data || {})['day' + di] || [], w = weightOf(c), T = c.pid === profile.id ? titles : (c.titles || {});
   if (HIIT_T.includes(T['day' + di])){ const lv = c.pid === profile.id ? settings.hiitLvl ?? 1 : 1;
     try{ return Math.round(hiitSeq(hiitOfDay(di), lv).reduce((a, x, i) => a + (i === 0 ? 5 : x.k === 'work' ? 9 : 3.5) * 3.5 * w / 200 * x.s / 60, 0)); }catch(e){} }
-  return Math.round(l.reduce((a, e) => isSkip(e) || ['Mobilité', 'Étirements'].includes(e.m) ? a : a + (kcalEst(e, topReps(e.r), w) || 0), 0));
+  return Math.round(l.reduce((a, e) => isSkip(e) || e.walk || ['Mobilité', 'Étirements'].includes(e.m) ? a : a + (kcalEst(e, topReps(e.r), w) || 0), 0));
 }
 function targets(c, di){
   const n = c.nut, w = weightOf(c), sx = n.sexe === 'F' ? -161 : 5;
@@ -3766,7 +3767,7 @@ function targets(c, di){
   const pk = { perte: 2.0, maintien: 1.8, muscle: 2.0, recompo: 2.0 }[n.obj || 'maintien'];
   // protéines : g/kg selon l'objectif, sans dépasser 30 % des calories (au moins 1,2 g/kg)
   const lk = c.pid === profile.id ? leanKg() : null, pBase = lk ? lk.lean * pk * 1.1 : w * pk;
-  const p = Math.round(Math.max(w * 1.2, Math.min(pBase, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
+  const p = num(n.pFix) || Math.round(Math.max(w * 1.2, Math.min(pBase, kcal * .30 / 4))), l = Math.round(Math.min(kcal * .35 / 9, Math.max(w * .6, kcal * .30 / 9))), g = Math.max(50, Math.round((kcal - p * 4 - l * 9) / 4));
   return { kcal, p, g, l, bmr, tdee, sk, train, w, man: !!man, auto, floor, bmrScale: !!(bc && bmr === Math.round(bc)), lean: lk ? lk.lean : null };
 }
 // prévision : date estimée pour atteindre le poids visé
@@ -4718,6 +4719,7 @@ function progFixCard(){
 function slotOf(n){ for (const [k, v] of Object.entries(SLOTS)) if (Object.values(v).some(L => L.includes(n))) return k; return null; }
 // calcul des changements d'une semaine (le même pour l'aperçu du dimanche et pour le lundi) : modifie D, renvoie [ancien, nouveau, jour, rang]
 function rotPlan(D, wk, future){
+  if (isP12()) return []; // programme 12 semaines : mêmes exercices pour suivre la progression
   const mat = prog && prog.mat || 'caserne', num = +String(wk).split('-W')[1] || 0, big = prog ? cycleIdx(prog, wk) === 0 : num % 4 === 1;
   const pool = []; Object.entries(SLOTS).forEach(([sl0, v]) => (v[mat] || []).forEach(n => { if (LIB_BY[n] && !pool.some(x => x.n === n)) pool.push({ n, slot: sl0, comp: COMPOUND.includes(sl0) }); }));
   const absPool = [...new Set([...ABS_FIN, ...((SLOTS.core || {})[mat] || [])])];
@@ -4897,6 +4899,64 @@ function beaPompesOnce(){
       const x = exFromLib(nm, {}); ['s', 'bs', 'ph', 'abs', 'fx', 'fin', 'cmp', 'slot'].forEach(f => { if (e[f] != null) x[f] = e[f]; }); return x; }).filter(Boolean); });
   coach = Object.assign({}, coach, { noPompes: today() }); if (n) save();
 }
+/* ---------- PROGRAMME 12 SEMAINES « jambes, hanches et silhouette » (PDF du 18 novembre 2026, Béa, version caserne) ----------
+   3 séances de force (lun A, mer B, ven C), HIIT sur machines mardi et samedi, marche tous les jours ; phases, semaines allégées 4 et 8, bilans 0 / 4 / 8 / 12 */
+const isP12 = () => !!(prog && prog.p12);
+const P12S = {
+  A: { t: 'Séance A · jambes (quadriceps) et fessiers', L: [['Squat goblet', 4, '8-10', 1], ['Fentes marchées', 3, '10 chaque'], ['Step-up', 3, '10 chaque'], ['Leg extension', 3, '12-15'], ['Abduction élastique', 3, '15'], ['Gainage', 3, '30-40 s']] },
+  B: { t: 'Séance B · haut du corps', L: [['Développé incliné haltères', 3, '8-10', 1], ['Tirage vertical (Lat Pulldown)', 3, '10', 1], ['Développé haltères assis', 3, '10'], ['Rowing haltère un bras', 3, '10'], ['Élévations latérales', 2, '12-15'], ['Oiseau (Rear Delt Fly)', 2, '12-15'], ['Hollow hold', 3, '30-40 s']] },
+  C: { t: 'Séance C · fessiers et ischio-jambiers', L: [['Hip thrust', 4, '8-10', 1], ['Soulevé de terre roumain', 4, '8-10', 1], ['Squat bulgare', 3, '10 chaque'], ['Leg curl élastique', 3, '12'], ['Marche latérale élastique', 3, '30 s'], ['Pont fessier', 2, '12']] } };
+const P12_PH = w => w <= 0 ? ['📏', 'avant le départ : prends tes mesures de départ (semaine 0).'] : w <= 3 ? ['🧭', 'prise en main. Apprends les mouvements, trouve tes charges de départ, note tout. Ne cherche pas l’échec.'] : w === 4 || w === 8 ? ['🪶', 'semaine allégée : mêmes exercices et mêmes charges, 1 série de moins. Bilan (mesures, photos).'] : w <= 7 ? ['📈', 'montée en charge : c’est là que les progrès se voient sur le carnet.'] : w <= 11 ? ['🏆', 'consolidation : cherche à battre tes records.'] : w === 12 ? ['🏁', 'tests et bilan final : reprends tes charges de départ, mesures et photos.'] : ['✅', 'programme terminé. Fais le point avec ton bilan.'];
+const p12Phase = w => P12_PH(w);
+function p12Week(wk){ if (!isP12()) return 0; const a = prog.p12.start.split('-W'), b = (wk || curWk()).split('-W'); return (+b[0] - +a[0]) * 52 + (+b[1] - +a[1]) + 1; }
+const P12_WALK = (r, d) => exFromLib('Marche rapide', { r, walk: 1, desc: d || 'Marche tranquille. Objectif : 8 000 à 10 000 pas par jour en moyenne.' });
+function p12Build(){
+  const warm = () => [exFromLib('Rameur', { ph: 'warm', r: '5 min', desc: '5 min de rameur (ou vélo), facile.' }), exFromLib('Mobilité de hanches 90/90', { ph: 'warm', s: 1, r: '5 chaque' }), exFromLib('World’s greatest stretch', { ph: 'warm', s: 1, r: '5 chaque' })];
+  const cool = () => [exFromLib('Vélo', { ph: 'cool', r: '5 min', desc: '5 à 10 min de vélo ou de marche tranquille, sans intensité.' }), exFromLib('Étirement du psoas', { ph: 'cool', s: 1 }), exFromLib('Posture de l’enfant', { ph: 'cool', s: 1 })];
+  const sess = k => P12S[k].L.map(([n, sr, r, main]) => { const x = exFromLib(n, { s: sr, bs: sr, r, cmp: main ? 1 : 0 }); if (n === 'Gainage' || n === 'Hollow hold') x.abs = 1; return x; });
+  const hiitDay = j => [...['Rameur', 'Assault bike', 'SkiErg'].map(n => exFromLib(n, { r: '8 min', desc: 'HIIT sur machine : effort intense puis récupération lente, sans sauts.' })), P12_WALK('30 min')];
+  const D = { day0: [...warm(), ...sess('A'), ...cool(), P12_WALK('30 min')], day1: hiitDay(0), day2: [...warm(), ...sess('B'), ...cool(), P12_WALK('30 min')], day3: [P12_WALK('30-45 min')],
+    day4: [...warm(), ...sess('C'), ...cool(), P12_WALK('30 min')], day5: hiitDay(1), day6: [P12_WALK('30 min', 'Marche tranquille, jour de repos : pas d’autre effort.')] };
+  const T = { day0: P12S.A.t, day1: HIIT_T[0], day2: P12S.B.t, day3: 'Marche · récupération', day4: P12S.C.t, day5: HIIT_T[1], day6: 'Repos · marche tranquille' };
+  return { D, T };
+}
+function beaP12Once(){
+  if (profile.id !== 'bea' || (coach && coach.beaP12)) return;
+  const old = { data: clone(data), titles: clone(titles), prog: prog ? clone(prog) : null }, { D, T } = p12Build();
+  data = D; titles = T; done = {}; sets = {}; sl = {}; logs = {};
+  const start = todayIdx() >= 2 ? wkShift(curWk(), 1) : curWk();
+  prog = Object.assign(prog || {}, { p12: { start, b: {} }, split: 'Programme 12 semaines', days: [0, 2, 4], mat: 'caserne', plyo: false, abs: true, absOffD: null, start: curWk(), lastWk: curWk() });
+  if (nut){ delete nut.kcalMan; nut.kcalSeance = true; nut.pFix = 100; } // calories automatiques (objectif inchangé : léger déficit), 100 g de protéines ; la marche est déjà comprise dans son niveau d'activité
+  coach = Object.assign({}, coach, { beaP12: today(), rotWk: curWk(), rot: null, prevMuscu: old });
+  applyCycle(); save(); setTimeout(() => toast('💪 Programme 12 semaines en place'), 1400);
+}
+const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
+const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
+const P12_MS = [0, 4, 8, 12];
+function p12Card(){
+  const w = p12Week(), ph = p12Phase(w), B = prog.p12.b || {}, ms = w <= 1 ? 0 : P12_MS.includes(w) ? w : null, need = ms != null && !B[ms];
+  const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td></tr>` : ''; };
+  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours</small></div></div>
+    <div class="cycle" style="grid-template-columns:repeat(12,1fr)">${Array.from({ length: 12 }, (_, i) => `<div class="${i + 1 === w ? 'on' : i + 1 < w ? 'past' : ''}"><span>${[4, 8].includes(i + 1) ? '🪶' : i + 1 === 12 ? '🏁' : '·'}</span><small>${i + 1}</small></div>`).join('')}</div>
+    <p style="font-size:13.5px"><b>${ph[0]}</b> ${ph[1]}</p>
+    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p><p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p></div>
+    ${need ? `<div class="advice up" style="margin-top:10px"><span>📏 <b>Bilan semaine ${ms}</b> : tours de taille, hanches, cuisse, mollet, photos et charges repères.</span><button class="btn sm pri" data-x="p12bilan">Faire le bilan</button></div>` : ''}
+    ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th></tr>${P12_MS.map(row).join('')}</table></div>` : ''}
+    <div class="row" style="margin-top:12px"><button class="btn sm" data-x="p12bilan">📏 Bilan / mesures</button>${coach && coach.prevMuscu ? '<button class="btn sm" data-x="muscuundo">↩️ Ancien programme</button>' : ''}<button class="btn sm" data-x="gear">🏋️ Mon matériel</button></div></div>`;
+}
+function sheetP12Bilan(){
+  const w = p12Week(), ms = w <= 1 ? 0 : [4, 8, 12].reduce((a, k) => w >= k ? k : a, 0), B = prog.p12.b || {}, x = B[ms] || {};
+  const f = (id, l, v) => `<div class="fg"><label for="${id}">${l}</label><input id="${id}" class="inp" inputmode="decimal" value="${v ?? ''}" placeholder="cm"></div>`;
+  openSheet(`<h2>📏 Bilan semaine ${ms}</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Le matin, à jeun. Le poids sur la balance est le moins important de ces indicateurs.</p>
+    <form id="p12f"><div class="two">${f('pT', 'Tour de taille (au nombril)', x.t)}${f('pH', 'Hanches (point le plus large)', x.h)}</div><div class="two">${f('pC', 'Cuisse (à mi-hauteur)', x.c)}${f('pM', 'Mollet', x.m)}</div>
+    <div class="box"><h4>🏋️ Charges repères (meilleures notées)</h4><p>${P12_REF.map(([n, l]) => `${l} : ${p12Best(n) != null ? fr(p12Best(n)) + ' kg' : 'pas encore noté'}`).join('\n')}</p></div>
+    <p class="muted" style="font-size:12.5px;margin:8px 2px">📸 Photos de face, de profil et de dos, dans la même lumière : garde-les dans ton téléphone.</p>
+    <button class="btn pri block" type="submit">✅ Enregistrer le bilan</button></form>`);
+  $('#p12f').onsubmit = ev => { ev.preventDefault(); const v = id => { const n = num($(id).value); return n > 0 ? n : null; };
+    const r = { d: today(), t: v('#pT'), h: v('#pH'), c: v('#pC'), m: v('#pM'), ch: Object.fromEntries(P12_REF.map(([n]) => [n, p12Best(n)])) };
+    prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t){ const E = body.find(b0 => b0.d === r.d); if (E) E.t = r.t; else body.push({ d: r.d, t: r.t }); }
+    save(); closeSheet(); render(); toast('📏 Bilan enregistré'); };
+}
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 // Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
 const hasAbs = L => (L || []).some(e => e && (e.abs || (e.m === 'Abdos' && !e.ph && !e.tab)));
@@ -4970,9 +5030,10 @@ function buildProgram(cfg){
   }
   return { data: out, titles: titles2, split: tplKeys === keys ? splitName : 'Push / Pull / Legs', nEx };
 }
-const cycleIdx = (p, wk) => { if (!p || !p.start) return 0; const a = p.start.split('-W'), b = (wk || curWk()).split('-W'); const w = (+b[0] - +a[0]) * 52 + (+b[1] - +a[1]); return ((w % 4) + 4) % 4; };
+const cycleIdx = (p, wk) => { if (!p || !p.start || p.p12) return 0; const a = p.start.split('-W'), b = (wk || curWk()).split('-W'); const w = (+b[0] - +a[0]) * 52 + (+b[1] - +a[1]); return ((w % 4) + 4) % 4; };
 function applyCycle(){
   if (!prog) return;
+  if (isP12()){ const lite = [4, 8].includes(p12Week()); Object.values(data).forEach(L => (L || []).forEach(e => { if (e && e.bs != null && !e.ph && !e.walk) e.s = Math.max(1, e.bs - (lite && !e.abs ? 1 : 0)); })); return; }
   const ci = cycleIdx(prog);
   Object.values(data).forEach(L => (L || []).forEach(e => {
     if (e.bs == null) return;
@@ -5000,7 +5061,8 @@ function coachWeekly(prevDone){
   let tot = 0, ok = 0; Object.entries(data).forEach(([k, L]) => (L || []).forEach((e, i) => { tot++; if ((prevDone[k] || [])[i]) ok++; }));
   const rate = tot ? ok / tot : 0;
   if (prog.lastWk){ (prog.adh = prog.adh || []).push({ wk: prog.lastWk, rate: +rate.toFixed(2) }); if (prog.adh.length > 12) prog.adh = prog.adh.slice(-12); }
-  if (isFitProg()){ prog.lastWk = wk; return msgs; } // fitness : pas de cycle de musculation ni de changement d'exercice au plateau
+  if (isFitProg()){ prog.lastWk = wk; return msgs; }
+  if (isP12()){ prog.lastWk = wk; applyCycle(); const w = p12Week(wk), ph = p12Phase(w); if (ph) msgs.push(`${ph[0]} Semaine ${w}/12 : ${ph[1]}`); return msgs; } // fitness : pas de cycle de musculation ni de changement d'exercice au plateau
   // plateaux → variante (hors semaine de décharge)
   if (cycleIdx(prog) !== 3) Object.entries(data).forEach(([k, L]) => (L || []).forEach((e, i) => {
     if (!e.slot || ['cardio','core','mob','plyo'].includes(e.slot) || !stalled(e.n)) return;
@@ -5074,6 +5136,11 @@ const HIIT_FMT = [
 const hiitBT = b => b.t || (b.ws ? 'Pyramide' : `${b.w} s / ${b.r} s`);
 function hiitOfDay(di, wkT){
   const wk = wkT || curWk();
+  if (isP12()){ // programme 12 semaines : pas de sauts ni de burpees, HIIT sur machines, ~20-25 min
+    const r = rng('hiitm' + wk + '_' + di), used = new Set(), M = () => { const C = HM.filter(n => LIB_BY[n] && canDo(n) && !used.has(n)); const n = C.length ? C[Math.floor(r() * C.length)] : HM[0]; used.add(n); return n; };
+    const F = [() => ({ t: 'Machine 30/30', ex: [M()], w: 30, r: 30, n: [5, 6, 8], p: 90 }), () => ({ t: 'Pyramide', ex: [M()], ws: [[20, 30, 40, 30, 20], [20, 30, 40, 50, 40, 30, 20], [20, 30, 40, 50, 60, 50, 40, 30, 20]], p: 90 }),
+      () => ({ t: 'Sprints 15/45', ex: [M()], w: 15, r: 45, n: [5, 6, 8], p: 90 }), () => ({ t: 'Duo de machines 40/20', ex: [M(), M()], w: 40, r: 20, n: [2, 3, 3], p: 90 })].map(f => [f, r()]).sort((a, b) => a[1] - b[1]).slice(0, 3).map(x => x[0]());
+    return { id: 'mix', n: 'HIIT machines', ic: '⚡', d: 'Sur machines uniquement (pas de sauts) : 3 blocs, effort intense puis récupération lente.', u: 'cal', B: F }; }
   if (!isFitProg()){ // HIIT classique (Chris) : un format par séance, qui tourne chaque semaine
     const days = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay), slot = Math.max(0, days.indexOf(di)), wn = +String(wk).slice(-2) || 0;
     return HIIT_S[(wn * 3 + slot * 5) % HIIT_S.length]; }
@@ -5167,7 +5234,7 @@ function applyHiit(){
   closeSheet(); render(); save(); toast('⚡ 2 séances HIIT ajoutées à ta semaine');
 }
 function hiitCard(){
-  if (isFitProg()) return '';
+  if (isFitProg() || isP12()) return '';
   const H = [0, 1, 2, 3, 4, 5, 6].filter(isHiitDay);
   return `<div class="card" style="margin-top:12px"><div class="row"><span style="font-size:26px">⚡</span><div style="flex:1;min-width:0"><b>${H.length ? `HIIT : ${H.map(i => DAY_NAMES[i].toLowerCase()).join(' et ')}` : 'Ajouter 2 séances HIIT par semaine'}</b>
     <small class="muted" style="display:block;font-size:12.5px">${H.length ? 'Sprints machines, kettlebell et poids du corps, 30 à 40 min.' : 'Brûle plus de calories et améliore ton cardio, sans perdre ta muscu.'}</small></div></div>
@@ -5183,6 +5250,7 @@ function coachCard(){
     return `<div class="card coach"><div class="row"><span style="font-size:30px">🔥</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme fitness · ${T.length + H.length} séances / semaine</b><small class="muted" style="display:block;font-size:12.5px">Que du brûle-graisse : pas de musculation · ${nut && num(nut.kcalMan) ? kc(num(nut.kcalMan)) + ' kcal par jour' : 'calories automatiques'}</small></div></div>
       <div class="tips-list" style="margin-top:10px"><p>⏱️ <b>Tabata</b> · ${T.map(d => DAY_NAMES[d].toLowerCase()).join(', ')} : 6 blocs mixés de 4 min, exercices qui changent chaque lundi</p><p>⚡ <b>HIIT</b> · ${H.map(d => DAY_NAMES[d].toLowerCase()).join(', ')} : un format différent chaque semaine</p><p>🎧 Chaque séance se lance d’un seul bouton : échauffement, séance, abdos, étirements</p></div>
       <div class="row" style="margin-top:12px">${coach && coach.prevMuscu ? '<button class="btn sm" data-x="muscuundo">↩️ Revenir à mon ancien programme</button>' : ''}<button class="btn sm" data-x="gear">🏋️ Mon matériel</button></div></div>`; }
+  if (isP12()) return p12Card();
   const ci = cycleIdx(prog), c = CYCLE[ci], last = (prog.log || []).slice(-1)[0], adh = (prog.adh || []).slice(-1)[0];
   return `<div class="card coach">
     <div class="row"><span style="font-size:30px">🧠</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">${esc(prog.split)} · ${prog.days.length} j/sem</b><small class="muted" style="display:block;font-size:12.5px">${OBJ[prog.obj][1]} ${OBJ[prog.obj][0]} · ${esc(NIV[prog.niv].split(' (')[0])} · ${prog.dur} min · repos ${REST[prog.obj]} s${prog.plyo ? ' · ⚡ pliométrie' : ''}${prog.mob ? ' · 🧘 mobilité' : ''}${prog.mat === 'caserne' ? ' · 🚒 caserne' : ''}</small></div></div>
@@ -5343,7 +5411,7 @@ const modeToday = () => { const f = isTodayView() ? formeMode(formeOf()) : null;
 const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay] && e.skipD > today()));
 function effS(e){ const n = e.cutS && e.cutS.d === today() ? e.cutS.n : +e.s || 0, m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob' || e.tab) return n; return Math.max(1, n + m.dS); }
 // durée estimée d'une liste d'exercices (séries, effort ~45 s, repos ; super-séries : repos court après le 1er exercice)
-function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e)) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
+function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
 function sugW(e){ const a = advice(e); if (!a || a.w == null) return null; const m = modeToday(); return m && m.load < 1 ? snapW(e, Math.round(a.w * m.load / 2.5) * 2.5, 0) : a.w; }
 // remplacements temporaires du jour (douleur) : on remet les exercices d'origine les autres jours
 function restoreTemp(){
@@ -6436,6 +6504,7 @@ function evoAct(a, b){
     case 'remperm': if ('Notification' in window) Notification.requestPermission().then(p => { viewSemaine(); if (p === 'granted'){ notify('🔔 Notifications activées', 'Tu recevras tes rappels ici.', 'test'); } }); break;
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
     case 'shopgo': shopOpen(); break;
+    case 'p12bilan': sheetP12Bilan(); break;
     case 'shopclose': shopClose(); break;
     case 'shophide': if (SHOP){ SHOP.hide = !SHOP.hide; shopRender(); } break;
     case 'shopck': if (SHOP){ const k = b.dataset.k, on = !(foyer.checked[SHOP.wk] || {})[k]; shopKeyCk(SHOP.wk, k, on); if (on && navigator.vibrate && settings.vibe) navigator.vibrate(15); shopRender(); } break;
@@ -7019,7 +7088,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 110;
+const APP_VERSION = 111;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

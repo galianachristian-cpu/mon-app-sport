@@ -155,6 +155,13 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     document.querySelector('[data-x="shophide"]').click(); const ok2 = document.querySelectorAll('.shopi').length === n - 1;
     document.querySelector('[data-x="shopclose"]').click(); const ok3 = !SHOP && !document.querySelector('#full').classList.contains('show');
     foyer.checked = sv; go('seance'); return ok1 && ok2 && ok3; }) === true);
+  check('Béa : programme 12 semaines (3 séances, HIIT machines, marche, phases, bilan, 100 g de protéines)', await p.evaluate(() => { const sv = { profile, data: clone(data), titles: clone(titles), coach, prog, nut: clone(nut), save, gear }; save = () => {}; profile = PROFILES[1]; coach = { beaFit: '1' }; gear = clone(GEAR_CASERNE);
+    prog = { obj: 'perte', days: [0, 2, 4], split: 'Fitness : 3 Tabata + 2 HIIT' }; nut = Object.assign({}, nut, { kcalMan: 1260, kcalSeance: false }); beaP12Once();
+    const ok1 = isP12() && !isFitProg() && isHiitDay(1) && isHiitDay(5) && [0, 1, 2, 3, 4, 5, 6].every(d => data['day' + d].some(e => e.walk)) && data.day0.some(e => e.n === 'Squat goblet') && data.day4.some(e => e.n === 'Hip thrust') && Object.values(data).flat().every(e => canDo(e.n));
+    const ex = hiitOfDay(1).B.flatMap(b => b.ex), ok2 = ex.every(n => HM.includes(n));
+    const ok3 = !nut.kcalMan && targets(ctxOf('bea'), 0).p === 100 && rotPlan(clone(data), wkShift(curWk(), 1), true).length === 0 && /12 semaines/.test(coachCard());
+    const st = prog.p12.start; prog.p12.start = wkShift(curWk(), -3); applyCycle(); const ok4 = data.day0.find(e => e.n === 'Squat goblet').s === 3; prog.p12.start = st;
+    profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; nut = sv.nut; save = sv.save; gear = sv.gear; return ok1 && ok2 && ok3 && ok4; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 
