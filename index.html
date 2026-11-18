@@ -1727,8 +1727,11 @@ function sheetNews(since, all){
 function newsCheck(){
   const seen = safeGet('mp_news', 0); if (seen >= APP_VERSION) return; let n = 0;
   const iv = setInterval(() => { const cnx = document.getElementById('cnx'), busy = lockState || (cnx && cnx.classList.contains('on')) || $('#sheet').classList.contains('show') || $('#full').classList.contains('show') || view !== 'seance';
-    if (++n > 90) return clearInterval(iv); if (busy) return;
-    clearInterval(iv); safeSet('mp_news', APP_VERSION); if (NEWS.some(([v]) => v > seen)) sheetNews(seen); }, 2000);
+    if (++n > 90) return clearInterval(iv);
+    // une autre vérification a déjà affiché la fenêtre : on s'arrête (évite qu'elle s'ouvre deux fois)
+    const now = safeGet('mp_news', 0); if (now >= APP_VERSION) return clearInterval(iv);
+    if (busy) return;
+    clearInterval(iv); safeSet('mp_news', APP_VERSION); if (NEWS.some(([v]) => v > now)) sheetNews(now); }, 2000);
 }
 function sheetProfiles(){
   openSheet(`<h2>Qui s’entraîne ?</h2>
