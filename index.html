@@ -581,7 +581,7 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .nav button .i{font-size:20px}
 .seg.small button{padding:7px 4px;font-size:12.5px}
 .seg.seg6{display:grid;grid-template-columns:repeat(3,1fr)}
-.seg.ptabs{display:grid;grid-template-columns:repeat(4,1fr)}.p12t{width:100%;border-collapse:collapse;font-size:13px}.p12t th,.p12t td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line)}.p12t th{color:var(--muted);font-weight:700}.seg.ptabs button{padding:8px 2px;font-size:12.5px}
+.seg.ptabs{display:grid;grid-template-columns:repeat(4,1fr)}#sheet .tips-list a{color:var(--a1);text-decoration:underline;text-underline-offset:2px}.p12t{width:100%;border-collapse:collapse;font-size:13px}.p12t th,.p12t td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line)}.p12t th{color:var(--muted);font-weight:700}.seg.ptabs button{padding:8px 2px;font-size:12.5px}
 .lvl{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.lvl .btn{font-size:12px;padding:6px 10px}.g-ex .lvl{justify-content:center;margin:2px 0 8px}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}.wit{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:0}
 .wit .wn{position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;background:var(--grad);color:#0b0f19;font-size:11px;font-weight:900;display:grid;place-items:center;z-index:1}
@@ -1693,7 +1693,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [114, [['🍽️', 'Béa : recomposition à 1 500 kcal', 'activité sédentaire, 1 500 kcal fixes par jour, 100 g de protéines']]],
+  [114, [['🍽️', 'Béa : recomposition à 1 500 kcal', 'activité sédentaire, 1 500 kcal fixes par jour, 115 g de protéines'], ['🥩', 'Plus de protéines dans les menus', 'plats riches en protéines de préférence, collation plus protéinée les jours de séance'], ['⚖️', 'Alerte si le poids baisse trop vite ou monte', 'même avec des calories choisies à la main'], ['📚', 'D’où viennent les chiffres', 'Nutrition → Coach nutrition → Sources']]],
   [113, [['📏', 'Mesures du corps', 'bras, taille, hanches, cuisse avec un schéma pour savoir exactement où mesurer, et l’évolution sur 4 semaines']]],
   [112, [['📷', 'Photos de progression guidées', 'face, profil et dos avec silhouette et minuteur de 10 s, protocole pour des photos comparables, comparaison par pose avec le poids, rappel tous les 28 jours']]],
   [111, [['💪', 'Béa : programme 12 semaines', 'jambes, hanches et silhouette : 3 séances de force, 2 HIIT machines, marche tous les jours, bilans 0 / 4 / 8 / 12'], ['🩺', 'Béa : rappel du bilan médical', 'médecin traitant et médecin vasculaire, jusqu’à ce que les rendez-vous soient pris'], ['🍽️', 'Béa : calories automatiques', 'léger déficit selon ses séances, environ 100 g de protéines par jour']]],
@@ -3937,6 +3937,23 @@ function autoAdjust(){
   save();
   return delta ? { delta, pct: c.pct, why } : null;
 }
+/* ---------- D'où viennent les chiffres : références scientifiques et règles pratiques ---------- */
+function sheetSources(){
+  const L = (t, u) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
+  openSheet(`<h2>📚 D’où viennent ces chiffres</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Ce sont des estimations (marge d’environ 10 %). Le vrai juge : ton poids, tes mesures et ton énergie sur 3 à 4 semaines.</p>
+    <div class="card tips-list">
+      <p><b>🔥 Métabolisme de base</b> : équation de Mifflin-St Jeor (1990), ou la valeur de ta balance si elle date de moins de 60 jours.</p>
+      <p><b>🚶 Activité</b> : coefficients de dépense FAO / OMS (1,2 sédentaire → 1,65 très actif).</p>
+      <p><b>🏋️ Calories des séances</b> : ${L('Compendium of Physical Activities', 'https://pacompendium.com/')} (valeurs MET).</p>
+      <p><b>🥩 Protéines</b> : 1,6 à 2,2 g par kg et par jour (${L('Morton 2018', 'https://pubmed.ncbi.nlm.nih.gov/28698222/')}, ${L('ISSN 2017', 'https://jissn.biomedcentral.com/track/pdf/10.1186/s12970-017-0174-y')}) ; en péri- et post-ménopause, le haut de la fourchette, réparti toutes les 3 à 4 h (${L('ISSN femmes 2023', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10210857/')}).</p>
+      <p><b>📉 Rythme de perte</b> : 0,25 à 1 % du poids par semaine ; plus lent = plus de muscle gardé (ISSN 2017). Éviter les régimes restrictifs, qui finissent par faire reprendre (J.-M. Lecerf, Institut Pasteur de Lille).</p>
+      <p><b>🔄 Recomposition</b> : musculation progressive + beaucoup de protéines + déficit modéré (Barakat et coll., 2020).</p>
+      <p><b>🧈 Lipides</b> : 30 à 35 % des calories, au moins 0,6 g/kg (repères ${L('ANSES', 'https://www.anses.fr/fr/content/les-lipides')}, un peu plus bas).</p>
+      <p><b>🦴 Calcium, vitamine D</b> : à surveiller à partir de la ménopause (${L('ANSES / PNNS', 'https://www.anses.fr/fr/system/files/NUT2017SA0143.pdf')}) ; la vitamine D se vérifie au bilan sanguin.</p>
+      <p><b>🥫 Aliments</b> : valeurs arrondies de la table Ciqual (ANSES).</p>
+      <p><b>🛟 Règles de prudence de l’appli</b> (pas d’étude précise) : minimum 1 300 kcal (femme) / 1 600 kcal (homme), déficit de 20 % en perte de poids, produits de saison selon le calendrier français.</p></div>
+    <p class="muted" style="font-size:12px;margin-top:10px">Ces repères ne remplacent pas l’avis d’un médecin ou d’une diététicienne.</p>`);
+}
 function nutCoachCard(){
   if (!nutReady(nut)) return '';
   const c = nutCoach(), f = x => (x > 0 ? '+' : '') + fr(+x.toFixed(2)), lg = (nut.log || []).slice(-1)[0];
@@ -3944,12 +3961,16 @@ function nutCoachCard(){
   let st;
   if (num(nut.kcalMan)){ const t0 = targets(ctxOf(profile.id), todayIdx()), m0 = num(nut.kcalMan), lo = Math.max(t0.floor, t0.bmr);
     st = m0 < lo ? `⚠️ <b>${kc(m0)} kcal choisies : c’est sous ${m0 < t0.bmr ? `ton métabolisme de base (≈ ${kc(t0.bmr)} kcal, ce que ton corps brûle au repos)` : `le minimum conseillé (${kc(t0.floor)} kcal)`}.</b> Risque de fatigue, de perte de muscle et de fringales. Le calcul automatique propose <b>${kc(t0.auto)} kcal</b> pour ton objectif : Nutrition → Profil → Calories → « Automatique ».`
-      : '✍️ Tu as choisi tes calories toi-même : l’ajustement automatique est en pause.'; }
+      : '✍️ Tu as choisi tes calories toi-même : l’ajustement automatique est en pause.';
+    if (c.ok && m0 >= lo){ const fast = c.pct < -1, up = c.pct > (c.R[2] + .25);
+      st += fast ? `<br>⚠️ <b>Tu perds vite : ${f(c.kgW)} kg/semaine (${f(c.pct)} %).</b> Au-delà de 1 % par semaine, on perd aussi du muscle. Remonte de 100 à 150 kcal par jour.`
+        : up ? `<br>⚠️ <b>Ton poids monte : ${f(c.kgW)} kg/semaine.</b> Si ce n’est pas voulu, baisse de 100 kcal par jour, ou vérifie que tes repas notés sont complets.`
+        : `<br>Tendance : <b>${f(c.kgW)} kg/semaine</b> (${f(c.pct)} %) · rythme conseillé : ${target}.`; } }
   else if (nut.auto === false) st = '⏸️ Ajustement automatique désactivé.';
   else if (!c.ok) st = `⚖️ Pèse-toi au moins 3 fois sur 2 semaines (Progrès → Corps) pour que j’ajuste tes calories. ${c.nW} pesée${c.nW > 1 ? 's' : ''} ces 14 derniers jours.`;
   else st = `Tendance : <b>${f(c.kgW)} kg/semaine</b> (${f(c.pct)} %) · visé : ${target}<br>${c.inRange ? '✅ Dans la cible, on ne touche à rien.' : lg && lg.wk === curWk() ? `🤖 Ajusté cette semaine : <b>${lg.delta > 0 ? '+' : ''}${lg.delta} kcal/jour</b> (${esc(lg.why)}). Prochain point lundi.` : '⚠️ Hors cible : ajustement automatique lundi.'}`;
   const P = weightProj();
-  return `<h3 class="sec">🤖 Coach nutrition</h3><div class="card"><p style="font-size:13.5px">${st}</p>${P ? `<p style="font-size:13.5px;margin-top:6px">${projTxt(P)}</p>` : `<p class="muted" style="font-size:12.5px;margin-top:6px">🎯 <button class="btn sm" data-x="cible">Fixer un poids visé</button> pour avoir une date estimée.</p>`}
+  return `<h3 class="sec">🤖 Coach nutrition <button class="btn sm" data-x="sources" style="float:right;text-transform:none;letter-spacing:0">📚 Sources</button></h3><div class="card"><p style="font-size:13.5px">${st}</p>${P ? `<p style="font-size:13.5px;margin-top:6px">${projTxt(P)}</p>` : `<p class="muted" style="font-size:12.5px;margin-top:6px">🎯 <button class="btn sm" data-x="cible">Fixer un poids visé</button> pour avoir une date estimée.</p>`}
     ${nut.adj ? `<p class="muted" style="font-size:12.5px;margin-top:6px">Ajustement en cours : <b>${nut.adj > 0 ? '+' : ''}${nut.adj} kcal/jour</b> par rapport au calcul de départ.</p>` : ''}
     ${num(nut.kcalMan) ? '' : `<div class="toggle" style="margin-top:6px"><span>Ajuster mes calories chaque semaine<small>Selon la tendance de mon poids et mon objectif</small></span><button type="button" class="sw ${nut.auto === false ? '' : 'on'}" data-x="nutauto" role="switch" aria-checked="${nut.auto !== false}"></button></div>`}</div>`;
 }
@@ -4071,6 +4092,8 @@ const SEASON = { courgette: [6, 7, 8, 9], tomate: [6, 7, 8, 9], poivron: [7, 8, 
 const monthOfWk = wk => new Date(wkDates(wk)[3] + 'T12:00').getMonth() + 1;
 const seasonOk = (r, m) => r.ing.every(([f]) => !SEASON[f] || SEASON[f].includes(m));
 const seasonal = (L, m) => { const S = L.filter(r => seasonOk(r, m)); return S.length ? S : L; };
+// plats : de préférence au moins 7 g de protéines pour 100 kcal (≈ 25-35 g par repas), s'il en reste assez pour varier la semaine
+const protDense = (L, n) => { const H = L.filter(r => { const m = recMac(r); return m.k && m.p * 100 / m.k >= 7; }); return H.length >= n ? H : L; };
 function genPlan(wk, keep, from){
   const mo = monthOfWk(wk);
   const pids = PROFILES.map(p => p.id), excls = pids.map(id => exclOf(ctxOf(id))), S = wk + '#' + (foyer.salt || 0);
@@ -4082,15 +4105,15 @@ function genPlan(wk, keep, from){
       const c = ctxOf(pid), train = sessionKcal(c, d) > 0, rnd = rng(S + meal + d + pid);
       let L = seasonal(RECIPES.filter(r => r.type === meal && recipeOk(r, [excls[k]])), mo);
       // jour de séance : collation avec glucides et protéines ; perte de poids : petit-déjeuner et collation riches en protéines
-      if (meal === 'col' && train){ const pre = L.filter(r => { const m = recMac(r); return m.g >= 25 && m.p >= 10; }); if (pre.length) L = pre; }
+      if (meal === 'col' && train){ const pre = L.filter(r => { const m = recMac(r); return m.g >= 25 && m.p >= 12; }); /* autour de l'entraînement : glucides + ~0,2-0,3 g/kg de protéines */ if (pre.length) L = pre; }
       else if (meal === 'col' && c.nut && (c.nut.obj === 'perte' || c.nut.obj === 'recompo')){ const hp = L.filter(r => { const m = recMac(r); return m.p * 100 / m.k >= 6.5; }); if (hp.length) L = hp; }
       if (meal === 'pdj' && c.nut && c.nut.obj === 'perte'){ const hp = L.filter(r => recMac(r).p >= 22); if (hp.length) L = hp; }
       const prev = d ? [days[d - 1][meal][pid]] : [];
       day[meal][pid] = pickW(L, rnd, { used: new Set(prev), recent: new Set(), stock: {}, n: 1 });
     }); });
     ['dej','din'].forEach(meal => {
-      if (foyer.commun){ const L = seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls)), mo); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
-      else { day[meal] = {}; pids.forEach((pid, k) => { const L = seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, [excls[k]])), mo); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
+      if (foyer.commun){ const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
+      else { day[meal] = {}; pids.forEach((pid, k) => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
   }
@@ -5093,10 +5116,10 @@ function sheetP12Bilan(){
     prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t){ const E = body.find(b0 => b0.d === r.d); if (E) E.t = r.t; else body.push({ d: r.d, t: r.t }); }
     save(); closeSheet(); render(); toast('📏 Bilan enregistré'); };
 }
-// Béa (demande de Chris) : activité sédentaire, objectif recomposition, 1 500 kcal fixes par jour, 100 g de protéines. Une seule fois.
+// Béa (demande de Chris) : activité sédentaire, objectif recomposition, 1 500 kcal fixes par jour, 115 g de protéines. Une seule fois.
 function beaNut1500Once(){
   if (profile.id !== 'bea' || !nut || nut.k1500) return;
-  Object.assign(nut, { act: 1.2, obj: 'recompo', kcalMan: 1500, kcalSeance: false, pFix: 100, k1500: today() });
+  Object.assign(nut, { act: 1.2, obj: 'recompo', kcalMan: 1500, kcalSeance: false, pFix: 115, k1500: today() }); // 115 g ≈ 1,85 g/kg : haut de la fourchette 1,4-2,2 g/kg conseillée en péri-ménopause (ISSN 2023)
   save(); setTimeout(() => toast('🍽️ Objectif : recomposition, 1 500 kcal par jour'), 2200);
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
@@ -6647,6 +6670,7 @@ function evoAct(a, b){
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
     case 'shopgo': shopOpen(); break;
     case 'p12bilan': sheetP12Bilan(); break;
+    case 'sources': sheetSources(); break;
     case 'p12med': if (isP12()){ prog.p12.med = Object.assign({}, prog.p12.med, { [b.dataset.k]: today() }); save(); render(); toast('🩺 Noté, merci !'); } break;
     case 'shopclose': shopClose(); break;
     case 'shophide': if (SHOP){ SHOP.hide = !SHOP.hide; shopRender(); } break;
