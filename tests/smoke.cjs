@@ -211,6 +211,16 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     EC.agenda = [{ t: 'Dentiste', s: d.getTime(), e: d.getTime() + 3600000, j: false }]; const h = ecAgendaHtml(); delete foyer.agenda; EC.agenda = null; return /Dentiste/.test(h) && /23:00/.test(h); }));
   check('défis à deux et bilan : aucun plantage', await e3.p.evaluate(() => { ecDuoCol(); ecBilanCol(); return true; }));
   check('réglage agenda : fenêtre et script', await e3.p.evaluate(() => { sheetAgenda(); const ok = /script\.google\.com/.test($('#sheet').textContent) && /doGet/.test(EC_AGENDA_SCRIPT); closeSheet(); return ok; }));
+  check('recette pas à pas : étapes et minuteur détecté', await e3.p.evaluate(() => { const ok1 = ecStepMin('Cuire les pâtes 8 à 10 min.') === 10 && ecStepMin('Laisser reposer 5 minutes') === 5 && ecStepMin('Mélanger.') === 0;
+    const b = $('#ecran [data-ec="rec"]'); if (!b) return false; ecStepView(b.dataset.d, b.dataset.meal, b.dataset.rid, 0); const ok2 = /Étape 1 sur/.test($('#ecRec').textContent) && !!$('#ecRec .ec-step'); ecCloseRec(); return ok1 && ok2; }));
+  check('pesée : fenêtre et réglage ±', await e3.p.evaluate(() => { ecOpenWeigh('user1'); const v0 = $('#ecRec .ec-weigh b').textContent; $('#ecRec [data-w="0.1"]').click(); const v1 = $('#ecRec .ec-weigh b').textContent; ecCloseRec(); return v0 !== v1 && /88,1/.test(v1); }));
+  check('météo : créneau pour courir et alertes', await e3.p.evaluate(() => { const td = ymd(new Date()), hrs = Array.from({ length: 24 }, (_, i) => `${td}T${String(i).padStart(2, '0')}:00`);
+    EC.meteo = { current: { temperature_2m: 10, weather_code: 3, wind_speed_10m: 10 }, daily: { weather_code: [95, 3], temperature_2m_max: [16, 14], temperature_2m_min: [-2, 4], precipitation_probability_max: [80, 10], precipitation_sum: [25, 0], wind_gusts_10m_max: [85, 20] },
+      hourly: { time: hrs, temperature_2m: hrs.map((_, i) => i === 15 ? 14 : 5), precipitation_probability: hrs.map((_, i) => i === 15 ? 0 : 70), weather_code: hrs.map(() => 3), wind_speed_10m: hrs.map(() => 5) } };
+    const H = Date.prototype.getHours; Date.prototype.getHours = function(){ return 9; }; const M = Date.prototype.getMinutes; Date.prototype.getMinutes = function(){ return 0; };
+    try{ const b = ecRunSlot(), A = ecAlerts(); return b && b.h === 15 && A.some(x => /Orages/.test(x)) && A.some(x => /Rafales/.test(x)) && A.some(x => /Gel/.test(x)) && A.some(x => /Fortes pluies/.test(x)) && /Alerte météo/.test(ecAlertHtml()); }
+    finally { Date.prototype.getHours = H; Date.prototype.getMinutes = M; EC.meteo = null; } }));
+  check('rappel du soir, bouton lancer, pesée, menu de demain : aucun plantage', await e3.p.evaluate(() => { ecRender(); return !!$('#ecran [data-ec="guide"]') && !!$('#ecran [data-ec="weigh"]'); }));
   check('quitter le mode écran', await e3.p.evaluate(() => { ecStop(); render(); return !document.body.classList.contains('ecran-on') && !EC.on; }));
   check('aucune erreur', !e3.errs.length, e3.errs.join(' | '));
 
