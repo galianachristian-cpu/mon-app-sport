@@ -832,6 +832,9 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 #ecran{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);color:var(--text);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px calc(18px + var(--safe-b))}
 body.ecran-on #ecran{display:block}
 body.ecran-on .nav,body.ecran-on .top,body.ecran-on #app{visibility:hidden}
+/* le mini-minuteur rangé se cache d'habitude derrière la barre du bas, masquée ici : on le cache aussi */
+body.ecran-on #mini:not(.show){visibility:hidden}
+body.ecran-on #mini.show{bottom:calc(16px + var(--safe-b))}
 .ec-top{display:flex;align-items:flex-start;gap:18px;margin-bottom:14px}
 .ec-clock{font-family:'Outfit',system-ui,sans-serif;font-size:78px;font-weight:800;line-height:.95;letter-spacing:-2px}
 .ec-date{font-size:20px;color:var(--soft);text-transform:capitalize;margin-top:6px}
@@ -1792,6 +1795,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [119, [['🖥️', 'Mode écran : plus de minuteur fantôme', 'le minuteur rangé ne dépasse plus en bas de la tablette']]],
   [118, [['🖥️', 'Mode écran plus propre', 'le minuteur en pause ne reste plus affiché en bas, et les durées de cardio s’affichent correctement']]],
   [117, [['🖥️', 'Mode écran pour tablette', 'un vieil iPad posé à la maison affiche le brief du matin, vos séances, le repas à préparer en grand et une horloge la nuit : Accueil → ⚙️ Personnaliser l’accueil'], ['📱', 'Compatible avec les anciens iPad', 'l’appli démarre maintenant aussi sur iOS 15']]],
   [116, [['📱', 'Barre du bas bien en place', 'après une rotation du téléphone ou la fermeture du clavier sur iPhone']]],
@@ -7371,7 +7375,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 118;
+const APP_VERSION = 119;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

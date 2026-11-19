@@ -193,6 +193,7 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('horloge de nuit', await e3.p.evaluate(() => { EC.wakeUntil = 0; const d0 = Date; const fake = new d0(); fake.setHours(23, 30); window.Date = class extends d0 { constructor(...a){ super(...(a.length ? a : [fake.getTime()])); } static now(){ return fake.getTime(); } };
     try{ ecRender(); return $('#ecran').classList.contains('nuit'); } finally { window.Date = d0; } }));
   check('minuteur en pause caché sur l’écran, visible s’il tourne', await e3.p.evaluate(() => { T.total = 90; T.left = 60; T.run = false; paintTimer(); const hid = !$('#mini').classList.contains('show'); T.run = true; paintTimer(); const vis = $('#mini').classList.contains('show'); T.run = false; T.left = T.total; paintTimer(); return hid && vis; }));
+  check('minuteur rangé invisible sur l’écran (pas de « 01:30 » qui dépasse en bas)', await e3.p.evaluate(() => { ecShow(); T.run = false; T.left = T.total; paintTimer(); return getComputedStyle($('#mini')).visibility === 'hidden'; }));
   check('quitter le mode écran', await e3.p.evaluate(() => { ecStop(); render(); return !document.body.classList.contains('ecran-on') && !EC.on; }));
   check('aucune erreur', !e3.errs.length, e3.errs.join(' | '));
 
