@@ -1792,6 +1792,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [118, [['🖥️', 'Mode écran plus propre', 'le minuteur en pause ne reste plus affiché en bas, et les durées de cardio s’affichent correctement']]],
   [117, [['🖥️', 'Mode écran pour tablette', 'un vieil iPad posé à la maison affiche le brief du matin, vos séances, le repas à préparer en grand et une horloge la nuit : Accueil → ⚙️ Personnaliser l’accueil'], ['📱', 'Compatible avec les anciens iPad', 'l’appli démarre maintenant aussi sur iOS 15']]],
   [116, [['📱', 'Barre du bas bien en place', 'après une rotation du téléphone ou la fermeture du clavier sur iPhone']]],
   [115, [['✏️', 'Renommer son profil sans souci', 'le téléphone ne propose plus de remplir tes informations personnelles']]],
@@ -3430,7 +3431,7 @@ function paintTimer(){
   const p = T.total ? T.left / T.total : 0;
   $('#miniTime').textContent = fmtT(T.left); $('#miniTime').className = 'tm' + (T.run && T.left <= 10 ? ' warn' : '');
   $('#miniBar').style.width = (p * 100) + '%'; $('#miniLbl').textContent = T.run ? T.label : (T.left <= 0 ? '⏰ Terminé !' : 'En pause');
-  $('#mini').classList.toggle('show', (T.run || (T.left > 0 && T.left < T.total) || (T.left <= 0 && T.flash)) && view !== 'chrono');
+  $('#mini').classList.toggle('show', (T.run || (T.left > 0 && T.left < T.total) || (T.left <= 0 && T.flash)) && view !== 'chrono' && !(window.EC && EC.on && !EC.away && !T.run)); // mode écran : seulement si un minuteur tourne
   const big = $('#bigTime');
   if (big){ big.textContent = fmtT(T.left); const r = $('#rt'); if (r){ const c = +r.getAttribute('stroke-dasharray'); r.setAttribute('stroke-dashoffset', c * (1 - p)); }
     $('#bigRing').className = 'bigring' + (T.left <= 0 ? ' end' : T.run && T.left <= 10 ? ' warn' : '');
@@ -7370,7 +7371,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 117;
+const APP_VERSION = 118;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -7476,7 +7477,7 @@ function ecMeteoHtml(){
   const M = EC.meteo; if (!M) return `<div class="ec-meteo"><span class="ic">🌡️</span><div><b>…</b><small>Météo de ${EC_LIEU.nom}</small></div></div>`;
   const h = new Date().getHours(), i = h >= 19 ? 1 : 0, D = M.daily, [ic, txt] = EC_WMO(i ? D.weather_code[1] : M.current.weather_code);
   const tmin = Math.round(D.temperature_2m_min[i]), tmax = Math.round(D.temperature_2m_max[i]), pluie = D.precipitation_probability_max[i] || 0, vent = Math.round(M.current.wind_speed_10m || 0);
-  const tip = pluie >= 50 ? '☔ Prends un parapluie' : tmin <= 3 ? '🧤 Il va faire froid' : tmax >= 30 ? '💧 Pense à bien t’hydrater' : vent >= 40 ? '💨 Ça souffle fort' : pluie < 20 && tmax >= 12 && tmax <= 27 ? '🏃 Parfait pour sortir courir' : '';
+  const tip = pluie >= 50 ? `☔ ${pluie} % de risque de pluie${i ? ' demain' : ''} : prends un parapluie` : tmin <= 3 ? '🧤 Il va faire froid' : tmax >= 30 ? '💧 Pense à bien t’hydrater' : vent >= 40 ? '💨 Ça souffle fort' : pluie < 20 && tmax >= 12 && tmax <= 27 ? '🏃 Parfait pour sortir courir' : '';
   return `<div class="ec-meteo"><span class="ic">${ic}</span><div><b>${i ? `${tmax}°` : `${Math.round(M.current.temperature_2m)}°`}</b><small>${i ? 'Demain · ' : ''}${txt} · ${tmin}° / ${tmax}°${pluie ? ` · 💧 ${pluie} %` : ''}</small>${tip ? `<small class="tip">${tip}</small>` : ''}</div></div>`;
 }
 /* ---------- repas ---------- */
@@ -7548,7 +7549,7 @@ function ecPersonCol(pid){
   const MAX = 7, shown = S.list.slice(0, MAX);
   const body = S.list.length ? `<div class="ec-sub">🏋️ ${esc(S.title)} · ${S.list.length} exercices${S.min ? ` · ~${S.min} min` : ''}</div>
       <div class="ec-bar"><i style="width:${pc}%"></i></div>
-      <ul class="ec-ex">${shown.map((e, i) => { const ok = S.dn[i] || isSkip(e); return `<li class="${ok ? 'ok' : ''}"><span class="ck">${ok ? '✅' : '▫️'}</span>${esc(e.n)}<small>${typ(e) === 'c' ? esc(e.r) + ' min' : `${+e.s || 0} × ${esc(e.r)}`}</small></li>`; }).join('')}</ul>
+      <ul class="ec-ex">${shown.map((e, i) => { const ok = S.dn[i] || isSkip(e); return `<li class="${ok ? 'ok' : ''}"><span class="ck">${ok ? '✅' : '▫️'}</span>${esc(e.n)}<small>${typ(e) === 'c' ? esc(e.r) + (/min/.test(e.r) ? '' : ' min') : `${+e.s || 0} × ${esc(e.r)}`}</small></li>`; }).join('')}</ul>
       ${S.list.length > MAX ? `<p class="ec-more">+ ${S.list.length - MAX} autre${S.list.length - MAX > 1 ? 's' : ''}</p>` : ''}
       ${S.nOk === S.list.length ? '<p class="ec-sub" style="margin-top:8px">🎉 Séance terminée, bravo !</p>' : ''}`
     : `<div class="ec-rest"><span class="e">${S.extra.length ? '✅' : '😴'}</span>${S.extra.length ? 'Activité du jour : ' + esc(S.extra.map(x => x.n.replace(/ \(minuteur\)$/, '')).join(', ')) : 'Jour de repos'}</div>`;
@@ -7599,7 +7600,7 @@ async function ecSync(){
 }
 function ecStart(){
   EC.on = true; EC.away = false; document.body.classList.add('ecran-on'); document.body.classList.remove('ecran-away');
-  ecRender(); ecMeteo(); syncAwake();
+  ecRender(); paintTimer(); ecMeteo(); syncAwake();
   if (!other) ecSync(); else { EC.syncAt = Date.now(); ecRender(); }
   clearInterval(EC.iv); let tick = 0;
   EC.iv = setInterval(() => { tick++;
@@ -7611,7 +7612,7 @@ function ecStart(){
 }
 function ecStop(){ EC.on = false; EC.away = false; clearInterval(EC.iv); document.body.classList.remove('ecran-on', 'ecran-away'); ecCloseRec(); syncAwake(); }
 function ecLeave(v){ EC.away = true; ecCloseRec(); document.body.classList.remove('ecran-on'); document.body.classList.add('ecran-away'); if (v === 'nutrition') nutTab = 'jour'; currentDay = todayIdx(); go(v || 'seance'); }
-function ecShow(){ closeSheet(); EC.away = false; document.body.classList.remove('ecran-away'); document.body.classList.add('ecran-on'); ecRender(); syncAwake(); }
+function ecShow(){ closeSheet(); EC.away = false; document.body.classList.remove('ecran-away'); document.body.classList.add('ecran-on'); ecRender(); paintTimer(); syncAwake(); }
 document.addEventListener('pointerdown', () => { EC.lastTouch = Date.now(); }, { passive: true, capture: true });
 document.addEventListener('visibilitychange', () => { if (EC.on && document.visibilityState === 'visible'){ ecRender(); if (Date.now() - EC.syncAt > 2 * 60000) ecSync(); } });
 document.addEventListener('click', e => {
