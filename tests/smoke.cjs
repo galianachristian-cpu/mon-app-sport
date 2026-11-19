@@ -173,6 +173,12 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('plats mélangés : poids de l’assiette cuite (pain et salade à part)', await p.evaluate(() => { const por = { r: REC_BY['chili'], ing: [['boeuf', 100], ['riz', 50], ['concassee', 100], ['oignon', 50]], side: null };
     const g = plateG(por), sol = { r: REC_BY['minestrone'], ing: [['pates', 50], ['pain', 60]], side: null };
     return isMix(por) && g === Math.round((75 + 130 + 100 + 40) / 10) * 10 && plateG(sol) === 110 && /pain/.test(plateSide(sol)) && !isMix({ r: REC_BY['poulet-riz'], ing: [] }); }));
+  check('séance oubliée : un jour passé est enregistré à sa date, sans chrono en cours', await p.evaluate(() => { if (todayIdx() === 0) return true; const sv = { data: clone(data), done: clone(done), hist: clone(hist), sess: clone(sess), save }; save = () => {};
+    data.day0 = [exFromLib('Crunch', { s: 2 }), exFromLib('Gainage', { s: 2 })]; done.day0 = []; delete sess.day0; currentDay = 0; go('seance');
+    const ban = /oubliée/.test(document.querySelector('#app').textContent); setDone('day0', 0, true); const h = hist.filter(x => x.n === 'Crunch').slice(-1)[0], ok1 = h && h.d === weekDates(curWk())[0] && !(sess.day0 && sess.day0.start && !sess.day0.end);
+    setDone('day0', 1, true); const ok2 = sess.day0 && sess.day0.past && ymd(new Date(sess.day0.start)) === weekDates(curWk())[0];
+    setDone('day0', 0, false); const ok3 = !hist.some(x => x.n === 'Crunch' && x.d === weekDates(curWk())[0]);
+    data = sv.data; done = sv.done; hist = sv.hist; sess = sv.sess; save = sv.save; go('seance'); return ban && ok1 && ok2 && ok3; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 

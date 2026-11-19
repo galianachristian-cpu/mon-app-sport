@@ -1884,6 +1884,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [123, [['📅', 'Valider une séance oubliée', 'reviens sur un jour passé de la semaine et coche : c’est enregistré à la bonne date']]],
   [122, [['▶️', 'Séance guidée lancée depuis la tablette', 'pour Moi ou pour Béa, retour à l’écran à la fin'], ['💪', 'Rappel du soir', 'à partir de 19 h si la séance du jour n’est pas faite'], ['⚖️', 'Pesée sur la tablette', 'en deux touchers, avec l’évolution sur 7 jours'], ['👣', 'Recette pas à pas', 'une étape à la fois en très grand, minuteur proposé quand l’étape donne une durée'], ['🍽️', 'Menu de demain', 'affiché le soir sur l’écran'], ['🏃', 'Meilleur créneau pour courir', 'selon la pluie, la température et le vent'], ['⚠️', 'Alertes météo', 'orages, rafales, fortes pluies, neige, gel, forte chaleur']]],
   [121, [['✅', 'Cocher sa séance sur la tablette', 'un exercice ou toute la séance, pour Moi comme pour Béa'], ['🛒', 'Liste de courses sur l’écran', 'à cocher en rangeant les courses, ou pour ajouter un produit'], ['🧊', 'Rappel de décongélation', 'poisson et viande surgelés à sortir la veille ou le matin'], ['⏱️', 'Plusieurs minuteurs de cuisson', 'pâtes, poisson, four… en même temps, avec sonnerie'], ['👫', 'Défis à deux et bilan du week-end', 'sur l’écran de la tablette'], ['📅', 'Agenda Google sur l’écran', 'Accueil → ⚙️ Personnaliser l’accueil → Agenda']]],
   [120, [['🎄', 'Le mode écran se met aux couleurs de Noël', 'en décembre : guirlande lumineuse, neige qui tombe et compte à rebours jusqu’à Noël, puis vœux du Nouvel An']]],
@@ -2220,6 +2221,7 @@ function viewSeance(){
   ${storyOn ? storyRow(k, list) : ''}
   <div class="days">${DAY_SHORT.map((d, i) => { const l = data['day'+i] || [], f = l.length && l.every((_, j) => (done['day'+i] || [])[j]);
     return `<button class="day ${i === currentDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''} ${f ? 'full' : ''}" data-day="${i}"><b>${d}</b><span>${esc(dayTitle(i))}</span></button>`; }).join('')}</div>
+  ${currentDay < todayIdx() && list.length && nDone < list.length ? `<div class="advice up" style="margin-top:10px"><span>📅 <b>Séance de ${DAY_NAMES[currentDay].toLowerCase()} oubliée ?</b> Coche ce que tu as fait : ce sera enregistré au ${fmtD(dayDate(k))}, avec tes charges et tes calories.</span></div>` : ''}
   <section class="hero${s && s.start && !s.end && nDone < list.length ? ' live' : ''}">
     <div style="flex:1;min-width:0;position:relative;z-index:1">
       <h2>${DAY_NAMES[currentDay]}${currentDay === todayIdx() ? ' <span class="tday">aujourd’hui</span>' : ''}</h2>
@@ -2562,9 +2564,12 @@ function duoChallenges(){
     <table class="tbl"><thead><tr><th></th><th>${esc(me)}</th><th>${esc(ot)}</th><th></th></tr></thead><tbody>${DUO_CH.map(([c, ic, l]) => `<tr><td>${ic} ${l}</td><td>${cell(A[c][0], A[c][1])}</td><td>${cell(B[c][0], B[c][1])}</td><td>${ok(c) ? '✅' : ''}</td></tr>`).join('')}</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:6px">${nOk === DUO_CH.length ? '🏅 Semaine réussie ensemble, bravo à vous deux !' : 'Les 4 défis réussis par vous deux = une médaille commune 🏅'}${nW ? ` · ${nW} semaine${nW > 1 ? 's' : ''} réussie${nW > 1 ? 's' : ''} ensemble` : ''}</p></div>`;
 }
-function startSession(k){ const L = data[k] || []; if (L.length && L.every((x, j) => (done[k] || [])[j] || isSkip(x))) return; if (!sess[k] || sess[k].end || !sess[k].start || ymd(new Date(sess[k].start)) !== ymd(new Date())) sess[k] = { start: Date.now() }; }
+// séance d'un jour passé de la semaine (oubliée) : enregistrée à la date de ce jour-là, sans chrono « en cours »
+const isPastDay = k => +String(k).slice(3) < todayIdx();
+const dayDate = k => isPastDay(k) ? weekDates(curWk())[+String(k).slice(3)] : today();
+function startSession(k){ if (isPastDay(k)) return; const L = data[k] || []; if (L.length && L.every((x, j) => (done[k] || [])[j] || isSkip(x))) return; if (!sess[k] || sess[k].end || !sess[k].start || ymd(new Date(sess[k].start)) !== ymd(new Date())) sess[k] = { start: Date.now() }; }
 function record(k, i){
-  const e = data[k][i], lg = logs[keyOf(k, i)] || {}, t = typ(e), S = setsOf(k, i), d = ymd(new Date());
+  const e = data[k][i], lg = logs[keyOf(k, i)] || {}, t = typ(e), S = setsOf(k, i), d = dayDate(k);
   hist = hist.filter(h => !(h.d === d && h.n === e.n));
   const h = { d, k, n: e.n, m: e.m, s: +e.s || 0 };
   if (t !== 'f') h.t = t;
@@ -2581,17 +2586,17 @@ function setDone(k, i, val){
     startSession(k); record(k, i); justDone = keyOf(k, i); setTimeout(() => { justDone = null; }, 1000);
     { const e2 = data[k][i], h2 = lastOf(e2.n), v = h2 && kcalVal(h2), bk = bestKcal(e2.n, ymd(new Date())); if (typ(e2) === 'c' && v && bk > 0 && v > bk) setTimeout(() => { confetti(); toast(`🏆 Record de calories sur ${e2.n} : ${v} kcal !`); }, 300); }
     const list = data[k], all = list.every((x, j) => done[k][j] || isSkip(x));
-    if (all){ sess[k].end = Date.now(); pauseTimer(); const guided = !!G; setTimeout(() => { confetti(); if (guided && settings.cool !== false) sheetCool(k); else storyRecap(k); }, 300); }
+    if (all){ if (isPastDay(k)){ const t0 = new Date(dayDate(k) + 'T18:00').getTime(); sess[k] = { start: t0, end: t0 + estMin(list) * 60000, past: 1 }; } else sess[k].end = Date.now(); pauseTimer(); const guided = !!G; setTimeout(() => { confetti(); if (guided && settings.cool !== false) sheetCool(k); else storyRecap(k); }, 300); }
     else toast('✅ ' + data[k][i].n + ' terminé');
   }
-  if (!val && was){ const d = ymd(new Date()); hist = hist.filter(h => !(h.d === d && h.n === data[k][i].n)); if (sess[k]) delete sess[k].end; }
+  if (!val && was){ const d = dayDate(k); hist = hist.filter(h => !(h.d === d && h.n === data[k][i].n)); if (sess[k] && !sess[k].past) delete sess[k].end; else if (sess[k]) delete sess[k]; }
 }
 function logSet(k, i, j){
   const e = data[k][i], key = keyOf(k, i), lg = logs[key] || {}, t = typ(e), S = setsOf(k, i).slice();
   const val = () => ({ w: t === 'f' ? String(num(lg.w) ?? sugW(e) ?? '') : '', r: String(num(lg.r) ?? (t === 'k' ? sugK(e) : topReps(e.r))) });
   if (j < S.length){ sheetSet(k, i, j); return; }
   startSession(k);
-  const today = ymd(new Date()), best = bestOf(e.n, today), score = L2 => t === 'f' ? Math.max(0, ...L2.map(x => num(x.w) || 0)) : t === 'c' ? 0 : Math.max(0, ...L2.map(x => num(x.r) || 0)), before = score(S);
+  const today = dayDate(k), best = bestOf(e.n, today), score = L2 => t === 'f' ? Math.max(0, ...L2.map(x => num(x.w) || 0)) : t === 'c' ? 0 : Math.max(0, ...L2.map(x => num(x.r) || 0)), before = score(S);
   while (S.length <= j) S.push(val());
   justSet = key + ':' + j; setTimeout(() => { justSet = null; }, 600);
   if (settings.vibe && navigator.vibrate) navigator.vibrate(12);
@@ -7469,7 +7474,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 122;
+const APP_VERSION = 123;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
