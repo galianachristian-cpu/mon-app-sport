@@ -194,6 +194,8 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     try{ ecRender(); return $('#ecran').classList.contains('nuit'); } finally { window.Date = d0; } }));
   check('minuteur en pause caché sur l’écran, visible s’il tourne', await e3.p.evaluate(() => { T.total = 90; T.left = 60; T.run = false; paintTimer(); const hid = !$('#mini').classList.contains('show'); T.run = true; paintTimer(); const vis = $('#mini').classList.contains('show'); T.run = false; T.left = T.total; paintTimer(); return hid && vis; }));
   check('minuteur rangé invisible sur l’écran (pas de « 01:30 » qui dépasse en bas)', await e3.p.evaluate(() => { ecShow(); T.run = false; T.left = T.total; paintTimer(); return getComputedStyle($('#mini')).visibility === 'hidden'; }));
+  check('déco de Noël en décembre seulement', await e3.p.evaluate(() => { const ok = /Plus que 13 jours/.test(ecFete(new Date(2026, 11, 12))) && /Joyeux Noël/.test(ecFete(new Date(2026, 11, 25))) && /Bonne année/.test(ecFete(new Date(2027, 0, 1))) && !ecFete(new Date(2026, 10, 19)) && !ecFete(new Date(2027, 0, 2));
+    ecDeco(); return ok && document.querySelectorAll('#ecDeco .ec-guirl i').length === 26 && document.querySelectorAll('#ecDeco .ec-snow span').length === 22; }));
   check('quitter le mode écran', await e3.p.evaluate(() => { ecStop(); render(); return !document.body.classList.contains('ecran-on') && !EC.on; }));
   check('aucune erreur', !e3.errs.length, e3.errs.join(' | '));
 
