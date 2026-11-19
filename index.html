@@ -913,6 +913,24 @@ body.ecran-on #mini.show{bottom:calc(16px + var(--safe-b))}
 body.ecran-away #ecBack{display:block}
 @media (max-width:900px){.ec-grid{grid-template-columns:1fr 1fr}.ec-cook{grid-column:1 / -1}.ec-clock{font-size:60px}}
 @media (max-width:600px){.ec-grid,.ec-rec-g{grid-template-columns:1fr}.ec-top{flex-wrap:wrap}.ec-meteo{margin-left:0;width:100%}.ec-night b{font-size:96px}}
+/* déco de Noël (décembre et 1er janvier) : guirlande lumineuse et neige, sauf la nuit */
+#ecDeco{display:none;position:fixed;inset:0;z-index:61;pointer-events:none;overflow:hidden}
+body.ecran-on.ec-noel:not(.ec-nuit) #ecDeco{display:block}
+body.ecran-on.ec-noel:not(.ec-nuit) #ecran{padding-top:44px}
+.ec-guirl{position:absolute;left:0;right:0;top:0;height:40px;display:flex;justify-content:space-around;align-items:flex-start;padding:0 8px}
+.ec-guirl::before{content:'';position:absolute;left:0;right:0;top:-14px;height:30px;border-bottom:2px solid #2f4a35;border-radius:0 0 50% 50% / 0 0 100% 100%}
+.ec-guirl i{position:relative;top:12px;width:11px;height:16px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:var(--b);box-shadow:0 0 10px 2px var(--b);animation:ecBlink 1.8s ease-in-out infinite alternate}
+.ec-guirl i::before{content:'';position:absolute;top:-4px;left:3px;width:5px;height:5px;border-radius:1px;background:#4b5563}
+.ec-guirl i:nth-child(4n+1){--b:#ef4444}.ec-guirl i:nth-child(4n+2){--b:#facc15;animation-delay:.45s}.ec-guirl i:nth-child(4n+3){--b:#22c55e;animation-delay:.9s}.ec-guirl i:nth-child(4n+4){--b:#38bdf8;animation-delay:1.35s}
+.ec-guirl i:nth-child(odd){top:18px}
+@keyframes ecBlink{from{opacity:1}to{opacity:.35;box-shadow:0 0 2px 0 var(--b)}}
+.ec-snow span{position:absolute;top:-30px;color:#fff;opacity:.75;animation:ecFall linear infinite;will-change:transform}
+@keyframes ecFall{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(22px,55vh,0)}100%{transform:translate3d(-8px,110vh,0)}}
+.ec-fete{font-family:'Outfit',system-ui,sans-serif;font-size:18px;font-weight:700;color:#fcd34d;margin-top:6px}
+.ec-night .ec-fete{font-size:16px;color:#6b5a2a;font-weight:600}
+:root[data-theme="light"] .ec-fete{color:#b45309}
+:root[data-theme="light"] .ec-snow span{color:#93c5fd}
+@media (prefers-reduced-motion:reduce){.ec-snow{display:none}.ec-guirl i{animation:none}}
 :root[data-theme="light"] .ec-streak{color:#c2410c}
 :root[data-theme="light"] .ec-meteo .tip{color:#b45309}
 /* Safari 15 (vieux iPad) ne connaît pas color-mix : fonds pleins de secours pour ne pas avoir d'écran transparent */
@@ -1795,6 +1813,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [120, [['🎄', 'Le mode écran se met aux couleurs de Noël', 'en décembre : guirlande lumineuse, neige qui tombe et compte à rebours jusqu’à Noël, puis vœux du Nouvel An']]],
   [119, [['🖥️', 'Mode écran : plus de minuteur fantôme', 'le minuteur rangé ne dépasse plus en bas de la tablette']]],
   [118, [['🖥️', 'Mode écran plus propre', 'le minuteur en pause ne reste plus affiché en bas, et les durées de cardio s’affichent correctement']]],
   [117, [['🖥️', 'Mode écran pour tablette', 'un vieil iPad posé à la maison affiche le brief du matin, vos séances, le repas à préparer en grand et une horloge la nuit : Accueil → ⚙️ Personnaliser l’accueil'], ['📱', 'Compatible avec les anciens iPad', 'l’appli démarre maintenant aussi sur iOS 15']]],
@@ -7375,7 +7394,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 119;
+const APP_VERSION = 120;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -7575,18 +7594,36 @@ function ecBrief(){
 }
 /* ---------- affichage ---------- */
 const ecIsNight = () => { const n = new Date(), h = n.getHours() + n.getMinutes() / 60; return (h >= 22.5 || h < 5.5) && Date.now() > EC.wakeUntil; };
+/* ---------- fêtes de fin d'année ---------- */
+function ecFete(n){
+  const m = n.getMonth(), d = n.getDate();
+  if (m === 0 && d === 1) return '🎆 Bonne année à vous deux !';
+  if (m !== 11) return '';
+  if (d < 24){ const j = 25 - d; return `🎄 Plus que ${j} jour${j > 1 ? 's' : ''} avant Noël`; }
+  return d === 24 ? '🎅 C’est le réveillon de Noël ce soir !' : d === 25 ? '🎄 Joyeux Noël à vous deux !' : d === 31 ? '🥂 Réveillon du Nouvel An ce soir !' : '✨ Joyeuses fêtes de fin d’année';
+}
+// guirlande et flocons : créés une seule fois (pas à chaque rafraîchissement, pour ne pas couper l'animation)
+function ecDeco(){
+  if ($('#ecDeco')) return;
+  const el = document.createElement('div'); el.id = 'ecDeco'; el.setAttribute('aria-hidden', 'true');
+  const r = rng('neige'), F = Array.from({ length: 22 }, () => { const sz = 10 + Math.round(r() * 14), du = 9 + r() * 10;
+    return `<span style="left:${Math.round(r() * 98)}%;font-size:${sz}px;animation-duration:${du.toFixed(1)}s;animation-delay:-${(r() * du).toFixed(1)}s">${r() < .6 ? '❄' : '•'}</span>`; }).join('');
+  el.innerHTML = `<div class="ec-guirl">${'<i></i>'.repeat(26)}</div><div class="ec-snow">${F}</div>`;
+  document.body.appendChild(el);
+}
 function ecRender(){
   if (!EC.on) return;
   const el = $('#ecran'), n = new Date(), hh = n.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), h = n.getHours();
   const night = ecIsNight(); el.classList.toggle('nuit', night);
+  const fete = ecFete(n); if (fete) ecDeco(); document.body.classList.toggle('ec-noel', !!fete); document.body.classList.toggle('ec-nuit', night);
   const hello = h < 5 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
   const N = PROFILES.map(p => ecNom(ecPerson(p.id) ? ecPerson(p.id).p : p)), names = N.includes('Moi') ? 'à vous deux' : N.join(' et ');
   const upd = EC.syncAt ? `Mis à jour à ${new Date(EC.syncAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Chargement des données…';
   const tmr = (() => { try{ const P = ecPerson(profile.id), di = todayIdx(), dd = h < 6 ? di : di + 1; if (dd > 6) return ''; const L = PROFILES.map(p => ecPerson(p.id)).filter(Boolean).map(Q => { const S = ecSession(Q, dd); return `${esc(ecNom(Q.p))} : ${S.list.length ? esc(S.title) : 'repos'}`; }); return P ? (h < 6 ? 'Aujourd’hui · ' : 'Demain · ') + L.join(' · ') : ''; }catch(e){ return ''; } })();
   const sc = el.scrollTop;
-  el.innerHTML = `<div class="ec-night" data-ec="wake"><b>${hh}</b><p>${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>${tmr ? `<p style="font-size:16px">${tmr}</p>` : ''}<small>Touchez l’écran pour l’allumer</small></div>
+  el.innerHTML = `<div class="ec-night" data-ec="wake"><b>${hh}</b><p>${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>${tmr ? `<p style="font-size:16px">${tmr}</p>` : ''}${fete ? `<p class="ec-fete">${fete}</p>` : ''}<small>Touchez l’écran pour l’allumer</small></div>
   <div class="ec-day-v">
-    <div class="ec-top"><div><div class="ec-clock">${hh}</div><div class="ec-date">${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div><div class="ec-hello">${hello} ${esc(names)} 👋</div></div>${ecMeteoHtml()}</div>
+    <div class="ec-top"><div><div class="ec-clock">${hh}</div><div class="ec-date">${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div><div class="ec-hello">${hello} ${esc(names)} ${fete ? '🎄' : '👋'}</div>${fete ? `<div class="ec-fete">${fete}</div>` : ''}</div>${ecMeteoHtml()}</div>
     ${ecBrief()}
     <div class="ec-grid">${ecPersonCol('user1')}${ecPersonCol('bea')}${ecCookCol()}</div>
     <div class="ec-bot"><button data-ec="go" data-v="chrono">⏱️ Minuteur</button><button data-ec="go" data-v="nutrition">🛒 Menus et courses</button><button data-ec="go" data-v="seance">📱 Ouvrir l’appli</button><button data-ec="sync">🔄 Actualiser</button></div>
@@ -7614,7 +7651,7 @@ function ecStart(){
     if (tick % 8 === 0) ecMeteo();      // la météo ne se relit que toutes les 30 minutes
   }, 15000);
 }
-function ecStop(){ EC.on = false; EC.away = false; clearInterval(EC.iv); document.body.classList.remove('ecran-on', 'ecran-away'); ecCloseRec(); syncAwake(); }
+function ecStop(){ EC.on = false; EC.away = false; clearInterval(EC.iv); document.body.classList.remove('ecran-on', 'ecran-away', 'ec-noel', 'ec-nuit'); ecCloseRec(); syncAwake(); }
 function ecLeave(v){ EC.away = true; ecCloseRec(); document.body.classList.remove('ecran-on'); document.body.classList.add('ecran-away'); if (v === 'nutrition') nutTab = 'jour'; currentDay = todayIdx(); go(v || 'seance'); }
 function ecShow(){ closeSheet(); EC.away = false; document.body.classList.remove('ecran-away'); document.body.classList.add('ecran-on'); ecRender(); paintTimer(); syncAwake(); }
 document.addEventListener('pointerdown', () => { EC.lastTouch = Date.now(); }, { passive: true, capture: true });
