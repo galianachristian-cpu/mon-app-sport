@@ -183,6 +183,18 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
   check('elle ne se rouvre pas ensuite', await b2.p.evaluate(async () => { closeSheet(); newsCheck(); await new Promise(r => setTimeout(r, 2600)); return !document.querySelector('#sheet').classList.contains('show'); }));
   check('aucune erreur', !b2.errs.length, b2.errs.join(' | '));
 
+  console.log('7. Mode écran (tablette)');
+  const e3 = await open(false); await e3.p.route(/open-meteo/, r => r.abort()); await seed(e3.p);
+  check('le code reste lisible par Safari 15 (vieux iPad) : pas de « lookbehind »', !/\(\?<[=!]/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+  check('l’écran s’affiche avec les deux profils et le repas à préparer', await e3.p.evaluate(() => { ecStart(); EC.wakeUntil = Date.now() + 60000; ecRender(); const t = $('#ecran').textContent;
+    return document.body.classList.contains('ecran-on') && document.querySelectorAll('#ecran .ec-col').length === 3 && /En cuisine/.test(t) && wantAwake(); }));
+  check('recette en grand : ingrédients et étapes', await e3.p.evaluate(() => { const b = $('#ecran [data-ec="rec"]'); if (!b) return false; b.click(); const r = $('#ecRec'); return r.classList.contains('on') && r.querySelectorAll('tbody tr').length > 0 && r.querySelectorAll('.ec-steps li').length > 0; }));
+  check('aller dans l’appli puis revenir à l’écran', await e3.p.evaluate(() => { ecCloseRec(); ecLeave('nutrition'); const away = document.body.classList.contains('ecran-away') && view === 'nutrition'; ecShow(); return away && document.body.classList.contains('ecran-on'); }));
+  check('horloge de nuit', await e3.p.evaluate(() => { EC.wakeUntil = 0; const d0 = Date; const fake = new d0(); fake.setHours(23, 30); window.Date = class extends d0 { constructor(...a){ super(...(a.length ? a : [fake.getTime()])); } static now(){ return fake.getTime(); } };
+    try{ ecRender(); return $('#ecran').classList.contains('nuit'); } finally { window.Date = d0; } }));
+  check('quitter le mode écran', await e3.p.evaluate(() => { ecStop(); render(); return !document.body.classList.contains('ecran-on') && !EC.on; }));
+  check('aucune erreur', !e3.errs.length, e3.errs.join(' | '));
+
   await browser.close(); server.close();
   console.log(fails.length ? `\n${fails.length} échec(s) sur ${n} vérifications : ${fails.join(' ; ')}` : `\n${n} vérifications réussies.`);
   process.exit(fails.length ? 1 : 0);

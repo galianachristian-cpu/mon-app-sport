@@ -828,6 +828,95 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 .itvis{width:min(62vw,260px);height:min(62vw,260px);border-radius:24px;overflow:hidden;background:#fff;margin:4px auto 6px;border:1px solid var(--line)}
 .itvis.sm{width:min(36vw,140px);height:min(36vw,140px);opacity:.85}
 .itv:has(.itvis) .itmain>b{font-size:min(20vw,96px)}
+/* ===== Mode écran (tablette posée à la maison) ===== */
+#ecran{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);color:var(--text);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px calc(18px + var(--safe-b))}
+body.ecran-on #ecran{display:block}
+body.ecran-on .nav,body.ecran-on .top,body.ecran-on #app{visibility:hidden}
+.ec-top{display:flex;align-items:flex-start;gap:18px;margin-bottom:14px}
+.ec-clock{font-family:'Outfit',system-ui,sans-serif;font-size:78px;font-weight:800;line-height:.95;letter-spacing:-2px}
+.ec-date{font-size:20px;color:var(--soft);text-transform:capitalize;margin-top:6px}
+.ec-hello{font-size:17px;color:var(--muted);margin-top:4px}
+.ec-meteo{margin-left:auto;display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 18px;min-width:250px}
+.ec-meteo .ic{font-size:54px;line-height:1}
+.ec-meteo b{font-family:'Outfit',system-ui,sans-serif;font-size:34px;display:block;line-height:1}
+.ec-meteo small{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+.ec-meteo .tip{color:var(--warn);font-size:13px}
+.ec-brief{background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(167,139,250,.14));border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:17px;line-height:1.45}
+.ec-brief b{font-family:'Outfit',system-ui,sans-serif}
+.ec-grid{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:14px;align-items:start}
+.ec-col{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;border-top:5px solid var(--c,var(--a1))}
+.ec-col h3{font-family:'Outfit',system-ui,sans-serif;font-size:22px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+.ec-col h3 .av{width:30px;height:30px;border-radius:50%;background:var(--c);color:#0b0f19;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:900}
+.ec-sub{color:var(--soft);font-size:15px;margin-bottom:8px}
+.ec-streak{display:inline-block;font-size:13px;color:#fdba74;margin-bottom:8px}
+.ec-bar{height:10px;border-radius:6px;background:var(--card2);overflow:hidden;margin:6px 0 10px}
+.ec-bar i{display:block;height:100%;background:var(--c,var(--a1));border-radius:6px}
+.ec-ex{list-style:none;margin:0;padding:0}
+.ec-ex li{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.ec-ex li:last-child{border-bottom:0}
+.ec-ex li .ck{flex:0 0 22px;text-align:center}
+.ec-ex li.ok{color:var(--muted);text-decoration:line-through}
+.ec-ex li small{margin-left:auto;color:var(--muted);white-space:nowrap;text-decoration:none}
+.ec-rest{font-size:16px;color:var(--soft);padding:16px 0;text-align:center}
+.ec-rest .e{font-size:40px;display:block;margin-bottom:6px}
+.ec-more{color:var(--muted);font-size:13px;margin-top:6px}
+.ec-kcal{font-size:13px;color:var(--muted);margin-top:8px}
+.ec-cook{--c:#fb923c}
+.ec-meal{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:inherit;font:inherit;margin-top:8px;cursor:pointer}
+.ec-meal .e{font-size:40px;line-height:1}
+.ec-meal b{font-family:'Outfit',system-ui,sans-serif;font-size:18px;display:block}
+.ec-meal small{color:var(--soft);font-size:13px}
+.ec-meal .go{margin-left:auto;font-size:22px;color:var(--muted)}
+.ec-lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:12px}
+.ec-day{list-style:none;margin:6px 0 0;padding:0}
+.ec-day li{display:flex;gap:8px;font-size:14px;padding:5px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ec-day li:last-child{border-bottom:0}
+.ec-day li span{color:var(--muted);flex:0 0 92px}
+.ec-day li.past{opacity:.45}
+.ec-day li button{all:unset;cursor:pointer;flex:1}
+.ec-bot{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.ec-bot button{flex:1;min-width:140px;background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:14px 10px;font:600 16px 'Outfit',system-ui,sans-serif;cursor:pointer}
+.ec-upd{color:var(--muted);font-size:12px;text-align:center;margin-top:10px}
+/* recette en grand */
+.ec-rec{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 24px calc(24px + var(--safe-b));display:none}
+.ec-rec.on{display:block}
+.ec-rec h2{font-family:'Outfit',system-ui,sans-serif;font-size:34px;margin:0 0 4px;padding-right:120px}
+.ec-rec .meta{color:var(--soft);font-size:17px;margin-bottom:14px}
+.ec-rec .close{position:fixed;top:16px;right:20px;background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 18px;font:700 17px 'Outfit',system-ui,sans-serif;z-index:2}
+.ec-rec-g{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.ec-rec .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.ec-rec h4{font-family:'Outfit',system-ui,sans-serif;font-size:20px;margin:0 0 10px}
+.ec-rec table{width:100%;border-collapse:collapse;font-size:17px}
+.ec-rec th,.ec-rec td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.ec-rec td{text-align:right;white-space:nowrap}
+.ec-rec td small,.ec-rec th small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.ec-rec thead th{font-size:14px;color:var(--muted);font-weight:600}
+.ec-rec thead th:not(:first-child){text-align:right}
+.ec-rec tr.tot td{font-weight:800}
+.ec-steps{margin:0;padding-left:26px;font-size:19px;line-height:1.5}
+.ec-steps li{margin-bottom:10px}
+.ec-steps li::marker{font-weight:800;color:#fb923c}
+.ec-rec .note{color:var(--soft);font-size:15px;margin-top:10px}
+/* nuit : horloge seule, très sombre */
+#ecran.nuit{background:#000}
+#ecran.nuit .ec-day-v{display:none}
+.ec-night{display:none;height:100%;flex-direction:column;align-items:center;justify-content:center;color:#5b6475;text-align:center}
+#ecran.nuit .ec-night{display:flex}
+.ec-night b{font-family:'Outfit',system-ui,sans-serif;font-size:150px;font-weight:700;letter-spacing:-4px;line-height:1}
+.ec-night p{font-size:20px;margin-top:10px}
+.ec-night small{font-size:14px;margin-top:22px;color:#3a4150}
+/* bouton pour revenir à l'écran depuis l'appli */
+#ecBack{position:fixed;right:14px;bottom:calc(84px + var(--safe-b));z-index:55;display:none;background:#fb923c;color:#1a1206;border:0;border-radius:999px;padding:12px 16px;font:700 15px 'Outfit',system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+body.ecran-away #ecBack{display:block}
+@media (max-width:900px){.ec-grid{grid-template-columns:1fr 1fr}.ec-cook{grid-column:1 / -1}.ec-clock{font-size:60px}}
+@media (max-width:600px){.ec-grid,.ec-rec-g{grid-template-columns:1fr}.ec-top{flex-wrap:wrap}.ec-meteo{margin-left:0;width:100%}.ec-night b{font-size:96px}}
+:root[data-theme="light"] .ec-streak{color:#c2410c}
+:root[data-theme="light"] .ec-meteo .tip{color:#b45309}
+/* Safari 15 (vieux iPad) ne connaît pas color-mix : fonds pleins de secours pour ne pas avoir d'écran transparent */
+@supports not (color:color-mix(in srgb,red 50%,blue)){
+  body{background:var(--bg)}
+  .guide,.story,.full.show:has(.itv.work){background:var(--bg)}
+}
 </style>
 </head>
 <body>
@@ -840,6 +929,9 @@ svg.trace{width:100%;height:auto;border-radius:14px;background:var(--bg2)}
 </div></header>
 
 <main class="wrap" id="app"></main>
+<div id="ecran" aria-label="Écran maison"></div>
+<div class="ec-rec" id="ecRec" role="dialog" aria-modal="true" aria-label="Recette"></div>
+<button id="ecBack" data-ec="back">🖥️ Retour à l’écran</button>
 
 <div class="mini" id="mini" role="status" aria-live="polite">
   <div class="tm" id="miniTime">01:30</div>
@@ -1700,6 +1792,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [117, [['🖥️', 'Mode écran pour tablette', 'un vieil iPad posé à la maison affiche le brief du matin, vos séances, le repas à préparer en grand et une horloge la nuit : Accueil → ⚙️ Personnaliser l’accueil'], ['📱', 'Compatible avec les anciens iPad', 'l’appli démarre maintenant aussi sur iOS 15']]],
   [116, [['📱', 'Barre du bas bien en place', 'après une rotation du téléphone ou la fermeture du clavier sur iPhone']]],
   [115, [['✏️', 'Renommer son profil sans souci', 'le téléphone ne propose plus de remplir tes informations personnelles']]],
   [114, [['🍽️', 'Béa : recomposition à 1 500 kcal', 'activité sédentaire, 1 500 kcal fixes par jour, 115 g de protéines'], ['🥩', 'Plus de protéines dans les menus', 'plats riches en protéines de préférence, collation plus protéinée les jours de séance'], ['⚖️', 'Alerte si le poids baisse trop vite ou monte', 'même avec des calories choisies à la main'], ['📚', 'D’où viennent les chiffres', 'Nutrition → Coach nutrition → Sources'], ['🍲', 'Plats mélangés : poids de l’assiette', 'chili, curry, gratin… : grammes cuits par assiette pour chacun et part de la marmite']]],
@@ -1970,6 +2063,7 @@ function sheetHome(){
   openSheet(`<h2>⚙️ Mon accueil</h2><p class="muted" style="font-size:13px;margin-bottom:6px">Choisis ce que tu veux voir sur l’écran Séance. ${n} carte${n > 1 ? 's' : ''} affichée${n > 1 ? 's' : ''} sur ${HOME_CARDS.length}. Réglage propre à ce téléphone.</p>
     <div class="toggle"><span><b>⬇️ Séance d’abord</b><small>Place partenaire, actions, défis et bilan sous la liste des exercices</small></span><button type="button" class="sw ${c.low ? 'on' : ''}" data-x="homelow" role="switch" aria-checked="${!!c.low}" aria-label="Séance d’abord"></button></div>
     ${HOME_CARDS.map(([id, l, d]) => `<div class="toggle"><span><b>${l}</b><small>${d}</small></span><button type="button" class="sw ${c.hide[id] ? '' : 'on'}" data-x="hometog" data-id="${id}" role="switch" aria-checked="${!c.hide[id]}" aria-label="${l}"></button></div>`).join('')}
+    <div class="toggle"><span><b>🖥️ Mode écran (tablette)</b><small>Pour un iPad posé à la maison : brief du matin, séances de vous deux, repas à préparer, horloge la nuit</small></span><button type="button" class="sw" data-x="ecranon" role="switch" aria-checked="false" aria-label="Mode écran"></button></div>
     <div class="row" style="margin-top:14px"><button class="btn" data-x="homereset">↩️ Tout afficher</button><span class="spacer"></span><button class="btn pri" data-act="close">Terminé</button></div>`);
 }
 function todayCard(){
@@ -2160,7 +2254,7 @@ function ocrParse(words, e){
     else A.push(w); return A; }, []);
   words.forEach(w => {
     const b = w.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 }, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, h = Math.max(1, b.y1 - b.y0);
-    const txt = String(w.text || '').replace(/[Oo](?=\d)|(?<=\d)[Oo]/g, '0');
+    const txt = String(w.text || '').replace(/[Oo]/g, (c, i, s) => /\d/.test(s[i + 1] || '') || /\d/.test(s[i - 1] || '') ? '0' : c); // sans « lookbehind » : Safari 15 (vieux iPad) ne le comprend pas
     const word = txt.replace(/[^A-Za-zÀ-ÿ]/g, ''); if (word && lblOf(word) && !/\d/.test(txt)) { L.push({ k: lblOf(word), km: /^km$/i.test(word), cx, cy, h }); return; }
     const re = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?:[.,]\d)?|\d+(?:[.,]\d+)?/g; let m;
     while ((m = re.exec(txt))){
@@ -3484,7 +3578,7 @@ function musclesOf(e){
 }
 function techCard(e){
   const S = musclesOf(e), P = Object.keys(S).filter(m => S[m] >= 10), Q = Object.keys(S).filter(m => S[m] < 10);
-  const steps = String(e.desc || '').split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
+  const steps = String(e.desc || '').replace(/([.!?])\s+/g, '$1\n').split('\n').map(x => x.trim()).filter(Boolean);
   const t = typ(e), breath = t === 'f' || t === 'p' ? 'Inspire pendant la phase facile (descente), souffle pendant l’effort (montée ou poussée).' : t === 's' ? 'Respire calmement et régulièrement, sans bloquer.' : 'Garde une respiration régulière, accélère seulement sur les sprints.';
   return `${Object.keys(S).length ? `<div class="box"><h4>💪 Muscles travaillés</h4><div class="tmus">${bodyMap(S, 10)}</div>
       <p style="margin-top:6px">${P.map(m => `<span class="mus" style="--c:${mcol(m)}">${esc(m)}</span>`).join(' ')}${Q.length ? ` <small class="muted">aussi :</small> ${Q.map(m => `<span class="mus" style="--c:${mcol(m)};opacity:.7">${esc(m)}</span>`).join(' ')}` : ''}</p></div>` : ''}
@@ -6596,6 +6690,7 @@ function evoAct(a, b){
     case 'stshare': if (STORY) clearTimeout(STORY.t); if (STORY && STORY.year) shareCanvas(yearImage(), `mon-annee-${STORY.year}.png`, 'Mon année ' + STORY.year); else storyShare(); break;
     case 'yearstory': storyYear(b.dataset.y); break;
     case 'homecfg': sheetHome(); break;
+    case 'ecranon': closeSheet(); safeSet('mp_ecran', true); ecStart(); break;
     case 'hiitlvl': settings.hiitLvl = +b.dataset.l; safeSet('mp_settings', settings); render(); break;
     case 'hiitrun': hiitRun(); break;
     case 'hometog': { const c = homeCfg(), id = b.dataset.id; if (c.hide[id]) delete c.hide[id]; else c.hide[id] = 1; safeSet('mp_settings', settings); render(); sheetHome(); break; }
@@ -6976,6 +7071,7 @@ function sheetCool(k){
 let awakeLock = null;
 const AWAKE = [['seance','Pendant la séance'],['toujours','Toujours (appli ouverte)'],['jamais','Jamais']];
 function wantAwake(){
+  if (window.EC && EC.on && document.visibilityState === 'visible') return true; // mode écran : la tablette reste allumée
   const m = settings.awake || 'seance'; if (m === 'jamais' || document.visibilityState !== 'visible') return false; if (m === 'toujours') return true;
   const s = sess['day' + todayIdx()], live = s && s.start && !s.end && ymd(new Date(s.start)) === today();
   return !!(G || live || T.run || (typeof RUN !== 'undefined' && RUN) || ($('#full') && $('#full').classList.contains('show')) || (view === 'chrono'));
@@ -7274,7 +7370,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 116;
+const APP_VERSION = 117;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -7338,6 +7434,199 @@ async function seDeconnecter(){
   try{ await auth.signOut(); }catch(e){}
   location.reload();
 }
+/* ============================================================
+   MODE ÉCRAN : tablette posée à la maison (cuisine, salon)
+   Brief du matin, séance du jour de chacun, prochain repas à préparer, horloge de nuit.
+   Lecture seule : l'écran affiche les données, les modifications se font dans l'appli.
+   Activation : adresse …/?ecran ou Accueil → ⚙️ Personnaliser l'accueil → Mode écran.
+   ============================================================ */
+const EC_LIEU = { nom: 'Cruzy', lat: 43.355, lon: 2.938 };
+var EC = { on: false, away: false, wakeUntil: 0, lastTouch: Date.now(), meteo: null, meteoAt: 0, syncAt: 0, iv: null, rec: null };
+const ecWanted = () => { try{ const q = new URLSearchParams(location.search); if (q.has('ecran')){ const v = q.get('ecran') !== '0'; safeSet('mp_ecran', v); return v; } }catch(e){} return safeGet('mp_ecran', false) === true; };
+const ecNom = p => p && p.nom && !/^moi$/i.test(p.nom) ? p.nom : 'Moi';
+// données d'une personne : profil ouvert sur la tablette, ou l'autre profil (lu en ligne)
+function ecPerson(pid){
+  const wk = curWk();
+  if (pid === profile.id) return { p: profile, data, done: week === wk ? done : {}, hist, titles, prog };
+  if (!other || other.p.id !== pid) return null;
+  const d = other.d || {};
+  return { p: other.p, data: d.data || {}, done: d.week === wk ? (d.done || {}) : {}, hist: d.hist || [], titles: d.titles || {}, prog: d.prog || null };
+}
+function ecStreak(H){ const S = new Set((H || []).map(h => h.d)); let n = 0; const d = new Date(); for (let i = 0; i < 400; i++){ if (S.has(ymd(d))) n++; else if (i > 0) break; d.setDate(d.getDate() - 1); } return n; }
+function ecSession(P, di){
+  const k = 'day' + di, list = P.data[k] || [], dn = P.done[k] || [];
+  const title = P.titles[k] || (!list.length ? 'Repos' : DAY_SUB[di]);
+  const nOk = list.filter((e, i) => dn[i] || isSkip(e)).length;
+  const extra = P.hist.filter(h => h.d === today() && !list.some(e => e.n === h.n));
+  let min = 0; try{ min = estMin(list); }catch(e){ min = 0; }
+  return { list, dn, title, nOk, extra, min };
+}
+/* ---------- météo (Open-Meteo, gratuit, sans clé) ---------- */
+const EC_WMO = c => c === 0 ? ['☀️', 'Grand soleil'] : c <= 2 ? ['🌤️', 'Éclaircies'] : c === 3 ? ['☁️', 'Couvert'] : c <= 48 ? ['🌫️', 'Brouillard'] : c <= 57 ? ['🌦️', 'Bruine'] : c <= 67 ? ['🌧️', 'Pluie'] : c <= 77 ? ['❄️', 'Neige'] : c <= 82 ? ['🌦️', 'Averses'] : c <= 86 ? ['🌨️', 'Averses de neige'] : ['⛈️', 'Orages'];
+async function ecMeteo(){
+  if (EC.meteo && Date.now() - EC.meteoAt < 30 * 60000) return;
+  try{
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${EC_LIEU.lat}&longitude=${EC_LIEU.lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FParis&forecast_days=2`;
+    const r = await Promise.race([fetch(u), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 10000))]);
+    if (!r.ok) return; const j = await r.json(); if (!j || !j.current || !j.daily) return;
+    EC.meteo = j; EC.meteoAt = Date.now(); ecRender();
+  }catch(e){}
+}
+function ecMeteoHtml(){
+  const M = EC.meteo; if (!M) return `<div class="ec-meteo"><span class="ic">🌡️</span><div><b>…</b><small>Météo de ${EC_LIEU.nom}</small></div></div>`;
+  const h = new Date().getHours(), i = h >= 19 ? 1 : 0, D = M.daily, [ic, txt] = EC_WMO(i ? D.weather_code[1] : M.current.weather_code);
+  const tmin = Math.round(D.temperature_2m_min[i]), tmax = Math.round(D.temperature_2m_max[i]), pluie = D.precipitation_probability_max[i] || 0, vent = Math.round(M.current.wind_speed_10m || 0);
+  const tip = pluie >= 50 ? '☔ Prends un parapluie' : tmin <= 3 ? '🧤 Il va faire froid' : tmax >= 30 ? '💧 Pense à bien t’hydrater' : vent >= 40 ? '💨 Ça souffle fort' : pluie < 20 && tmax >= 12 && tmax <= 27 ? '🏃 Parfait pour sortir courir' : '';
+  return `<div class="ec-meteo"><span class="ic">${ic}</span><div><b>${i ? `${tmax}°` : `${Math.round(M.current.temperature_2m)}°`}</b><small>${i ? 'Demain · ' : ''}${txt} · ${tmin}° / ${tmax}°${pluie ? ` · 💧 ${pluie} %` : ''}</small>${tip ? `<small class="tip">${tip}</small>` : ''}</div></div>`;
+}
+/* ---------- repas ---------- */
+// prochain repas à préparer selon l'heure (le soir : le déjeuner de demain, pour anticiper)
+function ecNextMeal(){
+  const n = new Date(), h = n.getHours() + n.getMinutes() / 60, d = todayIdx();
+  if (h < 9.5) return { d, meal: 'pdj', when: 'Ce matin' };
+  if (h < 14) return { d, meal: 'dej', when: 'Ce midi' };
+  if (h < 21.5) return { d, meal: 'din', when: 'Ce soir' };
+  return d < 6 ? { d: d + 1, meal: 'dej', when: 'Demain midi' } : null;
+}
+// portions des deux pour un repas : même plat (une seule recette à cuisiner) ou plats différents
+function ecMealOf(d, meal){
+  const wk = curWk(), out = [];
+  PROFILES.forEach(p => { if (p.id !== profile.id && !(other && other.p.id === p.id)) return;
+    let x = null; try{ x = dayPortions(p.id, d, wk).find(z => z.meal === meal); }catch(e){ x = null; }
+    if (x) out.push(Object.assign({ p }, x)); });
+  return out;
+}
+function ecMealBtn(d, meal, when){
+  const L = ecMealOf(d, meal).filter(x => x.por), lbl = (MEALS.find(m => m[0] === meal) || [])[1] || '';
+  if (!L.length) return `<p class="ec-more">${when} : personne à la maison ou pas de recette prévue.</p>`;
+  const R = {}; L.forEach(x => { (R[x.por.r.id] = R[x.por.r.id] || { r: x.por.r, who: [] }).who.push(x.p); });
+  return Object.values(R).map(({ r, who }) => `<button class="ec-meal" data-ec="rec" data-d="${d}" data-meal="${meal}" data-rid="${esc(r.id)}"><span class="e">${r.e}</span><span><small>${when} · ${lbl}</small><b>${esc(r.n)}</b><small>⏱️ ${r.min} min · pour ${who.map(p => esc(ecNom(p))).join(' et ')}</small></span><span class="go">›</span></button>`).join('');
+}
+function ecCookCol(){
+  const nx = ecNextMeal(), d = todayIdx(), h = new Date().getHours() + new Date().getMinutes() / 60;
+  let menu = '';
+  try{
+    menu = MEALS.map(([m, lbl, ico]) => { const L = ecMealOf(d, m).filter(x => x.por); if (!L.length) return '';
+      const names = [...new Set(L.map(x => x.por.r.e + ' ' + x.por.r.n))].join(' · '), past = { pdj: 10, dej: 14, col: 17, din: 22 }[m] <= h;
+      return `<li class="${past ? 'past' : ''}"><span>${ico} ${lbl}</span><button data-ec="rec" data-d="${d}" data-meal="${m}" data-rid="${esc(L[0].por.r.id)}">${esc(names)}</button></li>`; }).join('');
+  }catch(e){ menu = ''; }
+  return `<section class="ec-col ec-cook"><h3>👩‍🍳 En cuisine</h3>
+    ${nx ? ecMealBtn(nx.d, nx.meal, nx.when) : '<p class="ec-more">Nouvelle semaine demain : les menus seront prêts dans l’appli.</p>'}
+    ${menu ? `<p class="ec-lbl">Menu du jour</p><ul class="ec-day">${menu}</ul>` : ''}
+    <p class="ec-more">Touchez un plat pour la recette en grand, avec les portions de chacun.</p></section>`;
+}
+function ecStepsOf(txt){ return String(txt || '').replace(/\.\s+(?=[A-ZÀ-ÖØ-Ý])/g, '.\n').split('\n').map(s => s.trim()).filter(Boolean); }
+function ecOpenRec(d, meal, rid){
+  const L = ecMealOf(+d, meal).filter(x => x.por && x.por.r.id === rid); if (!L.length) return;
+  const r = L[0].por.r, foods = [...new Set(L.flatMap(x => x.por.ing.map(([f]) => f)))], two = L.length > 1;
+  const cell = (f, g) => g ? `${qty(f, g)}${CUIT[f] ? `<small>≈ ${cuitG(f, g)} g cuit</small>` : ''}` : '–';
+  const rows = foods.map(f => { const G = L.map(x => (x.por.ing.find(([y]) => y === f) || [0, 0])[1]), t = G.reduce((a, b) => a + b, 0);
+    return `<tr><th>${esc(FOODS[f].n)}${CUIT[f] ? ' <small>(cru)</small>' : ''}</th>${two ? G.map(g => `<td>${cell(f, g)}</td>`).join('') : ''}<td><b>${cell(f, t)}</b></td></tr>`; }).join('');
+  const steps = ecStepsOf(r.steps), lbl = (MEALS.find(m => m[0] === meal) || [])[1] || '';
+  const mix = (() => { try{ return two && L.every(x => isMix(x.por)) ? L.map(x => `${esc(ecNom(x.p))} ≈ <b>${kc(plateG(x.por))} g</b>`).join(' · ') : ''; }catch(e){ return ''; } })();
+  const el = $('#ecRec'); EC.rec = { d, meal, rid };
+  el.innerHTML = `<button class="close" data-ec="recx">✕ Fermer</button>
+    <h2>${r.e} ${esc(r.n)}</h2>
+    <p class="meta">${DAY_NAMES[+d]} · ${lbl} · ⏱️ ${r.min} min · pour ${L.map(x => esc(ecNom(x.p))).join(' et ')} · ${L.map(x => `${esc(ecNom(x.p))} ${kc(x.por.m.k)} kcal`).join(' · ')}</p>
+    <div class="ec-rec-g">
+      <div class="box"><h4>🛒 Ingrédients</h4><table>${two ? `<thead><tr><th></th>${L.map(x => `<th>${esc(ecNom(x.p))}</th>`).join('')}<th>Total</th></tr></thead>` : ''}<tbody>${rows}</tbody></table>
+        ${foods.some(f => CUIT[f]) ? '<p class="note">⚖️ Pèse cru, ou utilise le poids cuit indiqué.</p>' : ''}
+        ${mix ? `<p class="note">🍲 Plat mélangé : cuis le total, puis sers les assiettes au poids : ${mix}.</p>` : two ? '<p class="note">🍳 Cuisine le total, puis sers chaque assiette avec sa colonne.</p>' : ''}</div>
+      <div class="box"><h4>👩‍🍳 Préparation</h4><ol class="ec-steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+        <div class="ec-bot"><button data-ec="timer" data-min="${r.min}">⏱️ Minuteur ${r.min} min</button></div></div>
+    </div>`;
+  el.classList.add('on'); el.scrollTop = 0; syncAwake();
+}
+function ecCloseRec(){ $('#ecRec').classList.remove('on'); EC.rec = null; }
+/* ---------- colonnes sport ---------- */
+function ecPersonCol(pid){
+  const p0 = PROFILES.find(p => p.id === pid), P = ecPerson(pid), col = (P ? P.p : p0).a1;
+  const head = `<h3><span class="av" style="background:${col}">${esc(ecNom(P ? P.p : p0).slice(0, 1).toUpperCase())}</span>${esc(ecNom(P ? P.p : p0))}</h3>`;
+  if (!P) return `<section class="ec-col" style="--c:${col}">${head}<p class="ec-rest">Chargement…</p></section>`;
+  const di = todayIdx(), S = ecSession(P, di), st = ecStreak(P.hist), pc = S.list.length ? Math.round(S.nOk * 100 / S.list.length) : 0;
+  const tomorrow = di < 6 ? ecSession(P, di + 1) : null;
+  const MAX = 7, shown = S.list.slice(0, MAX);
+  const body = S.list.length ? `<div class="ec-sub">🏋️ ${esc(S.title)} · ${S.list.length} exercices${S.min ? ` · ~${S.min} min` : ''}</div>
+      <div class="ec-bar"><i style="width:${pc}%"></i></div>
+      <ul class="ec-ex">${shown.map((e, i) => { const ok = S.dn[i] || isSkip(e); return `<li class="${ok ? 'ok' : ''}"><span class="ck">${ok ? '✅' : '▫️'}</span>${esc(e.n)}<small>${typ(e) === 'c' ? esc(e.r) + ' min' : `${+e.s || 0} × ${esc(e.r)}`}</small></li>`; }).join('')}</ul>
+      ${S.list.length > MAX ? `<p class="ec-more">+ ${S.list.length - MAX} autre${S.list.length - MAX > 1 ? 's' : ''}</p>` : ''}
+      ${S.nOk === S.list.length ? '<p class="ec-sub" style="margin-top:8px">🎉 Séance terminée, bravo !</p>' : ''}`
+    : `<div class="ec-rest"><span class="e">${S.extra.length ? '✅' : '😴'}</span>${S.extra.length ? 'Activité du jour : ' + esc(S.extra.map(x => x.n.replace(/ \(minuteur\)$/, '')).join(', ')) : 'Jour de repos'}</div>`;
+  return `<section class="ec-col" style="--c:${col}">${head}
+    ${st ? `<span class="ec-streak">🔥 ${st} jour${st > 1 ? 's' : ''} d’affilée</span>` : ''}
+    ${body}
+    ${tomorrow ? `<p class="ec-kcal">Demain : ${tomorrow.list.length ? '🏋️ ' + esc(tomorrow.title) : '😴 repos'}</p>` : ''}</section>`;
+}
+/* ---------- brief du matin ---------- */
+function ecBrief(){
+  const h = new Date().getHours(); if (h < 5 || h >= 11) return '';
+  const di = todayIdx(), who = PROFILES.map(p => ecPerson(p.id)).filter(Boolean);
+  const sp = who.map(P => { const S = ecSession(P, di); return `<b>${esc(ecNom(P.p))}</b> ${S.list.length ? `🏋️ ${esc(S.title)}${S.min ? ` (~${S.min} min)` : ''}` : '😴 repos'}`; }).join(' · ');
+  const meal = m => { const L = ecMealOf(di, m).filter(x => x.por); return L.length ? [...new Set(L.map(x => x.por.r.e + ' ' + x.por.r.n))].join(' / ') : ''; };
+  const dj = meal('dej'), dn = meal('din'), M = EC.meteo, w = M ? EC_WMO(M.daily.weather_code[0]) : null;
+  const long = (() => { const L = [['dej', 'midi'], ['din', 'soir']].map(([m, l]) => { const x = ecMealOf(di, m).find(z => z.por); return x && x.por.r.min >= 25 ? `${l} : ${x.por.r.min} min de préparation` : ''; }).filter(Boolean); return L.length ? ' ⏳ ' + L.join(', ') + '.' : ''; })();
+  return `<div class="ec-brief">☕ <b>Le brief du jour</b>${w ? ` · ${w[0]} ${w[1].toLowerCase()}, ${Math.round(M.daily.temperature_2m_min[0])}° à ${Math.round(M.daily.temperature_2m_max[0])}°` : ''}<br>
+    ${sp}${dj || dn ? `<br>🍽️ ${dj ? 'Midi : ' + esc(dj) : ''}${dj && dn ? ' · ' : ''}${dn ? 'Soir : ' + esc(dn) : ''}.${long}` : ''}</div>`;
+}
+/* ---------- affichage ---------- */
+const ecIsNight = () => { const n = new Date(), h = n.getHours() + n.getMinutes() / 60; return (h >= 22.5 || h < 5.5) && Date.now() > EC.wakeUntil; };
+function ecRender(){
+  if (!EC.on) return;
+  const el = $('#ecran'), n = new Date(), hh = n.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), h = n.getHours();
+  const night = ecIsNight(); el.classList.toggle('nuit', night);
+  const hello = h < 5 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const N = PROFILES.map(p => ecNom(ecPerson(p.id) ? ecPerson(p.id).p : p)), names = N.includes('Moi') ? 'à vous deux' : N.join(' et ');
+  const upd = EC.syncAt ? `Mis à jour à ${new Date(EC.syncAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Chargement des données…';
+  const tmr = (() => { try{ const P = ecPerson(profile.id), di = todayIdx(), dd = h < 6 ? di : di + 1; if (dd > 6) return ''; const L = PROFILES.map(p => ecPerson(p.id)).filter(Boolean).map(Q => { const S = ecSession(Q, dd); return `${esc(ecNom(Q.p))} : ${S.list.length ? esc(S.title) : 'repos'}`; }); return P ? (h < 6 ? 'Aujourd’hui · ' : 'Demain · ') + L.join(' · ') : ''; }catch(e){ return ''; } })();
+  const sc = el.scrollTop;
+  el.innerHTML = `<div class="ec-night" data-ec="wake"><b>${hh}</b><p>${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>${tmr ? `<p style="font-size:16px">${tmr}</p>` : ''}<small>Touchez l’écran pour l’allumer</small></div>
+  <div class="ec-day-v">
+    <div class="ec-top"><div><div class="ec-clock">${hh}</div><div class="ec-date">${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div><div class="ec-hello">${hello} ${esc(names)} 👋</div></div>${ecMeteoHtml()}</div>
+    ${ecBrief()}
+    <div class="ec-grid">${ecPersonCol('user1')}${ecPersonCol('bea')}${ecCookCol()}</div>
+    <div class="ec-bot"><button data-ec="go" data-v="chrono">⏱️ Minuteur</button><button data-ec="go" data-v="nutrition">🛒 Menus et courses</button><button data-ec="go" data-v="seance">📱 Ouvrir l’appli</button><button data-ec="sync">🔄 Actualiser</button></div>
+    <p class="ec-upd">${upd} · ${EC_LIEU.nom} · <button data-ec="quit" style="all:unset;cursor:pointer;text-decoration:underline">Quitter le mode écran</button></p>
+  </div>`;
+  el.scrollTop = sc;
+}
+// relit les données en ligne (les deux profils et les menus du foyer) sans rien enregistrer
+async function ecSync(){
+  if (!EC.on) return;
+  try{ if (db && !pending){ const src = await fetchDoc(profile.id); if (src && Object.keys(src).length) applyDoc(src); } }catch(e){}
+  try{ await loadOther(); }catch(e){}
+  try{ await loadFoyer(); }catch(e){}
+  EC.syncAt = Date.now(); ecRender();
+}
+function ecStart(){
+  EC.on = true; EC.away = false; document.body.classList.add('ecran-on'); document.body.classList.remove('ecran-away');
+  ecRender(); ecMeteo(); syncAwake();
+  if (!other) ecSync(); else { EC.syncAt = Date.now(); ecRender(); }
+  clearInterval(EC.iv); let tick = 0;
+  EC.iv = setInterval(() => { tick++;
+    if (EC.away && Date.now() - EC.lastTouch > 15 * 60000 && !T.run && !G) ecShow();
+    if (!EC.away) ecRender();
+    if (tick % 40 === 0) ecSync();      // toutes les 10 minutes
+    if (tick % 8 === 0) ecMeteo();      // la météo ne se relit que toutes les 30 minutes
+  }, 15000);
+}
+function ecStop(){ EC.on = false; EC.away = false; clearInterval(EC.iv); document.body.classList.remove('ecran-on', 'ecran-away'); ecCloseRec(); syncAwake(); }
+function ecLeave(v){ EC.away = true; ecCloseRec(); document.body.classList.remove('ecran-on'); document.body.classList.add('ecran-away'); if (v === 'nutrition') nutTab = 'jour'; currentDay = todayIdx(); go(v || 'seance'); }
+function ecShow(){ closeSheet(); EC.away = false; document.body.classList.remove('ecran-away'); document.body.classList.add('ecran-on'); ecRender(); syncAwake(); }
+document.addEventListener('pointerdown', () => { EC.lastTouch = Date.now(); }, { passive: true, capture: true });
+document.addEventListener('visibilitychange', () => { if (EC.on && document.visibilityState === 'visible'){ ecRender(); if (Date.now() - EC.syncAt > 2 * 60000) ecSync(); } });
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-ec]'); if (!b) return;
+  const a = b.dataset.ec;
+  if (a === 'wake'){ EC.wakeUntil = Date.now() + 3 * 60000; ecRender(); }
+  else if (a === 'rec') ecOpenRec(b.dataset.d, b.dataset.meal, b.dataset.rid);
+  else if (a === 'recx') ecCloseRec();
+  else if (a === 'timer'){ const m = +b.dataset.min || 10; ecLeave('chrono'); chronoTab = 'repos'; T.total = T.left = m * 60; render(); startTimer(m * 60, 'Cuisson'); }
+  else if (a === 'go') ecLeave(b.dataset.v);
+  else if (a === 'sync'){ toast('🔄 Actualisation…'); ecSync().then(() => toast('✅ À jour')); }
+  else if (a === 'back') ecShow();
+  else if (a === 'quit'){ if (confirm('Quitter le mode écran sur cette tablette ? (Réactivable dans Accueil → ⚙️ Personnaliser l’accueil)')){ safeSet('mp_ecran', false); ecStop(); render(); } }
+});
+
 (async function init(){
   applyTheme(); applyProfileTheme();
   if (lockOf(profile.id)) showLock(profile.id, null, false);
@@ -7348,6 +7637,7 @@ async function seDeconnecter(){
   await load();
   render();
   const on = document.querySelector('.day.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
+  if (ecWanted()) ecStart();
   setTimeout(remCheck, 3000); setTimeout(newsCheck, 2500);
   if (/deploy-preview/.test(location.hostname)) setTimeout(() => toast('⚠️ Version d’aperçu figée : ouvre l’adresse principale de l’appli'), 2500);
 })();
