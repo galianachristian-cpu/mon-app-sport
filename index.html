@@ -1499,6 +1499,13 @@ const NAV_ORDER = ['seance','semaine','nutrition','progres','chrono'];
     document.documentElement.style.setProperty('--sat', (ios && stand ? Math.max(h, 47) : h) + 'px'); };
   if (document.body) fix(); else document.addEventListener('DOMContentLoaded', fix);
   addEventListener('orientationchange', () => setTimeout(fix, 300)); addEventListener('resize', () => setTimeout(fix, 100));
+  // iPhone (appli sur l'écran d'accueil) : après une rotation ou la fermeture du clavier, la hauteur d'écran peut rester périmée
+  // et la barre du bas remonte au milieu. On force l'iPhone à recalculer la taille de l'écran.
+  let vvT = null; const relayout = () => { clearTimeout(vvT); vvT = setTimeout(() => { const m = document.querySelector('meta[name=viewport]'); if (m){ const c = m.content; m.content = c + ', shrink-to-fit=no'; requestAnimationFrame(() => { m.content = c; }); }
+    const y = scrollY; scrollTo(scrollX, y + 1); requestAnimationFrame(() => scrollTo(scrollX, y)); document.documentElement.style.setProperty('--vh', innerHeight * .01 + 'px'); }, 250); };
+  addEventListener('orientationchange', relayout); addEventListener('pageshow', relayout); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') relayout(); });
+  document.addEventListener('focusout', e => { if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) relayout(); });
+  if (window.visualViewport) visualViewport.addEventListener('resize', relayout);
 })();
 const settings = Object.assign({ auto:true, sound:true, vibe:true, preset:90, rappelH:'18:00', voice:true, cd:true, warm:true, cool:true, bar:20, theme:'dark' }, safeGet('mp_settings', {}));
 const $ = s => document.querySelector(s);
@@ -1693,6 +1700,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [116, [['📱', 'Barre du bas bien en place', 'après une rotation du téléphone ou la fermeture du clavier sur iPhone']]],
   [115, [['✏️', 'Renommer son profil sans souci', 'le téléphone ne propose plus de remplir tes informations personnelles']]],
   [114, [['🍽️', 'Béa : recomposition à 1 500 kcal', 'activité sédentaire, 1 500 kcal fixes par jour, 115 g de protéines'], ['🥩', 'Plus de protéines dans les menus', 'plats riches en protéines de préférence, collation plus protéinée les jours de séance'], ['⚖️', 'Alerte si le poids baisse trop vite ou monte', 'même avec des calories choisies à la main'], ['📚', 'D’où viennent les chiffres', 'Nutrition → Coach nutrition → Sources'], ['🍲', 'Plats mélangés : poids de l’assiette', 'chili, curry, gratin… : grammes cuits par assiette pour chacun et part de la marmite']]],
   [113, [['📏', 'Mesures du corps', 'bras, taille, hanches, cuisse avec un schéma pour savoir exactement où mesurer, et l’évolution sur 4 semaines']]],
@@ -7266,7 +7274,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 115;
+const APP_VERSION = 116;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
