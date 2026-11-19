@@ -179,6 +179,11 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     setDone('day0', 1, true); const ok2 = sess.day0 && sess.day0.past && ymd(new Date(sess.day0.start)) === weekDates(curWk())[0];
     setDone('day0', 0, false); const ok3 = !hist.some(x => x.n === 'Crunch' && x.d === weekDates(curWk())[0]);
     data = sv.data; done = sv.done; hist = sv.hist; sess = sv.sess; save = sv.save; go('seance'); return ban && ok1 && ok2 && ok3; }));
+  check('« je ne peux pas faire cet exercice » : remplacé partout et jamais proposé', await p.evaluate(() => { const sv = { data: clone(data), coach, save }; save = () => {}; coach = Object.assign({}, coach, { ban: {} });
+    data = { day0: [exFromLib('Crunch', { abs: 1, s: 3 }), exFromLib('Gainage latéral', { abs: 1, s: 3 })], day1: [exFromLib('Élévations latérales', { s: 3 })], day2: [], day3: [], day4: [], day5: [], day6: [] };
+    banEx('Gainage latéral', true); banEx('Élévations latérales', true);
+    const ok = !Object.values(data).flat().some(e => isBanned(e.n)) && data.day0.length === 2 && data.day1.length === 1 && !canDo('Gainage latéral') && !absFinisher([], 1, 'inter').some(e => e.n === 'Gainage latéral');
+    banEx('Gainage latéral', false); const ok2 = canDo('Gainage latéral'); data = sv.data; coach = sv.coach; save = sv.save; return ok && ok2; }));
   check('code oublié : supprime le code et ouvre le profil', await p.evaluate(async () => { await setPin('bea', '1234'); switchProfile('bea'); await new Promise(r => setTimeout(r, 200)); document.querySelector('#lock [data-lk="forgot"]').click(); document.querySelector('#lock [data-lk="reset"]').click(); await new Promise(r => setTimeout(r, 600)); const ok = !lockOf('bea') && !document.getElementById('lock') && profile.id === 'bea'; await switchProfile(PROFILES[0].id, true); return ok; }));
   await p.waitForTimeout(400); check('aucune erreur pendant ces vérifications', !errs.length, errs.join(' | ')); await p.close();
 

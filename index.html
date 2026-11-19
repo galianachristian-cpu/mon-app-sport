@@ -1368,7 +1368,9 @@ const NO_CASERNE = new Set(['Squat','Front squat','Overhead squat','Soulevé de 
 const HOME = [['Elliptique','🏠 Vélo elliptique']];
 const homeHas = n => !gear || !gear.home || gear.home.includes(n);
 // faisable avec mon matériel ? (caserne + maison) — sans « Mon matériel » activé, tout est permis
-const canDo = n => !gear || !gear.on || ((!NO_CASERNE.has(n)) && (!HOME.some(([h]) => h === n) || homeHas(n)));
+// exercices que la personne ne peut pas faire (douleur, niveau) : jamais proposés, nulle part
+const isBanned = n => !!(typeof coach !== 'undefined' && coach && coach.ban && coach.ban[n]);
+const canDo = n => !isBanned(n) && (!gear || !gear.on || ((!NO_CASERNE.has(n)) && (!HOME.some(([h]) => h === n) || homeHas(n))));
 // remplaçant faisable : même muscle, même type, pas déjà dans la séance
 function altDoable(e, used, avoid){
   const t = typ(e), m = e.m, slot = Object.values(SLOTS).find(v => (v.caserne || []).includes(e.n) || Object.values(v).some(L => L.includes(e.n)));
@@ -1782,7 +1784,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1884,7 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [123, [['📅', 'Valider une séance oubliée', 'reviens sur un jour passé de la semaine et coche : c’est enregistré à la bonne date']]],
+  [123, [['📅', 'Valider une séance oubliée', 'reviens sur un jour passé de la semaine et coche : c’est enregistré à la bonne date'], ['🚫', '« Je ne peux pas faire cet exercice »', 'dans la fiche : remplacé tout de suite et plus jamais proposé (Béa : gainage latéral, pompes)']]],
   [122, [['▶️', 'Séance guidée lancée depuis la tablette', 'pour Moi ou pour Béa, retour à l’écran à la fin'], ['💪', 'Rappel du soir', 'à partir de 19 h si la séance du jour n’est pas faite'], ['⚖️', 'Pesée sur la tablette', 'en deux touchers, avec l’évolution sur 7 jours'], ['👣', 'Recette pas à pas', 'une étape à la fois en très grand, minuteur proposé quand l’étape donne une durée'], ['🍽️', 'Menu de demain', 'affiché le soir sur l’écran'], ['🏃', 'Meilleur créneau pour courir', 'selon la pluie, la température et le vent'], ['⚠️', 'Alertes météo', 'orages, rafales, fortes pluies, neige, gel, forte chaleur']]],
   [121, [['✅', 'Cocher sa séance sur la tablette', 'un exercice ou toute la séance, pour Moi comme pour Béa'], ['🛒', 'Liste de courses sur l’écran', 'à cocher en rangeant les courses, ou pour ajouter un produit'], ['🧊', 'Rappel de décongélation', 'poisson et viande surgelés à sortir la veille ou le matin'], ['⏱️', 'Plusieurs minuteurs de cuisson', 'pâtes, poisson, four… en même temps, avec sonnerie'], ['👫', 'Défis à deux et bilan du week-end', 'sur l’écran de la tablette'], ['📅', 'Agenda Google sur l’écran', 'Accueil → ⚙️ Personnaliser l’accueil → Agenda']]],
   [120, [['🎄', 'Le mode écran se met aux couleurs de Noël', 'en décembre : guirlande lumineuse, neige qui tombe et compte à rebours jusqu’à Noël, puis vœux du Nouvel An']]],
@@ -3703,7 +3705,9 @@ function sheetDetail(i){
     ${techCard(e)}
     <div class="row" style="margin-top:14px"><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.n + ' exécution')}" target="_blank" rel="noopener">▶️ Vidéo</a><button class="btn" data-act="edit" data-i="${i}">✏️ Modifier</button><button class="btn pri" data-act="replace" data-i="${i}">🔁 Remplacer</button>
       <button class="btn" data-act="move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Monter">⬆️</button><button class="btn" data-act="move" data-i="${i}" data-d="1" ${i === n - 1 ? 'disabled' : ''} aria-label="Descendre">⬇️</button>
-      <span class="spacer"></span><button class="btn danger" data-act="del" data-i="${i}">🗑️</button></div>`);
+      <span class="spacer"></span><button class="btn danger" data-act="del" data-i="${i}">🗑️</button></div>
+    <button class="btn block" data-act="ban" data-i="${i}" style="margin-top:10px">🚫 Je ne peux pas faire cet exercice</button>
+    ${Object.keys((coach && coach.ban) || {}).length ? `<p class="muted" style="font-size:12px;margin-top:8px">Jamais proposés pour ${esc(profile.nom)} : ${Object.keys(coach.ban).map(x => `<button class="btn sm" data-x="unban" data-n="${esc(x)}" style="margin:2px">${esc(x)} ✕</button>`).join('')}</p>` : ''}`);
 }
 function sheetEdit(i, preset){
   const k = 'day' + currentDay, e = i >= 0 ? data[k][i] : Object.assign({ n:'', m:'Pectoraux', s:3, r:'10-12', e:'🏋️', desc:'', tips:'', gif:'' }, preset || {});
@@ -5044,7 +5048,7 @@ function exFromLib(name, extra){ const x = LIB_BY[name]; if (!x) return null; co
 // finisher abdos : 2 exercices au poids du corps, différents d'un jour à l'autre et de ceux déjà dans la séance
 const ABS_FIN = ['Crunch', 'Gainage latéral', 'Ciseaux', 'Dead bug', 'Crunch bicyclette', 'Hollow hold', 'Russian twist', 'Planche latérale avec rotation', 'Gainage', 'Mountain climbers'];
 function absFinisher(L, i, niv){
-  const have = new Set(L.map(e => e.n)), C = ABS_FIN.filter(n => LIB_BY[n] && !have.has(n)), out = [];
+  const have = new Set(L.map(e => e.n)), C = ABS_FIN.filter(n => LIB_BY[n] && !have.has(n) && !isBanned(n)), out = [];
   for (let j = 0; out.length < 2 && j < C.length; j++){ const n = C[(i * 2 + j) % C.length]; if (out.some(e => e.n === n)) continue;
     const x = exFromLib(n, { slot: 'abs', vi: j }); if (niv === 'deb') x.s = 2; x.bs = x.s; x.cmp = 0; x.fx = 1; x.abs = 1; out.push(x); }
   return out;
@@ -5337,6 +5341,30 @@ function beaNut1500Once(){
   if (profile.id !== 'bea' || !nut || nut.k1500) return;
   Object.assign(nut, { act: 1.2, obj: 'recompo', kcalMan: 1500, kcalSeance: false, pFix: 115, k1500: today() }); // 115 g ≈ 1,85 g/kg : haut de la fourchette 1,4-2,2 g/kg conseillée en péri-ménopause (ISSN 2023)
   save(); setTimeout(() => toast('🍽️ Objectif : recomposition, 1 500 kcal par jour'), 2200);
+}
+// remplace partout dans le programme les exercices interdits (même muscle / même rôle), ou les retire s'il n'y a rien d'équivalent
+function replaceBanned(){
+  let n = 0;
+  Object.keys(data).forEach(k => { const L = data[k]; if (!Array.isArray(L)) return; const used = new Set(L.filter(Boolean).map(e => e.n));
+    data[k] = L.map(e => { if (!e || !isBanned(e.n)) return e;
+      let to = null;
+      if (e.tab && TAB_POOL[e.tabP]) to = TAB_POOL[e.tabP].L.find(x => LIB_BY[x] && canDo(x) && DF_GIF[x] && !used.has(x));
+      else if (e.abs || e.m === 'Abdos') to = ABS_FIN.find(x => LIB_BY[x] && canDo(x) && !used.has(x));
+      else to = altDoable(e, used);
+      n++; if (!to) return null; used.add(to);
+      if (e.tab) return tabEx(to, e.tabP, e.tabB);
+      const x = exFromLib(to, {}); ['s', 'bs', 'ph', 'abs', 'fx', 'fin', 'cmp', 'slot', 'walk'].forEach(f => { if (e[f] != null) x[f] = e[f]; }); if (typ(x) === typ(e) && /chaque/.test(e.r) === /chaque/.test(x.r)) x.r = e.r; return x; }).filter(Boolean); });
+  return n;
+}
+function banEx(name, on){
+  const B = Object.assign({}, (coach && coach.ban) || {}); if (on) B[name] = today(); else delete B[name];
+  coach = Object.assign({}, coach, { ban: B }); const n = on ? replaceBanned() : 0; save(); return n;
+}
+// Béa ne peut pas faire le gainage latéral (ni sa version avec rotation) ni les pompes : jamais proposés (une fois)
+function beaBanOnce(){
+  if (profile.id !== 'bea' || (coach && coach.beaBan)) return;
+  const B = Object.assign({}, (coach && coach.ban) || {}); ['Gainage latéral', 'Planche latérale avec rotation', ...POMPES].forEach(x => { B[x] = today(); });
+  coach = Object.assign({}, coach, { ban: B, beaBan: today() }); replaceBanned(); save();
 }
 // Béa : abdos ajoutés une fois à la fin de chaque séance de musculation de son programme actuel
 // Béa : vérifié à chaque ouverture (les abdos reviennent s'ils ont disparu : retour à un ancien programme, nouveau programme…), sauf si elle les a désactivés dans le coach
@@ -6888,6 +6916,7 @@ function evoAct(a, b){
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
     case 'shopgo': shopOpen(); break;
     case 'p12bilan': sheetP12Bilan(); break;
+    case 'unban': banEx(b.dataset.n, false); closeSheet(); render(); toast(`↩️ ${b.dataset.n} peut de nouveau être proposé`); break;
     case 'sources': sheetSources(); break;
     case 'p12med': if (isP12()){ prog.p12.med = Object.assign({}, prog.p12.med, { [b.dataset.k]: today() }); save(); render(); toast('🩺 Noté, merci !'); } break;
     case 'shopclose': shopClose(); break;
@@ -7274,6 +7303,7 @@ document.addEventListener('click', e => {
     case 'lib': sheetLib(); break;
     case 'replace': sheetLib(i); break;
     case 'edit': sheetEdit(i); break;
+    case 'ban': { const nm = data[k][i].n; sheetConfirm(`« ${esc(nm)} » ne sera plus jamais proposé à ${esc(profile.nom)}, et il est remplacé tout de suite par un exercice équivalent. Tu pourras l'annuler depuis la fiche d'un exercice.`, 'Ne plus le proposer', () => { banEx(nm, true); render(); toast(`🚫 ${nm} : remplacé et plus jamais proposé`); }); break; }
     case 'unskip': { const e = data[k][i]; delete e.skipD; delete e.cutD; render(); save(); break; }
     case 'del': { const e = data[k][i], dd = weekDates(curWk())[currentDay];
       openSheet(`<h2>« ${esc(e.n)} »</h2><p class="muted" style="font-size:13.5px;margin-bottom:12px">Tu ne fais pas cet exercice ${currentDay === todayIdx() ? 'aujourd’hui' : 'ce jour-là'}, ou tu veux l’enlever de ton programme pour de bon ?</p>
