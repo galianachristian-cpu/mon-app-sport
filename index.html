@@ -278,6 +278,7 @@ h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--m
 .wd.goal{background:color-mix(in srgb,#34d399 12%,transparent);color:#34d399}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 auto}
+#app .rsteps,#sheet .rsteps{padding-left:22px;margin:4px 0 0;line-height:1.5}#sheet .rsteps li{margin-bottom:6px}#sheet .ring-l{line-height:1.8}
 #savePill.tap{cursor:pointer;border-color:#f59e0b;color:#fbbf24}
 @media(max-width:430px){#saveText{display:none}.pill{padding:9px}}
 .heat .h{aspect-ratio:1;border-radius:6px;background:var(--bg2);border:1px solid var(--line)}
@@ -1896,6 +1897,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [135, [['🍐', 'Desserts variés', 'le midi un fruit de saison qui change chaque jour (clémentine, kiwi, poire…), le soir 1 carré de chocolat noir, une compote ou un fruit, toujours avec ton laitage'], ['🇫🇷', '14 classiques français', 'blanquette, filet mignon purée, soupe à l’oignon, galettes de sarrasin, endives au jambon, poulet basquaise, tartine avocat-œuf…'], ['📖', 'Fiche recette plus claire', 'temps de préparation et de cuisson, une icône par ingrédient, étapes numérotées']]],
   [134, [['🍔', '19 nouveaux plats', 'kebab, nuggets, fish & chips au four, lasagnes, carbonara, tartiflette, cordon bleu, fajitas, poke bowl… version maison et légère, et des recettes express en 10-15 min'], ['🍫', '13 desserts et goûters', 'mousse au chocolat, mug cake, crêpes, crumble, cookies, riz au lait, yaourt glacé… riches en protéines, peu sucrés']]],
   [133, [['🔐', 'Appareil non connecté : se connecter en un toucher', 'si l’iPad ou un téléphone affiche « Non connecté », touche-le en haut pour retrouver tes séances, tes repas et tes menus']]],
   [132, [['📅', 'Agenda sur la tablette : message clair', 'si l’agenda ne se charge pas, la tablette dit pourquoi et propose « Réessayer »']]],
@@ -3972,15 +3974,27 @@ const FOODS = Object.fromEntries([
   ['amande','Amandes',610,21,8,52,'epicerie','noix'],
   ['miel','Miel',320,0.3,80,0,'epicerie','sucre'],
   ['soja','Sauce soja',60,6,6,0,'epicerie','sauce'],
-  ['cacao','Cacao en poudre non sucré',360,20,14,11,'epicerie','cacao']
+  ['cacao','Cacao en poudre non sucré',360,20,14,11,'epicerie','cacao'],
+  ['veau','Veau (sauté ou escalope)',120,21,0,4,'viande','prot'],
+  ['porc','Filet mignon de porc',120,22,0,3.5,'viande','prot'],
+  ['sarrasin','Farine de sarrasin',340,13,68,3,'epicerie','fec'],
+  ['chevre','Fromage de chèvre (bûche)',300,18,2,25,'cremerie','fromage'],
+  ['avocat','Avocats',160,2,2,15,'fruits','avocat',{u:'avocat',g:150}],
+  ['poireau','Poireaux',30,1.5,5,0.3,'legumes','legume'],
+  ['endive','Endives',17,1,3,0.1,'legumes','legume'],
+  ['kiwi','Kiwis',61,1.1,10,0.5,'fruits','fruit',{u:'kiwi',g:80}],
+  ['clementine','Clémentines',47,0.9,10,0.2,'fruits','fruit',{u:'clémentine',g:60}],
+  ['poire','Poires',57,0.4,12,0.1,'fruits','fruit',{u:'poire',g:150}],
+  ['compote','Compote sans sucres ajoutés',65,0.3,14,0.2,'epicerie','fruit',{u:'compote',g:100}],
+  ['chocolat','Chocolat noir 70 %',570,8,33,42,'epicerie','choco',{u:'carré',g:10}]
 ].map(([id, n, k, p, g, l, ray, grp, unit]) => [id, { id, n, k, p, g, l, ray, grp, unit }]));
 // poids cuit ≈ poids cru × facteur (les quantités des menus sont pesées crues)
-const CUIT = { riz:2.6, pates:2.3, semoule:2.3, lentille:2.5, poulet:.75, dinde:.75, boeuf:.75, colin:.8, saumon:.8 };
+const CUIT = { veau:.75, porc:.75, riz:2.6, pates:2.3, semoule:2.3, lentille:2.5, poulet:.75, dinde:.75, boeuf:.75, colin:.8, saumon:.8 };
 const cuitG = (f, g) => Math.round(g * CUIT[f] / 10) * 10;
 /* plats où tout cuit ensemble : poids de l'assiette une fois cuit (pain et salade servis à côté non comptés) */
-const MIX = new Set(['lasagnes-legeres', 'carbonara-legere', 'tartiflette-legere', 'parmentier-colin', 'shakshuka', 'quiche-jambon-courgette', 'bowl-semoule-pc', 'pates-poulet-brocoli', 'bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
+const MIX = new Set(['soupe-oignon', 'coquillettes-risotto', 'poelee-pc-epinards', 'lasagnes-legeres', 'carbonara-legere', 'tartiflette-legere', 'parmentier-colin', 'shakshuka', 'quiche-jambon-courgette', 'bowl-semoule-pc', 'pates-poulet-brocoli', 'bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
 const MIX_SIDE = new Set(['pain', 'salade']);
-const MIXC = Object.assign({}, CUIT, { champignon: .6, courgette: .85, epinard: .8, poivron: .85, oignon: .8, carotte: .9, brocoli: .9, haricotvert: .9, poelee: .9, chou: .9, patate: .9, pdt: .95, lait: .85 });
+const MIXC = Object.assign({}, CUIT, { champignon: .6, courgette: .85, epinard: .8, poivron: .85, oignon: .8, carotte: .9, brocoli: .9, haricotvert: .9, poelee: .9, chou: .9, patate: .9, pdt: .95, lait: .85, poireau: .8, endive: .7 });
 const isMix = por => !!(por && por.r && MIX.has(por.r.id));
 /* hors de l'assiette : pain, salade, complément à part et dessert (laitage + fruit) */
 const offPlate = (por, f) => MIX_SIDE.has(f) || f === por.side || f === por.dsf;
@@ -4002,7 +4016,9 @@ const SUBS = {
   banane:['pomme','orange','fruitrouge'], pomme:['banane','orange','fruitrouge'], orange:['pomme','banane'], fruitrouge:['pomme','banane'],
   fblanc:['skyr','yaourt'], skyr:['fblanc','yaourt'], yaourt:['skyr','fblanc'], lait:['yaourt'],
   emmental:['mozza','feta'], mozza:['emmental','feta'], feta:['mozza','emmental'],
-  cacahuete:['amande'], amande:['cacahuete'], miel:[], huile:[], soja:[], cacao:[], concassee:['tomate']
+  cacahuete:['amande'], amande:['cacahuete'], miel:[], huile:[], soja:[], cacao:[], concassee:['tomate'],
+  veau:['dinde','poulet'], porc:['dinde','poulet'], sarrasin:['pain'], chevre:['feta','mozza'], avocat:[], poireau:['courgette','haricotvert'], endive:['salade'],
+  kiwi:['orange','pomme'], clementine:['orange','pomme'], poire:['pomme','banane'], compote:['pomme'], chocolat:[]
 };
 
 /* RECETTES — portions de base pour une personne (g ; unités pour les œufs et les fruits) */
@@ -4126,6 +4142,22 @@ const RECIPES = [
   R('cesar-legere','Salade César légère','plat',15,[['poulet',150],['salade',100],['tomate',80],['pain',50],['emmental',15],['fblanc',40]],'Griller le poulet en lanières. Toaster le pain en croûtons. Sauce : fromage blanc, moutarde, citron, ail. Mélanger la salade, la tomate, le poulet, les croûtons et l’emmental avec la sauce.','🥗'),
   R('bowl-semoule-pc','Bowl express semoule, pois chiches & feta','plat',10,[['semoule',70],['poischiche',120],['tomate',100],['concombre',100],['feta',30],['huile',5]],'Gonfler la semoule 5 min dans l’eau bouillante salée. Mélanger avec les pois chiches rincés, la tomate et le concombre en dés, la feta émiettée, l’huile, du citron et de la menthe.','🥙'),
   R('pates-poulet-brocoli','Pâtes poulet-brocoli express','plat',15,[['pates',80],['poulet',130],['brocoli',200],['fblanc',40],['emmental',10]],'Cuire les pâtes avec le brocoli dans la même eau. Dorer le poulet en dés. Égoutter, mélanger avec le poulet, le fromage blanc et l’emmental, poivrer.','🍝'),
+  // Ajouts (v135) : classiques français, version légère
+  R('blanquette-legere','Blanquette de veau légère & riz','plat',50,[['veau',150],['carotte',120],['champignon',80],['oignon',40],['fblanc',50],['riz',70]],'Faire revenir le veau en morceaux, couvrir d’eau avec un bouquet garni, l’oignon et les carottes, mijoter 40 min. Ajouter les champignons 10 min avant la fin. Hors du feu, lier la sauce avec le fromage blanc et un jus de citron. Servir avec le riz.','🍲'),
+  R('filet-mignon-puree','Filet mignon, purée & carottes','plat',35,[['porc',150],['pdt',250],['lait',60],['carotte',150]],'Dorer le filet mignon sur toutes les faces, finir 20 min au four à 180 °C. Cuire les pommes de terre et les carottes à l’eau. Écraser les pommes de terre avec le lait chaud, sel, poivre, muscade.','🥩'),
+  R('soupe-oignon','Soupe à l’oignon gratinée & œufs pochés','plat',40,[['oignon',250],['pain',60],['emmental',25],['oeuf',120]],'Faire fondre les oignons émincés 15 min à feu doux. Couvrir de bouillon, cuire 15 min. Pocher les œufs 3 min dans la soupe. Verser dans des bols, poser le pain grillé, parsemer d’emmental, gratiner 5 min.','🧅'),
+  R('galettes-sarrasin','Galettes de sarrasin complètes & poireaux','plat',25,[['sarrasin',60],['oeuf',60],['jambon',60],['emmental',20],['poireau',150],['salade',50]],'Pâte : farine de sarrasin, eau, sel, jusqu’à une pâte fluide. Faire fondre les poireaux émincés 10 min. Cuire une galette, garnir de poireaux, jambon, emmental, casser l’œuf au centre, replier les bords, couvrir 3 min.','🥞'),
+  R('coquillettes-risotto','Coquillettes façon risotto jambon-champignons','plat',20,[['pates',80],['jambon',80],['champignon',120],['oignon',30],['lait',100],['emmental',20]],'Faire revenir l’oignon et les champignons. Ajouter les coquillettes crues, couvrir d’eau et cuire 12 min en remuant comme un risotto. En fin de cuisson, ajouter le lait, le jambon en dés et l’emmental.','🍝'),
+  R('tartines-chevre-endives','Tartines chèvre-miel, jambon & salade d’endives','plat',15,[['pain',100],['chevre',50],['jambon',60],['miel',10],['endive',150],['amande',10]],'Garnir les tranches de pain de jambon et de rondelles de chèvre, un filet de miel, griller 8 min au four. Servir avec les endives émincées, les amandes concassées et une vinaigrette.','🧀'),
+  R('gratin-poireaux-jambon','Gratin de poireaux au jambon & riz','plat',35,[['poireau',300],['jambon',100],['lait',100],['emmental',20],['riz',60]],'Cuire les poireaux en tronçons 10 min. Les enrouler dans le jambon, les poser dans un plat, verser le lait, parsemer d’emmental, gratiner 20 min à 200 °C. Servir avec le riz.','🥬'),
+  R('endives-jambon','Endives au jambon gratinées & pommes de terre','plat',40,[['endive',300],['jambon',100],['lait',100],['emmental',20],['pdt',200]],'Cuire les endives 15 min à l’eau, bien les égoutter. Les rouler dans le jambon, couvrir de lait et d’emmental, gratiner 20 min. Servir avec les pommes de terre vapeur.','🥬'),
+  R('saumon-lentilles-moutarde','Saumon, lentilles & haricots verts, sauce moutarde','plat',30,[['saumon',130],['lentille',60],['haricotvert',150],['fblanc',40]],'Cuire les lentilles 20 min et les haricots verts à la vapeur. Poêler le saumon 3 min par face. Sauce : fromage blanc, moutarde à l’ancienne, citron, poivre.','🐟'),
+  R('poulet-amandes','Poulet aux amandes, brocoli & riz','plat',20,[['poulet',150],['amande',15],['brocoli',200],['riz',70],['soja',10]],'Cuire le riz et le brocoli. Faire sauter le poulet en dés avec les amandes effilées, ajouter la sauce soja et un peu de gingembre.','🍗'),
+  R('poelee-pc-epinards','Poêlée de pois chiches aux épinards & œufs','plat',20,[['poischiche',200],['epinard',200],['oeuf',120],['oignon',30],['concassee',100],['pain',50]],'Faire revenir l’oignon, ajouter les pois chiches, les épinards et la tomate, cumin, 10 min. Creuser deux puits, y casser les œufs, couvrir 5 min. Servir avec le pain.','🥘'),
+  R('poulet-basquaise','Poulet basquaise & riz','plat',35,[['poulet',150],['poivron',150],['concassee',150],['oignon',40],['riz',70],['huile',5]],'Dorer le poulet. Ajouter l’oignon et les poivrons en lanières, puis la tomate et le piment d’Espelette, mijoter 20 min. Servir avec le riz.','🍗'),
+  // Ajouts (v135) : petits-déjeuners
+  R('tartine-avocat-oeuf','Tartine avocat & œufs au plat','pdj',10,[['pain',70],['avocat',75],['oeuf',120]],'Griller le pain, écraser l’avocat dessus avec citron, sel et poivre. Cuire les œufs au plat et les poser sur les tartines.','🥑'),
+  R('porridge-poire-choco','Porridge poire, chocolat & amandes','pdj',8,[['avoine',50],['lait',200],['poire',150],['chocolat',10],['amande',10]],'Cuire l’avoine dans le lait 4 min en remuant. Ajouter la poire en dés, le chocolat râpé et les amandes concassées.','🥣'),
   // Ajouts (v134) : desserts et goûters
   R('mousse-choco-fb','Mousse au chocolat au fromage blanc','col',3,[['fblanc',200],['cacao',10],['miel',10]],'Fouetter le fromage blanc avec le cacao et le miel jusqu’à ce que ce soit bien lisse. 10 min au frais si possible.','🍫'),
   R('mug-cake','Mug cake chocolat au micro-ondes','col',5,[['avoine',30],['oeuf',60],['cacao',10],['fblanc',50],['miel',10]],'Mixer l’avoine en farine. Mélanger tout dans un grand mug, cuire 1 min 30 au micro-ondes. Laisser tiédir 2 min.','🧁'),
@@ -4371,15 +4403,25 @@ function portion(rid, pid, meal, di, wk){
     if (lg && ing.filter(([f]) => FOODS[f].grp === 'legume').reduce((a, [, g]) => a + g, 0) < 250) ing.push([lg, 200]);
   }
   // dessert (déjeuner, dîner) : fromage blanc ou skyr + un fruit, pris sur la part du repas
-  const dess = dessertOn(c.nut) && (meal === 'dej' || meal === 'din') ? { l: ['fblanc', 'skyr'].find(f => !excl.includes(f) && !ing.some(([x]) => x === f)), f: ['pomme', 'orange', 'fruitrouge', 'banane'].find(f => !excl.includes(f) && !ing.some(([x]) => x === f)) } : null;
-  const dessK = dess ? macrosOf([dess.l ? [dess.l, roundG(dess.l, 125)] : null, dess.f ? [dess.f, roundG(dess.f, 120)] : null].filter(Boolean)).k : 0;
+  /* dessert (déjeuner, dîner) : laitage pour les protéines + le midi un fruit de saison qui change chaque jour,
+     le soir en alternance 1 carré de chocolat noir, une compote ou un fruit */
+  let dess = null;
+  if (dessertOn(c.nut) && (meal === 'dej' || meal === 'din')){
+    const used = f => !FOODS[f] || excl.includes(f) || ing.some(([x]) => x === f);
+    let mo = new Date().getMonth() + 1; try{ mo = +String(weekDates(wk)[di]).slice(5, 7) || mo; }catch(e){}
+    const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)));
+    const fruit = FR.length ? FR[(di + (meal === 'din' ? 3 : 0)) % FR.length] : null, k = di % 3;
+    const f = meal === 'din' && k === 0 && !used('chocolat') ? 'chocolat' : meal === 'din' && k === 1 && !used('compote') ? 'compote' : fruit;
+    dess = { l: ['fblanc', 'skyr'].find(x => !used(x)), f, fg: f && FOODS[f].unit ? FOODS[f].unit.g * (f === 'clementine' ? 2 : 1) : 120 };
+  }
+  const dessK = dess ? macrosOf([dess.l ? [dess.l, roundG(dess.l, 125)] : null, dess.f ? [dess.f, roundG(dess.f, dess.fg)] : null].filter(Boolean)).k : 0;
   let factor = 1, t = null;
   if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, (t.kcal * share - dessK) / Math.max(1, kcalOf(ing)))); }
   const merged = {}; ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g * factor; });
   let side = null;
   if (t) side = macroFix(merged, { k: t.kcal * share - dessK, p: t.p * share, l: t.l * share }, excl, !dess, meal);
   Object.keys(merged).forEach(f => { if (MAXG[f]) merged[f] = Math.min(merged[f], MAXG[f]); });
-  if (dess){ if (dess.l){ merged[dess.l] = roundG(dess.l, 125); side = dess.l; } if (dess.f) merged[dess.f] = roundG(dess.f, 120); }
+  if (dess){ if (dess.l){ merged[dess.l] = roundG(dess.l, 125); side = dess.l; } if (dess.f) merged[dess.f] = roundG(dess.f, dess.fg); }
   ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
   return { r, ing, m: macrosOf(ing), subs, side, dsf: dess && dess.f, pT: t ? t.p * share : null };
 }
@@ -4408,7 +4450,7 @@ function pickW(list, rnd, ctx){
 // valeurs d'une recette pour sa portion de base
 const recMac = r => r.ing.reduce((a, [f, g]) => FOODS[f] ? { k: a.k + FOODS[f].k * g / 100, p: a.p + FOODS[f].p * g / 100, g: a.g + FOODS[f].g * g / 100 } : a, { k: 0, p: 0, g: 0 });
 /* ---------- PRODUITS DE SAISON (France) : fruits et légumes frais, mois où on les trouve en saison ; surgelés, conserves et produits de garde toute l'année ---------- */
-const SEASON = { courgette: [6, 7, 8, 9], tomate: [6, 7, 8, 9], poivron: [7, 8, 9, 10], concombre: [5, 6, 7, 8, 9], chou: [9, 10, 11, 12, 1, 2, 3, 4], patate: [9, 10, 11, 12, 1, 2, 3], pomme: [8, 9, 10, 11, 12, 1, 2, 3, 4, 5], orange: [11, 12, 1, 2, 3, 4] };
+const SEASON = { courgette: [6, 7, 8, 9], tomate: [6, 7, 8, 9], poivron: [7, 8, 9, 10], concombre: [5, 6, 7, 8, 9], chou: [9, 10, 11, 12, 1, 2, 3, 4], patate: [9, 10, 11, 12, 1, 2, 3], pomme: [8, 9, 10, 11, 12, 1, 2, 3, 4, 5], orange: [11, 12, 1, 2, 3, 4], kiwi: [11, 12, 1, 2, 3, 4], clementine: [11, 12, 1, 2], poire: [8, 9, 10, 11, 12, 1], poireau: [9, 10, 11, 12, 1, 2, 3, 4], endive: [10, 11, 12, 1, 2, 3, 4] };
 const monthOfWk = wk => new Date(wkDates(wk)[3] + 'T12:00').getMonth() + 1;
 const seasonOk = (r, m) => r.ing.every(([f]) => !SEASON[f] || SEASON[f].includes(m));
 const seasonal = (L, m) => { const S = L.filter(r => seasonOk(r, m)); return S.length ? S : L; };
@@ -4454,7 +4496,7 @@ function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(
 /* ============================================================
    BUDGET — prix moyens en supermarché (€ par kg, poids acheté), modifiables avec les prix de son magasin
    ============================================================ */
-const PRICE = { cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
+const PRICE = { veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
   lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
   concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
 const STORES = { moyen:['Prix moyens',1], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
@@ -4682,17 +4724,26 @@ function mealCard(x, st, date, ox){
 function bindJour(){
   document.querySelectorAll('[data-nday]').forEach(b => b.onclick = () => { nutDay = +b.dataset.nday; viewNutrition(); });
 }
+/* fiche recette : une icône par ingrédient, temps de préparation / cuisson, étapes numérotées */
+const FOOD_ICO = { oeuf:'🥚', poulet:'🍗', dinde:'🍗', boeuf:'🥩', veau:'🥩', porc:'🥩', jambon:'🥓', thon:'🐟', sardine:'🐟', colin:'🐟', saumon:'🐟', tofu:'🧈', riz:'🍚', pates:'🍝', semoule:'🌾', pdt:'🥔', patate:'🍠', pain:'🍞', tortilla:'🫓', galette:'🍘', avoine:'🌾', sarrasin:'🌾', lentille:'🫘', poischiche:'🫘', haricotrouge:'🫘', brocoli:'🥦', haricotvert:'🫛', poelee:'🥗', epinard:'🥬', courgette:'🥒', carotte:'🥕', tomate:'🍅', poivron:'🫑', champignon:'🍄', chou:'🥦', concombre:'🥒', salade:'🥬', endive:'🥬', poireau:'🥬', oignon:'🧅', concassee:'🥫', banane:'🍌', pomme:'🍎', orange:'🍊', clementine:'🍊', kiwi:'🥝', poire:'🍐', fruitrouge:'🍓', compote:'🍏', avocat:'🥑', fblanc:'🥛', skyr:'🥛', yaourt:'🥛', lait:'🥛', emmental:'🧀', mozza:'🧀', feta:'🧀', chevre:'🧀', huile:'🫒', cacahuete:'🥜', amande:'🌰', miel:'🍯', soja:'🥢', cacao:'🍫', chocolat:'🍫' };
+const foodIco = f => FOOD_ICO[f] || '•';
+function recTimes(r){
+  const M = [...String(r.steps || '').matchAll(/(\d+)\s*(?:à\s*(\d+)\s*)?min\b/g)].map(m => +(m[2] || m[1])), sum = M.reduce((a, b) => a + b, 0);
+  const cook = r.min > 5 ? Math.min(sum, r.min - 5) : 0; return { prep: r.min - cook, cook };
+}
+const recTimeCell = r => { const t = recTimes(r); return `<div><b>${r.min} min</b><small>${t.cook ? `prépa ${t.prep} · cuisson ${t.cook}` : 'au total'}</small></div>`; };
+const recSteps = r => `<ol class="rsteps">${ecStepsOf(r.steps).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
 function sheetRecette(meal){
   const wk = curWk(), rid = ridOf(planOf(wk), nutDay, meal, profile.id), p = portion(rid, profile.id, meal, nutDay, wk);
   // l'autre profil : même plat → les deux portions côte à côte ; sinon une ligne pour dire ce qu'il mange
   const op = otherProfile(); let ox = null; try{ ox = op ? Object.assign(dayPortions(op.id, nutDay, wk).find(z => z.meal === meal) || {}, { op }) : null; }catch(e){ ox = null; }
   const duo = sameDish({ por: p, meal, away: false }, ox), B = duo ? ox.por : null;
   openSheet(`<h2>${p.r.e} ${esc(p.r.n)}</h2>
-    ${duo ? `<div class="three"><div><b>${kc(p.m.k)} · ${kc(B.m.k)}</b><small>kcal ${esc(profile.nom)} · ${esc(op.nom)}</small></div><div><b>${Math.round(p.m.p)} · ${Math.round(B.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
-    <div class="box">${duoTable({ por: p, meal }, ox, true)}</div>` : `<div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div><div><b>${p.r.min} min</b><small>Préparation</small></div></div>
+    ${duo ? `<div class="three"><div><b>${kc(p.m.k)} · ${kc(B.m.k)}</b><small>kcal ${esc(profile.nom)} · ${esc(op.nom)}</small></div><div><b>${Math.round(p.m.p)} · ${Math.round(B.m.p)} g</b><small>Protéines</small></div>${recTimeCell(p.r)}</div>
+    <div class="box">${duoTable({ por: p, meal }, ox, true)}</div>` : `<div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div>${recTimeCell(p.r)}</div>
     ${ox && op ? (ox.away ? `<p class="duo-por" style="--c2:${op.a1}">🧳 <b>${esc(op.nom)}</b> n’est pas à la maison : seule ta portion est à préparer.</p>` : ox.por ? `<p class="duo-por" style="--c2:${op.a1}">🍽️ <b>${esc(op.nom)}</b> mange autre chose : ${ox.por.r.e} ${esc(ox.por.r.n)}</p>` : '') : ''}`}
-    ${duo ? '' : `<div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p>${p.ing.map(([f, g]) => `• ${qty(f, g)} ${esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : f === p.dsf ? ' (en dessert)' : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>`}
-    <div class="box"><h4>👩‍🍳 Préparation</h4><p>${esc(p.r.steps)}</p></div>
+    ${duo ? '' : `<div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p class="ring-l">${p.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : f === p.dsf ? ' (en dessert)' : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>`}
+    <div class="box"><h4>👩‍🍳 Préparation</h4>${recSteps(p.r)}</div>
     <div class="row" style="margin:4px 0 10px"><button class="btn sm ${favOf()[p.r.id] ? 'pri' : ''}" data-x="fav" data-rid="${p.r.id}" data-meal="${meal}">${favOf()[p.r.id] ? '❤️ Favori' : '🤍 J’adore'}</button><button class="btn sm ${banOf()[p.r.id] ? 'danger' : ''}" data-x="ban" data-rid="${p.r.id}" data-meal="${meal}">${banOf()[p.r.id] ? '👎 Écarté (annuler)' : '👎 Ne plus proposer'}</button></div>
     <p class="muted" style="font-size:12px">${duo ? 'Ta portion : g' : 'G'}lucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
 }
@@ -7628,7 +7679,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 134;
+const APP_VERSION = 135;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
