@@ -1886,6 +1886,8 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [127, [['⏭️', '« Pas ce jour-là » sur un jour passé', 'un exercice mis de côté sur un jour déjà passé compte enfin comme réglé : 1/1 au lieu de 1/2']]],
+  [126, [['🏋️', 'Liste des exercices du jour', 'touche « 7 exercices » en haut de la séance : la liste complète s’ouvre, avec ce qui est déjà fait']]],
   [125, [['🗑️', 'Retirer un exercice plus facilement', 'ouvre l’exercice dans la séance : bouton « 🗑️ Retirer » en bas. Un jour vidé devient un jour de repos']]],
   [124, [['📷', 'Importer sa pesée Feelfit', 'Progrès → Corps : une capture de « Détails des indicateurs » remplit poids, graisse, muscle, viscérale, métabolisme et eau']]],
   [123, [['📅', 'Valider une séance oubliée', 'reviens sur un jour passé de la semaine et coche : c’est enregistré à la bonne date'], ['🚫', '« Je ne peux pas faire cet exercice »', 'dans la fiche : remplacé tout de suite et plus jamais proposé (Béa : gainage latéral, pompes)']]],
@@ -2230,7 +2232,7 @@ function viewSeance(){
     <div style="flex:1;min-width:0;position:relative;z-index:1">
       <h2>${DAY_NAMES[currentDay]}${currentDay === todayIdx() ? ' <span class="tday">aujourd’hui</span>' : ''}</h2>
       <p>${esc(dayTitle(currentDay))}</p>
-      <div class="meta">${hiitD ? '<span class="chip">⚡ HIIT guidé</span>' : `<span class="chip">🏋️ ${list.length} exercices</span>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}`}<span class="chip">⏱️ ~${mins} min</span>${prog && cycleIdx(prog) === 3 ? '<span class="chip">🪶 Décharge</span>' : ''}${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end && nDone < list.length ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
+      <div class="meta">${hiitD ? '<span class="chip">⚡ HIIT guidé</span>' : `<button class="chip" data-act="daylist" aria-label="Voir la liste des exercices">🏋️ ${list.length} exercice${list.length > 1 ? 's' : ''} ›</button>${totalSets ? `<span class="chip">🔁 ${totalSets} séries</span>` : ''}`}<span class="chip">⏱️ ~${mins} min</span>${prog && cycleIdx(prog) === 3 ? '<span class="chip">🪶 Décharge</span>' : ''}${nutReady(nut) ? `<button class="chip" data-go2="nutrition" data-nd="${currentDay}">🍽️ ${kc(targets(ctxOf(profile.id), currentDay).kcal)} kcal</button>` : ''}${s && s.start && !s.end && nDone < list.length ? `<span class="chip live">🟢 En cours · <span id="elapsed">${elapsed(s.start)}</span></span>` : ''}</div>
       ${muscles.length ? `<div class="meta">${muscles.map(m => `<span class="mus" style="--c:${mcol(m)}">${esc(m)}</span>`).join('')}</div>` : ''}
     </div>
     <div class="ring">${ring(list.length ? nDone / list.length : 0, 86, 9, 'r1')}<div class="v">${nDone}/${list.length}<small>${nDone === list.length && list.length ? 'Bravo ! 🎉' : 'faits'}</small></div></div>
@@ -5863,7 +5865,7 @@ const isTodayView = () => currentDay === todayIdx();
 const lightOn = () => !!coach && coach.light === curWk();
 const LIGHT = { id:'light', ico:'🪶', t:'Semaine allégée', d:'1 série en moins et charges −10 % toute la semaine : tu récupères pour repartir plus fort.', load:.9, dS:-1, noPlyo:true, avg:3 };
 const modeToday = () => { const f = isTodayView() ? formeMode(formeOf()) : null; return !lightOn() || (f && f.id === 'leger') ? f : LIGHT; };
-const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay] && e.skipD > today()));
+const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay]));
 function effS(e){ const n = e.cutS && e.cutS.d === today() ? e.cutS.n : +e.s || 0, m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob' || e.tab) return n; return Math.max(1, n + m.dS); }
 // durée estimée d'une liste d'exercices (séries, effort ~45 s, repos ; super-séries : repos court après le 1er exercice)
 function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
@@ -5873,7 +5875,7 @@ function restoreTemp(){
   const d = today();
   Object.values(data).forEach(L => (L || []).forEach((e, i) => {
     if (e.orig && e.tmpD !== d) L[i] = e.orig;
-    else if (e.skipD && e.skipD < d) delete e.skipD;
+    else if (e.skipD && e.skipD < weekDates(curWk())[0]) delete e.skipD; /* garde les « pas ce jour-là » des jours passés de la semaine */
   }));
 }
 function applyPain(pains){
@@ -7344,6 +7346,9 @@ document.addEventListener('click', e => {
   switch (a){
     case 'close': closeSheet(); break;
     case 'detail': sheetDetail(i); break;
+    case 'daylist': { const L = data[k] || [], D = done[k] || [];
+      openSheet(`<h2>🏋️ ${esc(DAY_NAMES[currentDay])} · ${esc(dayTitle(currentDay))}</h2><p class="muted" style="font-size:13px;margin-bottom:10px">${L.length} exercice${L.length > 1 ? 's' : ''} · ${D.filter(Boolean).length} fait${D.filter(Boolean).length > 1 ? 's' : ''} · touche un exercice pour voir sa fiche</p>
+        <div class="tips-list">${L.map((e, j) => `<button class="rec" data-act="detail" data-i="${j}" style="width:100%;text-align:left;display:flex;gap:10px;align-items:center;background:none;border:0;border-bottom:1px solid var(--line,#1e293b);padding:8px 0;color:inherit;font:inherit;cursor:pointer"><span style="font-size:18px;width:24px;text-align:center">${D[j] ? '✅' : isSkip(e) ? '⏭️' : (j + 1)}</span><span style="flex:1;min-width:0"><b style="${D[j] || isSkip(e) ? 'opacity:.6' : ''}">${esc(e.n)}</b><br><small class="muted">${e.ph === 'warm' ? '🧘 Échauffement · ' : e.ph === 'cool' ? '🌙 Retour au calme · ' : ''}${esc(e.m || '')} · ${typ(e) === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`}</small></span><span class="muted">›</span></button>`).join('') || '<p class="muted">Aucun exercice ce jour-là.</p>'}</div>`); break; }
     case 'lvl': swapLevel(k, i, +b.dataset.d); render(); break;
     case 'exopen': exOpen[k] = i; render(); { const c = document.querySelector(`.ex[data-i="${i}"]`); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } break;
     case 'add': sheetEdit(-1); break;
@@ -7551,7 +7556,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 125;
+const APP_VERSION = 127;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
