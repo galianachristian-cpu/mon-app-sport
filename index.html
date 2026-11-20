@@ -278,6 +278,7 @@ h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--m
 .wd.goal{background:color-mix(in srgb,#34d399 12%,transparent);color:#34d399}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 auto}
+#app .semrec{display:block;background:none;border:0;padding:2px 0;color:inherit;font:inherit;text-align:left;cursor:pointer}#app .semrec small{color:var(--a1)}
 #app .rsteps,#sheet .rsteps{padding-left:22px;margin:4px 0 0;line-height:1.5}#sheet .rsteps li{margin-bottom:6px}#sheet .ring-l{line-height:1.8}
 #savePill.tap{cursor:pointer;border-color:#f59e0b;color:#fbbf24}
 @media(max-width:430px){#saveText{display:none}.pill{padding:9px}}
@@ -1897,6 +1898,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [137, [['📅', 'Voir les repas de la semaine prochaine', 'Nutrition → Semaine → « Semaine prochaine » : tous les repas du lundi au dimanche, touche un repas pour voir la recette et vos portions']]],
   [136, [['🗓️', 'Les nouvelles recettes dès la semaine prochaine', 'un menu de semaine pas encore commencée est refait quand de nouvelles recettes arrivent ; kebab, burger, poke, lasagnes, quiche et César adaptés à l’hiver']]],
   [135, [['🍐', 'Desserts variés', 'le midi un fruit de saison qui change chaque jour (clémentine, kiwi, poire…), le soir 1 carré de chocolat noir, une compote ou un fruit, toujours avec ton laitage'], ['🇫🇷', '14 classiques français', 'blanquette, filet mignon purée, soupe à l’oignon, galettes de sarrasin, endives au jambon, poulet basquaise, tartine avocat-œuf…'], ['📖', 'Fiche recette plus claire', 'temps de préparation et de cuisson, une icône par ingrédient, étapes numérotées']]],
   [134, [['🍔', '19 nouveaux plats', 'kebab, nuggets, fish & chips au four, lasagnes, carbonara, tartiflette, cordon bleu, fajitas, poke bowl… version maison et légère, et des recettes express en 10-15 min'], ['🍫', '13 desserts et goûters', 'mousse au chocolat, mug cake, crêpes, crumble, cookies, riz au lait, yaourt glacé… riches en protéines, peu sucrés']]],
@@ -4193,6 +4195,7 @@ const ACT = { 1.2:'Sédentaire (bureau, peu de marche)', 1.35:'Peu actif (marche
    NUTRITION — CALCULS
    ============================================================ */
 let foyer = { plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true };
+let semNext = false; // onglet Semaine : false = cette semaine, true = semaine prochaine
 let nutTab = 'jour', nutDay = null, coursesScope = 'semaine', coursesWho = 'tous';
 const FOYER_ID = 'foyer';
 function hashN(s){ let h = 2166136261; for (const c of String(s)){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -4409,7 +4412,7 @@ function portion(rid, pid, meal, di, wk){
   let dess = null;
   if (dessertOn(c.nut) && (meal === 'dej' || meal === 'din')){
     const used = f => !FOODS[f] || excl.includes(f) || ing.some(([x]) => x === f);
-    let mo = new Date().getMonth() + 1; try{ mo = +String(weekDates(wk)[di]).slice(5, 7) || mo; }catch(e){}
+    let mo = new Date().getMonth() + 1; try{ mo = +String(wkDates(wk)[di]).slice(5, 7) || mo; }catch(e){}
     const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)));
     const fruit = FR.length ? FR[(di + (meal === 'din' ? 3 : 0)) % FR.length] : null, k = di % 3;
     const f = meal === 'din' && k === 0 && !used('chocolat') ? 'chocolat' : meal === 'din' && k === 1 && !used('compote') ? 'compote' : fruit;
@@ -4892,10 +4895,30 @@ function protCard(di){
 }
 
 function nutSemaine(){
+  const seg = `<div class="seg small" style="margin-top:14px">${[[0, 'Cette semaine'], [1, 'Semaine prochaine']].map(([v, l]) => `<button class="${+semNext === v ? 'on' : ''}" data-x="semwk" data-v="${v}">${l}</button>`).join('')}</div>`;
+  if (semNext) return seg + nutSemaineNext();
   const wk = curWk(), plan = planOf(wk);
-  return `<div class="card" style="margin-top:14px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
+  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
   ${(() => { const t = weekCost(wk, 0), mx = num(budgetCfg().max); return `<div class="card" style="margin-top:12px"><p style="font-size:14px">💶 Menus de la semaine : <b>≈ ${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>${mx && t > mx ? '<button class="btn sm pri" data-x="budfit" style="margin-top:8px">🎯 Ajuster les menus au budget</button>' : ''}</div>`; })()}
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
+}
+// semaine prochaine : aperçu des repas, chaque repas s'ouvre en fiche recette
+function nutSemaineNext(){
+  const wk = wkShift(curWk(), 1), plan = planOf(wk), D = wkDates(wk), t = weekCost(wk, 0), mx = num(budgetCfg().max);
+  return `<div class="card" style="margin-top:12px"><p style="font-size:14px">📅 Du <b>${fmtD(D[0])}</b> au <b>${fmtD(D[6])}</b> · menus prêts pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}.</p>
+    <p style="font-size:14px;margin-top:6px">💶 ≈ <b>${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>
+    <p class="muted" style="font-size:12px;margin-top:6px">Touche un repas pour voir la recette et vos portions.</p></div>
+  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<div class="wkday" style="align-items:flex-start;cursor:default"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${esc(d)} ${fmtD(D[i])}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; if (isAway(profile.id, i, m, wk)) return `<small>${ico} 🧳 Hors de la maison</small>`; return r ? `<button class="semrec" data-x="semrec" data-d="${i}" data-m="${m}"><small>${ico} ${r.e} ${esc(r.n)} ›</small></button>` : ''; }).join('')}</span></div>`).join('')}</div>`;
+}
+function sheetRecNext(d, meal){
+  const wk = wkShift(curWk(), 1), rid = ridOf(planOf(wk), d, meal, profile.id), p = portion(rid, profile.id, meal, d, wk); if (!p) return;
+  const op = otherProfile(); let o = null; try{ const x = op ? dayPortions(op.id, d, wk).find(z => z.meal === meal) : null; o = x && x.por && x.por.r.id === p.r.id && !x.away ? x.por : null; }catch(e){ o = null; }
+  const ml = (MEALS.find(m => m[0] === meal) || [])[1] || '';
+  openSheet(`<h2>${p.r.e} ${esc(p.r.n)}</h2><p class="muted" style="font-size:13px;margin-bottom:10px">${esc(DAY_NAMES[d])} ${fmtD(wkDates(wk)[d])} · ${esc(ml)}</p>
+    <div class="three"><div><b>${kc(p.m.k)}${o ? ' · ' + kc(o.m.k) : ''}</b><small>kcal${o ? ` ${esc(profile.nom)} · ${esc(op.nom)}` : ''}</small></div><div><b>${Math.round(p.m.p)}${o ? ' · ' + Math.round(o.m.p) : ''} g</b><small>Protéines</small></div>${recTimeCell(p.r)}</div>
+    <div class="box"><h4>🛒 Ta portion</h4><p class="ring-l">${p.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side || f === p.dsf ? (meal === 'col' ? ' (en plus)' : ' (dessert)') : ''}`).join('\n')}</p></div>
+    ${o ? `<div class="box"><h4>🛒 Portion de ${esc(op.nom)}</h4><p class="ring-l">${o.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === o.side || f === o.dsf ? ' (dessert)' : ''}`).join('\n')}</p></div>` : ''}
+    <div class="box"><h4>👩‍🍳 Préparation</h4>${recSteps(p.r)}</div>`);
 }
 function coursesList(){
   const wk = curWk(), dates = weekDates(wk), from = coursesScope === 'semaine' ? 0 : todayIdx();
@@ -7033,6 +7056,8 @@ function evoAct(a, b){
     case 'runmap': runMap(b.dataset.id); b.remove(); break;
     case 'rundel': sheetConfirm('Supprimer cette sortie ?', 'Supprimer', () => { const r = runs.find(x => x.id === b.dataset.id); runs = runs.filter(x => x.id !== b.dataset.id); if (r) { const i = hist.findIndex(h => h.k === 'run' && h.d === r.d && h.w === r.km); if (i >= 0) hist.splice(i, 1); } save(); closeSheet(); viewRun(); }); break;
     case 'duo': startDuo(); break;
+    case 'semwk': semNext = b.dataset.v === '1'; viewNutrition(); break;
+    case 'semrec': sheetRecNext(+b.dataset.d, b.dataset.m); break;
     case 'batch': batchScope = null; sheetBatch(); break;
     case 'awaysheet': awayWk = null; sheetAway(); break;
     case 'gear': sheetGear(); break;
@@ -7682,7 +7707,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 136;
+const APP_VERSION = 137;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
