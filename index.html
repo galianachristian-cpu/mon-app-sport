@@ -581,7 +581,7 @@ body.veil #app,body.veil .nav,body.veil .top{filter:blur(18px)}
 .nav button .i{font-size:20px}
 .seg.small button{padding:7px 4px;font-size:12.5px}
 .seg.seg6{display:grid;grid-template-columns:repeat(3,1fr)}
-.seg.ptabs{display:grid;grid-template-columns:repeat(4,1fr)}#sheet .tips-list a{color:var(--a1);text-decoration:underline;text-underline-offset:2px}.plate-tip{font-size:12.5px;margin:8px 2px 0;padding:8px 10px;border-radius:12px;background:color-mix(in srgb,var(--a1) 10%,transparent);border:1px solid color-mix(in srgb,var(--a1) 30%,transparent)}.dtab tr.plate td,.dtab tr.plate th{border-top:2px solid var(--line)}.p12t{width:100%;border-collapse:collapse;font-size:13px}.p12t th,.p12t td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line)}.p12t th{color:var(--muted);font-weight:700}.seg.ptabs button{padding:8px 2px;font-size:12.5px}
+.seg.ptabs{display:grid;grid-template-columns:repeat(4,1fr)}#sheet .tips-list a{color:var(--a1);text-decoration:underline;text-underline-offset:2px}.plate-tip{font-size:12.5px;margin:8px 2px 0;padding:8px 10px;border-radius:12px;background:color-mix(in srgb,var(--a1) 10%,transparent);border:1px solid color-mix(in srgb,var(--a1) 30%,transparent)}.dtab tr.plate td,.dtab tr.plate th{border-top:2px solid var(--line)}#bf input.feelok{border-color:var(--ok);box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 30%,transparent)}.p12t{width:100%;border-collapse:collapse;font-size:13px}.p12t th,.p12t td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line)}.p12t th{color:var(--muted);font-weight:700}.seg.ptabs button{padding:8px 2px;font-size:12.5px}
 .lvl{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.lvl .btn{font-size:12px;padding:6px 10px}.g-ex .lvl{justify-content:center;margin:2px 0 8px}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}.wit{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:0}
 .wit .wn{position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;background:var(--grad);color:#0b0f19;font-size:11px;font-weight:900;display:grid;place-items:center;z-index:1}
@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [124, [['📷', 'Importer sa pesée Feelfit', 'Progrès → Corps : une capture de « Détails des indicateurs » remplit poids, graisse, muscle, viscérale, métabolisme et eau']]],
   [123, [['📅', 'Valider une séance oubliée', 'reviens sur un jour passé de la semaine et coche : c’est enregistré à la bonne date'], ['🚫', '« Je ne peux pas faire cet exercice »', 'dans la fiche : remplacé tout de suite et plus jamais proposé (Béa : gainage latéral, pompes)']]],
   [122, [['▶️', 'Séance guidée lancée depuis la tablette', 'pour Moi ou pour Béa, retour à l’écran à la fin'], ['💪', 'Rappel du soir', 'à partir de 19 h si la séance du jour n’est pas faite'], ['⚖️', 'Pesée sur la tablette', 'en deux touchers, avec l’évolution sur 7 jours'], ['👣', 'Recette pas à pas', 'une étape à la fois en très grand, minuteur proposé quand l’étape donne une durée'], ['🍽️', 'Menu de demain', 'affiché le soir sur l’écran'], ['🏃', 'Meilleur créneau pour courir', 'selon la pluie, la température et le vent'], ['⚠️', 'Alertes météo', 'orages, rafales, fortes pluies, neige, gel, forte chaleur']]],
   [121, [['✅', 'Cocher sa séance sur la tablette', 'un exercice ou toute la séance, pour Moi comme pour Béa'], ['🛒', 'Liste de courses sur l’écran', 'à cocher en rangeant les courses, ou pour ajouter un produit'], ['🧊', 'Rappel de décongélation', 'poisson et viande surgelés à sortir la veille ou le matin'], ['⏱️', 'Plusieurs minuteurs de cuisson', 'pâtes, poisson, four… en même temps, avec sonnerie'], ['👫', 'Défis à deux et bilan du week-end', 'sur l’écran de la tablette'], ['📅', 'Agenda Google sur l’écran', 'Accueil → ⚙️ Personnaliser l’accueil → Agenda']]],
@@ -2384,6 +2385,48 @@ function ocrParse(words, e){
   const est = kcalEst(e, min || num(e.r) || 10) || 100, isK = x => x.v != null && Number.isInteger(x.v) && x.v >= 1 && x.v <= 2000 && !x.pace;
   const kc = pick(x => isK(x) && x.l === 'k', () => 0) || pick(x => isK(x) && !x.l, (a, b) => Math.abs(a.v - est) - Math.abs(b.v - est));
   return { T, min, km, kcal: kc ? kc.v : null };
+}
+/* ---------- IMPORT D'UNE CAPTURE FEELFIT (« Détails des indicateurs ») : chaque valeur est cherchée juste sous son intitulé ---------- */
+const FEEL = [['bP', /^poids$/i, 30, 250], ['bG', /^corporelle$/i, 3, 60], ['bM', /^musculaire$/i, 20, 130], ['bV', /^viscerale$/i, 1, 30], ['bB', /^(de)?base$/i, 800, 4000], ['bE', /^totale$/i, 30, 80]];
+const feelNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z]/g, '');
+function feelParse(words, W, H){
+  const cx = b => (b.x0 + b.x1) / 2, cy = b => (b.y0 + b.y1) / 2;
+  // chiffres : « 88.8. » → 88.8 ; « 1 » + « 981 » côte à côte sur la même ligne → 1981
+  const raw = words.map(w => ({ t: String(w.text || '').replace(/[^0-9.,]/g, '').replace(/,/g, '.').replace(/^\.+|\.+$/g, ''), b: Object.assign({}, w.bbox) })).filter(x => /^\d/.test(x.t)).sort((x, y) => cy(x.b) - cy(y.b) || x.b.x0 - y.b.x0);
+  const nums = [];
+  raw.forEach(x => { const h = x.b.y1 - x.b.y0, L = nums[nums.length - 1];
+    if (L && Math.abs(cy(L.b) - cy(x.b)) < h / 2 && x.b.x0 - L.b.x1 < h * .8 && x.b.x0 > L.b.x0 && !/\./.test(L.t)){ L.t += x.t; L.b.x1 = x.b.x1; } else nums.push(x); });
+  nums.forEach(n => { n.v = /^\d{1,4}(\.\d{1,2})?$/.test(n.t) ? +n.t : NaN; });
+  const out = {}, used = new Set();
+  FEEL.forEach(([id, re, lo, hi]) => {
+    for (const a of words.filter(w => re.test(feelNorm(w.text)))){ // l'intitulé peut apparaître plusieurs fois : on prend le premier qui a un chiffre plausible juste dessous
+      const C = nums.filter(n => !used.has(n) && n.v >= lo && n.v <= hi && cy(n.b) > cy(a.bbox) && cy(n.b) - cy(a.bbox) < H * .16 && Math.abs(cx(n.b) - cx(a.bbox)) < W * .2)
+        .sort((x, y) => (cy(x.b) - cy(a.bbox)) - (cy(y.b) - cy(a.bbox)));
+      if (C.length){ out[id] = C[0].v; used.add(C[0]); break; }
+    }
+  });
+  return out;
+}
+function feelStart(){
+  let inp = $('#feelIn');
+  if (!inp){ inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.id = 'feelIn'; inp.hidden = true; document.body.appendChild(inp);
+    inp.onchange = () => { const f = inp.files && inp.files[0]; inp.value = ''; if (f) feelRun(f); }; }
+  loadTess().catch(() => {}); inp.click();
+}
+async function feelRun(file){
+  const st = $('#feelSt'); if (st) st.textContent = '⏳ Lecture de la capture…';
+  let R = {};
+  try{
+    const url = URL.createObjectURL(file), img = new Image(); img.src = url; await img.decode(); await loadTess();
+    const W = await Tesseract.createWorker('eng', 1, { workerPath: TESS + 'worker.min.js', corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1', langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int' });
+    await W.setParameters({ tessedit_pageseg_mode: '11' });
+    const r = await W.recognize(img); await W.terminate(); URL.revokeObjectURL(url);
+    R = feelParse(r.data.words || [], img.naturalWidth, img.naturalHeight);
+  }catch(err){ if (st) st.textContent = navigator.onLine === false ? '📶 La première lecture a besoin d’internet (pour télécharger le lecteur).' : '⚠️ Lecture impossible : remplis à la main.'; return; }
+  const n = Object.keys(R).length; if (!$('#bf')) return;
+  Object.entries(R).forEach(([id, v]) => { const el = $('#' + id); if (el){ el.value = fr(v); el.classList.add('feelok'); } });
+  if (Object.keys(R).some(id => id !== 'bP')) document.querySelectorAll('#bf details.bcomp').forEach(d => { if (d.querySelector('#bG')) d.open = true; });
+  if (st) st.innerHTML = n ? `✅ ${n} valeur${n > 1 ? 's' : ''} lue${n > 1 ? 's' : ''} (en vert). <b>Vérifie-les</b>, puis touche « Enregistrer ».` : '🤔 Aucune valeur trouvée : prends la capture de la page « Détails des indicateurs », bien nette, ou remplis à la main.';
 }
 async function ocrRun(file){
   const { k, i } = OCR, e = (data[k] || [])[i]; if (!e) return;
@@ -3378,7 +3421,7 @@ function tabCorps(){
   const B = body.slice().sort((a, b) => a.d < b.d ? -1 : 1), last = B[B.length - 1], first = B[0];
   const dp = last && first && last.p != null && first.p != null && B.length > 1 ? last.p - first.p : null;
   return `<h3 class="sec">Nouvelle mesure</h3>
-  <div class="card"><form id="bf"><div class="two"><div class="fg"><label for="bP">Poids (kg)</label><input id="bP" inputmode="decimal" placeholder="${last && last.p != null ? fr(last.p) : '75'}"></div><div class="fg"><label for="bT">Tour de taille (cm, au nombril)</label><input id="bT" inputmode="decimal" placeholder="${last && last.t != null ? fr(last.t) : '85'}"></div></div>
+  <div class="card"><button type="button" class="btn block" data-x="feelimp" style="margin-bottom:6px">📷 Importer une capture Feelfit</button><p class="muted" id="feelSt" style="font-size:12px;margin-bottom:10px">Capture de la page « Détails des indicateurs » de l’appli Feelfit : poids, graisse, muscle, viscérale, métabolisme et eau sont remplis tout seuls.</p><form id="bf"><div class="two"><div class="fg"><label for="bP">Poids (kg)</label><input id="bP" inputmode="decimal" placeholder="${last && last.p != null ? fr(last.p) : '75'}"></div><div class="fg"><label for="bT">Tour de taille (cm, au nombril)</label><input id="bT" inputmode="decimal" placeholder="${last && last.t != null ? fr(last.t) : '85'}"></div></div>
     <details class="bcomp" open><summary>📏 Autres mesures du corps (facultatif)</summary>
       <p style="margin:8px 0"><button type="button" class="btn sm" id="mGuide">📍 Où mesurer ? Voir le schéma</button></p>
       <div class="three2"><div class="fg"><label for="bBr">Bras (cm)</label><input id="bBr" inputmode="decimal" placeholder="${last && last.br != null ? fr(last.br) : '28'}"></div><div class="fg"><label for="bH">Hanches (cm)</label><input id="bH" inputmode="decimal" placeholder="${last && last.h != null ? fr(last.h) : '100'}"></div><div class="fg"><label for="bCu">Cuisse (cm)</label><input id="bCu" inputmode="decimal" placeholder="${last && last.cu != null ? fr(last.cu) : '58'}"></div></div>
@@ -6916,6 +6959,7 @@ function evoAct(a, b){
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
     case 'shopgo': shopOpen(); break;
     case 'p12bilan': sheetP12Bilan(); break;
+    case 'feelimp': feelStart(); break;
     case 'unban': banEx(b.dataset.n, false); closeSheet(); render(); toast(`↩️ ${b.dataset.n} peut de nouveau être proposé`); break;
     case 'sources': sheetSources(); break;
     case 'p12med': if (isP12()){ prog.p12.med = Object.assign({}, prog.p12.med, { [b.dataset.k]: today() }); save(); render(); toast('🩺 Noté, merci !'); } break;
@@ -7504,7 +7548,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 123;
+const APP_VERSION = 124;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
