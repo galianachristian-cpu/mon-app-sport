@@ -1000,6 +1000,14 @@ body.ecran-on.ec-noel:not(.ec-nuit) #ecran{padding-top:44px}
 @keyframes ecBlink{from{opacity:1}to{opacity:.35;box-shadow:0 0 2px 0 var(--b)}}
 .ec-snow span{position:absolute;top:-30px;color:#fff;opacity:.75;animation:ecFall linear infinite;will-change:transform}
 @keyframes ecFall{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(22px,55vh,0)}100%{transform:translate3d(-8px,110vh,0)}}
+.ec-noelcd{display:flex;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+.ec-noelcd .cd{flex:1;min-width:260px;background:linear-gradient(135deg,rgba(220,38,38,.28),rgba(22,163,74,.22));border:1px solid rgba(252,211,77,.45);border-radius:var(--r);padding:12px 16px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.ec-noelcd .ico{font-size:34px;line-height:1}.ec-noelcd small{font-size:13px;color:var(--muted);font-weight:600}
+.ec-noelcd b{font-family:'Outfit',system-ui,sans-serif;font-size:30px;font-weight:800;color:#fcd34d;letter-spacing:.5px;font-variant-numeric:tabular-nums}
+.ec-noelcd b small{font-size:14px;color:#fde68a;margin:0 2px}
+.ec-noelcd.fete{justify-content:center;align-items:center;flex-direction:column;background:linear-gradient(135deg,rgba(220,38,38,.3),rgba(22,163,74,.25));border:1px solid rgba(252,211,77,.5);border-radius:var(--r);padding:14px}
+.ec-noelcd.fete .big{font-size:40px}
+:root[data-theme="light"] .ec-noelcd b{color:#b45309}:root[data-theme="light"] .ec-noelcd b small{color:#92400e}
 .ec-fete{font-family:'Outfit',system-ui,sans-serif;font-size:18px;font-weight:700;color:#fcd34d;margin-top:6px}
 .ec-night .ec-fete{font-size:16px;color:#6b5a2a;font-weight:600}
 :root[data-theme="light"] .ec-fete{color:#b45309}
@@ -1898,6 +1906,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
   [138, [['🚶‍♀️', 'Béa : salle, marche, HIIT, puis on recommence', 'dès lundi : lun salle · mar marche 10 000 pas · mer HIIT · jeu salle · ven marche · week-end repos ; les séances A, B, C tournent d’une semaine à l’autre, plus de marche après les séances']]],
   [137, [['📅', 'Voir les repas de la semaine prochaine', 'Nutrition → Semaine → « Semaine prochaine » : tous les repas du lundi au dimanche, touche un repas pour voir la recette et vos portions']]],
   [136, [['🗓️', 'Les nouvelles recettes dès la semaine prochaine', 'un menu de semaine pas encore commencée est refait quand de nouvelles recettes arrivent ; kebab, burger, poke, lasagnes, quiche et César adaptés à l’hiver']]],
@@ -7728,7 +7737,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 138;
+const APP_VERSION = 139;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8216,6 +8225,17 @@ function ecTomorrowMenu(){
   return L ? `<p class="ec-lbl">Menu de demain</p><ul class="ec-day">${L}</ul>` : '';
 }
 /* ---------- fêtes de fin d'année ---------- */
+/* compte à rebours de Noël sur l'écran (du 1er novembre au 25 décembre) : réveillon le 24 à 19 h, Noël le 25 à 0 h, mis à jour chaque seconde */
+const ecCdTxt = ms => { if (ms <= 0) return ''; const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sc = s % 60, z = x => String(x).padStart(2, '0');
+  return d ? `${d}<small>j</small> ${z(h)}<small>h</small> ${z(m)}<small>min</small> ${z(sc)}<small>s</small>` : `${z(h)}<small>h</small> ${z(m)}<small>min</small> ${z(sc)}<small>s</small>`; };
+function ecNoelHtml(n){
+  const Y = n.getFullYear(), mo = n.getMonth(); if (mo < 10 || (mo === 11 && n.getDate() > 25)) return '';
+  const rev = new Date(Y, 11, 24, 19, 0, 0).getTime(), noel = new Date(Y, 11, 25, 0, 0, 0).getTime(), t = n.getTime();
+  if (t >= noel) return `<div class="ec-noelcd fete"><span class="big">🎄🎅🎁</span><b>Joyeux Noël à vous deux !</b></div>`;
+  const cell = (ico, lbl, at) => `<div class="cd"><span class="ico">${ico}</span><small>${lbl}</small>${t >= at ? '<b>C’est ce soir ! 🥂</b>' : `<b class="ecnd" data-t="${at}">${ecCdTxt(at - t)}</b>`}</div>`;
+  return `<div class="ec-noelcd">${cell('🎅', 'Réveillon de Noël · 24 déc. 19 h', rev)}${cell('🎄', 'Noël · 25 décembre', noel)}</div>`;
+}
+setInterval(() => { if (!window.EC || !EC.on || EC.away) return; const now = Date.now(); document.querySelectorAll('#ecran .ecnd').forEach(el => { const at = +el.dataset.t; if (at - now <= 0) ecRender(); else el.innerHTML = ecCdTxt(at - now); }); }, 1000);
 function ecFete(n){
   const m = n.getMonth(), d = n.getDate();
   if (m === 0 && d === 1) return '🎆 Bonne année à vous deux !';
@@ -8245,6 +8265,7 @@ function ecRender(){
   el.innerHTML = `<div class="ec-night" data-ec="wake"><b>${hh}</b><p>${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>${tmr ? `<p style="font-size:16px">${tmr}</p>` : ''}${fete ? `<p class="ec-fete">${fete}</p>` : ''}${(() => { let L = []; try{ L = ecThaw(); }catch(e){} return L.length ? `<p style="font-size:15px;color:#4b6a80">🧊 Pense à sortir du congélateur : ${L.map(x => esc(FOODS[x.f].n.toLowerCase())).join(', ')}</p>` : ''; })()}<small>Touchez l’écran pour l’allumer</small></div>
   <div class="ec-day-v">
     <div class="ec-top"><div><div class="ec-clock">${hh}</div><div class="ec-date">${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div><div class="ec-hello">${hello} ${esc(names)} ${fete ? '🎄' : '👋'}</div>${fete ? `<div class="ec-fete">${fete}</div>` : ''}</div>${ecMeteoHtml()}</div>
+    ${ecNoelHtml(n)}
     ${ecAlertHtml()}
     ${ecAgendaHtml()}
     ${ecBrief()}
