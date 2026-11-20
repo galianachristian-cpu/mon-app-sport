@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [127, [['⏭️', '« Pas ce jour-là » sur un jour passé', 'un exercice mis de côté sur un jour déjà passé compte enfin comme réglé : 1/1 au lieu de 1/2']]],
   [126, [['🏋️', 'Liste des exercices du jour', 'touche « 7 exercices » en haut de la séance : la liste complète s’ouvre, avec ce qui est déjà fait']]],
   [125, [['🗑️', 'Retirer un exercice plus facilement', 'ouvre l’exercice dans la séance : bouton « 🗑️ Retirer » en bas. Un jour vidé devient un jour de repos']]],
   [124, [['📷', 'Importer sa pesée Feelfit', 'Progrès → Corps : une capture de « Détails des indicateurs » remplit poids, graisse, muscle, viscérale, métabolisme et eau']]],
@@ -5864,7 +5865,7 @@ const isTodayView = () => currentDay === todayIdx();
 const lightOn = () => !!coach && coach.light === curWk();
 const LIGHT = { id:'light', ico:'🪶', t:'Semaine allégée', d:'1 série en moins et charges −10 % toute la semaine : tu récupères pour repartir plus fort.', load:.9, dS:-1, noPlyo:true, avg:3 };
 const modeToday = () => { const f = isTodayView() ? formeMode(formeOf()) : null; return !lightOn() || (f && f.id === 'leger') ? f : LIGHT; };
-const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay] && e.skipD > today()));
+const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay]));
 function effS(e){ const n = e.cutS && e.cutS.d === today() ? e.cutS.n : +e.s || 0, m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob' || e.tab) return n; return Math.max(1, n + m.dS); }
 // durée estimée d'une liste d'exercices (séries, effort ~45 s, repos ; super-séries : repos court après le 1er exercice)
 function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
@@ -5874,7 +5875,7 @@ function restoreTemp(){
   const d = today();
   Object.values(data).forEach(L => (L || []).forEach((e, i) => {
     if (e.orig && e.tmpD !== d) L[i] = e.orig;
-    else if (e.skipD && e.skipD < d) delete e.skipD;
+    else if (e.skipD && e.skipD < weekDates(curWk())[0]) delete e.skipD; /* garde les « pas ce jour-là » des jours passés de la semaine */
   }));
 }
 function applyPain(pains){
@@ -7555,7 +7556,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 126;
+const APP_VERSION = 127;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
