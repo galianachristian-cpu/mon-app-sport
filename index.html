@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [128, [['🎧', 'Séance guidée = séance du jour', 'les jours HIIT, elle utilise les machines prévues et saute celles que tu as grisées ; plus de jumping jacks dans l’échauffement de Béa']]],
   [127, [['⏭️', '« Pas ce jour-là » sur un jour passé', 'un exercice mis de côté sur un jour déjà passé compte enfin comme réglé : 1/1 au lieu de 1/2']]],
   [126, [['🏋️', 'Liste des exercices du jour', 'touche « 7 exercices » en haut de la séance : la liste complète s’ouvre, avec ce qui est déjà fait']]],
   [125, [['🗑️', 'Retirer un exercice plus facilement', 'ouvre l’exercice dans la séance : bouton « 🗑️ Retirer » en bas. Un jour vidé devient un jour de repos']]],
@@ -5236,15 +5237,20 @@ const FULL_WARM = ['Jumping jacks', 'World’s greatest stretch', 'Rotation thor
 function fullPlan(di){
   const L = (data['day' + di] || []).filter(e => e && !isSkip(e)), hiit = isHiitDay(di), T = L.filter(e => e.tab);
   if (!hiit && !T.length) return null;
-  const l = settings.hiitLvl ?? 1, H = hiit ? hiitOfDay(di) : null;
-  let W = L.filter(e => e.ph === 'warm' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!W.length) W = FULL_WARM.filter(n => LIB_BY[n]);
+  const l = settings.hiitLvl ?? 1;
+  /* la séance guidée suit la liste du jour : machines prévues (non grisées) en priorité, exercices grisés évités */
+  const ALL = (data['day' + di] || []).filter(Boolean), SK = new Set(ALL.filter(isSkip).map(e => e.n)), MD = L.filter(e => HM.includes(e.n)).map(e => e.n);
+  HPICK = { m: MD.length ? MD : HM.filter(n => !SK.has(n)), sk: SK };
+  let H = null, hs = null;
+  try { H = hiit ? hiitOfDay(di) : null; hs = hiit ? hiitSeq(H, l) : null; } finally { HPICK = null; }
+  let W = L.filter(e => e.ph === 'warm' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!W.length) W = FULL_WARM.filter(n => LIB_BY[n] && canDo(n) && !(isP12() && /jump|saut/i.test(n))); /* programme 12 semaines : pas de sauts */
   let C = L.filter(e => e.ph === 'cool' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!C.length) C = FULL_COOL.filter(n => LIB_BY[n]);
   const A = L.filter(e => e.abs && LIB_BY[e.n]).map(e => e.n);
   const S = [];
   // 1. échauffement : 45 s par mouvement (1 min de jumping jacks)
   W.forEach((n, j) => { S.push({ k: 'work', l: `Échauffement · ${n}`, nm: n, s: /jumping/i.test(n) ? 60 : 45, tour: j + 1, n: W.length }); S.push({ k: 'rest', l: 'On enchaîne', s: 8, next: W[j + 1] || (hiit ? 'HIIT' : T[0].n) }); });
   // 2. corps de séance
-  if (hiit) hiitSeq(H, l).forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
+  if (hiit) hs.forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
   else tabSeq(T.map(e => e.n), S, 'Tabata');
   // 3. abdos : 3 tours de 40 s / 20 s
   if (A.length){ S.push({ k: 'rest', l: 'Respire, on passe aux abdos', s: 45, next: A[0] });
@@ -5573,9 +5579,10 @@ const HIIT_S = [
   { id: 'courts', n: 'Sprints courts', ic: '💥', d: '15 s au maximum, 45 s très lent. La qualité du sprint avant tout.', u: 'cal', B: [{ ex: ['@0'], w: 15, r: 45, n: [8, 10, 12] }] },
   { id: 'duo', n: 'Duo de machines', ic: '🎛️', d: '40 s sur une machine, 20 s pour passer à l’autre.', u: 'cal', B: [{ ex: ['@0', '@2'], w: 40, r: 20, n: [4, 5, 6] }] }];
 // « @0 » = 1re machine disponible à partir de ce rang ; les autres exercices sont remplacés si le matériel manque
+let HPICK = null; // pendant la construction de la séance guidée : { m: machines du jour, sk: exercices grisés }
 function hiitEx(x){
-  if (x[0] === '@'){ const i = +x[1]; return HM.slice(i).concat(HM.slice(0, i)).find(m => LIB_BY[m] && canDo(m)) || HM[i]; }
-  if (LIB_BY[x] && !canDo(x)){ const a = altDoable(LIB_BY[x], new Set()); if (a) return a; }
+  if (x[0] === '@'){ const M = HPICK && HPICK.m.length ? HPICK.m : HM, i = +x[1] % M.length; return M.slice(i).concat(M.slice(0, i)).find(m => LIB_BY[m] && canDo(m)) || M[i]; }
+  if (LIB_BY[x] && (!canDo(x) || (HPICK && HPICK.sk.has(x)))){ const a = altDoable(LIB_BY[x], new Set(), HPICK && HPICK.sk); if (a) return a; }
   return x;
 }
 // séance du jour : change chaque semaine, différente pour les deux jours HIIT, la même pour les deux profils
@@ -5594,7 +5601,7 @@ const hiitBT = b => b.t || (b.ws ? 'Pyramide' : `${b.w} s / ${b.r} s`);
 function hiitOfDay(di, wkT){
   const wk = wkT || curWk();
   if (isP12()){ // programme 12 semaines : pas de sauts ni de burpees, HIIT sur machines, ~20-25 min
-    const r = rng('hiitm' + wk + '_' + di), used = new Set(), M = () => { const C = HM.filter(n => LIB_BY[n] && canDo(n) && !used.has(n)); const n = C.length ? C[Math.floor(r() * C.length)] : HM[0]; used.add(n); return n; };
+    const r = rng('hiitm' + wk + '_' + di), used = new Set(), M = () => { const P = HPICK && HPICK.m.length ? HPICK.m : HM, C = P.filter(n => LIB_BY[n] && canDo(n) && !used.has(n)), C2 = C.length ? C : P.filter(n => LIB_BY[n] && canDo(n)); const n = C2.length ? C2[Math.floor(r() * C2.length)] : P[0]; used.add(n); return n; };
     const F = [() => ({ t: 'Machine 30/30', ex: [M()], w: 30, r: 30, n: [5, 6, 8], p: 90 }), () => ({ t: 'Pyramide', ex: [M()], ws: [[20, 30, 40, 30, 20], [20, 30, 40, 50, 40, 30, 20], [20, 30, 40, 50, 60, 50, 40, 30, 20]], p: 90 }),
       () => ({ t: 'Sprints 15/45', ex: [M()], w: 15, r: 45, n: [5, 6, 8], p: 90 }), () => ({ t: 'Duo de machines 40/20', ex: [M(), M()], w: 40, r: 20, n: [2, 3, 3], p: 90 })].map(f => [f, r()]).sort((a, b) => a[1] - b[1]).slice(0, 3).map(x => x[0]());
     return { id: 'mix', n: 'HIIT machines', ic: '⚡', d: 'Sur machines uniquement (pas de sauts) : 3 blocs, effort intense puis récupération lente.', u: 'cal', B: F }; }
@@ -7556,7 +7563,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 127;
+const APP_VERSION = 128;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
