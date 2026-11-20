@@ -157,11 +157,15 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     foyer.checked = sv; go('seance'); return ok1 && ok2 && ok3; }) === true);
   check('Béa : programme 12 semaines (3 séances, HIIT machines, marche, phases, bilan, 100 g de protéines)', await p.evaluate(() => { const sv = { profile, data: clone(data), titles: clone(titles), coach, prog, nut: clone(nut), save, gear }; save = () => {}; profile = PROFILES[1]; coach = { beaFit: '1' }; gear = clone(GEAR_CASERNE);
     prog = { obj: 'perte', days: [0, 2, 4], split: 'Fitness : 3 Tabata + 2 HIIT' }; nut = Object.assign({}, nut, { kcalMan: 1260, kcalSeance: false }); beaP12Once();
-    const ok1 = isP12() && !isFitProg() && isHiitDay(1) && isHiitDay(5) && [0, 1, 2, 3, 4, 5, 6].every(d => data['day' + d].some(e => e.walk)) && data.day0.some(e => e.n === 'Squat goblet') && data.day4.some(e => e.n === 'Hip thrust') && Object.values(data).flat().every(e => canDo(e.n));
+    const ok1 = isP12() && !isFitProg() && isHiitDay(1) && isHiitDay(3) && !data.day5.length && !data.day6.length && [0, 1, 2, 3, 4].every(d => data['day' + d].some(e => e.walk)) && data.day0.some(e => e.n === 'Squat goblet') && data.day4.some(e => e.n === 'Hip thrust') && Object.values(data).flat().every(e => canDo(e.n));
     const ex = hiitOfDay(1).B.flatMap(b => b.ex), ok2 = ex.every(n => HM.includes(n));
     const ok3 = !nut.kcalMan && targets(ctxOf('bea'), 0).p === 100 && rotPlan(clone(data), wkShift(curWk(), 1), true).length === 0 && !canRepair() && !brokenDays().length && /12 semaines/.test(coachCard()) && /bilan médical/.test(p12MedCard()) && (prog.p12.med = { mt: today(), vasc: today() }, p12MedCard() === '');
     const st = prog.p12.start; prog.p12.start = wkShift(curWk(), -3); applyCycle(); const ok4 = data.day0.find(e => e.n === 'Squat goblet').s === 3; prog.p12.start = st;
-    profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; nut = sv.nut; save = sv.save; gear = sv.gear; return ok1 && ok2 && ok3 && ok4; }));
+    /* ancien planning (HIIT samedi, marche dimanche) : migration week-end au repos */
+    data.day3 = [P12_WALK('30-45 min')]; titles.day3 = 'Marche · récupération'; data.day5 = p12Build().D.day3; data.day5[0].n = 'SkiErg'; titles.day5 = HIIT_T[1]; data.day6 = [P12_WALK('30 min')]; titles.day6 = 'Repos · marche tranquille'; delete coach.beaWe;
+    beaWeOnce(); const ok5 = isHiitDay(3) && data.day3[0].n === 'SkiErg' && !data.day5.length && !data.day6.length && titles.day5 === 'Repos' && titles.day6 === 'Repos' && coach.beaWe; beaWeOnce();
+    const ok6 = isHiitDay(3) && data.day3.length > 1;
+    profile = sv.profile; data = sv.data; titles = sv.titles; coach = sv.coach; prog = sv.prog; nut = sv.nut; save = sv.save; gear = sv.gear; return ok1 && ok2 && ok3 && ok4 && ok5 && ok6; }));
   check('Béa : sédentaire, recomposition, 1 500 kcal fixes et 115 g de protéines', await p.evaluate(() => { const sv = { profile, nut: clone(nut), save }; save = () => {}; profile = PROFILES[1]; nut = { sexe: 'F', age: 49, taille: 153, poids: 62, obj: 'perte', act: 1.5, kcalMan: 1260 };
     beaNut1500Once(); const K = [0, 1, 2, 3, 4, 5, 6].map(d => targets(ctxOf(profile.id), d)), ok = nut.act === 1.2 && nut.obj === 'recompo' && K.every(t => t.kcal === 1500 && t.p === 115);
     profile = sv.profile; nut = sv.nut; save = sv.save; return ok; }));
