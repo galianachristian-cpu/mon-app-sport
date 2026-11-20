@@ -1796,7 +1796,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaP12Week(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1898,6 +1898,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [138, [['🚶‍♀️', 'Béa : salle, marche, HIIT, puis on recommence', 'dès lundi : lun salle · mar marche 10 000 pas · mer HIIT · jeu salle · ven marche · week-end repos ; les séances A, B, C tournent d’une semaine à l’autre, plus de marche après les séances']]],
   [137, [['📅', 'Voir les repas de la semaine prochaine', 'Nutrition → Semaine → « Semaine prochaine » : tous les repas du lundi au dimanche, touche un repas pour voir la recette et vos portions']]],
   [136, [['🗓️', 'Les nouvelles recettes dès la semaine prochaine', 'un menu de semaine pas encore commencée est refait quand de nouvelles recettes arrivent ; kebab, burger, poke, lasagnes, quiche et César adaptés à l’hiver']]],
   [135, [['🍐', 'Desserts variés', 'le midi un fruit de saison qui change chaque jour (clémentine, kiwi, poire…), le soir 1 carré de chocolat noir, une compote ou un fruit, toujours avec ton laitage'], ['🇫🇷', '14 classiques français', 'blanquette, filet mignon purée, soupe à l’oignon, galettes de sarrasin, endives au jambon, poulet basquaise, tartine avocat-œuf…'], ['📖', 'Fiche recette plus claire', 'temps de préparation et de cuisson, une icône par ingrédient, étapes numérotées']]],
@@ -5493,6 +5494,26 @@ function beaWeOnce(){
   ['day3', 'day5', 'day6'].forEach(k => { done[k] = []; remapKeys(k, () => null); if (sess) delete sess[k]; });
   coach = Object.assign({}, coach, { beaWe: today() }); save(); setTimeout(() => toast('😴 Week-end au repos · HIIT déplacé au jeudi'), 1600);
 }
+/* Béa (v138) : une journée salle, une journée marche (10 000 pas), une journée HIIT, et on recommence ; week-end au repos.
+   Lun salle · Mar marche · Mer HIIT · Jeu salle · Ven marche · Sam/Dim repos. Les séances de salle tournent A → B → C d'une semaine à l'autre.
+   Plus de marche ajoutée après les séances : elle a ses jours de marche. Démarre le lundi qui suit le changement. */
+const P12_WALKDAY = () => P12_WALK('75-90 min', 'Objectif du jour : 10 000 pas. Marche active à ton rythme, en une ou plusieurs fois (le matin, le midi, après le travail).');
+function p12AltLetter(wk, slot){ const n = (Math.max(1, p12Week(wk)) - 1) * 2 + slot; return 'ABC'[n % 3]; }
+function beaAltOnce(){
+  if (profile.id !== 'bea' || !isP12() || (coach && coach.beaAlt)) return;
+  prog.p12.alt = todayIdx() >= 1 ? wkShift(curWk(), 1) : curWk();
+  coach = Object.assign({}, coach, { beaAlt: today() }); save();
+  setTimeout(() => toast('🚶‍♀️ Nouvelle semaine dès lundi : salle, marche, HIIT, puis on recommence'), 1800);
+}
+function beaP12Week(force){
+  if (profile.id !== 'bea' || !isP12() || !prog.p12.alt || curWk() < prog.p12.alt || (!force && prog.p12.altWk === curWk())) return;
+  const { D } = p12Build(), S = { A: D.day0, B: D.day2, C: D.day4 }, noWalk = L => L.filter(e => e && !e.walk);
+  const a = p12AltLetter(curWk(), 0), b = p12AltLetter(curWk(), 1);
+  data = { day0: noWalk(S[a]), day1: [P12_WALKDAY()], day2: noWalk(D.day1), day3: noWalk(S[b]), day4: [P12_WALKDAY()], day5: [], day6: [] };
+  titles = { day0: P12S[a].t, day1: 'Marche · 10 000 pas', day2: HIIT_T[0], day3: P12S[b].t, day4: 'Marche · 10 000 pas', day5: 'Repos', day6: 'Repos' };
+  Object.keys(data).forEach(k => { done[k] = []; remapKeys(k, () => null); });
+  prog.days = [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
+}
 const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
 const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
 const P12_MS = [0, 4, 8, 12];
@@ -7707,7 +7728,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 137;
+const APP_VERSION = 138;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
