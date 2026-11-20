@@ -1784,7 +1784,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [131, [['😴', 'Béa : week-end au repos', 'samedi et dimanche libres ; son HIIT machines du samedi passe au jeudi (lundi → vendredi : A, HIIT, B, HIIT, C)']]],
   [130, [['🍽️', 'Poids de l’assiette corrigé', 'le fruit du dessert n’est plus compté dans l’assiette du plat mélangé (seulement le plat, sans fromage blanc ni fruit)']]],
   [129, [['🎵', 'Le minuteur ne coupe plus la musique', 'sur iPhone, les bips passent par-dessus ta musique au lieu de l’arrêter (iOS 16.4 ou plus récent)']]],
   [128, [['🎧', 'Séance guidée = séance du jour', 'les jours HIIT, elle utilise les machines prévues et saute celles que tu as grisées ; plus de jumping jacks dans l’échauffement de Béa']]],
@@ -5329,7 +5330,7 @@ function beaPompesOnce(){
   coach = Object.assign({}, coach, { noPompes: today() }); if (n) save();
 }
 /* ---------- PROGRAMME 12 SEMAINES « jambes, hanches et silhouette » (PDF du 18 novembre 2026, Béa, version caserne) ----------
-   3 séances de force (lun A, mer B, ven C), HIIT sur machines mardi et samedi, marche tous les jours ; phases, semaines allégées 4 et 8, bilans 0 / 4 / 8 / 12 */
+   3 séances de force (lun A, mer B, ven C), HIIT sur machines mardi et jeudi (Béa : week-end au repos), marche les jours de séance ; phases, semaines allégées 4 et 8, bilans 0 / 4 / 8 / 12 */
 const isP12 = () => !!(prog && prog.p12);
 const P12S = {
   A: { t: 'Séance A · jambes (quadriceps) et fessiers', L: [['Squat goblet', 4, '8-10', 1], ['Fentes marchées', 3, '10 chaque'], ['Step-up', 3, '10 chaque'], ['Leg extension', 3, '12-15'], ['Abduction élastique', 3, '15'], ['Gainage', 3, '30-40 s']] },
@@ -5344,9 +5345,9 @@ function p12Build(){
   const cool = () => [exFromLib('Vélo', { ph: 'cool', r: '5 min', desc: '5 à 10 min de vélo ou de marche tranquille, sans intensité.' }), exFromLib('Étirement du psoas', { ph: 'cool', s: 1 }), exFromLib('Posture de l’enfant', { ph: 'cool', s: 1 })];
   const sess = k => P12S[k].L.map(([n, sr, r, main]) => { const x = exFromLib(n, { s: sr, bs: sr, r, cmp: main ? 1 : 0 }); if (n === 'Gainage' || n === 'Hollow hold') x.abs = 1; return x; });
   const hiitDay = j => [...['Rameur', 'Assault bike', 'SkiErg'].map(n => exFromLib(n, { r: '8 min', desc: 'HIIT sur machine : effort intense puis récupération lente, sans sauts.' })), P12_WALK('30 min')];
-  const D = { day0: [...warm(), ...sess('A'), ...cool(), P12_WALK('30 min')], day1: hiitDay(0), day2: [...warm(), ...sess('B'), ...cool(), P12_WALK('30 min')], day3: [P12_WALK('30-45 min')],
-    day4: [...warm(), ...sess('C'), ...cool(), P12_WALK('30 min')], day5: hiitDay(1), day6: [P12_WALK('30 min', 'Marche tranquille, jour de repos : pas d’autre effort.')] };
-  const T = { day0: P12S.A.t, day1: HIIT_T[0], day2: P12S.B.t, day3: 'Marche · récupération', day4: P12S.C.t, day5: HIIT_T[1], day6: 'Repos · marche tranquille' };
+  const D = { day0: [...warm(), ...sess('A'), ...cool(), P12_WALK('30 min')], day1: hiitDay(0), day2: [...warm(), ...sess('B'), ...cool(), P12_WALK('30 min')], day3: hiitDay(1),
+    day4: [...warm(), ...sess('C'), ...cool(), P12_WALK('30 min')], day5: [], day6: [] }; // Béa : repos complet le samedi et le dimanche
+  const T = { day0: P12S.A.t, day1: HIIT_T[0], day2: P12S.B.t, day3: HIIT_T[1], day4: P12S.C.t, day5: 'Repos', day6: 'Repos' };
   return { D, T };
 }
 function beaP12Once(){
@@ -5358,6 +5359,14 @@ function beaP12Once(){
   if (nut){ delete nut.kcalMan; nut.kcalSeance = true; nut.pFix = 100; } // calories automatiques (objectif inchangé : léger déficit), 100 g de protéines ; la marche est déjà comprise dans son niveau d'activité
   coach = Object.assign({}, coach, { beaP12: today(), rotWk: curWk(), rot: null, prevMuscu: old });
   applyCycle(); save(); setTimeout(() => toast('💪 Programme 12 semaines en place'), 1400);
+}
+// Béa : week-end au repos complet, le HIIT du samedi passe au jeudi (on garde ses exercices du samedi, avec ses changements)
+function beaWeOnce(){
+  if (profile.id !== 'bea' || !isP12() || (coach && coach.beaWe)) return;
+  data.day3 = (data.day5 || []).length ? data.day5 : p12Build().D.day3; titles.day3 = isHiitDay(5) ? titles.day5 : HIIT_T[1];
+  data.day5 = []; data.day6 = []; titles.day5 = 'Repos'; titles.day6 = 'Repos';
+  ['day3', 'day5', 'day6'].forEach(k => { done[k] = []; remapKeys(k, () => null); if (sess) delete sess[k]; });
+  coach = Object.assign({}, coach, { beaWe: today() }); save(); setTimeout(() => toast('😴 Week-end au repos · HIIT déplacé au jeudi'), 1600);
 }
 const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
 const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
@@ -7571,7 +7580,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 130;
+const APP_VERSION = 131;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
