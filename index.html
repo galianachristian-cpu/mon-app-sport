@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [125, [['🗑️', 'Retirer un exercice plus facilement', 'ouvre l’exercice dans la séance : bouton « 🗑️ Retirer » en bas. Un jour vidé devient un jour de repos']]],
   [124, [['📷', 'Importer sa pesée Feelfit', 'Progrès → Corps : une capture de « Détails des indicateurs » remplit poids, graisse, muscle, viscérale, métabolisme et eau']]],
   [123, [['📅', 'Valider une séance oubliée', 'reviens sur un jour passé de la semaine et coche : c’est enregistré à la bonne date'], ['🚫', '« Je ne peux pas faire cet exercice »', 'dans la fiche : remplacé tout de suite et plus jamais proposé (Béa : gainage latéral, pompes)']]],
   [122, [['▶️', 'Séance guidée lancée depuis la tablette', 'pour Moi ou pour Béa, retour à l’écran à la fin'], ['💪', 'Rappel du soir', 'à partir de 19 h si la séance du jour n’est pas faite'], ['⚖️', 'Pesée sur la tablette', 'en deux touchers, avec l’évolution sur 7 jours'], ['👣', 'Recette pas à pas', 'une étape à la fois en très grand, minuteur proposé quand l’étape donne une durée'], ['🍽️', 'Menu de demain', 'affiché le soir sur l’écran'], ['🏃', 'Meilleur créneau pour courir', 'selon la pluie, la température et le vent'], ['⚠️', 'Alertes météo', 'orages, rafales, fortes pluies, neige, gel, forte chaleur']]],
@@ -2311,6 +2312,7 @@ function exCard(k, e, i){
     <div class="logrow">${inputs}
       <div class="last">${last ? `Dernière fois : <b>${esc(lastTxt(last))}</b> · ${fmtD(last.d)}` : 'Première fois 💥'}${isPR ? ' <span class="pr">🏆 Record</span>' : ''}</div>
     </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn sm" data-act="del" data-i="${i}" aria-label="Retirer ${esc(e.n)}">🗑️ Retirer</button></div>
   </article>`;
 }
 /* ============================================================
@@ -3878,6 +3880,7 @@ function delEx(i){
   const k = 'day' + currentDay, name = data[k][i].n;
   data[k].splice(i, 1); if (done[k]) done[k].splice(i, 1);
   remapKeys(k, x => x === i ? null : x > i ? x - 1 : x);
+  if (!data[k].length) titles[k] = 'Repos'; /* jour vidé : il devient un vrai jour de repos */
   render(); save(); toast('🗑️ ' + name + ' supprimé');
 }
 
@@ -7548,7 +7551,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 124;
+const APP_VERSION = 125;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
