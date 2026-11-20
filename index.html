@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [132, [['📅', 'Agenda sur la tablette : message clair', 'si l’agenda ne se charge pas, la tablette dit pourquoi et propose « Réessayer »']]],
   [131, [['😴', 'Béa : week-end au repos', 'samedi et dimanche libres ; son HIIT machines du samedi passe au jeudi (lundi → vendredi : A, HIIT, B, HIIT, C)']]],
   [130, [['🍽️', 'Poids de l’assiette corrigé', 'le fruit du dessert n’est plus compté dans l’assiette du plat mélangé (seulement le plat, sans fromage blanc ni fruit)']]],
   [129, [['🎵', 'Le minuteur ne coupe plus la musique', 'sur iPhone, les bips passent par-dessus ta musique au lieu de l’arrêter (iOS 16.4 ou plus récent)']]],
@@ -7580,7 +7581,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 131;
+const APP_VERSION = 132;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -7929,9 +7930,12 @@ const ecAgendaUrl = () => (foyer && typeof foyer.agenda === 'string' && /^https:
 async function ecAgendaLoad(force){
   const u = ecAgendaUrl(); if (!u){ EC.agenda = null; return; }
   if (!force && EC.agenda && Date.now() - EC.agendaAt < 15 * 60000) return;
-  try{ const r = await Promise.race([fetch(u), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 15000))]); const j = await r.json();
-    if (j && Array.isArray(j.ev)){ EC.agenda = j.ev.filter(x => x && x.t).slice(0, 40); EC.agendaAt = Date.now(); EC.agendaErr = false; ecRender(); } }
-  catch(e){ EC.agendaErr = true; }
+  try{ const r = await Promise.race([fetch(u), new Promise((_, rej) => setTimeout(() => rej(new Error('délai dépassé')), 15000))]);
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const txt = await r.text(); let j = null; try{ j = JSON.parse(txt); }catch(x){ throw new Error(/doGet/.test(txt) ? 'script sans doGet' : /autoris|authoriz|sign ?in|connexion/i.test(txt) ? 'autorisation Google manquante' : 'réponse illisible'); }
+    if (!j || !Array.isArray(j.ev)) throw new Error('réponse inattendue');
+    EC.agenda = j.ev.filter(x => x && x.t).slice(0, 40); EC.agendaAt = Date.now(); EC.agendaErr = false; ecRender(); }
+  catch(e){ const was = EC.agendaErr; EC.agendaErr = (e && e.message) || 'erreur'; if (!EC.agenda || was !== EC.agendaErr) ecRender(); }
 }
 function ecAgendaDay(off){
   const L = EC.agenda || [], d0 = new Date(); d0.setHours(0, 0, 0, 0); const a = d0.getTime() + off * 86400000, b = a + 86400000, now = Date.now();
@@ -7939,7 +7943,9 @@ function ecAgendaDay(off){
 }
 const ecEvTxt = x => `${x.j ? '' : new Date(x.s).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + ' '}${esc(x.t)}`;
 function ecAgendaHtml(){
-  if (!ecAgendaUrl() || !EC.agenda) return '';
+  if (!ecAgendaUrl()) return '';
+  /* agenda configuré mais pas lisible : on le dit au lieu de ne rien afficher */
+  if (!EC.agenda) return `<div class="ec-agenda">📅 <b>Agenda</b> · ${EC.agendaErr ? `impossible de le lire (${esc(EC.agendaErr)})` : 'chargement…'} <button class="btn sm" data-ec="agreload" style="margin-left:auto">↻ Réessayer</button></div>`;
   const h = new Date().getHours(), A = ecAgendaDay(0), B = h >= 17 ? ecAgendaDay(1) : [];
   if (!A.length && !B.length) return `<div class="ec-agenda">📅 <b>Agenda</b> · rien de prévu ${h >= 17 ? 'ce soir ni demain' : 'aujourd’hui'}</div>`;
   const ch = L => L.slice(0, 6).map(x => `<span class="${x.j ? 'j' : ''}">${ecEvTxt(x)}</span>`).join('');
@@ -8133,6 +8139,7 @@ document.addEventListener('click', e => {
   if (a === 'wake'){ EC.wakeUntil = Date.now() + 3 * 60000; ecRender(); }
   else if (a === 'rec') ecOpenRec(b.dataset.d, b.dataset.meal, b.dataset.rid);
   else if (a === 'recx') ecCloseRec();
+  else if (a === 'agreload'){ EC.agendaErr = false; ecRender(); ecAgendaLoad(true); }
   else if (a === 'timer'){ ecTimerAdd(+b.dataset.min || 10, b.dataset.l || '⏱️ Cuisson'); ecCloseRec(); }
   else if (a === 'timers') ecOpenTimers(b.dataset.l);
   else if (a === 'step') ecStepView(b.dataset.d, b.dataset.meal, b.dataset.rid, +b.dataset.i);
