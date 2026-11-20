@@ -1918,6 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
   [138, [['🚶‍♀️', 'Béa : salle, marche, HIIT, puis on recommence', 'dès lundi : lun salle · mar marche 10 000 pas · mer HIIT · jeu salle · ven marche · week-end repos ; les séances A, B, C tournent d’une semaine à l’autre, plus de marche après les séances']]],
@@ -4091,7 +4092,19 @@ const FOODS = Object.fromEntries([
   ['clementine','Clémentines',47,0.9,10,0.2,'fruits','fruit',{u:'clémentine',g:60}],
   ['poire','Poires',57,0.4,12,0.1,'fruits','fruit',{u:'poire',g:150}],
   ['compote','Compote sans sucres ajoutés',65,0.3,14,0.2,'epicerie','fruit',{u:'compote',g:100}],
-  ['chocolat','Chocolat noir 70 %',570,8,33,42,'epicerie','choco',{u:'carré',g:10}]
+  ['chocolat','Chocolat noir 70 %',570,8,33,42,'epicerie','choco',{u:'carré',g:10}],
+  ['farine','Farine de blé',350,10,73,1.2,'epicerie','farine'],
+  ['beurre','Beurre',745,0.7,0.5,82,'cremerie','beurre'],
+  ['sucre','Sucre',400,0,100,0,'epicerie','sucre'],
+  ['creme','Crème fraîche épaisse',300,2.4,3,30,'cremerie','creme'],
+  ['mascarpone','Mascarpone',430,4.6,4,44,'cremerie','fromage'],
+  ['biscuit','Biscuits à la cuillère',390,8,80,4,'epicerie','biscuit'],
+  ['frites','Frites au four (surgelées)',160,2.6,25,5,'surgele','frites'],
+  ['pizza','Pâte à pizza (rouleau)',270,8,48,4.5,'cremerie','pizza'],
+  ['fondu','Reblochon ou fromage à raclette',340,22,0.5,28,'cremerie','fromage'],
+  ['lardons','Lardons',270,16,0.5,23,'viande','prot'],
+  ['merguez','Merguez',290,15,1,25,'viande','prot'],
+  ['charcuterie','Jambon cru et charcuterie',250,26,0.5,16,'viande','prot']
 ].map(([id, n, k, p, g, l, ray, grp, unit]) => [id, { id, n, k, p, g, l, ray, grp, unit }]));
 // poids cuit ≈ poids cru × facteur (les quantités des menus sont pesées crues)
 const CUIT = { veau:.75, porc:.75, riz:2.6, pates:2.3, semoule:2.3, lentille:2.5, poulet:.75, dinde:.75, boeuf:.75, colin:.8, saumon:.8 };
@@ -4099,10 +4112,11 @@ const cuitG = (f, g) => Math.round(g * CUIT[f] / 10) * 10;
 /* plats où tout cuit ensemble : poids de l'assiette une fois cuit (pain et salade servis à côté non comptés) */
 const MIX = new Set(['soupe-oignon', 'coquillettes-risotto', 'poelee-pc-epinards', 'lasagnes-legeres', 'carbonara-legere', 'tartiflette-legere', 'parmentier-colin', 'shakshuka', 'quiche-jambon-courgette', 'bowl-semoule-pc', 'pates-poulet-brocoli', 'bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
 const MIX_SIDE = new Set(['pain', 'salade']);
-const MIXC = Object.assign({}, CUIT, { champignon: .6, courgette: .85, epinard: .8, poivron: .85, oignon: .8, carotte: .9, brocoli: .9, haricotvert: .9, poelee: .9, chou: .9, patate: .9, pdt: .95, lait: .85, poireau: .8, endive: .7 });
+const MIXC = Object.assign({}, CUIT, { champignon: .6, courgette: .85, epinard: .8, poivron: .85, oignon: .8, carotte: .9, brocoli: .9, haricotvert: .9, poelee: .9, chou: .9, patate: .9, pdt: .95, lait: .85, poireau: .8, endive: .7, lardons: .8, merguez: .8 });
 const isMix = por => !!(por && por.r && MIX.has(por.r.id));
 /* hors de l'assiette : pain, salade, complément à part et dessert (laitage + fruit) */
-const offPlate = (por, f) => MIX_SIDE.has(f) || f === por.side || f === por.dsf;
+const isDs = (por, f) => !!por && (f === por.dsf || !!(por.dsx && por.dsx.includes(f)));
+const offPlate = (por, f) => MIX_SIDE.has(f) || f === por.side || isDs(por, f);
 const plateG = por => Math.round(por.ing.filter(([f]) => !offPlate(por, f)).reduce((a, [f, g]) => a + g * (MIXC[f] || 1), 0) / 10) * 10;
 const plateSide = por => por.ing.filter(([f]) => offPlate(por, f)).map(([f, g]) => { const q = qty(f, g); return /\d\s*(g|ml)$/.test(q) ? `${q} ${FOODS[f].n.toLowerCase()}` : q; }).join(' + ');
 const cuitTxt = (f, g) => CUIT[f] ? ` · cru, ≈ ${cuitG(f, g)} g cuit` : '';
@@ -4123,7 +4137,8 @@ const SUBS = {
   emmental:['mozza','feta'], mozza:['emmental','feta'], feta:['mozza','emmental'],
   cacahuete:['amande'], amande:['cacahuete'], miel:[], huile:[], soja:[], cacao:[], concassee:['tomate'],
   veau:['dinde','poulet'], porc:['dinde','poulet'], sarrasin:['pain'], chevre:['feta','mozza'], avocat:[], poireau:['courgette','haricotvert'], endive:['salade'],
-  kiwi:['orange','pomme'], clementine:['orange','pomme'], poire:['pomme','banane'], compote:['pomme'], chocolat:[]
+  kiwi:['orange','pomme'], clementine:['orange','pomme'], poire:['pomme','banane'], compote:['pomme'], chocolat:[],
+  farine:[], beurre:['huile'], sucre:['miel'], creme:['fblanc'], mascarpone:['fblanc'], biscuit:[], frites:['pdt'], pizza:['tortilla'], fondu:['emmental','mozza'], lardons:['jambon'], merguez:['poulet','boeuf'], charcuterie:['jambon']
 };
 
 /* RECETTES — portions de base pour une personne (g ; unités pour les œufs et les fruits) */
@@ -4247,6 +4262,20 @@ const RECIPES = [
   R('cesar-legere','Salade César légère','plat',15,[['poulet',150],['salade',120],['pain',50],['emmental',15],['fblanc',40]],'Griller le poulet en lanières. Toaster le pain en croûtons. Sauce : fromage blanc, moutarde, citron, ail. Mélanger la salade, le poulet, les croûtons et l’emmental avec la sauce.','🥗'),
   R('bowl-semoule-pc','Bowl express semoule, pois chiches & feta','plat',10,[['semoule',70],['poischiche',120],['tomate',100],['concombre',100],['feta',30],['huile',5]],'Gonfler la semoule 5 min dans l’eau bouillante salée. Mélanger avec les pois chiches rincés, la tomate et le concombre en dés, la feta émiettée, l’huile, du citron et de la menthe.','🥙'),
   R('pates-poulet-brocoli','Pâtes poulet-brocoli express','plat',15,[['pates',80],['poulet',130],['brocoli',200],['fblanc',40],['emmental',10]],'Cuire les pâtes avec le brocoli dans la même eau. Dorer le poulet en dés. Égoutter, mélanger avec le poulet, le fromage blanc et l’emmental, poivrer.','🍝'),
+  // Ajouts (v141) : repas plaisir du dimanche midi (vraies versions) et desserts plaisir
+  ...[R('pizza-plaisir','Pizza maison jambon, champignons & mozzarella','plat',30,[['pizza',150],['concassee',80],['mozza',80],['jambon',60],['champignon',50],['huile',5]],'Préchauffer le four à 240 °C. Étaler la pâte, la couvrir de tomate, puis de jambon, champignons émincés et mozzarella, origan, filet d’huile. Cuire 12 à 15 min.','🍕'),
+  R('burger-frites','Burger maison & frites','plat',30,[['pain',90],['boeuf',150],['emmental',30],['salade',30],['oignon',30],['frites',200]],'Frites 25 min au four à 220 °C. Former un steak, le cuire à la poêle 3 min par face, poser le fromage dessus la dernière minute. Toaster le pain, monter avec la salade, l’oignon et une sauce au choix.','🍔'),
+  R('raclette','Raclette & charcuterie','plat',30,[['pdt',300],['fondu',120],['charcuterie',70],['salade',50]],'Cuire les pommes de terre avec la peau 25 min. Faire fondre le fromage dans les poêlons, le verser sur les pommes de terre. Servir avec la charcuterie et une salade verte.','🧀'),
+  R('tartiflette','Tartiflette','plat',50,[['pdt',300],['fondu',100],['lardons',60],['oignon',50],['creme',30],['salade',50]],'Cuire les pommes de terre en rondelles 15 min. Faire revenir les lardons et l’oignon. Mélanger dans un plat avec la crème, poser le reblochon coupé en deux sur le dessus, gratiner 25 min à 200 °C.','🧀'),
+  R('couscous-merguez','Couscous poulet-merguez','plat',60,[['semoule',90],['poulet',100],['merguez',80],['carotte',120],['poischiche',60],['oignon',30]],'Dorer le poulet et l’oignon, ajouter les carottes, les pois chiches, les épices à couscous, couvrir d’eau, mijoter 40 min. Griller les merguez. Gonfler la semoule. Servir avec le bouillon et une pointe de harissa.','🍲'),
+  R('poulet-frites','Poulet rôti & frites maison','plat',60,[['poulet',200],['frites',220],['salade',50],['huile',5]],'Rôtir le poulet badigeonné d’huile, thym et ail, 45 min à 200 °C en l’arrosant. Frites au four les 25 dernières minutes. Servir avec le jus de cuisson et une salade.','🍗'),
+  R('lasagnes-vraies','Lasagnes à la bolognaise (la vraie)','plat',70,[['pates',90],['boeuf',130],['concassee',150],['carotte',50],['oignon',30],['lait',120],['beurre',10],['farine',10],['emmental',40]],'Bolognaise : bœuf, oignon, carotte, tomate, 20 min. Béchamel : faire fondre le beurre, ajouter la farine, puis le lait en fouettant jusqu’à épaissir. Alterner pâtes, bolognaise et béchamel, finir par l’emmental, four 35 min à 180 °C.','🍝'),
+  R('carbonara-vraie','Spaghetti carbonara','plat',20,[['pates',100],['lardons',70],['oeuf',60],['emmental',25]],'Cuire les spaghetti. Dorer les lardons. Battre l’œuf avec le fromage râpé et beaucoup de poivre. Hors du feu, mélanger les pâtes chaudes, les lardons et l’œuf battu avec un peu d’eau de cuisson.','🍝')].map(r => Object.assign(r, { pl: 1 })),
+  R('tiramisu','Tiramisu','dp',20,[['mascarpone',50],['oeuf',30],['sucre',12],['biscuit',25],['cacao',3]],'Fouetter le jaune avec le sucre, ajouter le mascarpone, puis le blanc monté en neige. Tremper les biscuits dans du café, alterner biscuits et crème, saupoudrer de cacao. Au frais au moins 4 h (à faire le samedi soir).','🍰'),
+  R('fondant-choco','Fondant au chocolat','dp',20,[['chocolat',30],['beurre',15],['sucre',12],['oeuf',30],['farine',8]],'Faire fondre le chocolat et le beurre. Ajouter le sucre, l’œuf, puis la farine. Verser en ramequin beurré, cuire 10 min à 200 °C : le cœur reste coulant.','🍫'),
+  R('tarte-pommes','Tarte fine aux pommes','dp',40,[['pomme',150],['farine',30],['beurre',15],['sucre',10]],'Pâte : farine, beurre, une pincée de sel et un peu d’eau, étaler finement. Couvrir de lamelles de pomme, saupoudrer de sucre et de cannelle, cuire 25 min à 200 °C.','🥧'),
+  R('creme-brulee','Crème brûlée','dp',45,[['creme',80],['lait',40],['oeuf',30],['sucre',15]],'Chauffer la crème et le lait avec la vanille. Fouetter le jaune avec le sucre, verser le lait chaud dessus. Cuire en ramequin 40 min à 100 °C, laisser prendre au frais. Caraméliser le dessus au moment de servir.','🍮'),
+  R('crepes-sucre','Crêpes au sucre','dp',20,[['lait',100],['farine',40],['oeuf',30],['beurre',5],['sucre',10]],'Mélanger la farine et l’œuf, ajouter le lait petit à petit, une noix de beurre fondu. Cuire 3 crêpes fines, sucrer au goût.','🥞'),
   // Ajouts (v135) : classiques français, version légère
   R('blanquette-legere','Blanquette de veau légère & riz','plat',50,[['veau',150],['carotte',120],['champignon',80],['oignon',40],['fblanc',50],['riz',70]],'Faire revenir le veau en morceaux, couvrir d’eau avec un bouquet garni, l’oignon et les carottes, mijoter 40 min. Ajouter les champignons 10 min avant la fin. Hors du feu, lier la sauce avec le fromage blanc et un jus de citron. Servir avec le riz.','🍲'),
   R('filet-mignon-puree','Filet mignon, purée & carottes','plat',35,[['porc',150],['pdt',250],['lait',60],['carotte',150]],'Dorer le filet mignon sur toutes les faces, finir 20 min au four à 180 °C. Cuire les pommes de terre et les carottes à l’eau. Écraser les pommes de terre avec le lait chaud, sel, poivre, muscade.','🥩'),
@@ -4511,8 +4540,13 @@ function portion(rid, pid, meal, di, wk){
   // dessert (déjeuner, dîner) : fromage blanc ou skyr + un fruit, pris sur la part du repas
   /* dessert (déjeuner, dîner) : laitage pour les protéines + le midi un fruit de saison qui change chaque jour,
      le soir en alternance 1 carré de chocolat noir, une compote ou un fruit */
-  let dess = null;
-  if (dessertOn(c.nut) && (meal === 'dej' || meal === 'din')){
+  let dess = null, dr = null;
+  /* repas plaisir (dimanche midi) : +400 kcal, repris par −400/12 kcal sur chaque déjeuner et dîner du lundi au samedi */
+  const plWk = (() => { try{ const x = REC_BY[ridOf(planOf(wk), 6, 'dej', pid)]; return !!(x && x.pl); }catch(e){ return false; } })();
+  const bonus = r.pl && di === 6 && meal === 'dej' ? 400 : plWk && di < 6 && (meal === 'dej' || meal === 'din') ? -400 / 12 : 0;
+  if (r.pl && dessertOn(c.nut) && meal === 'dej'){ const have = new Set(ing.map(([f]) => f)), D = RECIPES.filter(x => x.type === 'dp' && recipeOk(x, [excl]) && !x.ing.some(([f]) => have.has(f)));
+    if (D.length){ dr = D[(+String(wk).slice(-2) || 0) % D.length]; } }
+  if (!dr && dessertOn(c.nut) && (meal === 'dej' || meal === 'din')){
     const used = f => !FOODS[f] || excl.includes(f) || ing.some(([x]) => x === f);
     let mo = new Date().getMonth() + 1; try{ mo = +String(wkDates(wk)[di]).slice(5, 7) || mo; }catch(e){}
     const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)));
@@ -4520,16 +4554,17 @@ function portion(rid, pid, meal, di, wk){
     const f = meal === 'din' && k === 0 && !used('chocolat') ? 'chocolat' : meal === 'din' && k === 1 && !used('compote') ? 'compote' : fruit;
     dess = { l: ['fblanc', 'skyr'].find(x => !used(x)), f, fg: f && FOODS[f].unit ? FOODS[f].unit.g * (f === 'clementine' ? 2 : 1) : 120 };
   }
-  const dessK = dess ? macrosOf([dess.l ? [dess.l, roundG(dess.l, 125)] : null, dess.f ? [dess.f, roundG(dess.f, dess.fg)] : null].filter(Boolean)).k : 0;
+  const dessK = dr ? kcalOf(dr.ing) : dess ? macrosOf([dess.l ? [dess.l, roundG(dess.l, 125)] : null, dess.f ? [dess.f, roundG(dess.f, dess.fg)] : null].filter(Boolean)).k : 0;
   let factor = 1, t = null;
-  if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, (t.kcal * share - dessK) / Math.max(1, kcalOf(ing)))); }
+  if (nutReady(c.nut)){ t = targets(c, di); factor = Math.max(.5, Math.min(2.5, (t.kcal * share + bonus - dessK) / Math.max(1, kcalOf(ing)))); }
   const merged = {}; ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g * factor; });
   let side = null;
-  if (t) side = macroFix(merged, { k: t.kcal * share - dessK, p: t.p * share, l: t.l * share }, excl, !dess, meal);
+  if (t && !r.pl) side = macroFix(merged, { k: t.kcal * share + bonus - dessK, p: t.p * share, l: t.l * share }, excl, !dess, meal); /* repas plaisir : la vraie recette, juste mise à la bonne taille */
   Object.keys(merged).forEach(f => { if (MAXG[f]) merged[f] = Math.min(merged[f], MAXG[f]); });
   if (dess){ if (dess.l){ merged[dess.l] = roundG(dess.l, 125); side = dess.l; } if (dess.f) merged[dess.f] = roundG(dess.f, dess.fg); }
+  if (dr) dr.ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g; });
   ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
-  return { r, ing, m: macrosOf(ing), subs, side, dsf: dess && dess.f, pT: t ? t.p * share : null };
+  return { r, ing, m: macrosOf(ing), subs, side, dsf: dess && dess.f, dsx: dr ? dr.ing.map(([f]) => f) : null, dr, pT: t ? t.p * share : null };
 }
 function pickFrom(list, rnd, avoid){ const fresh = list.filter(r => !avoid.includes(r.id)), L = fresh.length ? fresh : list; return L.length ? L[Math.floor(rnd() * L.length)].id : null; }
 // favoris et plats écartés (pour le foyer)
@@ -4580,8 +4615,9 @@ function genPlan(wk, keep, from){
       day[meal][pid] = pickW(L, rnd, { used: new Set(prev), recent: new Set(), stock: {}, n: 1 });
     }); });
     ['dej','din'].forEach(meal => {
-      if (foyer.commun){ const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
-      else { day[meal] = {}; pids.forEach((pid, k) => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
+      const PLS = d === 6 && meal === 'dej'; /* dimanche midi : repas plaisir */
+      if (foyer.commun){ const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
+      else { day[meal] = {}; pids.forEach((pid, k) => { const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, [excls[k]])), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
   }
@@ -4592,6 +4628,12 @@ function planOf(wk){
   if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
   // semaine pas encore commencée, menu créé avant l'arrivée de nouvelles recettes : on le refait pour en profiter
   if (wk > curWk() && (foyer.plans[wk].rv || 0) < RECIPES.length){ foyer.plans[wk] = genPlan(wk); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
+  // semaine en cours créée avant le repas plaisir : on met un plat plaisir dimanche midi (si dimanche n'est pas passé)
+  { const P = foyer.plans[wk], v = P.days[6] && P.days[6].dej, ids = typeof v === 'string' ? [v] : Object.values(v || {});
+    if (wk === curWk() && !P.pl && ids.length && !ids.some(id => REC_BY[id] && REC_BY[id].pl)){
+      const L = seasonal(RECIPES.filter(r => r.pl && recipeOk(r, PROFILES.map(p => exclOf(ctxOf(p.id))))), monthOfWk(wk)), id = L.length ? L[Math.floor(rng(wk + '#pl')() * L.length)].id : null;
+      if (id){ if (typeof v === 'string') P.days[6].dej = id; else PROFILES.forEach(p => { v[p.id] = id; }); }
+      P.pl = 1; saveFoyer(); } }
   // menu créé avant les produits de saison : les jours à venir (à partir de demain) sont refaits s'ils contiennent un produit hors saison
   const P0 = foyer.plans[wk];
   if (!P0.season && wk === curWk() && foyer.plans){ const from = todayIdx() + 1, mo = monthOfWk(wk), R0 = Object.fromEntries(RECIPES.map(r => [r.id, r]));
@@ -4604,7 +4646,7 @@ function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(
 /* ============================================================
    BUDGET — prix moyens en supermarché (€ par kg, poids acheté), modifiables avec les prix de son magasin
    ============================================================ */
-const PRICE = { veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
+const PRICE = { farine:1.5, beurre:9, sucre:1.3, creme:5, mascarpone:9, biscuit:8, frites:3, pizza:6, fondu:14, lardons:11, merguez:11, charcuterie:22, veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
   lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
   concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
 const STORES = { moyen:['Prix moyens',1], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
@@ -4788,7 +4830,7 @@ const sameDish = (x, ox) => !!(ox && !x.away && !ox.away && x.por && ox.por && x
 function duoTable(x, ox, ro){
   const me = profile, o = ox.op, A = x.por, B = ox.por, mA = Object.fromEntries(A.ing), mB = Object.fromEntries(B.ing);
   const foods = [...new Set([...A.ing.map(([f]) => f), ...B.ing.map(([f]) => f)])];
-  const cell = (f, g, por) => g ? `<b>${qty(f, g)}</b>${CUIT[f] ? `<small>≈ ${cuitG(f, g)} g cuit</small>` : ''}${por && (f === por.side || f === por.dsf) ? `<small>${x.meal === 'col' ? 'en plus' : 'dessert'}</small>` : ''}` : '<span class="muted">–</span>';
+  const cell = (f, g, por) => g ? `<b>${qty(f, g)}</b>${CUIT[f] ? `<small>≈ ${cuitG(f, g)} g cuit</small>` : ''}${por && (f === por.side || isDs(por, f)) ? `<small>${x.meal === 'col' ? 'en plus' : 'dessert'}</small>` : ''}` : '<span class="muted">–</span>';
   const ready = nutReady(ctxOf(o.id).nut);
   return `<p class="dt-lead">👫 Même plat, chacun sa portion${ready ? '' : ` <small class="muted">(${esc(o.nom)} : portion standard, profil nutrition à remplir)</small>`}</p>
   <div class="dtab-w"><table class="dtab" style="--c1:${me.a1};--c2:${o.a1}"><thead><tr><th></th><th class="c1">${esc(me.nom)}</th><th class="c2">${esc(o.nom)}</th><th>Total</th></tr></thead><tbody>
@@ -4808,7 +4850,7 @@ function duoBlock(x, ox){
   const o = ox.op, nom = esc(o.nom), ready = nutReady(ctxOf(o.id).nut);
   if (ox.away) return `<p class="duo-por" style="--c2:${o.a1}">🧳 <b>${nom}</b> n’est pas à la maison : seule ta portion est à préparer.</p>`;
   if (!ox.por) return '';
-  const q = ox.por, chips = q.ing.map(([f, g]) => `<span class="ig"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === q.side || f === q.dsf ? ' <small class="cuit">en dessert</small>' : ''}</span>`).join('');
+  const q = ox.por, chips = q.ing.map(([f, g]) => `<span class="ig"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === q.side || isDs(q, f) ? ' <small class="cuit">en dessert</small>' : ''}</span>`).join('');
   return `<details class="duo-por" style="--c2:${o.a1}"><summary><b>${nom}</b> mange autre chose : ${q.r.e} ${esc(q.r.n)} · ${kc(q.m.k)} kcal${ready ? '' : ' <small>(portion standard)</small>'}</summary><div class="ingr">${chips}</div></details>`;
 }
 function mealCard(x, st, date, ox){
@@ -4821,7 +4863,7 @@ function mealCard(x, st, date, ox){
     <div class="row1"><button class="emo" data-act="recette" data-meal="${x.meal}">${p.r.e}</button>
       <button class="name" data-act="recette" data-meal="${x.meal}"><b>${favOf()[p.r.id] ? '❤️ ' : ''}${esc(p.r.n)}</b><span class="sub"><span class="mlbl">${ico} ${lbl}</span><span class="sr">${kc(p.m.k)} kcal · P ${Math.round(p.m.p)} · G ${Math.round(p.m.g)} · L ${Math.round(p.m.l)} g · ≈ ${eur(costOf(p.ing))}</span>${x.shared ? '<span class="mus" style="--c:#fb923c">👫 En commun</span>' : ''}</span></button>
       <button class="check" data-act="mok" data-meal="${x.meal}" aria-label="${okd ? 'Annuler' : 'Mangé comme prévu'}" aria-pressed="${okd}">✓</button></div>
-    ${sameDish(x, ox) ? duoTable(x, ox) : `${ox && ox.por && !ox.away ? `<p class="dt-lead" style="--c1:${profile.a1}">🍽️ Ta portion</p>` : ''}<div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === p.side || f === p.dsf ? ` <small class="cuit">${x.meal === 'col' ? 'en plus' : 'en dessert'}</small>` : ''}</button>`).join('')}</div>${isMix(p) ? `<p class="plate-tip">🍲 <b>Plat mélangé</b> : ton assiette cuite ≈ <b>${kc(plateG(p))} g</b>${plateSide(p) ? `, plus ${esc(plateSide(p))} à côté` : ''}. Pèse-la une fois servie.</p>` : ''}`}
+    ${sameDish(x, ox) ? duoTable(x, ox) : `${ox && ox.por && !ox.away ? `<p class="dt-lead" style="--c1:${profile.a1}">🍽️ Ta portion</p>` : ''}<div class="ingr">${p.ing.map(([f, g]) => `<button class="ig" data-act="swap" data-meal="${x.meal}" data-f="${f}"><b>${qty(f, g)}</b> ${esc(FOODS[f].n.toLowerCase())}${CUIT[f] ? ` <small class="cuit">cru · ≈ ${cuitG(f, g)} g cuit</small>` : ''}${f === p.side || isDs(p, f) ? ` <small class="cuit">${x.meal === 'col' ? 'en plus' : 'en dessert'}</small>` : ''}</button>`).join('')}</div>${isMix(p) ? `<p class="plate-tip">🍲 <b>Plat mélangé</b> : ton assiette cuite ≈ <b>${kc(plateG(p))} g</b>${plateSide(p) ? `, plus ${esc(plateSide(p))} à côté` : ''}. Pèse-la une fois servie.</p>` : ''}`}
     ${p.subs.length ? `<p class="muted" style="font-size:12px;margin-top:6px">🔁 ${p.subs.map(([a, b]) => `${esc(FOODS[a].n)} → ${esc(FOODS[b].n)}`).join(', ')}</p>` : ''}
     ${p.pT && p.m.p < p.pT * .75 ? `<p class="advice">💡 Plat léger en protéines (${Math.round(p.m.p)} g sur ${Math.round(p.pT)} g visés) : ajoute un skyr, un fromage blanc ou 2 œufs.</p>` : ''}
     ${other2 ? `<p class="advice">✏️ Mangé autre chose : ${kc(macrosOf(st.items).k)} kcal · ${Math.round(macrosOf(st.items).p)} g prot.</p>` : skip ? '<p class="advice">⏭️ Repas sauté</p>' : ''}
@@ -4850,8 +4892,9 @@ function sheetRecette(meal){
     ${duo ? `<div class="three"><div><b>${kc(p.m.k)} · ${kc(B.m.k)}</b><small>kcal ${esc(profile.nom)} · ${esc(op.nom)}</small></div><div><b>${Math.round(p.m.p)} · ${Math.round(B.m.p)} g</b><small>Protéines</small></div>${recTimeCell(p.r)}</div>
     <div class="box">${duoTable({ por: p, meal }, ox, true)}</div>` : `<div class="three"><div><b>${kc(p.m.k)}</b><small>kcal</small></div><div><b>${Math.round(p.m.p)} g</b><small>Protéines</small></div>${recTimeCell(p.r)}</div>
     ${ox && op ? (ox.away ? `<p class="duo-por" style="--c2:${op.a1}">🧳 <b>${esc(op.nom)}</b> n’est pas à la maison : seule ta portion est à préparer.</p>` : ox.por ? `<p class="duo-por" style="--c2:${op.a1}">🍽️ <b>${esc(op.nom)}</b> mange autre chose : ${ox.por.r.e} ${esc(ox.por.r.n)}</p>` : '') : ''}`}
-    ${duo ? '' : `<div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p class="ring-l">${p.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : f === p.dsf ? ' (en dessert)' : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>`}
+    ${duo ? '' : `<div class="box"><h4>🛒 Ingrédients (ta portion)</h4><p class="ring-l">${p.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side ? (meal === 'col' ? ' (en plus, pour les protéines)' : ' (en dessert, pour les protéines)') : isDs(p, f) ? ' (en dessert)' : ''}`).join('\n')}</p>${p.ing.some(([f]) => CUIT[f]) ? '<p class="muted" style="font-size:12px;margin-top:6px">⚖️ Pèse cru, ou utilise le poids cuit indiqué si tu pèses après cuisson.</p>' : ''}</div>`}
     <div class="box"><h4>👩‍🍳 Préparation</h4>${recSteps(p.r)}</div>
+    ${p.dr ? `<div class="box"><h4>${p.dr.e} Dessert plaisir : ${esc(p.dr.n)}</h4>${recSteps(p.dr)}</div>` : ''}
     <div class="row" style="margin:4px 0 10px"><button class="btn sm ${favOf()[p.r.id] ? 'pri' : ''}" data-x="fav" data-rid="${p.r.id}" data-meal="${meal}">${favOf()[p.r.id] ? '❤️ Favori' : '🤍 J’adore'}</button><button class="btn sm ${banOf()[p.r.id] ? 'danger' : ''}" data-x="ban" data-rid="${p.r.id}" data-meal="${meal}">${banOf()[p.r.id] ? '👎 Écarté (annuler)' : '👎 Ne plus proposer'}</button></div>
     <p class="muted" style="font-size:12px">${duo ? 'Ta portion : g' : 'G'}lucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
 }
@@ -5018,9 +5061,10 @@ function sheetRecNext(d, meal){
   const ml = (MEALS.find(m => m[0] === meal) || [])[1] || '';
   openSheet(`<h2>${p.r.e} ${esc(p.r.n)}</h2><p class="muted" style="font-size:13px;margin-bottom:10px">${esc(DAY_NAMES[d])} ${fmtD(wkDates(wk)[d])} · ${esc(ml)}</p>
     <div class="three"><div><b>${kc(p.m.k)}${o ? ' · ' + kc(o.m.k) : ''}</b><small>kcal${o ? ` ${esc(profile.nom)} · ${esc(op.nom)}` : ''}</small></div><div><b>${Math.round(p.m.p)}${o ? ' · ' + Math.round(o.m.p) : ''} g</b><small>Protéines</small></div>${recTimeCell(p.r)}</div>
-    <div class="box"><h4>🛒 Ta portion</h4><p class="ring-l">${p.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side || f === p.dsf ? (meal === 'col' ? ' (en plus)' : ' (dessert)') : ''}`).join('\n')}</p></div>
-    ${o ? `<div class="box"><h4>🛒 Portion de ${esc(op.nom)}</h4><p class="ring-l">${o.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === o.side || f === o.dsf ? ' (dessert)' : ''}`).join('\n')}</p></div>` : ''}
-    <div class="box"><h4>👩‍🍳 Préparation</h4>${recSteps(p.r)}</div>`);
+    <div class="box"><h4>🛒 Ta portion</h4><p class="ring-l">${p.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === p.side || isDs(p, f) ? (meal === 'col' ? ' (en plus)' : ' (dessert)') : ''}`).join('\n')}</p></div>
+    ${o ? `<div class="box"><h4>🛒 Portion de ${esc(op.nom)}</h4><p class="ring-l">${o.ing.map(([f, g]) => `${foodIco(f)} ${qty(f, g)}${FOODS[f].unit ? '' : ' ' + esc(FOODS[f].n.toLowerCase())}${cuitTxt(f, g)}${f === o.side || isDs(o, f) ? ' (dessert)' : ''}`).join('\n')}</p></div>` : ''}
+    <div class="box"><h4>👩‍🍳 Préparation</h4>${recSteps(p.r)}</div>
+    ${p.dr ? `<div class="box"><h4>${p.dr.e} Dessert plaisir : ${esc(p.dr.n)}</h4>${recSteps(p.dr)}</div>` : ''}`);
 }
 function coursesList(){
   const wk = curWk(), dates = weekDates(wk), from = coursesScope === 'semaine' ? 0 : todayIdx();
@@ -7833,7 +7877,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 140;
+const APP_VERSION = 141;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
