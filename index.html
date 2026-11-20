@@ -278,6 +278,7 @@ h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--m
 .wd.goal{background:color-mix(in srgb,#34d399 12%,transparent);color:#34d399}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 auto}
+#savePill.tap{cursor:pointer;border-color:#f59e0b;color:#fbbf24}
 @media(max-width:430px){#saveText{display:none}.pill{padding:9px}}
 .heat .h{aspect-ratio:1;border-radius:6px;background:var(--bg2);border:1px solid var(--line)}
 .heat .h.l1{background:color-mix(in srgb,var(--a1) 35%,transparent);border-color:transparent}
@@ -1017,7 +1018,7 @@ body.ecran-on.ec-noel:not(.ec-nuit) #ecran{padding-top:44px}
   <h1>Mon Programme<small id="subTitle">Entraînement de la semaine</small></h1>
   <a class="pill garage" href="https://galianachristian-cpu.github.io/mon-garage/" title="Mon Garage (véhicules)" aria-label="Ouvrir Mon Garage"><img src="garage-icon.png" alt="" width="28" height="28"></a>
   <button class="profbtn" id="profBtn" aria-label="Changer de profil"><span class="av">M</span><span class="pn">Moi</span></button>
-  <span class="pill" id="savePill" title="État de la sauvegarde"><span class="dot" id="saveDot"></span><span id="saveText">Connexion…</span></span>
+  <span class="pill" id="savePill" title="État de la sauvegarde" role="button" tabindex="0" onclick="savePillTap()"><span class="dot" id="saveDot"></span><span id="saveText">Connexion…</span></span>
 </div></header>
 
 <main class="wrap" id="app"></main>
@@ -1735,7 +1736,16 @@ function snapW(e, w, dir){
 /* ============================================================
    SAUVEGARDE (Firebase + copie sur l'appareil)
    ============================================================ */
-function setStatus(st, msg){ $('#saveDot').className = 'dot ' + st; $('#saveText').textContent = msg; $('#savePill').title = msg; }
+function setStatus(st, msg){
+  /* pas connecté au compte : les données en ligne sont illisibles, on le dit et on propose de se connecter */
+  const off = st === 'local' && typeof auth !== 'undefined' && auth && !auth.currentUser;
+  if (off) msg = 'Non connecté · Se connecter';
+  $('#saveDot').className = 'dot ' + st; $('#saveText').textContent = msg; $('#savePill').title = msg; $('#savePill').classList.toggle('tap', st === 'local'); }
+function savePillTap(){
+  if ($('#saveDot').className.indexOf('local') < 0) return;
+  if (auth && !auth.currentUser) return afficherConnexion(() => location.reload());
+  toast('🔄 Nouvelle tentative de synchronisation…'); clearTimeout(syncTimer); retrySync().then(() => { if (!remoteReady) toast('⚠️ Toujours pas de connexion à la sauvegarde en ligne. Vérifie le Wi-Fi, puis réessaie.'); });
+}
 function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body, nut, journal, prog, forme, badges, runs, gear, coach, _t: saveT }; }
 // Firestore refuse les tableaux dans des tableaux (aliments notés [[aliment, g]], tracés GPS) : on les emballe à l'envoi
 const plainObj = v => v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;
@@ -1759,7 +1769,7 @@ function applyDoc(src){
 async function fetchDoc(id){
   if (!db) return null;
   try{
-    const doc = await Promise.race([DOC(id).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))]);
+    const doc = await Promise.race([DOC(id).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))]); /* vieux iPad : la première lecture peut être lente */
     online = true; return doc.exists ? fsDec(doc.data()) : {};
   }catch(e){ online = false; return null; }
 }
@@ -1886,6 +1896,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [133, [['🔐', 'Appareil non connecté : se connecter en un toucher', 'si l’iPad ou un téléphone affiche « Non connecté », touche-le en haut pour retrouver tes séances, tes repas et tes menus']]],
   [132, [['📅', 'Agenda sur la tablette : message clair', 'si l’agenda ne se charge pas, la tablette dit pourquoi et propose « Réessayer »']]],
   [131, [['😴', 'Béa : week-end au repos', 'samedi et dimanche libres ; son HIIT machines du samedi passe au jeudi (lundi → vendredi : A, HIIT, B, HIIT, C)']]],
   [130, [['🍽️', 'Poids de l’assiette corrigé', 'le fruit du dessert n’est plus compté dans l’assiette du plat mélangé (seulement le plat, sans fromage blanc ni fruit)']]],
@@ -7581,7 +7592,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 132;
+const APP_VERSION = 133;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -7630,7 +7641,7 @@ function afficherConnexion(suite){
       err(/api-key/.test(c) ? 'Connexion impossible pour l’instant (réglage Firebase de l’appli). Utilise « Continuer sans connexion ».' : /operation-not-allowed/.test(c) ? 'La connexion par email n’est pas encore activée dans Firebase.' : /network/.test(c) ? 'Pas de réseau : réessaie quand tu es connecté.' : /too-many/.test(c) ? 'Trop d’essais : patiente quelques minutes.' : 'Email ou mot de passe incorrect.');
     }finally{ b.disabled = false; b.textContent = 'Se connecter'; }
   };
-  document.getElementById('cnxLocal').onclick = () => { cacherConnexion(); suite(); setTimeout(() => toast('📱 Données du téléphone : la sauvegarde en ligne reprendra une fois connecté'), 800); };
+  document.getElementById('cnxLocal').onclick = () => { cacherConnexion(); suite(); setTimeout(() => toast('📱 Données de cet appareil seulement · touche « Se connecter » en haut pour retrouver tes séances et tes repas'), 800); };
   document.getElementById('cnxOubli').onclick = async () => {
     const m = document.getElementById('cnxEmail').value.trim();
     if (!m){ err('Écris d’abord ton adresse email.'); return; }
