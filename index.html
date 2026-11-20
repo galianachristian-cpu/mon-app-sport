@@ -1896,6 +1896,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [134, [['🍔', '19 nouveaux plats', 'kebab, nuggets, fish & chips au four, lasagnes, carbonara, tartiflette, cordon bleu, fajitas, poke bowl… version maison et légère, et des recettes express en 10-15 min'], ['🍫', '13 desserts et goûters', 'mousse au chocolat, mug cake, crêpes, crumble, cookies, riz au lait, yaourt glacé… riches en protéines, peu sucrés']]],
   [133, [['🔐', 'Appareil non connecté : se connecter en un toucher', 'si l’iPad ou un téléphone affiche « Non connecté », touche-le en haut pour retrouver tes séances, tes repas et tes menus']]],
   [132, [['📅', 'Agenda sur la tablette : message clair', 'si l’agenda ne se charge pas, la tablette dit pourquoi et propose « Réessayer »']]],
   [131, [['😴', 'Béa : week-end au repos', 'samedi et dimanche libres ; son HIIT machines du samedi passe au jeudi (lundi → vendredi : A, HIIT, B, HIIT, C)']]],
@@ -3970,13 +3971,14 @@ const FOODS = Object.fromEntries([
   ['cacahuete','Beurre de cacahuète',600,25,15,50,'epicerie','noix'],
   ['amande','Amandes',610,21,8,52,'epicerie','noix'],
   ['miel','Miel',320,0.3,80,0,'epicerie','sucre'],
-  ['soja','Sauce soja',60,6,6,0,'epicerie','sauce']
+  ['soja','Sauce soja',60,6,6,0,'epicerie','sauce'],
+  ['cacao','Cacao en poudre non sucré',360,20,14,11,'epicerie','cacao']
 ].map(([id, n, k, p, g, l, ray, grp, unit]) => [id, { id, n, k, p, g, l, ray, grp, unit }]));
 // poids cuit ≈ poids cru × facteur (les quantités des menus sont pesées crues)
 const CUIT = { riz:2.6, pates:2.3, semoule:2.3, lentille:2.5, poulet:.75, dinde:.75, boeuf:.75, colin:.8, saumon:.8 };
 const cuitG = (f, g) => Math.round(g * CUIT[f] / 10) * 10;
 /* plats où tout cuit ensemble : poids de l'assiette une fois cuit (pain et salade servis à côté non comptés) */
-const MIX = new Set(['bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
+const MIX = new Set(['lasagnes-legeres', 'carbonara-legere', 'tartiflette-legere', 'parmentier-colin', 'shakshuka', 'quiche-jambon-courgette', 'bowl-semoule-pc', 'pates-poulet-brocoli', 'bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
 const MIX_SIDE = new Set(['pain', 'salade']);
 const MIXC = Object.assign({}, CUIT, { champignon: .6, courgette: .85, epinard: .8, poivron: .85, oignon: .8, carotte: .9, brocoli: .9, haricotvert: .9, poelee: .9, chou: .9, patate: .9, pdt: .95, lait: .85 });
 const isMix = por => !!(por && por.r && MIX.has(por.r.id));
@@ -4000,7 +4002,7 @@ const SUBS = {
   banane:['pomme','orange','fruitrouge'], pomme:['banane','orange','fruitrouge'], orange:['pomme','banane'], fruitrouge:['pomme','banane'],
   fblanc:['skyr','yaourt'], skyr:['fblanc','yaourt'], yaourt:['skyr','fblanc'], lait:['yaourt'],
   emmental:['mozza','feta'], mozza:['emmental','feta'], feta:['mozza','emmental'],
-  cacahuete:['amande'], amande:['cacahuete'], miel:[], huile:[], soja:[], concassee:['tomate']
+  cacahuete:['amande'], amande:['cacahuete'], miel:[], huile:[], soja:[], cacao:[], concassee:['tomate']
 };
 
 /* RECETTES — portions de base pour une personne (g ; unités pour les œufs et les fruits) */
@@ -4104,6 +4106,40 @@ const RECIPES = [
   R('salade-pc-feta','Salade de pois chiches, concombre & feta','plat',10,[['poischiche',200],['concombre',150],['tomate',150],['feta',40],['huile',5],['pain',50]],'Mélanger les pois chiches rincés avec le concombre et la tomate en dés, la feta et l’huile. Servir avec le pain.','🥒'),
   R('dinde-pdt-haricots','Escalope de dinde, pommes de terre & haricots verts','plat',25,[['dinde',150],['pdt',250],['haricotvert',200],['huile',5]],'Cuire les pommes de terre et les haricots verts. Poêler l’escalope 4 min par face.','🍽️'),
   R('soupe-poulet','Soupe de poulet, légumes & petites pâtes','plat',30,[['poulet',130],['carotte',100],['courgette',100],['oignon',40],['pates',50],['pain',40]],'Faire revenir l’oignon, ajouter le poulet et les légumes en dés, couvrir d’eau, cuire 15 min. Ajouter les pâtes 8 min.','🍲'),
+  // Ajouts (v134) : plats gourmands allégés et recettes rapides
+  R('kebab-maison','Kebab maison au poulet, sauce blanche','plat',20,[['tortilla',120],['poulet',150],['fblanc',60],['oignon',30],['tomate',80],['salade',40]],'Griller le poulet en fines lanières avec une pincée de cumin et de paprika. Sauce : fromage blanc, ail, ciboulette, sel, poivre. Garnir les tortillas chaudes de poulet, crudités et sauce, rouler.','🌯'),
+  R('nuggets-four','Nuggets de poulet au four & potatoes','plat',30,[['poulet',150],['oeuf',60],['avoine',30],['pdt',250],['huile',5],['salade',50]],'Couper les pommes de terre en quartiers, les mélanger avec l’huile et le paprika, cuire 25 min à 210 °C. Tremper les morceaux de poulet dans l’œuf battu puis dans l’avoine mixée, les ajouter au four pour les 15 dernières minutes.','🍗'),
+  R('fish-chips-four','Fish & chips au four','plat',30,[['colin',180],['oeuf',60],['avoine',25],['pdt',250],['huile',5],['haricotvert',150]],'Frites : pommes de terre en bâtonnets avec l’huile, 25 min à 220 °C. Paner le colin (œuf battu puis avoine mixée), le cuire 12 min au four avec les frites. Servir avec les haricots verts.','🐟'),
+  R('lasagnes-legeres','Lasagnes légères bœuf-courgette','plat',45,[['pates',80],['boeuf',130],['courgette',150],['concassee',200],['oignon',30],['fblanc',50],['emmental',20]],'Faire revenir le bœuf et l’oignon, ajouter la courgette râpée et la tomate, mijoter 10 min. Alterner feuilles de lasagne, sauce et fromage blanc dans un plat, finir par l’emmental. Four 25 min à 190 °C.','🍝'),
+  R('carbonara-legere','Carbonara légère au jambon','plat',15,[['pates',80],['jambon',80],['oeuf',60],['fblanc',60],['emmental',15]],'Cuire les pâtes. Mélanger l’œuf, le fromage blanc et l’emmental avec du poivre. Dorer le jambon en dés. Hors du feu, mélanger les pâtes chaudes avec la sauce et le jambon (la chaleur cuit l’œuf sans le brouiller).','🍝'),
+  R('tartiflette-legere','Tartiflette légère au jambon','plat',35,[['pdt',300],['jambon',100],['oignon',50],['fblanc',80],['emmental',30],['salade',50]],'Cuire les pommes de terre en rondelles 15 min. Faire revenir l’oignon et le jambon en dés. Mélanger dans un plat avec le fromage blanc, parsemer d’emmental, gratiner 15 min à 200 °C. Servir avec la salade.','🧀'),
+  R('cordon-bleu','Cordon bleu maison & haricots verts','plat',30,[['dinde',150],['jambon',30],['emmental',15],['oeuf',60],['avoine',20],['pdt',200],['haricotvert',150]],'Ouvrir l’escalope en portefeuille, glisser le jambon et l’emmental, refermer. Paner (œuf battu puis avoine mixée), cuire 20 min à 200 °C. Servir avec les pommes de terre vapeur et les haricots verts.','🍽️'),
+  R('fajitas-poulet','Fajitas poulet-poivrons','plat',20,[['tortilla',120],['poulet',150],['poivron',150],['oignon',40],['fblanc',40],['huile',5]],'Faire sauter le poulet en lanières avec les poivrons et l’oignon émincés, cumin et paprika, 8 min. Garnir les tortillas chaudes, ajouter une cuillère de fromage blanc.','🌮'),
+  R('poke-saumon','Poke bowl saumon, riz & crudités','plat',20,[['saumon',120],['riz',70],['concombre',100],['carotte',80],['soja',10]],'Cuire le riz et le laisser tiédir. Poêler le saumon en dés 3 min. Disposer dans un bol le riz, le saumon, le concombre en dés et la carotte râpée, arroser de sauce soja.','🍣'),
+  R('gratin-dauphinois-poulet','Gratin dauphinois léger & poulet','plat',45,[['pdt',300],['lait',150],['emmental',20],['poulet',140],['salade',50]],'Disposer les pommes de terre en fines rondelles dans un plat, ail, sel, muscade, couvrir de lait, parsemer d’emmental. Four 40 min à 190 °C. Griller le poulet, servir avec la salade.','🥔'),
+  R('parmentier-colin','Parmentier de colin aux épinards','plat',40,[['colin',180],['epinard',100],['pdt',300],['lait',80],['emmental',20]],'Cuire les pommes de terre et les écraser avec le lait. Pocher le colin 5 min, l’émietter avec les épinards revenus. Mettre le poisson dans un plat, couvrir de purée, parsemer d’emmental, gratiner 15 min.','🐟'),
+  R('shakshuka','Shakshuka & pain','plat',20,[['oeuf',180],['concassee',250],['poivron',100],['oignon',40],['feta',20],['pain',70]],'Faire revenir l’oignon et le poivron, ajouter la tomate, cumin, paprika, mijoter 8 min. Creuser des puits, y casser les œufs, couvrir 6 min. Parsemer de feta, servir avec le pain.','🍳'),
+  R('burger-poulet','Burger de poulet croustillant & frites de patate douce','plat',30,[['pain',90],['poulet',140],['avoine',20],['tomate',60],['salade',40],['fblanc',30],['emmental',15],['patate',200],['huile',5]],'Frites : patate douce en bâtonnets avec l’huile, 25 min à 210 °C. Aplatir le poulet, le rouler dans l’avoine mixée, le cuire à la poêle 5 min par face. Monter le burger : pain, sauce fromage blanc, salade, tomate, poulet, emmental.','🍔'),
+  R('quiche-jambon-courgette','Quiche sans pâte jambon-courgette','plat',40,[['oeuf',180],['lait',100],['jambon',80],['courgette',150],['emmental',20],['salade',50]],'Battre les œufs avec le lait, ajouter la courgette râpée et pressée, le jambon en dés et l’emmental. Verser dans un moule, cuire 30 min à 180 °C. Servir avec la salade.','🥧'),
+  R('patate-farcie-chili','Patate douce farcie façon chili','plat',30,[['patate',250],['boeuf',130],['haricotrouge',80],['concassee',100],['emmental',15]],'Cuire les patates douces 8 min au micro-ondes puis 10 min au four. Faire revenir le bœuf, ajouter les haricots, la tomate et les épices chili, mijoter 8 min. Ouvrir les patates, garnir, parsemer d’emmental.','🍠'),
+  R('omelette-pizza','Omelette façon pizza','plat',10,[['oeuf',180],['concassee',60],['jambon',40],['mozza',30],['pain',60],['salade',50]],'Cuire l’omelette à la poêle. Avant qu’elle prenne complètement, étaler la tomate, le jambon et la mozzarella, origan, couvrir 2 min. Servir avec le pain et la salade.','🍕'),
+  R('cesar-legere','Salade César légère','plat',15,[['poulet',150],['salade',100],['tomate',80],['pain',50],['emmental',15],['fblanc',40]],'Griller le poulet en lanières. Toaster le pain en croûtons. Sauce : fromage blanc, moutarde, citron, ail. Mélanger la salade, la tomate, le poulet, les croûtons et l’emmental avec la sauce.','🥗'),
+  R('bowl-semoule-pc','Bowl express semoule, pois chiches & feta','plat',10,[['semoule',70],['poischiche',120],['tomate',100],['concombre',100],['feta',30],['huile',5]],'Gonfler la semoule 5 min dans l’eau bouillante salée. Mélanger avec les pois chiches rincés, la tomate et le concombre en dés, la feta émiettée, l’huile, du citron et de la menthe.','🥙'),
+  R('pates-poulet-brocoli','Pâtes poulet-brocoli express','plat',15,[['pates',80],['poulet',130],['brocoli',200],['fblanc',40],['emmental',10]],'Cuire les pâtes avec le brocoli dans la même eau. Dorer le poulet en dés. Égoutter, mélanger avec le poulet, le fromage blanc et l’emmental, poivrer.','🍝'),
+  // Ajouts (v134) : desserts et goûters
+  R('mousse-choco-fb','Mousse au chocolat au fromage blanc','col',3,[['fblanc',200],['cacao',10],['miel',10]],'Fouetter le fromage blanc avec le cacao et le miel jusqu’à ce que ce soit bien lisse. 10 min au frais si possible.','🍫'),
+  R('mug-cake','Mug cake chocolat au micro-ondes','col',5,[['avoine',30],['oeuf',60],['cacao',10],['fblanc',50],['miel',10]],'Mixer l’avoine en farine. Mélanger tout dans un grand mug, cuire 1 min 30 au micro-ondes. Laisser tiédir 2 min.','🧁'),
+  R('pancakes-skyr','Pancakes protéinés au skyr & fruits rouges','col',15,[['avoine',40],['oeuf',60],['skyr',100],['fruitrouge',80]],'Mixer l’avoine, l’œuf et la moitié du skyr. Cuire de petits pancakes 1 min par face dans une poêle chaude. Servir avec le reste du skyr et les fruits rouges.','🥞'),
+  R('crumble-pomme','Crumble pomme-avoine express','col',10,[['pomme',150],['avoine',25],['amande',10],['miel',5],['fblanc',100]],'Couper la pomme en dés dans un bol, cannelle, 2 min au micro-ondes. Mélanger l’avoine, les amandes concassées et le miel, poser dessus, 1 min de plus. Servir avec le fromage blanc.','🍎'),
+  R('cookies-avoine','Cookies avoine-banane-cacahuète','col',20,[['banane',120],['avoine',40],['cacahuete',10]],'Écraser la banane, mélanger avec l’avoine et le beurre de cacahuète. Former 4 petits cookies sur une plaque, cuire 15 min à 180 °C.','🍪'),
+  R('riz-au-lait','Riz au lait léger','col',30,[['riz',30],['lait',250],['miel',10]],'Cuire le riz dans le lait à feu doux 25 min en remuant souvent, avec vanille ou cannelle. Sucrer au miel. Se mange tiède ou froid.','🍚'),
+  R('yaourt-glace','Yaourt glacé aux fruits rouges','col',5,[['skyr',150],['fruitrouge',100],['miel',10]],'Mixer les fruits rouges encore congelés avec le skyr et le miel : texture glace tout de suite. Ou mettre 1 h au congélateur.','🍨'),
+  R('crepes-legeres','Crêpes légères & fromage blanc','col',15,[['lait',100],['oeuf',60],['avoine',30],['fblanc',100],['miel',5]],'Mixer le lait, l’œuf et l’avoine en pâte fluide. Cuire 2 à 3 crêpes fines dans une poêle chaude. Garnir de fromage blanc et d’un filet de miel.','🥞'),
+  R('pomme-four','Pomme au four, cannelle & amandes','col',20,[['pomme',150],['amande',10],['fblanc',100]],'Évider la pomme, la saupoudrer de cannelle, cuire 15 min au four à 200 °C (ou 4 min au micro-ondes). Servir avec le fromage blanc et les amandes concassées.','🍏'),
+  R('banane-choco','Banane chaude au chocolat','col',5,[['banane',120],['cacao',5],['fblanc',100],['miel',5]],'Couper la banane en deux, la chauffer 1 min au micro-ondes. Mélanger le fromage blanc avec le cacao et le miel, napper la banane.','🍌'),
+  R('energy-balls','Energy balls avoine-cacao','col',10,[['avoine',30],['cacahuete',15],['miel',10],['cacao',5]],'Mélanger l’avoine, le beurre de cacahuète, le miel et le cacao. Former 4 petites boules, 15 min au frais.','🟤'),
+  R('cheesecake-verrine','Verrine façon cheesecake aux fruits rouges','col',5,[['skyr',150],['avoine',20],['amande',5],['fruitrouge',80],['miel',5]],'Au fond d’un verre : l’avoine et les amandes concassées. Ajouter le skyr mélangé au miel et à la vanille, puis les fruits rouges.','🍰'),
+  R('smoothie-choco','Smoothie choco-banane protéiné','col',3,[['lait',200],['banane',120],['skyr',100],['cacao',5]],'Mixer tous les ingrédients avec quelques glaçons.','🥤'),
   R('riz-sardines','Riz aux sardines, tomate & poivron','plat',20,[['sardine',100],['riz',70],['concassee',150],['poivron',100],['oignon',30]],'Cuire le riz. Faire revenir l’oignon et le poivron, ajouter la tomate 8 min, puis les sardines émiettées. Servir sur le riz.','🐟'),
 ];
 const REC_BY = Object.fromEntries(RECIPES.map(r => [r.id, r]));
@@ -4418,7 +4454,7 @@ function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(
 /* ============================================================
    BUDGET — prix moyens en supermarché (€ par kg, poids acheté), modifiables avec les prix de son magasin
    ============================================================ */
-const PRICE = { oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
+const PRICE = { cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
   lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
   concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
 const STORES = { moyen:['Prix moyens',1], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
@@ -7592,7 +7628,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 133;
+const APP_VERSION = 134;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
