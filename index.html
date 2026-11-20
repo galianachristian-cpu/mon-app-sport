@@ -278,6 +278,18 @@ h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--m
 .wd.goal{background:color-mix(in srgb,#34d399 12%,transparent);color:#34d399}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 auto}
+/* Avent, frigo, objectif commun */
+.avent{margin-top:12px}.avent.ec{background:linear-gradient(135deg,rgba(22,163,74,.22),rgba(220,38,38,.18));border:1px solid rgba(252,211,77,.4);border-radius:var(--r);padding:12px 16px;margin:0 0 14px}
+.avent .ah{display:flex;align-items:baseline;gap:8px}.avent .ah b{flex:1}.avent .ah small{color:var(--muted);font-size:12px}
+.avent .adef{font-size:17px;font-weight:700;margin:8px 0 10px}.avent.ec .adef{font-size:22px}.avent .row{gap:8px}
+.adoors{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:10px}.adoors span{aspect-ratio:1;display:grid;place-items:center;font-size:11px;font-weight:700;border-radius:6px;background:var(--card2);border:1px solid var(--line);color:var(--muted)}
+.avent.ec .adoors{grid-template-columns:repeat(24,1fr)}.avent.ec .adoors span{aspect-ratio:auto;height:30px}
+.adoors span.ad-ok{background:rgba(22,163,74,.3);border-color:#16a34a;font-size:13px}.adoors span.ad-mi{border-color:#fcd34d;color:#fcd34d}.adoors span.ad-cur{outline:2px solid #fcd34d}.adoors span.ad-lk{opacity:.4}
+.fgl{font-size:12.5px;font-weight:700;color:var(--muted);margin:12px 0 6px}.fchips{display:flex;flex-wrap:wrap;gap:6px}
+.fchip{border:1px solid var(--line);background:var(--card2);color:inherit;border-radius:99px;padding:7px 11px;font:inherit;font-size:13.5px;cursor:pointer}.fchip.on{background:var(--a1);border-color:var(--a1);color:#04111a;font-weight:700}
+.frec{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.frec .emo{font-size:26px}.frec .t{flex:1;min-width:0}.frec .t small{display:block;color:var(--muted);font-size:12px}
+.couple{margin-bottom:12px}.couple small{font-size:12px}.cbar{position:relative;height:12px;border-radius:99px;background:var(--card2);overflow:hidden;margin:8px 0 6px}
+.cbar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--a1),#f472b6);border-radius:99px}.cbar .c1{position:absolute;inset:0 auto 0 0;border-right:2px solid rgba(255,255,255,.7)}
 #app .semrec{display:block;background:none;border:0;padding:2px 0;color:inherit;font:inherit;text-align:left;cursor:pointer}#app .semrec small{color:var(--a1)}
 #app .rsteps,#sheet .rsteps{padding-left:22px;margin:4px 0 0;line-height:1.5}#sheet .rsteps li{margin-bottom:6px}#sheet .ring-l{line-height:1.8}
 #savePill.tap{cursor:pointer;border-color:#f59e0b;color:#fbbf24}
@@ -1906,6 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
   [138, [['🚶‍♀️', 'Béa : salle, marche, HIIT, puis on recommence', 'dès lundi : lun salle · mar marche 10 000 pas · mer HIIT · jeu salle · ven marche · week-end repos ; les séances A, B, C tournent d’une semaine à l’autre, plus de marche après les séances']]],
   [137, [['📅', 'Voir les repas de la semaine prochaine', 'Nutrition → Semaine → « Semaine prochaine » : tous les repas du lundi au dimanche, touche un repas pour voir la recette et vos portions']]],
@@ -2250,7 +2263,7 @@ function viewSeance(){
   if (list.length && nDone === list.length && sess[k] && sess[k].start && !sess[k].end){ sess[k].end = Date.now(); setTimeout(() => save(), 0); }
   const s = sess[k], storyOn = currentDay === todayIdx() && list.length > 0 && !sessStarted(k);
   // cartes secondaires : avant les exercices (par défaut) ou après (« Séance d'abord »)
-  const social = currentDay === todayIdx() ? (hOn('duo') ? duoLine() + cheerCard() : '') + (hOn('actions') ? actionsCard() : '') + (hOn('defis') ? duoChallenges() : '') + (hOn('bilan') ? reportBanner() : '') : '';
+  const social = currentDay === todayIdx() ? aventHtml(false) + (hOn('duo') ? duoLine() + cheerCard() : '') + (hOn('actions') ? actionsCard() : '') + (hOn('defis') ? duoChallenges() : '') + (hOn('bilan') ? reportBanner() : '') : '';
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
   ${progFixCard()}
@@ -2641,7 +2654,11 @@ function duoChallenges(){
   if (nOk === DUO_CH.length && !wins[wk] && foyerReady){ foyer.duoWins = Object.assign({}, wins, { [wk]: 1 }); saveFoyer(); setTimeout(() => { confetti(); toast('🏅 Défis de la semaine réussis à deux !'); }, 400); }
   const nW = Object.keys(foyer.duoWins || {}).length, me = profile.nom.slice(0, 1).toUpperCase(), ot = other.p.nom.slice(0, 1).toUpperCase();
   const cell = (v, n) => `<span class="${v >= n ? 'ok' : ''}">${Math.min(v, n)}/${n}</span>`;
-  return `<div class="card duoch" style="margin-top:10px"><div class="row"><b style="flex:1">👫 Défis de la semaine</b><small class="muted">${nOk}/${DUO_CH.length}${nW ? ` · 🏅 ${nW}` : ''}</small></div>
+  // objectif commun : les séances des deux s'additionnent dans une même barre
+  const cT = A.seances[1] + B.seances[1], cV = Math.min(cT, A.seances[0] + B.seances[0]), cOk = cV >= cT, cw = foyer.coupleWins || {};
+  if (cOk && !cw[wk] && foyerReady){ foyer.coupleWins = Object.assign({}, cw, { [wk]: 1 }); saveFoyer(); setTimeout(() => { confetti(); toast('🤝 Objectif commun atteint : toutes vos séances de la semaine !'); }, 600); }
+  const coup = `<div class="couple"><div class="row"><b style="flex:1">🤝 Objectif commun</b><small>${cV}/${cT} séances à deux${Object.keys(foyer.coupleWins || {}).length ? ` · 🏆 ${Object.keys(foyer.coupleWins || {}).length}` : ''}</small></div><div class="cbar"><i style="width:${Math.round(cV * 100 / Math.max(1, cT))}%"></i><span class="c1" style="width:${Math.round(Math.min(A.seances[0], A.seances[1]) * 100 / Math.max(1, cT))}%"></span></div><small class="muted">${cOk ? '🏆 Toutes vos séances sont faites, bravo à vous deux !' : `Encore ${cT - cV} séance${cT - cV > 1 ? 's' : ''} à vous deux pour remplir la barre cette semaine.`}</small></div>`;
+  return `<div class="card duoch" style="margin-top:10px">${coup}<div class="row"><b style="flex:1">👫 Défis de la semaine</b><small class="muted">${nOk}/${DUO_CH.length}${nW ? ` · 🏅 ${nW}` : ''}</small></div>
     <table class="tbl"><thead><tr><th></th><th>${esc(me)}</th><th>${esc(ot)}</th><th></th></tr></thead><tbody>${DUO_CH.map(([c, ic, l]) => `<tr><td>${ic} ${l}</td><td>${cell(A[c][0], A[c][1])}</td><td>${cell(B[c][0], B[c][1])}</td><td>${ok(c) ? '✅' : ''}</td></tr>`).join('')}</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:6px">${nOk === DUO_CH.length ? '🏅 Semaine réussie ensemble, bravo à vous deux !' : 'Les 4 défis réussis par vous deux = une médaille commune 🏅'}${nW ? ` · ${nW} semaine${nW > 1 ? 's' : ''} réussie${nW > 1 ? 's' : ''} ensemble` : ''}</p></div>`;
 }
@@ -3920,6 +3937,81 @@ function delEx(i){
 }
 
 /* ============================================================
+   CALENDRIER DE L'AVENT SPORTIF (1er → 24 décembre) : un défi par jour, à cocher chacun, partagé (foyer.avent)
+   ============================================================ */
+const AVENT = ['🚶 10 000 pas dans la journée', '💧 2 grands verres d’eau avant midi', '🦵 3 × 15 squats (sans sauter)', '🧘 10 minutes d’étirements le soir', '🥦 Des légumes à midi ET le soir', '🍫 Un seul carré de chocolat, savouré lentement',
+  '🌳 Une balade à deux, même 20 minutes', '🧱 3 × 30 s de planche sur les avant-bras', '😴 Au lit 30 minutes plus tôt', '🍑 3 × 15 ponts fessiers', '📵 Pas d’écran pendant le dîner', '🪜 Les escaliers à chaque fois, pas l’ascenseur',
+  '🥗 Un repas 100 % fait maison', '🌬️ 5 minutes de respiration calme', '🏋️ Faire sa séance du jour (ou 20 min de marche)', '💧 1,5 L d’eau dans la journée', '🦵 3 × 10 fentes par jambe', '🍎 Un fruit au goûter à la place d’un biscuit',
+  '🚶 15 minutes de marche après le dîner', '💪 Battre un record (charge, répétitions ou pas)', '🎶 10 minutes de danse sur une playlist de Noël', '🥛 Un petit-déjeuner riche en protéines', '🧦 Préparer ses tenues de sport de la semaine', '🎅 Réveillon : une balade digestive à deux avant le dessert'];
+const aventDay = (n = new Date()) => n.getMonth() === 11 && n.getDate() <= 24 ? n.getDate() : 0;
+const aventKey = d => `${new Date().getFullYear()}-12-${String(d).padStart(2, '0')}`;
+const aventOf = d => ((foyer && foyer.avent) || {})[aventKey(d)] || {};
+function aventToggle(pid){
+  const d = aventDay(); if (!d) return; const k = aventKey(d), A = Object.assign({}, foyer.avent || {}), v = Object.assign({}, A[k] || {});
+  if (v[pid]) delete v[pid]; else v[pid] = 1; A[k] = v; foyer.avent = A;
+  if (v[pid]){ const both = PROFILES.every(p => v[p.id]); setTimeout(() => { confetti(); toast(d === 24 && both ? `🎅 Joyeux réveillon ! ${aventScore()} défis relevés à deux sur 24` : both ? '🎁 Défi du jour réussi à deux !' : '🎁 Défi du jour coché !'); }, 150); }
+}
+const aventScore = () => { let n = 0; for (let d = 1; d <= 24; d++) if (PROFILES.every(p => aventOf(d)[p.id])) n++; return n; };
+function aventHtml(ec){
+  const d = aventDay(); if (!d || !foyer) return '';
+  const v = aventOf(d), nomOf = p => ec ? ecNom(ecPerson(p.id) ? ecPerson(p.id).p : p) : (p.id === profile.id ? profile.nom : p.nom);
+  const doors = Array.from({ length: 24 }, (_, i) => { const o = aventOf(i + 1), n = PROFILES.filter(p => o[p.id]).length; return `<span class="${i + 1 === d ? 'ad-cur' : ''} ${n === PROFILES.length ? 'ad-ok' : n ? 'ad-mi' : ''} ${i + 1 > d ? 'ad-lk' : ''}">${n === PROFILES.length ? '🎁' : i + 1}</span>`; }).join('');
+  const btns = (ec ? PROFILES : [profile]).map(p => `<button class="btn ${v[p.id] ? 'pri' : ''}" ${ec ? 'data-ec' : 'data-x'}="avent" data-pid="${p.id}">${v[p.id] ? '✅' : '⬜'} ${esc(nomOf(p))}</button>`).join('');
+  return `<div class="avent ${ec ? 'ec' : 'card'}"><div class="ah"><b>🎄 Calendrier de l’Avent · jour ${d}</b><small>${aventScore()}/24 réussis à deux</small></div>
+    <p class="adef">${esc(AVENT[d - 1])}</p><div class="row">${btns}</div>${ec || PROFILES.length < 2 ? '' : `<p class="muted" style="font-size:12px;margin-top:6px">${(() => { const o = PROFILES.find(p => p.id !== profile.id); return v[o.id] ? `✅ ${esc(o.nom)} l’a déjà fait !` : `${esc(o.nom)} ne l’a pas encore coché.`; })()}</p>`}<div class="adoors">${doors}</div></div>`;
+}
+/* ============================================================
+   QU'EST-CE QU'ON MANGE CE SOIR ? on coche ce qu'on a, l'appli propose les plats qui collent
+   ============================================================ */
+let FRIGO = new Set(safeGet('mp_frigo', []));
+const FRIGO_SKIP = new Set(['oignon', 'huile', 'soja', 'miel', 'concassee']);
+const FRIGO_GRP = [['🍗 Viandes, poissons, œufs', ['prot']], ['🍚 Féculents', ['fec', 'pain', 'cereale', 'legumineuse']], ['🥦 Légumes', ['legume']], ['🧀 Crèmerie', ['laitier', 'fromage', 'lait']]];
+function frigoResults(){
+  const ex = PROFILES.map(p => exclOf(ctxOf(p.id)));
+  return RECIPES.filter(r => r.type === 'plat' && recipeOk(r, ex) && !banOf()[r.id]).map(r => { const need = r.ing.map(([f]) => f).filter(f => !FRIGO_SKIP.has(f));
+    const has = need.filter(f => FRIGO.has(f)), miss = need.filter(f => !FRIGO.has(f)); return { r, has, miss }; })
+    .filter(x => x.has.length).sort((a, b) => a.miss.length - b.miss.length || b.has.length - a.has.length).slice(0, 8);
+}
+function frigoHtml(ec){
+  const A = ec ? 'data-ec' : 'data-x';
+  const chips = FRIGO_GRP.map(([l, G]) => `<p class="fgl">${l}</p><div class="fchips">${Object.values(FOODS).filter(F => G.includes(F.grp)).map(F => `<button class="fchip ${FRIGO.has(F.id) ? 'on' : ''}" ${A}="frigock" data-f="${F.id}">${foodIco(F.id)} ${esc(F.n)}</button>`).join('')}</div>`).join('');
+  const R = FRIGO.size ? frigoResults() : [];
+  return `<p class="muted" style="font-size:13px">Coche ce que vous avez à la maison. L’appli propose les plats qui demandent le moins de courses, avec vos portions.</p>${chips}
+    <h3 class="sec">${FRIGO.size ? '👩‍🍳 Idées pour ce soir' : ''}</h3>${R.map(x => `<div class="frec"><span class="emo">${x.r.e}</span><div class="t"><b>${esc(x.r.n)}</b><small>${x.miss.length ? `Il manque : ${x.miss.map(f => esc(FOODS[f].n.toLowerCase())).join(', ')}` : '✅ Vous avez tout !'} · ${x.r.min} min</small></div><button class="btn sm pri" ${A}="frigogo" data-rid="${x.r.id}">Ce soir</button></div>`).join('') || (FRIGO.size ? '<p class="muted">Aucun plat ne correspond, coche un ou deux aliments de plus.</p>' : '')}
+    ${FRIGO.size ? `<button class="btn sm" ${A}="frigoclr" style="margin-top:10px">🧹 Tout décocher</button>` : ''}`;
+}
+function frigoSet(rid){
+  const wk = curWk(), d = todayIdx(), plan = planOf(wk), v = plan.days[d].din;
+  if (typeof v === 'string' || !v) plan.days[d].din = rid; else PROFILES.forEach(p => { v[p.id] = rid; });
+  saveFoyer(); toast(`🍽️ Ce soir : ${REC_BY[rid].n}`);
+}
+const sheetFrigo = () => openSheet(`<h2>🧊 Qu’est-ce qu’on mange ce soir ?</h2>${frigoHtml(false)}`);
+function frigoAct(a, b, ec){
+  if (a === 'frigock'){ const f = b.dataset.f; FRIGO.has(f) ? FRIGO.delete(f) : FRIGO.add(f); safeSet('mp_frigo', [...FRIGO]); }
+  else if (a === 'frigoclr'){ FRIGO = new Set(); safeSet('mp_frigo', []); }
+  else if (a === 'frigogo'){ frigoSet(b.dataset.rid); if (ec){ ecCloseRec(); ecRender(); } else { closeSheet(); if (view === 'nutrition') viewNutrition(); } return; }
+  if (ec) ecOpenFrigo(); else { const sc = $('#sheet').scrollTop; sheetFrigo(); $('#sheet').scrollTop = sc; }
+}
+function ecOpenFrigo(){ const el = $('#ecRec'), sc = el.scrollTop; EC.rec = { frigo: 1 }; el.innerHTML = `<button class="close" data-ec="recx">✕ Fermer</button><h2>🧊 Qu’est-ce qu’on mange ce soir ?</h2>${frigoHtml(true)}`; el.classList.add('on'); el.scrollTop = sc; }
+/* ============================================================
+   COURSES À LA VOIX : « du lait, des œufs et du café » → 3 articles ajoutés
+   ============================================================ */
+function dictate(onText, fallbackInput){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR){ toast('🎤 Dictée non disponible ici : touche le micro du clavier pour dicter.'); if (fallbackInput) fallbackInput.focus(); return; }
+  try{ const r = new SR(); r.lang = 'fr-FR'; r.interimResults = false; r.maxAlternatives = 1;
+    r.onresult = e => { const t = ((e.results[0] || [])[0] || {}).transcript || ''; if (t) onText(t); };
+    r.onerror = e => toast(e.error === 'not-allowed' ? '🎤 Autorise le micro pour dicter.' : '🎤 Je n’ai pas compris, réessaie.');
+    r.start(); toast('🎤 Je t’écoute… dis par exemple « du lait, des œufs et du café »'); }
+  catch(e){ toast('🎤 Dictée impossible pour l’instant.'); }
+}
+const splitItems = t => String(t).split(/,|;|\bet\b|\bpuis\b|\n/i).map(x => x.trim().replace(/^(du|de la|de l’|de l'|des|un|une|le|la|les)\s+/i, '').replace(/\.$/, '')).filter(x => x.length > 1).map(x => x.charAt(0).toUpperCase() + x.slice(1, 60));
+function voiceAdd(ec){
+  dictate(t => { const L = splitItems(t); if (!L.length) return toast('🎤 Rien compris, réessaie.');
+    ecFoyerEdit(() => { const wk = curWk(); foyer.extra[wk] = (foyer.extra[wk] || []).concat(L); }).then(() => { toast(`🛒 Ajouté : ${L.join(', ')}`); if (ec) ecOpenShop(); else if (view === 'nutrition') viewNutrition(); }); },
+    ec ? $('#ecAddIn') : $('#exIn'));
+}
+/* ============================================================
    CONFETTIS
    ============================================================ */
 function confetti(){
@@ -4677,7 +4769,7 @@ function nutJour(){
   const eaten = eatenTotals(date, ports), J = journal[date] || {}, isToday = nutDay === todayIdx();
   const op = otherProfile(), oports = op ? dayPortions(op.id, nutDay, wk).map(z => Object.assign(z, { op })) : [];
   const sess = (data['day' + nutDay] || []).length ? dayTitle(nutDay) : null;
-  return `<div class="days">${DAY_SHORT.map((d, i) => `<button class="day ${i === nutDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''}" data-nday="${i}"><b>${d}</b><span>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : 'Repos'}</span></button>`).join('')}</div>
+  return `<button class="btn block" data-x="frigo" style="margin:12px 0 4px">🧊 Qu’est-ce qu’on mange ce soir ? Avec ce qu’on a</button><div class="days">${DAY_SHORT.map((d, i) => `<button class="day ${i === nutDay ? 'on' : ''} ${i === todayIdx() ? 'today' : ''}" data-nday="${i}"><b>${d}</b><span>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : 'Repos'}</span></button>`).join('')}</div>
   <section class="hero"><div style="flex:1;min-width:0;position:relative;z-index:1">
     <h2>${kc(t.kcal)} kcal</h2><p>${OBJ[nut.obj][1]} ${OBJ[nut.obj][0]} · ${sess ? '🏋️ ' + esc(sess) : '😴 Repos'}</p>
     <div class="meta"><span class="chip">🥩 ${t.p} g prot.</span><span class="chip">🍚 ${t.g} g gluc.</span><span class="chip">🥑 ${t.l} g lip.</span></div>
@@ -4962,7 +5054,7 @@ function nutCourses(){
     ${mine.map(x => `<div class="shopit got hvd"><span>${esc(x.n)}</span><button class="btn sm" data-hv="${x.f}" aria-label="Remettre ${esc(x.n)} dans la liste">↩️ À acheter</button></div>`).join('')}</div>` : ''}
   ${byAisle(groups).map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
-    <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="submit">➕</button></form></div>
+    <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="button" data-x="voiceadd" aria-label="Ajouter à la voix">🎤</button><button class="btn" type="submit">➕</button></form></div>
   <button class="btn pri block" data-x="shopgo" style="margin-top:16px;padding:15px;font-size:16px">🛒 Mode magasin : cocher sur le téléphone</button>
   <button class="btn block" id="pdfBtn" style="margin-top:8px;padding:13px;font-size:15px">📄 Envoyer la liste en PDF</button>
   <div class="row" style="margin-top:8px">${navigator.share ? '<button class="btn" id="shareBtn">💬 En texte</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn" id="mailBtn">✉️ Mail (texte)</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
@@ -7087,6 +7179,10 @@ function evoAct(a, b){
     case 'rundel': sheetConfirm('Supprimer cette sortie ?', 'Supprimer', () => { const r = runs.find(x => x.id === b.dataset.id); runs = runs.filter(x => x.id !== b.dataset.id); if (r) { const i = hist.findIndex(h => h.k === 'run' && h.d === r.d && h.w === r.km); if (i >= 0) hist.splice(i, 1); } save(); closeSheet(); viewRun(); }); break;
     case 'duo': startDuo(); break;
     case 'semwk': semNext = b.dataset.v === '1'; viewNutrition(); break;
+    case 'avent': aventToggle(b.dataset.pid); saveFoyer(); render(); break;
+    case 'frigo': sheetFrigo(); break;
+    case 'frigock': case 'frigoclr': case 'frigogo': frigoAct(a, b, false); break;
+    case 'voiceadd': voiceAdd(false); break;
     case 'semrec': sheetRecNext(+b.dataset.d, b.dataset.m); break;
     case 'batch': batchScope = null; sheetBatch(); break;
     case 'awaysheet': awayWk = null; sheetAway(); break;
@@ -7737,7 +7833,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 139;
+const APP_VERSION = 140;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8019,7 +8115,7 @@ function ecOpenShop(){
   const el = $('#ecRec'); EC.rec = { shop: 1 };
   el.innerHTML = `<button class="close" data-ec="recx">✕ Fermer</button>
     <h2>🛒 Courses</h2><p class="meta">${S.n ? `${S.n} article${S.n > 1 ? 's' : ''} à acheter` : 'Tout est coché 🎉'} · menus d’aujourd’hui à dimanche, pour vous deux · touchez pour cocher</p>
-    <form class="ec-add" id="ecAdd"><input id="ecAddIn" placeholder="Ajouter : café, lessive, piles…" autocomplete="off"><button type="submit">➕ Ajouter</button></form>
+    <form class="ec-add" id="ecAdd"><input id="ecAddIn" placeholder="Ajouter : café, lessive, piles…" autocomplete="off"><button type="button" data-ec="voiceadd">🎤 Dicter</button><button type="submit">➕ Ajouter</button></form>
     <div class="ec-shop">${S.rays.map(([g, L]) => `<div class="box"><h4>${esc(g)}</h4>${L.map(x => `<button class="ec-it ${x.ok ? 'ok' : ''}" data-ec="shopck" data-id="${esc(x.id)}"><span class="ck">${x.ok ? '✅' : '⬜'}</span><span class="n">${esc(x.n)}</span><b>${esc(x.q)}</b></button>`).join('')}</div>`).join('')}</div>`;
   el.classList.add('on');
   $('#ecAdd').onsubmit = ev => { ev.preventDefault(); const v = $('#ecAddIn').value.trim(); if (!v) return; ecFoyerEdit(() => { const wk = curWk(); foyer.extra[wk] = (foyer.extra[wk] || []).concat(v.slice(0, 60)); }).then(ecOpenShop); };
@@ -8266,12 +8362,13 @@ function ecRender(){
   <div class="ec-day-v">
     <div class="ec-top"><div><div class="ec-clock">${hh}</div><div class="ec-date">${n.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div><div class="ec-hello">${hello} ${esc(names)} ${fete ? '🎄' : '👋'}</div>${fete ? `<div class="ec-fete">${fete}</div>` : ''}</div>${ecMeteoHtml()}</div>
     ${ecNoelHtml(n)}
+    ${aventHtml(true)}
     ${ecAlertHtml()}
     ${ecAgendaHtml()}
     ${ecBrief()}
     <div class="ec-grid">${ecPersonCol('user1')}${ecPersonCol('bea')}${ecCookCol()}</div>
     ${(() => { const g = ecDuoCol() + ecBilanCol(); return g ? `<div class="ec-grid2">${g}</div>` : ''; })()}
-    <div class="ec-bot"><button data-ec="timers">⏱️ Minuteurs</button><button data-ec="shop">🛒 Courses</button><button data-ec="go" data-v="nutrition">🍽️ Menus</button><button data-ec="go" data-v="seance">📱 Ouvrir l’appli</button><button data-ec="sync">🔄 Actualiser</button></div>
+    <div class="ec-bot"><button data-ec="timers">⏱️ Minuteurs</button><button data-ec="shop">🛒 Courses</button><button data-ec="frigo">🧊 Ce soir ?</button><button data-ec="go" data-v="nutrition">🍽️ Menus</button><button data-ec="go" data-v="seance">📱 Ouvrir l’appli</button><button data-ec="sync">🔄 Actualiser</button></div>
     <p class="ec-upd">${upd} · ${EC_LIEU.nom} · <button data-ec="quit" style="all:unset;cursor:pointer;text-decoration:underline">Quitter le mode écran</button></p>
   </div>`;
   el.scrollTop = sc;
@@ -8307,6 +8404,10 @@ document.addEventListener('click', e => {
   if (a === 'wake'){ EC.wakeUntil = Date.now() + 3 * 60000; ecRender(); }
   else if (a === 'rec') ecOpenRec(b.dataset.d, b.dataset.meal, b.dataset.rid);
   else if (a === 'recx') ecCloseRec();
+  else if (a === 'avent') ecFoyerEdit(() => aventToggle(b.dataset.pid)).then(ecRender);
+  else if (a === 'frigo') ecOpenFrigo();
+  else if (a === 'frigock' || a === 'frigoclr' || a === 'frigogo') frigoAct(a, b, true);
+  else if (a === 'voiceadd') voiceAdd(true);
   else if (a === 'agreload'){ EC.agendaErr = false; ecRender(); ecAgendaLoad(true); }
   else if (a === 'timer'){ ecTimerAdd(+b.dataset.min || 10, b.dataset.l || '⏱️ Cuisson'); ecCloseRec(); }
   else if (a === 'timers') ecOpenTimers(b.dataset.l);
