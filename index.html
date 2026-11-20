@@ -1918,7 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine']]],
+  [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
   [138, [['🚶‍♀️', 'Béa : salle, marche, HIIT, puis on recommence', 'dès lundi : lun salle · mar marche 10 000 pas · mer HIIT · jeu salle · ven marche · week-end repos ; les séances A, B, C tournent d’une semaine à l’autre, plus de marche après les séances']]],
@@ -4628,12 +4628,6 @@ function planOf(wk){
   if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
   // semaine pas encore commencée, menu créé avant l'arrivée de nouvelles recettes : on le refait pour en profiter
   if (wk > curWk() && (foyer.plans[wk].rv || 0) < RECIPES.length){ foyer.plans[wk] = genPlan(wk); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
-  // semaine en cours créée avant le repas plaisir : on met un plat plaisir dimanche midi (si dimanche n'est pas passé)
-  { const P = foyer.plans[wk], v = P.days[6] && P.days[6].dej, ids = typeof v === 'string' ? [v] : Object.values(v || {});
-    if (wk === curWk() && !P.pl && ids.length && !ids.some(id => REC_BY[id] && REC_BY[id].pl)){
-      const L = seasonal(RECIPES.filter(r => r.pl && recipeOk(r, PROFILES.map(p => exclOf(ctxOf(p.id))))), monthOfWk(wk)), id = L.length ? L[Math.floor(rng(wk + '#pl')() * L.length)].id : null;
-      if (id){ if (typeof v === 'string') P.days[6].dej = id; else PROFILES.forEach(p => { v[p.id] = id; }); }
-      P.pl = 1; saveFoyer(); } }
   // menu créé avant les produits de saison : les jours à venir (à partir de demain) sont refaits s'ils contiennent un produit hors saison
   const P0 = foyer.plans[wk];
   if (!P0.season && wk === curWk() && foyer.plans){ const from = todayIdx() + 1, mo = monthOfWk(wk), R0 = Object.fromEntries(RECIPES.map(r => [r.id, r]));
