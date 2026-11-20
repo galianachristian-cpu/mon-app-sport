@@ -1886,6 +1886,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [129, [['🎵', 'Le minuteur ne coupe plus la musique', 'sur iPhone, les bips passent par-dessus ta musique au lieu de l’arrêter (iOS 16.4 ou plus récent)']]],
   [128, [['🎧', 'Séance guidée = séance du jour', 'les jours HIIT, elle utilise les machines prévues et saute celles que tu as grisées ; plus de jumping jacks dans l’échauffement de Béa']]],
   [127, [['⏭️', '« Pas ce jour-là » sur un jour passé', 'un exercice mis de côté sur un jour déjà passé compte enfin comme réglé : 1/1 au lieu de 1/2']]],
   [126, [['🏋️', 'Liste des exercices du jour', 'touche « 7 exercices » en haut de la séance : la liste complète s’ouvre, avec ce qui est déjà fait']]],
@@ -3602,6 +3603,7 @@ function cdShow(n){
 }
 // iPhone : le son et la voix doivent être « débloqués » par un toucher, on le fait au lancement du chrono
 function unlockAudio(){
+  mixAudio();
   try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); }catch(e){}
   try{ if (settings.voice && window.speechSynthesis && !unlockAudio.v){ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); unlockAudio.v = 1; } }catch(e){}
 }
@@ -6211,6 +6213,9 @@ const wkShift = (wk, n) => { const d = new Date(wkDates(wk)[0] + 'T12:00'); d.se
 const fmtDur = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
 const fmtPace = sPerKm => !isFinite(sPerKm) || sPerKm <= 0 || sPerKm > 3600 ? '–' : Math.floor(sPerKm / 60) + '’' + String(Math.round(sPerKm % 60)).padStart(2, '0');
 let actx = null;
+/* iPhone (iOS 16.4+) : les bips et la voix se mélangent à la musique (Spotify, Apple Music…) au lieu de la couper */
+const mixAudio = () => { try{ if (navigator.audioSession && navigator.audioSession.type !== 'ambient') navigator.audioSession.type = 'ambient'; }catch(e){} };
+mixAudio();
 function beep(f, d, v){ if (!settings.sound) return; try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); const o = actx.createOscillator(), g = actx.createGain(); o.connect(g); g.connect(actx.destination); o.frequency.value = f; g.gain.setValueAtTime(v || .3, actx.currentTime); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + d); o.start(); o.stop(actx.currentTime + d + .02); }catch(e){} }
 let fullLock = null;
 function openFull(html){ const el = $('#full'); el.innerHTML = html; el.classList.add('show'); document.body.style.overflow = 'hidden'; if (!fullLock) try{ navigator.wakeLock && navigator.wakeLock.request('screen').then(l => fullLock = l).catch(() => {}); }catch(e){} }
@@ -7563,7 +7568,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 128;
+const APP_VERSION = 129;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
