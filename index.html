@@ -1964,6 +1964,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [153, [['🛒', 'Liste de courses à jour', 'les kiwis de Béa sont retirés tout de suite sur tous les appareils, la liste et les menus se recalculent']]],
   [152, [['🥞', 'Plus de sarrasin', 'les galettes deviennent des crêpes salées complètes à la farine de blé'], ['🥝', 'Pas de kiwi pour Béa', 'ses desserts passent à d’autres fruits de saison']]],
   [151, [['🔌', 'Connexion fiable sur l’iPad', 'les fichiers de connexion sont maintenant fournis avec l’appli (plus besoin de joindre un serveur de Google pour démarrer), avec un serveur de secours ; le diagnostic vérifie aussi l’accès aux serveurs']]],
   [150, [['🔧', 'Diagnostic de connexion', 'si un appareil affiche « Sur cet appareil », touche la pastille : il montre ce qui bloque, avec « Réessayer », « Me reconnecter » et « Réparer cet appareil »']]],
@@ -4524,7 +4525,8 @@ function nutCoachCard(){
 /* ============================================================
    NUTRITION — MENUS ET PORTIONS
    ============================================================ */
-const exclOf = c => (c.nut && c.nut.excl) || [];
+/* Béa n'aime pas les kiwis : appliqué tout de suite sur tous les appareils (sans attendre qu'elle ouvre son appli) */
+const exclOf = c => { const e = (c.nut && c.nut.excl) || []; return c.pid === 'bea' && !e.includes('kiwi') ? e.concat('kiwi') : e; };
 function subFor(fid, excl){ if (!excl.includes(fid)) return fid; for (const s of SUBS[fid] || []) if (!excl.includes(s)) return s; return null; }
 function convert(from, to, g){
   const A = FOODS[from], B = FOODS[to];
@@ -8112,7 +8114,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 152;
+const APP_VERSION = 153;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
