@@ -1918,7 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie']]],
+  [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie'], ['🚒', 'Maison ou caserne', 'le jour de séance, choisis « 🏠 Maison » (version du document) ou « 🚒 Caserne » (mêmes mouvements avec haltères, barre et banc, vélo à la place de l’elliptique)']]],
   [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
@@ -2288,7 +2288,7 @@ function viewSeance(){
   ${fullCard(currentDay)}${hiitSessCard(currentDay)}${tabSessCard(currentDay)}
   ${hOn('mus') && !isHiitDay(currentDay) ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
-  ${currentDay === todayIdx() && homeDayCan(k) ? `<button class="btn block ${homeDayOn(k) ? '' : 'pri'}" data-x="homeday" data-v="${homeDayOn(k) ? 0 : 1}" style="margin-top:12px">${homeDayOn(k) ? '🏋️ Revenir à la version salle' : '🏠 Je m’entraîne à la maison aujourd’hui'}</button>` : ''}
+  ${currentDay === todayIdx() && venueCan(k) ? `<div class="seg small" style="margin-top:12px"><button class="${venueOn(k) ? '' : 'on'}" data-x="venue" data-v="0">🏠 Maison</button><button class="${venueOn(k) ? 'on' : ''}" data-x="venue" data-v="1">🚒 Caserne</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px">${fullPlan(currentDay) ? '' : `<button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}`}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
@@ -2349,7 +2349,7 @@ function exCard(k, e, i){
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button></div></article>`;
   }
   if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : formeOf() && (formeOf().pain || []).length ? '⏭️ Mis de côté aujourd’hui (douleur)' : '⏭️ Pas cette fois · il revient la semaine prochaine'}</span></span></div><button class="btn sm" data-act="unskip" data-i="${i}" style="margin-left:auto">↩️ Reprendre</button></div></article>`;
-  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'maison' ? '🏠 Version maison de' : e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
+  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'caserne' ? (e.orig.n === e.n ? '🚒 Version caserne, avec charges :' : '🚒 Version caserne de') : e.tmpWhy === 'maison' ? '🏠 Version maison de' : e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span>
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`}</span>${e.ssD === today() ? `<span class="ph ph-ss">🔗 avec ${esc(e.ssW)}</span>` : ''}${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
@@ -5644,8 +5644,13 @@ const P12_WALKDAY = () => P12_WALK('75-90 min', 'Objectif du jour : 10 000 pas. 
    Lun muscu A (bas du corps) · Mar marche rapide 1 h · Mer elliptique 30 min · Jeu marche rapide 1 h · Ven muscu B (jambes et tronc) · Sam marche rapide 1 h · Dim repos.
    Musculation : 2 à 3 répétitions en réserve, repos 60 à 90 s, faisable à la maison comme à la salle.
    Progression : S1-2 apprentissage, S3-4 +2 répétitions, S5-6 4 séries, S7-8 et après variantes plus difficiles. */
-const P12_HOME = {}; // séances faites pour la maison comme pour la salle
-const P12_HOME_TIP = {};
+const P12_HOME = {}, P12_HOME_TIP = {};
+// version caserne (salle) des séances du document : mêmes mouvements avec des charges, vélo à la place de l'elliptique
+const P12_CAS = { 'Squat poids du corps': ['Squat goblet', 'Haltère ou kettlebell tenu contre la poitrine. Même consigne de tempo que la version maison.'],
+  'Squat bulgare': ['Squat bulgare', 'Pied arrière sur le banc, un haltère dans chaque main.'], 'Pont fessier': ['Hip thrust', 'Dos sur le banc, barre (avec mousse) ou haltère sur les hanches. Sur une jambe quand c’est facile.'],
+  'Soulevé de terre roumain': ['Soulevé de terre roumain', 'Haltères ou barre, dos bien droit, sur une jambe ou les deux.'], 'Fentes marchées': ['Fentes marchées', 'Un haltère dans chaque main.'],
+  'Hip thrust': ['Hip thrust', 'Dos sur le banc, barre avec mousse sur les hanches, poussée par les talons.'], 'Step-up': ['Step-up', 'Sur un banc ou une box, un haltère dans chaque main.'],
+  'Elliptique': ['Vélo', 'Vélo à rythme modéré, 30 min.'] };
 const P12V = {
   A: { t: 'Musculation A · bas du corps', L: [['Squat poids du corps', 3, 10, 12, 'Squat lent : descente en 3 s.', 'Squat lent : descente en 4 s, pause 2 s en bas.'], ['Squat bulgare', 3, 8, 10, 'Pied arrière sur une chaise ou un banc, chaque jambe.', 'Descente en 3 s, sac à dos ou haltères.', ' chaque'], ['Pont fessier', 3, 10, 12, 'Pont fessier sur une jambe, l’autre tendue.', 'Sur une jambe, pause 2 s en haut.', ' chaque'], ['Soulevé de terre roumain', 3, 10, 10, 'Sur une jambe, avec sac à dos, bouteilles ou haltère, dos bien droit.', 'Sur une jambe, descente en 3 s.', ' chaque'], ['Gainage', 3, 20, 30, 'Planche sur les avant-bras, fesses serrées.', 'Planche, en levant un pied 2 s à tour de rôle.', ' s']] },
   B: { t: 'Musculation B · jambes et tronc', L: [['Fentes marchées', 3, 10, 10, 'Chaque jambe, buste droit.', 'Descente lente en 3 s, haltères ou sac à dos.', ' chaque'], ['Squat poids du corps', 3, 10, 10, 'Squat avec pause de 2 s en bas.', 'Pause 3 s en bas, descente en 3 s.'], ['Hip thrust', 3, 12, 15, 'Dos appuyé sur le canapé (ou un banc), poussée par les talons.', 'Sur une jambe ou avec une charge sur les hanches.'], ['Step-up', 3, 10, 10, 'Montées sur une marche, chaque jambe.', 'Marche plus haute, descente lente.', ' chaque'], ['Dead bug', 3, 10, 10, 'Bas du dos plaqué au sol.', 'Mouvement lent, 3 s par répétition.', ' chaque']] }
@@ -5662,16 +5667,18 @@ function p12FatWeek(){
   return { D: { day0: [...warm(), ...sess('A'), ...cool()], day1: [walk()], day2: [ell], day3: [walk()], day4: [...warm(), ...sess('B'), ...cool()], day5: [walk()], day6: [] },
     T: { day0: P12V.A.t, day1: 'Marche rapide · 1 h', day2: 'Elliptique · 30 min', day3: 'Marche rapide · 1 h', day4: P12V.B.t, day5: 'Marche rapide · 1 h', day6: 'Repos complet' } };
 }
-// aujourd'hui à la maison : on remplace les exercices de salle (pour aujourd'hui seulement)
-function homeDay(on){
+// séance du jour à la caserne (avec charges) ou à la maison (version du document, par défaut) : seulement pour aujourd'hui
+function venueDay(cas){
   const k = 'day' + currentDay, L = data[k] || [];
   L.forEach((e, i) => { if (!e) return;
-    if (on && !e.orig && P12_HOME[e.n] && LIB_BY[P12_HOME[e.n]]){ const to = P12_HOME[e.n], x = exFromLib(to, { s: e.s, bs: e.bs, r: e.r, ph: e.ph, abs: e.abs, cmp: e.cmp, desc: P12_HOME_TIP[to] || (e.ph ? e.desc : undefined) }); if (!x.desc) delete x.desc; x.orig = e; x.tmpD = today(); x.tmpWhy = 'maison'; L[i] = x; }
-    else if (!on && e.orig && e.tmpWhy === 'maison') L[i] = e.orig; });
-  save(); render(); toast(on ? '🏠 Version maison pour aujourd’hui' : '🏋️ Retour à la version salle');
+    if (cas && !e.orig && P12_CAS[e.n] && LIB_BY[P12_CAS[e.n][0]]){ const [to, tip] = P12_CAS[e.n], x = exFromLib(to, { s: e.s, bs: e.bs, r: to === 'Vélo' ? e.r : e.r, ph: e.ph, abs: e.abs, cmp: e.cmp, desc: tip + (e.desc && /réserve/.test(e.desc) ? ' Garde 2 à 3 répétitions en réserve, repos 60 à 90 s.' : '') }); x.orig = e; x.tmpD = today(); x.tmpWhy = 'caserne'; L[i] = x; }
+    else if (!cas && e.orig && e.tmpWhy === 'caserne') L[i] = e.orig; });
+  save(); render(); toast(cas ? '🚒 Version caserne pour aujourd’hui' : '🏠 Retour à la version maison');
 }
-const homeDayOn = k => (data[k] || []).some(e => e && e.tmpWhy === 'maison' && e.tmpD === today());
-const homeDayCan = k => isP12() && profile.id === 'bea' && (data[k] || []).some(e => e && (P12_HOME[e.n] || (e.orig && e.tmpWhy === 'maison')));
+const venueOn = k => (data[k] || []).some(e => e && e.tmpWhy === 'caserne' && e.tmpD === today());
+const venueCan = k => isP12() && profile.id === 'bea' && !!(prog.p12 && prog.p12.v3) && (data[k] || []).some(e => e && (P12_CAS[e.n] || (e.orig && e.tmpWhy === 'caserne')));
+function homeDay(on){ venueDay(!on); }
+const homeDayOn = k => false, homeDayCan = k => false;
 function beaFatOnce(){
   if (profile.id !== 'bea' || !isP12() || (coach && coach.beaFat)) return;
   prog.p12.v3 = 1; prog.p12.alt = prog.p12.alt || (todayIdx() >= 1 ? wkShift(curWk(), 1) : curWk()); prog.split = 'Perte de gras · 2 muscu + marche + elliptique';
@@ -7276,6 +7283,7 @@ function evoAct(a, b){
     case 'duo': startDuo(); break;
     case 'semwk': semNext = b.dataset.v === '1'; viewNutrition(); break;
     case 'homeday': homeDay(b.dataset.v === '1'); break;
+    case 'venue': if ((b.dataset.v === '1') !== venueOn('day' + currentDay)) venueDay(b.dataset.v === '1'); break;
     case 'avent': aventToggle(b.dataset.pid); saveFoyer(); render(); break;
     case 'frigo': sheetFrigo(); break;
     case 'frigock': case 'frigoclr': case 'frigogo': frigoAct(a, b, false); break;
