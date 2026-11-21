@@ -1918,7 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [145, [['🥘', 'Menus spécial batch cooking', 'dès la semaine prochaine : 6 plats mijotés mangés 2 fois chacun (jamais 2 repas de suite). Dimanche après-midi : lun → mer ; mercredi soir : jeu → sam. Moins d’ingrédients, gros formats, moins de temps en cuisine']]],
+  [145, [['🥘', 'Menus batch, seulement si moins chers', 'chaque semaine l’appli prépare les menus classiques et une version batch (6 plats mijotés mangés 2 fois, cuisinés le dimanche et le mercredi soir) et garde la moins chère. Le détail est dans Semaine → Semaine prochaine']]],
   [144, [['🧠', 'Achats malins', 'dans Courses : à partir de votre liste de la semaine, le bon format à acheter (poulet entier, œufs par 30, fromage blanc 1 kg, surgelés en grand sachet…) et l’économie estimée']]],
   [143, [['💶', 'Budget courses : 90 € par semaine', 'prix « promos et discount » (−15 %) : les plats et petits-déjeuners trop chers sont remplacés par des équivalents de saison, riches en protéines, sans doublon ; le repas plaisir du dimanche est gardé ; corrige un prix dans « Les prix de mon magasin »']]],
   [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie'], ['🚒', 'Maison ou caserne', 'le jour de séance, choisis « 🏠 Maison » (version du document) ou « 🚒 Caserne » (mêmes mouvements avec haltères, barre et banc, vélo à la place de l’elliptique)']]],
@@ -4609,7 +4609,7 @@ function genPlan(wk, keep, from){
   /* menus spécial batch (repas en commun) : 6 plats mijotés, chacun mangé 2 fois, jamais 2 repas de suite.
      Dimanche après-midi : plats A, B, C pour lun midi → mer soir ; mercredi soir : D, E, F pour jeu midi → sam soir.
      Ordre des repas : A B C A B C. Le dimanche midi reste le repas plaisir. */
-  const BT = foyer.batch && foyer.commun ? (() => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && isMix({ r }) && recipeOk(r, excls)), mo), 8), out = [];
+  const BT = foyer.batch === 1 && foyer.commun ? (() => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && isMix({ r }) && recipeOk(r, excls)), mo), 8), out = [];
     /* variété : au plus 2 plats avec le même féculent et 2 avec la même protéine (sinon 5 plats de pâtes) */
     const key = (r, G) => (r.ing.find(([f]) => G.includes(FOODS[f].grp)) || [''])[0], FEC = ['fec', 'cereale', 'pain', 'legumineuse'], PRO = ['prot'], nF = {}, nP = {};
     for (let i = 0; i < 6; i++){ const ok = L.filter(r => (nF[key(r, FEC)] || 0) < 2 && (nP[key(r, PRO)] || 0) < 2), id = pickW(ok.length ? ok : L, rng(S + 'batch' + i), ctx); if (!id) return null;
@@ -4639,9 +4639,9 @@ function genPlan(wk, keep, from){
 }
 const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
 function planOf(wk){
-  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
+  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ planBuild(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); }
   // semaine pas encore commencée, menu créé avant l'arrivée de nouvelles recettes : on le refait pour en profiter
-  if (wk > curWk() && (foyer.plans[wk].rv || 0) < RECIPES.length){ foyer.plans[wk] = genPlan(wk); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
+  if (wk > curWk() && (foyer.plans[wk].rv || 0) < RECIPES.length){ planBuild(wk); saveFoyer(); }
   // menu créé avant les produits de saison : les jours à venir (à partir de demain) sont refaits s'ils contiennent un produit hors saison
   const P0 = foyer.plans[wk];
   if (!P0.season && wk === curWk() && foyer.plans){ const from = todayIdx() + 1, mo = monthOfWk(wk), R0 = Object.fromEntries(RECIPES.map(r => [r.id, r]));
@@ -4840,9 +4840,17 @@ async function loadFoyer(){
   mergeFoyerExtras(); if (push) saveFoyer();
 }
 // budget courses demandé par Chris : 90 € par semaine pour vous 2, en jouant les promos (prix estimés −15 %). Une seule fois.
+/* menu d'une semaine : menus classiques, ou en mode batch « auto » les deux versions ajustées au budget, et on garde la moins chère */
+function planBuild(wk){
+  const fit = () => { if (budgetCfg().max) budgetFit(wk); return weekCost(wk, 0); };
+  if (foyer.batch !== 'auto' || !foyer.commun){ foyer.plans[wk] = genPlan(wk); fit(); return foyer.plans[wk]; }
+  foyer.batch = 0; foyer.plans[wk] = genPlan(wk); const cA = fit(), A = foyer.plans[wk];
+  foyer.batch = 1; foyer.plans[wk] = genPlan(wk); const cB = fit(), Bp = foyer.plans[wk]; foyer.batch = 'auto';
+  foyer.plans[wk] = cB < cA ? Bp : A; foyer.plans[wk].cmp = { classique: +cA.toFixed(2), batch: +cB.toFixed(2) }; return foyer.plans[wk];
+}
 function batchOnce(){
   if (!foyerReady || !foyer || foyer.batchSet) return;
-  foyer.batch = 1; foyer.batchSet = today(); const nx = wkShift(curWk(), 1); foyer.plans[nx] = genPlan(nx); if (budgetCfg().max) budgetFit(nx); saveFoyer();
+  foyer.batch = 'auto'; foyer.batchSet = today(); planBuild(wkShift(curWk(), 1)); saveFoyer(); /* Chris : le batch seulement s'il ne coûte pas plus cher */
 }
 function budgetOnce(){
   if (!foyerReady || !foyer || foyer.budgetSet) return;
@@ -5123,7 +5131,7 @@ function nutSemaine(){
   const seg = `<div class="seg small" style="margin-top:14px">${[[0, 'Cette semaine'], [1, 'Semaine prochaine']].map(([v, l]) => `<button class="${+semNext === v ? 'on' : ''}" data-x="semwk" data-v="${v}">${l}</button>`).join('')}</div>`;
   if (semNext) return seg + nutSemaineNext();
   const wk = curWk(), plan = planOf(wk);
-  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn ${foyer.batch ? 'pri' : ''}" data-x="batchmode" style="flex:1">${foyer.batch ? '✅ Menus batch' : '🥘 Menus batch : non'}</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
+  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn ${foyer.batch ? 'pri' : ''}" data-x="batchmode" style="flex:1">${foyer.batch ? '🥘 Batch si moins cher ✓' : '🥘 Menus batch : non'}</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
   ${(() => { const t = weekCost(wk, 0), mx = num(budgetCfg().max); return `<div class="card" style="margin-top:12px"><p style="font-size:14px">💶 Menus de la semaine : <b>≈ ${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>${mx && t > mx ? '<button class="btn sm pri" data-x="budfit" style="margin-top:8px">🎯 Ajuster les menus au budget</button>' : ''}</div>`; })()}
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
 }
@@ -5132,6 +5140,7 @@ function nutSemaineNext(){
   const wk = wkShift(curWk(), 1), plan = planOf(wk), D = wkDates(wk), t = weekCost(wk, 0), mx = num(budgetCfg().max);
   return `<div class="card" style="margin-top:12px"><p style="font-size:14px">📅 Du <b>${fmtD(D[0])}</b> au <b>${fmtD(D[6])}</b> · menus prêts pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}.</p>
     <p style="font-size:14px;margin-top:6px">💶 ≈ <b>${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>
+    ${plan.cmp ? `<p style="font-size:13px;margin-top:6px">🥘 ${plan.batch ? `Menus batch (≈ ${eur(plan.cmp.batch)}), moins chers que les menus classiques (≈ ${eur(plan.cmp.classique)})` : `Menus classiques (≈ ${eur(plan.cmp.classique)}) : le batch serait revenu plus cher (≈ ${eur(plan.cmp.batch)})`}.</p>` : ''}
     <p class="muted" style="font-size:12px;margin-top:6px">Touche un repas pour voir la recette et vos portions.</p></div>
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<div class="wkday" style="align-items:flex-start;cursor:default"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${esc(d)} ${fmtD(D[i])}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; if (isAway(profile.id, i, m, wk)) return `<small>${ico} 🧳 Hors de la maison</small>`; return r ? `<button class="semrec" data-x="semrec" data-d="${i}" data-m="${m}"><small>${ico} ${r.e} ${esc(r.n)} ›</small></button>` : ''; }).join('')}</span></div>`).join('')}</div>`;
 }
@@ -7220,11 +7229,11 @@ function batchSteps(b){
 }
 function batchDefault(){ const d = todayIdx(); return d <= 2 ? { wk: curWk(), from: 3, days: 3 } : { wk: wkShift(curWk(), 1), from: 0, days: 3 }; }
 function sheetBatch(){
-  if (!batchScope && foyer.batch) batchScope = batchDefault();
+  if (!batchScope && foyer.batch){ const bd = batchDefault(); if (planOf(bd.wk).batch) batchScope = bd; }
   const b = batchData(), st = safeGet('mp_batch_' + b.wk, {}), S = batchSteps(b), nx = b.wk !== curWk();
   openSheet(`<h2>🥘 Batch cooking</h2><p class="muted" style="font-size:13px;margin:-4px 0 10px">Tous les déjeuners et dîners de ${PROFILES.map(p => esc(p.nom)).join(' et ')} préparés en 1 h 30.</p>
     <div class="seg">${[[curWk(), 'Cette semaine'], [wkShift(curWk(), 1), 'Semaine prochaine']].map(([w, l]) => `<button class="${b.wk === w ? 'on' : ''}" data-x="bwk" data-wk="${w}">${l}</button>`).join('')}</div>
-    ${foyer.batch ? `<div class="seg" style="margin-top:8px">${[[0, '🥘 Dimanche · lun → mer'], [3, '🥘 Mercredi soir · jeu → sam']].map(([f, l]) => `<button class="${b.days === 3 && b.D[0] === f ? 'on' : ''}" data-x="bsess" data-f="${f}">${l}</button>`).join('')}</div><p class="muted" style="font-size:12.5px;margin-top:6px">Chaque plat est mangé 2 fois : tout est cuisiné en une fois, les quantités sont déjà doublées.</p>` : `<div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>`}
+    ${planOf(b.wk).batch ? `<div class="seg" style="margin-top:8px">${[[0, '🥘 Dimanche · lun → mer'], [3, '🥘 Mercredi soir · jeu → sam']].map(([f, l]) => `<button class="${b.days === 3 && b.D[0] === f ? 'on' : ''}" data-x="bsess" data-f="${f}">${l}</button>`).join('')}</div><p class="muted" style="font-size:12.5px;margin-top:6px">Chaque plat est mangé 2 fois : tout est cuisiné en une fois, les quantités sont déjà doublées.</p>` : `<div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>`}
     <h3 class="sec">Les étapes</h3><div class="steps">${S.map(([t, x], j) => `<label class="step ${st[j] ? 'ok' : ''}"><input type="checkbox" data-bstep="${j}" ${st[j] ? 'checked' : ''}><span class="t">${t}</span><span>${x}</span></label>`).join('')}</div>
     ${awayCount(b.wk, PROFILES.map(p => p.id)) ? '<p class="muted" style="font-size:12.5px;margin-top:10px">🧳 Les repas hors de la maison sont déjà retirés.</p>' : ''}
     <h3 class="sec">Les boîtes</h3><div class="card"><table class="tbl"><tbody>${b.boxes.map(([d, m, n]) => `<tr><td>${DAY_SHORT[d]} ${m === 'dej' ? '🍽️' : '🌙'}</td><td>${n.map(esc).join(' / ') || '–'}</td></tr>`).join('')}</tbody></table></div>
@@ -7426,10 +7435,10 @@ function evoAct(a, b){
     case 'away': { const d = +b.dataset.d, m = b.dataset.m, cur = awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m); setAway(awayWho, d, m, awayWk, !cur); awayChanged(); break; }
     case 'awday': { const d = +b.dataset.d, on = (m) => awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m), all = MEALS.every(([m]) => on(m)); MEALS.forEach(([m]) => setAway(awayWho, d, m, awayWk, !all)); awayChanged(); break; }
     case 'mout': { const d = nutDay, m = b.dataset.meal, wk = curWk(); setAway(profile.id, d, m, wk, !isAway(profile.id, d, m, wk)); saveFoyer(); viewNutrition(); toast(isAway(profile.id, d, m, wk) ? '🧳 Repas retiré des courses' : '🏠 Repas remis au menu'); break; }
-    case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: b0.days, from: foyer.batch ? (b0.D[0] || 0) : undefined }; sheetBatch(); break; }
+    case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: planOf(b.dataset.wk).batch ? 3 : b0.days, from: planOf(b.dataset.wk).batch ? 0 : undefined }; sheetBatch(); break; }
     case 'bdays': { const b0 = batchData(); batchScope = { wk: b0.wk, days: +b.dataset.n }; sheetBatch(); break; }
     case 'bsess': { const b0 = batchData(); batchScope = { wk: b0.wk, days: 3, from: +b.dataset.f }; sheetBatch(); break; }
-    case 'batchmode': foyer.batch = foyer.batch ? 0 : 1; { const nx = wkShift(curWk(), 1); foyer.plans[nx] = genPlan(nx); if (budgetCfg().max) budgetFit(nx); } saveFoyer(); viewNutrition(); toast(foyer.batch ? '🥘 Menus spécial batch dès la semaine prochaine' : 'Menus classiques dès la semaine prochaine'); break;
+    case 'batchmode': { foyer.batch = foyer.batch ? 0 : 'auto'; const P = planBuild(wkShift(curWk(), 1)); saveFoyer(); viewNutrition(); toast(!foyer.batch ? 'Menus classiques dès la semaine prochaine' : P.batch ? '🥘 Semaine prochaine en batch : c’est le moins cher' : '🥘 Batch « si moins cher » activé : la semaine prochaine reste en menus classiques (moins chers)'); break; }
     case 'remopt': { const r = remCfg(); r[b.dataset.k] = !r[b.dataset.k]; safeSet('mp_settings', settings); viewSemaine(); break; }
     case 'remperm': if ('Notification' in window) Notification.requestPermission().then(p => { viewSemaine(); if (p === 'granted'){ notify('🔔 Notifications activées', 'Tu recevras tes rappels ici.', 'test'); } }); break;
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
