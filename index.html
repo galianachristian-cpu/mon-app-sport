@@ -1862,7 +1862,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaKiwiOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { budgetOnce(); batchOnce(); if (view === 'nutrition') render(); });
@@ -1964,6 +1964,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [152, [['🥞', 'Plus de sarrasin', 'les galettes deviennent des crêpes salées complètes à la farine de blé'], ['🥝', 'Pas de kiwi pour Béa', 'ses desserts passent à d’autres fruits de saison']]],
   [151, [['🔌', 'Connexion fiable sur l’iPad', 'les fichiers de connexion sont maintenant fournis avec l’appli (plus besoin de joindre un serveur de Google pour démarrer), avec un serveur de secours ; le diagnostic vérifie aussi l’accès aux serveurs']]],
   [150, [['🔧', 'Diagnostic de connexion', 'si un appareil affiche « Sur cet appareil », touche la pastille : il montre ce qui bloque, avec « Réessayer », « Me reconnecter » et « Réparer cet appareil »']]],
   [149, [['🔧', 'Connexion réparée sur les vieux iPad', 'mode de connexion compatible avec les anciens Safari, et réparation automatique si l’appareil n’arrive pas à lire vos données (il redémarre une fois)']]],
@@ -4337,7 +4338,8 @@ const RECIPES = [
   R('blanquette-legere','Blanquette de veau légère & riz','plat',50,[['veau',150],['carotte',120],['champignon',80],['oignon',40],['fblanc',50],['riz',70]],'Faire revenir le veau en morceaux, couvrir d’eau avec un bouquet garni, l’oignon et les carottes, mijoter 40 min. Ajouter les champignons 10 min avant la fin. Hors du feu, lier la sauce avec le fromage blanc et un jus de citron. Servir avec le riz.','🍲'),
   R('filet-mignon-puree','Filet mignon, purée & carottes','plat',35,[['porc',150],['pdt',250],['lait',60],['carotte',150]],'Dorer le filet mignon sur toutes les faces, finir 20 min au four à 180 °C. Cuire les pommes de terre et les carottes à l’eau. Écraser les pommes de terre avec le lait chaud, sel, poivre, muscade.','🥩'),
   R('soupe-oignon','Soupe à l’oignon gratinée & œufs pochés','plat',40,[['oignon',250],['pain',60],['emmental',25],['oeuf',120]],'Faire fondre les oignons émincés 15 min à feu doux. Couvrir de bouillon, cuire 15 min. Pocher les œufs 3 min dans la soupe. Verser dans des bols, poser le pain grillé, parsemer d’emmental, gratiner 5 min.','🧅'),
-  R('galettes-sarrasin','Galettes de sarrasin complètes & poireaux','plat',25,[['sarrasin',60],['oeuf',60],['jambon',60],['emmental',20],['poireau',150],['salade',50]],'Pâte : farine de sarrasin, eau, sel, jusqu’à une pâte fluide. Faire fondre les poireaux émincés 10 min. Cuire une galette, garnir de poireaux, jambon, emmental, casser l’œuf au centre, replier les bords, couvrir 3 min.','🥞'),
+  /* Chris et Béa n'aiment pas le sarrasin : crêpes salées à la farine de blé (même identifiant, pour les menus déjà prévus) */
+  R('galettes-sarrasin','Crêpes salées complètes & poireaux','plat',25,[['farine',50],['lait',100],['oeuf',60],['jambon',60],['emmental',20],['poireau',150],['salade',50]],'Pâte : farine, lait, une pincée de sel, un filet d’eau si besoin, jusqu’à une pâte fluide. Faire fondre les poireaux émincés 10 min. Cuire une crêpe, garnir de poireaux, jambon, emmental, casser l’œuf au centre, replier les bords, couvrir 3 min.','🥞'),
   R('coquillettes-risotto','Coquillettes façon risotto jambon-champignons','plat',20,[['pates',80],['jambon',80],['champignon',120],['oignon',30],['lait',100],['emmental',20]],'Faire revenir l’oignon et les champignons. Ajouter les coquillettes crues, couvrir d’eau et cuire 12 min en remuant comme un risotto. En fin de cuisson, ajouter le lait, le jambon en dés et l’emmental.','🍝'),
   R('tartines-chevre-endives','Tartines chèvre-miel, jambon & salade d’endives','plat',15,[['pain',100],['chevre',50],['jambon',60],['miel',10],['endive',150],['amande',10]],'Garnir les tranches de pain de jambon et de rondelles de chèvre, un filet de miel, griller 8 min au four. Servir avec les endives émincées, les amandes concassées et une vinaigrette.','🧀'),
   R('gratin-poireaux-jambon','Gratin de poireaux au jambon & riz','plat',35,[['poireau',300],['jambon',100],['lait',100],['emmental',20],['riz',60]],'Cuire les poireaux en tronçons 10 min. Les enrouler dans le jambon, les poser dans un plat, verser le lait, parsemer d’emmental, gratiner 20 min à 200 °C. Servir avec le riz.','🥬'),
@@ -5941,6 +5943,11 @@ function banEx(name, on){
   coach = Object.assign({}, coach, { ban: B }); const n = on ? replaceBanned() : 0; save(); return n;
 }
 // Béa ne peut pas faire le gainage latéral (ni sa version avec rotation) ni les pompes : jamais proposés (une fois)
+// Béa n'aime pas les kiwis : ajoutés une fois à ses aliments exclus (desserts et recettes)
+function beaKiwiOnce(){
+  if (profile.id !== 'bea' || !nut || (coach && coach.beaKiwi)) return;
+  nut.excl = [...new Set([...(nut.excl || []), 'kiwi'])]; coach = Object.assign({}, coach, { beaKiwi: today() }); save();
+}
 function beaBanOnce(){
   if (profile.id !== 'bea' || (coach && coach.beaBan)) return;
   const B = Object.assign({}, (coach && coach.ban) || {}); ['Gainage latéral', 'Planche latérale avec rotation', ...POMPES].forEach(x => { B[x] = today(); });
@@ -8105,7 +8112,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 151;
+const APP_VERSION = 152;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
