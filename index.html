@@ -279,6 +279,9 @@ h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--m
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:300px;margin:0 auto}
 /* Avent, frigo, objectif commun */
+.ec-swap{border:1px solid var(--line);background:var(--card2);color:inherit;border-radius:10px;padding:6px 12px;font:inherit;font-size:18px;cursor:pointer}.ec-swap.wide{width:100%;margin-top:10px;font-size:15px}
+.ec-swaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:14px}.ec-swaps button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:16px;border:1px solid var(--line);background:var(--card);color:inherit;border-radius:var(--r);font:inherit;text-align:left;cursor:pointer}
+.ec-swaps .e{font-size:30px}.ec-swaps b{font-size:18px}.ec-swaps small{color:var(--muted)}
 .avent{margin-top:12px}.avent.ec{background:linear-gradient(135deg,rgba(22,163,74,.22),rgba(220,38,38,.18));border:1px solid rgba(252,211,77,.4);border-radius:var(--r);padding:12px 16px;margin:0 0 14px}
 .avent .ah{display:flex;align-items:baseline;gap:8px}.avent .ah b{flex:1}.avent .ah small{color:var(--muted);font-size:12px}
 .avent .adef{font-size:17px;font-weight:700;margin:8px 0 10px}.avent.ec .adef{font-size:22px}.avent .row{gap:8px}
@@ -1918,6 +1921,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [146, [['⇄', 'Remplacer un ingrédient pour vous deux', 'sur un repas en commun, le remplacement vaut pour les deux portions (sur le téléphone comme sur l’iPad) ; le thon peut maintenant remplacer le jambon'], ['🖥️', 'Remplacer depuis l’écran tablette', 'dans la recette, touche ⇄ à côté d’un ingrédient : plus besoin de quitter le mode écran']]],
   [145, [['🥘', 'Menus batch, seulement si moins chers', 'chaque semaine l’appli prépare les menus classiques et une version batch (6 plats mijotés mangés 2 fois, cuisinés le dimanche et le mercredi soir) et garde la moins chère. Le détail est dans Semaine → Semaine prochaine']]],
   [144, [['🧠', 'Achats malins', 'dans Courses : à partir de votre liste de la semaine, le bon format à acheter (poulet entier, œufs par 30, fromage blanc 1 kg, surgelés en grand sachet…) et l’économie estimée']]],
   [143, [['💶', 'Budget courses : 90 € par semaine', 'prix « promos et discount » (−15 %) : les plats et petits-déjeuners trop chers sont remplacés par des équivalents de saison, riches en protéines, sans doublon ; le repas plaisir du dimanche est gardé ; corrige un prix dans « Les prix de mon magasin »']]],
@@ -4128,7 +4132,7 @@ const cuitTxt = (f, g) => CUIT[f] ? ` · cru, ≈ ${cuitG(f, g)} g cuit` : '';
 const RAYONS = { legumes:'🥦 Fruits & légumes frais', fruits:'🥦 Fruits & légumes frais', viande:'🥩 Boucherie & charcuterie', cremerie:'🥛 Crémerie & œufs', surgele:'🧊 Surgelés', epicerie:'🥫 Épicerie', boulangerie:'🥖 Boulangerie' };
 // remplacements possibles (même famille), dans l'ordre de préférence
 const SUBS = {
-  poulet:['dinde','jambon','oeuf','tofu'], dinde:['poulet','jambon','oeuf','tofu'], boeuf:['dinde','poulet','haricotrouge','tofu'], jambon:['dinde','poulet','oeuf'],
+  poulet:['dinde','jambon','oeuf','tofu'], dinde:['poulet','jambon','oeuf','tofu'], boeuf:['dinde','poulet','haricotrouge','tofu'], jambon:['dinde','poulet','oeuf','thon'],
   thon:['sardine','poulet','oeuf','poischiche'], sardine:['thon','oeuf','poulet'], colin:['saumon','thon','poulet','oeuf'], saumon:['colin','sardine','thon','poulet'],
   tofu:['oeuf','poulet','poischiche'], oeuf:['jambon','tofu','fblanc'],
   riz:['semoule','pates','pdt'], pates:['riz','semoule'], semoule:['riz','pates'], pdt:['patate','riz'], patate:['pdt','riz'],
@@ -4986,12 +4990,21 @@ function sheetRecette(meal){
     <div class="row" style="margin:4px 0 10px"><button class="btn sm ${favOf()[p.r.id] ? 'pri' : ''}" data-x="fav" data-rid="${p.r.id}" data-meal="${meal}">${favOf()[p.r.id] ? '❤️ Favori' : '🤍 J’adore'}</button><button class="btn sm ${banOf()[p.r.id] ? 'danger' : ''}" data-x="ban" data-rid="${p.r.id}" data-meal="${meal}">${banOf()[p.r.id] ? '👎 Écarté (annuler)' : '👎 Ne plus proposer'}</button></div>
     <p class="muted" style="font-size:12px">${duo ? 'Ta portion : g' : 'G'}lucides ${Math.round(p.m.g)} g · Lipides ${Math.round(p.m.l)} g. Touchez un ingrédient sur la carte pour le remplacer.</p>`);
 }
+/* remplacer un aliment : sur un repas en commun (même plat pour vous deux), le changement vaut pour les deux portions */
+function swapWho(wk, d, meal){
+  try{ const plan = planOf(wk), v = plan.days[d][meal], rid = ridOf(plan, d, meal, profile.id);
+    if (typeof v !== 'string') return [profile.id];
+    return PROFILES.map(p => p.id).filter(pid => pid === profile.id || (ridOf(plan, d, meal, pid) === rid && !isAway(pid, d, meal, wk))); }catch(e){ return [profile.id]; }
+}
+const swapAlts = (f, pids) => (SUBS[f] || []).filter(x => FOODS[x] && pids.every(pid => !exclOf(ctxOf(pid)).includes(x)));
+function swapApply(wk, d, meal, f, to, pids){ pids.forEach(pid => { const key = [wk, d, meal, pid].join('|'); foyer.swaps[key] = Object.assign({}, foyer.swaps[key] || {}, { [f]: to }); }); }
+function swapReset(wk, d, meal, pids){ pids.forEach(pid => { delete foyer.swaps[[wk, d, meal, pid].join('|')]; }); }
 function sheetSwap(meal, f){
-  const wk = curWk(), key = [wk, nutDay, meal, profile.id].join('|'), alts = (SUBS[f] || []).filter(x => !(nut.excl || []).includes(x));
-  openSheet(`<h2>Remplacer : ${esc(FOODS[f].n)}</h2>
+  const wk = curWk(), who = swapWho(wk, nutDay, meal), alts = swapAlts(f, who), both = who.length > 1;
+  openSheet(`<h2>Remplacer : ${esc(FOODS[f].n)}</h2>${both ? '<p style="font-size:13px;margin-bottom:8px">👫 Repas en commun : le remplacement vaut pour vous deux.</p>' : ''}
     ${alts.length ? `<p class="muted" style="font-size:13px;margin-bottom:10px">Les quantités sont recalculées automatiquement.</p><div class="list" style="margin-top:0">${alts.map(a => `<button class="libit" data-to="${a}"><span class="t"><b>${esc(FOODS[a].n)}</b><small>${FOODS[a].k} kcal · ${FOODS[a].p} g prot. / 100 g</small></span><span class="plus">⇄</span></button>`).join('')}</div>` : '<p class="muted">Pas de remplacement prévu pour cet aliment.</p>'}
     <div class="row" style="margin-top:14px"><button class="btn danger" id="noLike">🚫 Je n’aime pas, ne plus le proposer</button></div>`);
-  $('#sheet').querySelectorAll('[data-to]').forEach(b => b.onclick = () => { foyer.swaps[key] = Object.assign(foyer.swaps[key] || {}, { [f]: b.dataset.to }); saveFoyer(); closeSheet(); viewNutrition(); toast('🔁 Remplacé, portions recalculées'); });
+  $('#sheet').querySelectorAll('[data-to]').forEach(b => b.onclick = () => { swapApply(wk, nutDay, meal, f, b.dataset.to, who); saveFoyer(); closeSheet(); viewNutrition(); toast(both ? '🔁 Remplacé pour vous deux, portions recalculées' : '🔁 Remplacé, portions recalculées'); });
   $('#noLike').onclick = () => { nut.excl = [...new Set([...(nut.excl || []), f])]; delete foyer.plans[wk]; save(); saveFoyer(); closeSheet(); viewNutrition(); toast('🚫 ' + FOODS[f].n + ' retiré de tes menus'); };
 }
 function changeMeal(meal){
@@ -8036,7 +8049,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 145;
+const APP_VERSION = 146;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8191,7 +8204,8 @@ function ecOpenRec(d, meal, rid){
   const r = L[0].por.r, foods = [...new Set(L.flatMap(x => x.por.ing.map(([f]) => f)))], two = L.length > 1;
   const cell = (f, g) => g ? `${qty(f, g)}${CUIT[f] ? `<small>≈ ${cuitG(f, g)} g cuit</small>` : ''}` : '–';
   const rows = foods.map(f => { const G = L.map(x => (x.por.ing.find(([y]) => y === f) || [0, 0])[1]), t = G.reduce((a, b) => a + b, 0);
-    return `<tr><th>${esc(FOODS[f].n)}${CUIT[f] ? ' <small>(cru)</small>' : ''}</th>${two ? G.map(g => `<td>${cell(f, g)}</td>`).join('') : ''}<td><b>${cell(f, t)}</b></td></tr>`; }).join('');
+    const orig = r.ing.some(([y]) => y === f) ? f : (L[0].por.subs || []).concat(...L.map(x => Object.entries(foyer.swaps[[curWk(), +d, meal, x.p.id].join('|')] || {}))).map(([a, b]) => b === f ? a : null).find(Boolean) || f;
+    return `<tr><th>${esc(FOODS[f].n)}${CUIT[f] ? ' <small>(cru)</small>' : ''}</th>${two ? G.map(g => `<td>${cell(f, g)}</td>`).join('') : ''}<td><b>${cell(f, t)}</b></td><td>${(SUBS[orig] || []).length && r.ing.some(([y]) => y === orig) ? `<button class="ec-swap" data-ec="swapf" data-f="${orig}" aria-label="Remplacer ${esc(FOODS[f].n)}">⇄</button>` : ''}</td></tr>`; }).join('');
   const steps = ecStepsOf(r.steps), lbl = (MEALS.find(m => m[0] === meal) || [])[1] || '';
   const mix = (() => { try{ return two && L.every(x => isMix(x.por)) ? L.map(x => `${esc(ecNom(x.p))} ≈ <b>${kc(plateG(x.por))} g</b>`).join(' · ') : ''; }catch(e){ return ''; } })();
   const el = $('#ecRec'); EC.rec = { d, meal, rid };
@@ -8199,13 +8213,26 @@ function ecOpenRec(d, meal, rid){
     <h2>${r.e} ${esc(r.n)}</h2>
     <p class="meta">${DAY_NAMES[+d]} · ${lbl} · ⏱️ ${r.min} min · pour ${L.map(x => esc(ecNom(x.p))).join(' et ')} · ${L.map(x => `${esc(ecNom(x.p))} ${kc(x.por.m.k)} kcal`).join(' · ')}</p>
     <div class="ec-rec-g">
-      <div class="box"><h4>🛒 Ingrédients</h4><table>${two ? `<thead><tr><th></th>${L.map(x => `<th>${esc(ecNom(x.p))}</th>`).join('')}<th>Total</th></tr></thead>` : ''}<tbody>${rows}</tbody></table>
+      <div class="box"><h4>🛒 Ingrédients <small style="font-weight:600;color:var(--muted)">· ⇄ pour remplacer un aliment</small></h4><table>${two ? `<thead><tr><th></th>${L.map(x => `<th>${esc(ecNom(x.p))}</th>`).join('')}<th>Total</th><th></th></tr></thead>` : ''}<tbody>${rows}</tbody></table>
+        ${L.some(x => Object.keys(foyer.swaps[[curWk(), +d, meal, x.p.id].join('|')] || {}).length) ? `<button class="ec-swap wide" data-ec="swapreset">↩️ Revenir aux ingrédients de la recette</button>` : ''}
         ${foods.some(f => CUIT[f]) ? '<p class="note">⚖️ Pèse cru, ou utilise le poids cuit indiqué.</p>' : ''}
         ${mix ? `<p class="note">🍲 Plat mélangé : cuis le total, puis sers les assiettes au poids : ${mix}.</p>` : two ? '<p class="note">🍳 Cuisine le total, puis sers chaque assiette avec sa colonne.</p>' : ''}</div>
       <div class="box"><h4>👩‍🍳 Préparation</h4><button class="ec-done" data-ec="step" data-d="${d}" data-meal="${meal}" data-rid="${esc(rid)}" data-i="0" style="--c:#fb923c;margin:0 0 14px">👣 Pas à pas, en grand</button><ol class="ec-steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
         <div class="ec-bot"><button data-ec="timer" data-min="${r.min}" data-l="${esc(r.e + ' ' + r.n)}">⏱️ Minuteur ${r.min} min</button><button data-ec="timers" data-l="${esc(r.e + ' ' + r.n)}">⏱️ Autre durée</button></div></div>
     </div>`;
   el.classList.add('on'); el.scrollTop = 0; syncAwake();
+}
+function ecOpenSwap(f){
+  const R = EC.rec; if (!R) return; const L = ecMealOf(+R.d, R.meal).filter(x => x.por && x.por.r.id === R.rid), pids = L.map(x => x.p.id), alts = swapAlts(f, pids);
+  EC.rec = Object.assign({}, R, { swap: f });
+  $('#ecRec').innerHTML = `<button class="close" data-ec="swapback">‹ Retour à la recette</button><h2>⇄ Remplacer : ${esc(FOODS[f].n)}</h2>
+    <p class="meta">${pids.length > 1 ? `👫 Pour ${L.map(x => esc(ecNom(x.p))).join(' et ')} : ` : ''}les quantités et les calories sont recalculées automatiquement.</p>
+    <div class="ec-swaps">${alts.map(a => `<button data-ec="swapto" data-to="${a}"><span class="e">${foodIco(a)}</span><b>${esc(FOODS[a].n)}</b><small>${FOODS[a].k} kcal · ${FOODS[a].p} g prot. / 100 g</small></button>`).join('') || '<p class="meta">Pas de remplacement prévu pour cet aliment.</p>'}</div>`;
+  $('#ecRec').scrollTop = 0;
+}
+function ecSwapDo(to){
+  const R = EC.rec; if (!R || !R.swap) return; const pids = ecMealOf(+R.d, R.meal).filter(x => x.por && x.por.r.id === R.rid).map(x => x.p.id), f = R.swap;
+  ecFoyerEdit(() => swapApply(curWk(), +R.d, R.meal, f, to, pids)).then(() => { ecOpenRec(R.d, R.meal, R.rid); ecRender(); toast(`🔁 ${FOODS[f].n} → ${FOODS[to].n}${pids.length > 1 ? ' pour vous deux' : ''}`); });
 }
 function ecCloseRec(){ $('#ecRec').classList.remove('on'); EC.rec = null; }
 /* ---------- colonnes sport ---------- */
@@ -8611,6 +8638,10 @@ document.addEventListener('click', e => {
   else if (a === 'frigo') ecOpenFrigo();
   else if (a === 'frigock' || a === 'frigoclr' || a === 'frigogo') frigoAct(a, b, true);
   else if (a === 'voiceadd') voiceAdd(true);
+  else if (a === 'swapf') ecOpenSwap(b.dataset.f);
+  else if (a === 'swapto') ecSwapDo(b.dataset.to);
+  else if (a === 'swapback'){ const R = EC.rec; if (R) ecOpenRec(R.d, R.meal, R.rid); }
+  else if (a === 'swapreset'){ const R = EC.rec; if (R){ const pids = ecMealOf(+R.d, R.meal).filter(x => x.por && x.por.r.id === R.rid).map(x => x.p.id); ecFoyerEdit(() => swapReset(curWk(), +R.d, R.meal, pids)).then(() => { ecOpenRec(R.d, R.meal, R.rid); ecRender(); toast('↩️ Ingrédients de la recette'); }); } }
   else if (a === 'agreload'){ EC.agendaErr = false; ecRender(); ecAgendaLoad(true); }
   else if (a === 'timer'){ ecTimerAdd(+b.dataset.min || 10, b.dataset.l || '⏱️ Cuisson'); ecCloseRec(); }
   else if (a === 'timers') ecOpenTimers(b.dataset.l);
