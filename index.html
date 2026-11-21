@@ -1816,10 +1816,10 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaP12Week(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
-  loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
+  loadOther(); loadFoyer().then(() => { budgetOnce(); batchOnce(); if (view === 'nutrition') render(); });
   setTimeout(() => autoBackup(), 5000);
 }
 // la base n'a pas répondu au démarrage : on réessaie, et on garde la version la plus complète
@@ -1918,6 +1918,10 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [145, [['🥘', 'Menus batch, seulement si moins chers', 'chaque semaine l’appli prépare les menus classiques et une version batch (6 plats mijotés mangés 2 fois, cuisinés le dimanche et le mercredi soir) et garde la moins chère. Le détail est dans Semaine → Semaine prochaine']]],
+  [144, [['🧠', 'Achats malins', 'dans Courses : à partir de votre liste de la semaine, le bon format à acheter (poulet entier, œufs par 30, fromage blanc 1 kg, surgelés en grand sachet…) et l’économie estimée']]],
+  [143, [['💶', 'Budget courses : 90 € par semaine', 'prix « promos et discount » (−15 %) : les plats et petits-déjeuners trop chers sont remplacés par des équivalents de saison, riches en protéines, sans doublon ; le repas plaisir du dimanche est gardé ; corrige un prix dans « Les prix de mon magasin »']]],
+  [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie'], ['🚒', 'Maison ou caserne', 'le jour de séance, choisis « 🏠 Maison » (version du document) ou « 🚒 Caserne » (mêmes mouvements avec haltères, barre et banc, vélo à la place de l’elliptique)']]],
   [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
@@ -2287,6 +2291,7 @@ function viewSeance(){
   ${fullCard(currentDay)}${hiitSessCard(currentDay)}${tabSessCard(currentDay)}
   ${hOn('mus') && !isHiitDay(currentDay) ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
+  ${currentDay === todayIdx() && venueCan(k) ? `<div class="seg small" style="margin-top:12px"><button class="${venueOn(k) ? '' : 'on'}" data-x="venue" data-v="0">🏠 Maison</button><button class="${venueOn(k) ? 'on' : ''}" data-x="venue" data-v="1">🚒 Caserne</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px">${fullPlan(currentDay) ? '' : `<button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}`}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
@@ -2347,7 +2352,7 @@ function exCard(k, e, i){
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button></div></article>`;
   }
   if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : formeOf() && (formeOf().pain || []).length ? '⏭️ Mis de côté aujourd’hui (douleur)' : '⏭️ Pas cette fois · il revient la semaine prochaine'}</span></span></div><button class="btn sm" data-act="unskip" data-i="${i}" style="margin-left:auto">↩️ Reprendre</button></div></article>`;
-  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
+  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'caserne' ? (e.orig.n === e.n ? '🚒 Version caserne, avec charges :' : '🚒 Version caserne de') : e.tmpWhy === 'maison' ? '🏠 Version maison de' : e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span>
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`}</span>${e.ssD === today() ? `<span class="ph ph-ss">🔗 avec ${esc(e.ssW)}</span>` : ''}${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
@@ -4549,7 +4554,7 @@ function portion(rid, pid, meal, di, wk){
   if (!dr && dessertOn(c.nut) && (meal === 'dej' || meal === 'din')){
     const used = f => !FOODS[f] || excl.includes(f) || ing.some(([x]) => x === f);
     let mo = new Date().getMonth() + 1; try{ mo = +String(wkDates(wk)[di]).slice(5, 7) || mo; }catch(e){}
-    const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)));
+    const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)) && !(f === 'fruitrouge' && budgetCfg().max)); /* budget fixé : pas de fruits rouges surgelés (chers) */
     const fruit = FR.length ? FR[(di + (meal === 'din' ? 3 : 0)) % FR.length] : null, k = di % 3;
     const f = meal === 'din' && k === 0 && !used('chocolat') ? 'chocolat' : meal === 'din' && k === 1 && !used('compote') ? 'compote' : fruit;
     dess = { l: ['fblanc', 'skyr'].find(x => !used(x)), f, fg: f && FOODS[f].unit ? FOODS[f].unit.g * (f === 'clementine' ? 2 : 1) : 120 };
@@ -4601,6 +4606,14 @@ function genPlan(wk, keep, from){
   const mo = monthOfWk(wk);
   const pids = PROFILES.map(p => p.id), excls = pids.map(id => exclOf(ctxOf(id))), S = wk + '#' + (foyer.salt || 0);
   const days = [], used = [], ctx = { used: new Set(), recent: platsOf(wkShift(wk, -1)), old: platsOf(wkShift(wk, -2)), stock: stockMap(), n: pids.length };
+  /* menus spécial batch (repas en commun) : 6 plats mijotés, chacun mangé 2 fois, jamais 2 repas de suite.
+     Dimanche après-midi : plats A, B, C pour lun midi → mer soir ; mercredi soir : D, E, F pour jeu midi → sam soir.
+     Ordre des repas : A B C A B C. Le dimanche midi reste le repas plaisir. */
+  const BT = foyer.batch === 1 && foyer.commun ? (() => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && isMix({ r }) && recipeOk(r, excls)), mo), 8), out = [];
+    /* variété : au plus 2 plats avec le même féculent et 2 avec la même protéine (sinon 5 plats de pâtes) */
+    const key = (r, G) => (r.ing.find(([f]) => G.includes(FOODS[f].grp)) || [''])[0], FEC = ['fec', 'cereale', 'pain', 'legumineuse'], PRO = ['prot'], nF = {}, nP = {};
+    for (let i = 0; i < 6; i++){ const ok = L.filter(r => (nF[key(r, FEC)] || 0) < 2 && (nP[key(r, PRO)] || 0) < 2), id = pickW(ok.length ? ok : L, rng(S + 'batch' + i), ctx); if (!id) return null;
+      const r = REC_BY[id]; nF[key(r, FEC)] = (nF[key(r, FEC)] || 0) + 1; nP[key(r, PRO)] = (nP[key(r, PRO)] || 0) + 1; out.push(id); ctx.used.add(id); } return out; })() : null;
   for (let d = 0; d < 7; d++){
     if (keep && d < from){ const day = keep.days[d]; days.push(day); ['dej','din'].forEach(m => { const v = day[m]; (typeof v === 'string' ? [v] : Object.values(v || {})).forEach(id => { used.push(id); ctx.used.add(id); }); }); continue; }
     const day = {};
@@ -4616,18 +4629,19 @@ function genPlan(wk, keep, from){
     }); });
     ['dej','din'].forEach(meal => {
       const PLS = d === 6 && meal === 'dej'; /* dimanche midi : repas plaisir */
+      if (BT && d < 6){ const sl = d * 2 + (meal === 'din' ? 1 : 0), id = BT[(sl < 6 ? 0 : 3) + (sl % 3)]; used.push(id); day[meal] = id; return; }
       if (foyer.commun){ const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
       else { day[meal] = {}; pids.forEach((pid, k) => { const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, [excls[k]])), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
   }
-  return { days, commun: foyer.commun, v: 2, season: 1, rv: RECIPES.length };
+  return { days, commun: foyer.commun, v: 2, season: 1, rv: RECIPES.length, batch: BT ? 1 : 0 };
 }
 const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
 function planOf(wk){
-  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ foyer.plans[wk] = genPlan(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
+  if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ planBuild(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); }
   // semaine pas encore commencée, menu créé avant l'arrivée de nouvelles recettes : on le refait pour en profiter
-  if (wk > curWk() && (foyer.plans[wk].rv || 0) < RECIPES.length){ foyer.plans[wk] = genPlan(wk); saveFoyer(); if (budgetCfg().max) budgetFit(wk); }
+  if (wk > curWk() && (foyer.plans[wk].rv || 0) < RECIPES.length){ planBuild(wk); saveFoyer(); }
   // menu créé avant les produits de saison : les jours à venir (à partir de demain) sont refaits s'ils contiennent un produit hors saison
   const P0 = foyer.plans[wk];
   if (!P0.season && wk === curWk() && foyer.plans){ const from = todayIdx() + 1, mo = monthOfWk(wk), R0 = Object.fromEntries(RECIPES.map(r => [r.id, r]));
@@ -4643,7 +4657,7 @@ function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(
 const PRICE = { farine:1.5, beurre:9, sucre:1.3, creme:5, mascarpone:9, biscuit:8, frites:3, pizza:6, fondu:14, lardons:11, merguez:11, charcuterie:22, veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
   lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
   concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
-const STORES = { moyen:['Prix moyens',1], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
+const STORES = { moyen:['Prix moyens',1], promo:['Promos et discount (−15 %)',.85], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
 const budgetCfg = () => foyer.budget || {};
 const priceDef = f => +((PRICE[f] || 5) * (STORES[budgetCfg().store] || STORES.moyen)[1]).toFixed(2);
 const priceKg = f => { const o = (budgetCfg().p || {})[f]; return o != null ? o : priceDef(f); };
@@ -4656,17 +4670,31 @@ function budgetFit(wk){
   const B = budgetCfg(); if (!B.max) return null;
   const plan = foyer.plans[wk]; if (!plan) return null;
   const from = wk === curWk() ? todayIdx() : 0, excls = PROFILES.map(p => exclOf(ctxOf(p.id))), base = r => costOf(r.ing);
-  const plats = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls) && !banOf()[r.id]).sort((a, b) => base(a) - base(b));
+  /* candidats : de saison, riches en protéines, jamais de plat plaisir ; on prend le plus proche en prix (pas le moins cher) pour garder de la variété */
+  const plats = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls) && !banOf()[r.id]), monthOfWk(wk)), 14).sort((a, b) => base(b) - base(a));
   const start = weekCost(wk, 0); let tot = start, n = 0, nSw = 0;
   const tried = new Set();
   while (tot > B.max && n++ < 40){
     let worst = null;
-    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v]) return; const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
+    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v] || REC_BY[v].pl) return; /* le repas plaisir du dimanche est gardé */ const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
     if (!worst) break;
     const used = new Set(); plan.days.forEach(day => ['dej', 'din'].forEach(m => { const v = day[m]; if (typeof v === 'string') used.add(v); }));
-    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .85) || plats.find(r => base(r) < worst.c * .85 && plan.days[worst.d][worst.m === 'dej' ? 'din' : 'dej'] !== r.id);
-    tried.add(worst.d + worst.m); if (!alt) continue;
-    plan.days[worst.d][worst.m] = alt.id; nSw++; tot = weekCost(wk, 0);
+    const fecOf = r => (r.ing.find(([f]) => ['fec', 'cereale', 'pain', 'legumineuse'].includes(FOODS[f].grp)) || [''])[0], wr = REC_BY[plan.days[worst.d][worst.m]];
+    const nFec = f => [...used].filter(id => REC_BY[id] && REC_BY[id] !== wr && fecOf(REC_BY[id]) === f).length;
+    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .9 && (!plan.batch || (isMix({ r }) && nFec(fecOf(r)) < 2)));
+    if (!alt){ tried.add(worst.d + worst.m); continue; }
+    if (plan.batch){ const old = plan.days[worst.d][worst.m]; for (let d2 = from; d2 < 6; d2++) ['dej', 'din'].forEach(m2 => { if (plan.days[d2][m2] === old) plan.days[d2][m2] = alt.id; }); } else plan.days[worst.d][worst.m] = alt.id;
+    nSw++; tot = weekCost(wk, 0);
+  }
+  // encore au-dessus : petits-déjeuners moins chers (le plus proche en prix, pour garder de la variété)
+  for (let guard = 0; tot > B.max && guard < 30; guard++){
+    let worst = null;
+    for (let d = from; d < 7; d++){ const v = plan.days[d].pdj; if (!v || typeof v !== 'object') continue; Object.entries(v).forEach(([pid, id]) => { if (!REC_BY[id] || tried.has('p' + d + pid)) return; const c = base(REC_BY[id]); if (!worst || c > worst.c) worst = { d, pid, c }; }); }
+    if (!worst) break;
+    const ex = exclOf(ctxOf(worst.pid)), L = seasonal(RECIPES.filter(r => r.type === 'pdj' && recipeOk(r, [ex])), monthOfWk(wk)).sort((a, b) => base(b) - base(a));
+    const prev = worst.d ? plan.days[worst.d - 1].pdj[worst.pid] : null, alt = L.find(r => base(r) < worst.c * .9 && r.id !== prev);
+    if (!alt){ tried.add('p' + worst.d + worst.pid); continue; }
+    plan.days[worst.d].pdj[worst.pid] = alt.id; nSw++; tot = weekCost(wk, 0);
   }
   if (nSw) saveFoyer();
   return { start, tot, ok: tot <= B.max, nSw };
@@ -4677,6 +4705,54 @@ function bonsPlans(tot){
   Object.entries(tot).forEach(([f, g]) => { (SUBS[f] || []).forEach(to => { if (!FOODS[to] || FOODS[to].grp !== FOODS[f].grp) return; const save = g / 1000 * (priceKg(f) - priceKg(to)); if (save >= 1) out.push({ f, to, save }); }); });
   const best = {}; out.forEach(x => { if (!best[x.f] || x.save > best[x.f].save) best[x.f] = x; });
   return Object.values(best).sort((a, b) => b.save - a.save).slice(0, 3);
+}
+/* ACHATS MALINS : à partir de la liste de la semaine, le bon format à acheter et l'économie estimée (sans prospectus).
+   [aliment, quantité minimale sur la semaine (g), facteur de prix si on suit le conseil, conseil] */
+const MALIN = [
+  ['poulet', 500, .7, 'Un poulet entier (≈ 1,6 kg) plutôt que des blancs : on le découpe ou on le rôtit, la carcasse fait un bouillon.'],
+  ['oeuf', 360, .75, 'Boîte de 30 œufs (plein air, marque distributeur) plutôt que par 6 ou 12.'],
+  ['fblanc', 500, .65, 'Pot de 1 kg de fromage blanc plutôt que des petits pots.'],
+  ['skyr', 400, .75, 'Grand pot de skyr (450 g à 1 kg), ou fromage blanc 0 % à la place : même apport en protéines, moins cher.'],
+  ['yaourt', 500, .8, 'Yaourts nature par 16, marque distributeur.'],
+  ['boeuf', 300, .75, 'Steaks hachés 5 % surgelés en boîte de 10, ou haché en barquette familiale.'],
+  ['jambon', 240, .8, 'Jambon en paquet de 8 à 10 tranches (marque distributeur), plutôt que par 4.'],
+  ['dinde', 300, .8, 'Escalopes de dinde en barquette familiale, à congeler par 2.'],
+  ['colin', 300, .8, 'Grand sachet de poisson blanc surgelé (1 kg).'],
+  ['saumon', 250, .8, 'Pavés de saumon surgelés en sachet familial.'],
+  ['thon', 150, .85, 'Thon au naturel par lot de 3 ou 4 boîtes.'],
+  ['emmental', 100, .75, 'Emmental en bloc à râper soi-même plutôt que déjà râpé.'],
+  ['mozza', 150, .85, 'Mozzarella en lot de 3, marque distributeur.'],
+  ['riz', 300, .7, 'Riz en paquet de 1 à 2 kg, marque distributeur.'],
+  ['pates', 300, .7, 'Pâtes complètes en paquet de 1 kg, marque distributeur.'],
+  ['semoule', 200, .75, 'Semoule en paquet de 1 kg.'],
+  ['avoine', 200, .7, 'Flocons d’avoine en sachet de 1 kg (rayon céréales ou vrac).'],
+  ['lentille', 150, .7, 'Lentilles sèches en sachet de 1 kg ou en vrac.'],
+  ['poischiche', 300, .85, 'Pois chiches en grosse boîte (800 g).'],
+  ['pdt', 800, .7, 'Pommes de terre en filet de 2,5 à 5 kg.'],
+  ['carotte', 400, .7, 'Carottes en sachet de 1 à 2 kg.'],
+  ['brocoli', 400, .85, 'Légumes surgelés en sachet de 1 à 2,5 kg (brocoli, haricots verts, poêlées).'],
+  ['haricotvert', 400, .85, 'Haricots verts surgelés en sachet de 1 à 2,5 kg.'],
+  ['poelee', 400, .85, 'Poêlée de légumes surgelée en grand sachet.'],
+  ['epinard', 300, .85, 'Épinards surgelés en galets, sachet de 1 kg.'],
+  ['pomme', 600, .75, 'Pommes en filet ou en vrac de saison.'],
+  ['clementine', 400, .7, 'Clémentines en filet de 2 kg (pleine saison en novembre-décembre).'],
+  ['banane', 500, .9, 'Bananes au poids, un peu vertes pour tenir la semaine.'],
+  ['pain', 500, .8, 'Pain complet tranché en grand format : congèle la moitié, sors les tranches au fur et à mesure.'],
+  ['lait', 1000, .85, 'Lait demi-écrémé par pack de 6.'] ];
+function malinTips(){
+  let raw = {}; try{ raw = coursesList().raw || {}; }catch(e){ raw = {}; }
+  const L = MALIN.filter(([f, min]) => FOODS[f] && (raw[f] || 0) >= min).map(([f, , fac, tip]) => ({ f, tip, save: raw[f] / 1000 * priceKg(f) * (1 - fac) })).filter(x => x.save >= .3).sort((a, b) => b.save - a.save);
+  return { L, total: L.reduce((a, x) => a + x.save, 0) };
+}
+function malinCard(){
+  const { L, total } = malinTips(); if (!L.length) return '';
+  const nMix = (() => { try{ const plan = planOf(curWk()); return plan.days.reduce((a, d) => a + ['dej', 'din'].filter(m => { const id = typeof d[m] === 'string' ? d[m] : Object.values(d[m] || {})[0]; return REC_BY[id] && isMix({ r: REC_BY[id] }); }).length, 0); }catch(e){ return 0; } })();
+  return `<h3 class="sec">🧠 Achats malins de la semaine <small class="muted" style="text-transform:none;letter-spacing:0">· ≈ ${eur(total)} d’économie</small></h3><div class="card">
+    ${L.slice(0, 8).map(x => `<p style="font-size:13.5px;margin:6px 0">${foodIco(x.f)} <b>${esc(FOODS[x.f].n)}</b> : ${esc(x.tip)} <span style="color:var(--ok);font-weight:700">≈ −${eur(x.save)}</span></p>`).join('')}
+    <p style="font-size:13.5px;margin:8px 0 4px">🏷️ <b>Marques distributeur</b> (Lidl, Intermarché « Top budget »…) pour l’épicerie, la crémerie et les surgelés : même qualité nutritionnelle, 20 à 40 % moins cher.</p>
+    ${nMix >= 2 ? `<p style="font-size:13.5px;margin:4px 0">🥘 <b>Cuisinez en double</b> : ${nMix} plats mijotés cette semaine, une portion de plus va au congélateur pour un soir pressé.</p><button class="btn sm" data-x="batch" style="margin-top:4px">🥘 Batch cooking</button>` : ''}
+    <button class="btn sm" data-x="stock" style="margin-top:6px">🥡 Noter nos restes (ils sortent de la liste)</button>
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Économies estimées d’après vos quantités de la semaine et des écarts de prix moyens constatés entre formats.</p></div>`;
 }
 function budgetCard(){
   const B = budgetCfg(), wk = curWk(), tot = weekCost(wk, 0), max = num(B.max), pct = max ? Math.min(100, tot * 100 / max) : 0, over = max && tot > max;
@@ -4762,6 +4838,24 @@ async function loadFoyer(){
   if (!foyerReady) setTimeout(() => { if (!foyerReady) loadFoyer().then(() => { if (view === 'nutrition') render(); }); }, 15000);
   foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true }, src || {});
   mergeFoyerExtras(); if (push) saveFoyer();
+}
+// budget courses demandé par Chris : 90 € par semaine pour vous 2, en jouant les promos (prix estimés −15 %). Une seule fois.
+/* menu d'une semaine : menus classiques, ou en mode batch « auto » les deux versions ajustées au budget, et on garde la moins chère */
+function planBuild(wk){
+  const fit = () => { if (budgetCfg().max) budgetFit(wk); return weekCost(wk, 0); };
+  if (foyer.batch !== 'auto' || !foyer.commun){ foyer.plans[wk] = genPlan(wk); fit(); return foyer.plans[wk]; }
+  foyer.batch = 0; foyer.plans[wk] = genPlan(wk); const cA = fit(), A = foyer.plans[wk];
+  foyer.batch = 1; foyer.plans[wk] = genPlan(wk); const cB = fit(), Bp = foyer.plans[wk]; foyer.batch = 'auto';
+  foyer.plans[wk] = cB < cA ? Bp : A; foyer.plans[wk].cmp = { classique: +cA.toFixed(2), batch: +cB.toFixed(2) }; return foyer.plans[wk];
+}
+function batchOnce(){
+  if (!foyerReady || !foyer || foyer.batchSet) return;
+  foyer.batch = 'auto'; foyer.batchSet = today(); planBuild(wkShift(curWk(), 1)); saveFoyer(); /* Chris : le batch seulement s'il ne coûte pas plus cher */
+}
+function budgetOnce(){
+  if (!foyerReady || !foyer || foyer.budgetSet) return;
+  foyer.budget = Object.assign({}, foyer.budget, { max: 90, store: 'promo' }); foyer.budgetSet = today();
+  const nx = wkShift(curWk(), 1); if (foyer.plans[nx]) budgetFit(nx); saveFoyer();
 }
 function saveFoyer(){
   foyer._t = Date.now(); safeSet('mp_foyer', foyer); clearTimeout(foyerTimer);
@@ -4906,7 +5000,7 @@ function changeMeal(meal){
   const L = seasonal(RECIPES.filter(r => r.type === type && r.id !== cur && recipeOk(r, ex) && !banOf()[r.id]), monthOfWk(wk)).sort((a, b) => (favOf()[b.id] ? 1 : 0) - (favOf()[a.id] ? 1 : 0));
   openSheet(`<h2>Choisir un autre plat</h2>${shared ? '<p class="muted" style="font-size:13px;margin-bottom:8px">👫 Repas en commun : le changement vaut pour vous deux.</p>' : ''}
     <div>${L.map(r => { const k2 = kcalOf(r.ing); return `<button class="libit" data-rid="${r.id}"><span class="emo">${r.e}</span><span class="t"><b>${favOf()[r.id] ? '❤️ ' : ''}${esc(r.n)}</b><small>${r.min} min · base ${kc(k2)} kcal</small></span><span class="plus">＋</span></button>`; }).join('')}</div>`);
-  $('#sheet').querySelectorAll('[data-rid]').forEach(b => b.onclick = () => { const v = plan.days[nutDay][meal]; if (typeof v === 'string') plan.days[nutDay][meal] = b.dataset.rid; else v[profile.id] = b.dataset.rid; saveFoyer(); closeSheet(); viewNutrition(); toast('🔄 Plat changé'); });
+  $('#sheet').querySelectorAll('[data-rid]').forEach(b => b.onclick = () => { const v = plan.days[nutDay][meal]; let n2 = 0; if (typeof v === 'string'){ if (plan.batch && nutDay < 6){ for (let d2 = todayIdx(); d2 < 6; d2++) ['dej', 'din'].forEach(m2 => { if (plan.days[d2][m2] === v && !(d2 === nutDay && m2 === meal)){ plan.days[d2][m2] = b.dataset.rid; n2++; } }); } plan.days[nutDay][meal] = b.dataset.rid; } else v[profile.id] = b.dataset.rid; saveFoyer(); closeSheet(); viewNutrition(); toast(n2 ? '🔄 Plat changé (aussi l’autre jour où il revient, batch oblige)' : '🔄 Plat changé'); });
 }
 function sheetOther(meal){
   const date = weekDates(curWk())[nutDay], J = journalOf(date), items = (J[meal] && J[meal].items) ? clone(J[meal].items) : [];
@@ -5037,7 +5131,7 @@ function nutSemaine(){
   const seg = `<div class="seg small" style="margin-top:14px">${[[0, 'Cette semaine'], [1, 'Semaine prochaine']].map(([v, l]) => `<button class="${+semNext === v ? 'on' : ''}" data-x="semwk" data-v="${v}">${l}</button>`).join('')}</div>`;
   if (semNext) return seg + nutSemaineNext();
   const wk = curWk(), plan = planOf(wk);
-  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
+  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn ${foyer.batch ? 'pri' : ''}" data-x="batchmode" style="flex:1">${foyer.batch ? '🥘 Batch si moins cher ✓' : '🥘 Menus batch : non'}</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
   ${(() => { const t = weekCost(wk, 0), mx = num(budgetCfg().max); return `<div class="card" style="margin-top:12px"><p style="font-size:14px">💶 Menus de la semaine : <b>≈ ${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>${mx && t > mx ? '<button class="btn sm pri" data-x="budfit" style="margin-top:8px">🎯 Ajuster les menus au budget</button>' : ''}</div>`; })()}
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
 }
@@ -5046,6 +5140,7 @@ function nutSemaineNext(){
   const wk = wkShift(curWk(), 1), plan = planOf(wk), D = wkDates(wk), t = weekCost(wk, 0), mx = num(budgetCfg().max);
   return `<div class="card" style="margin-top:12px"><p style="font-size:14px">📅 Du <b>${fmtD(D[0])}</b> au <b>${fmtD(D[6])}</b> · menus prêts pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}.</p>
     <p style="font-size:14px;margin-top:6px">💶 ≈ <b>${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>
+    ${plan.cmp ? `<p style="font-size:13px;margin-top:6px">🥘 ${plan.batch ? `Menus batch (≈ ${eur(plan.cmp.batch)}), moins chers que les menus classiques (≈ ${eur(plan.cmp.classique)})` : `Menus classiques (≈ ${eur(plan.cmp.classique)}) : le batch serait revenu plus cher (≈ ${eur(plan.cmp.batch)})`}.</p>` : ''}
     <p class="muted" style="font-size:12px;margin-top:6px">Touche un repas pour voir la recette et vos portions.</p></div>
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<div class="wkday" style="align-items:flex-start;cursor:default"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${esc(d)} ${fmtD(D[i])}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; if (isAway(profile.id, i, m, wk)) return `<small>${ico} 🧳 Hors de la maison</small>`; return r ? `<button class="semrec" data-x="semrec" data-d="${i}" data-m="${m}"><small>${ico} ${r.e} ${esc(r.n)} ›</small></button>` : ''; }).join('')}</span></div>`).join('')}</div>`;
 }
@@ -5087,6 +5182,7 @@ function nutCourses(){
     <button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste : ${nSt ? `${nSt} aliment${nSt > 1 ? 's' : ''}` : 'rien de noté'}</button>
     <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
   ${budgetCard()}
+  ${malinCard()}
   <div class="card" style="margin-top:12px"><p style="font-size:14px">🛒 Total estimé de la liste : <b>${eur(total)}</b>${saved >= .5 ? ` · <span style="color:var(--ok)">${eur(saved)} économisés grâce à vos restes</span>` : ''}</p></div>
   ${have.length || mine.length ? `<h3 class="sec">🏠 Déjà à la maison</h3><div class="card">${have.length ? `<p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}` : ''}
     ${mine.map(x => `<div class="shopit got hvd"><span>${esc(x.n)}</span><button class="btn sm" data-hv="${x.f}" aria-label="Remettre ${esc(x.n)} dans la liste">↩️ À acheter</button></div>`).join('')}</div>` : ''}
@@ -5637,6 +5733,67 @@ function beaWeOnce(){
    Lun salle · Mar marche · Mer HIIT · Jeu salle · Ven marche · Sam/Dim repos. Les séances de salle tournent A → B → C d'une semaine à l'autre.
    Plus de marche ajoutée après les séances : elle a ses jours de marche. Démarre le lundi qui suit le changement. */
 const P12_WALKDAY = () => P12_WALK('75-90 min', 'Objectif du jour : 10 000 pas. Marche active à ton rythme, en une ou plusieurs fois (le matin, le midi, après le travail).');
+/* Béa (v142) : « Programme de suivi – Perte de gras » (document du 21/11). Objectif : −4 à −6 kg de gras en 3 à 4 mois en gardant le muscle.
+   Poids stable depuis 2 ans à ~1 500 kcal : on garde 1 500 kcal, le déficit vient de l'activité (pas 6 000 → 10 000, marche, elliptique).
+   Lun muscu A (bas du corps) · Mar marche rapide 1 h · Mer elliptique 30 min · Jeu marche rapide 1 h · Ven muscu B (jambes et tronc) · Sam marche rapide 1 h · Dim repos.
+   Musculation : 2 à 3 répétitions en réserve, repos 60 à 90 s, faisable à la maison comme à la salle.
+   Progression : S1-2 apprentissage, S3-4 +2 répétitions, S5-6 4 séries, S7-8 et après variantes plus difficiles. */
+const P12_HOME = {}, P12_HOME_TIP = {};
+// version caserne (salle) des séances du document : mêmes mouvements avec des charges, vélo à la place de l'elliptique
+const P12_CAS = { 'Squat poids du corps': ['Squat goblet', 'Haltère ou kettlebell tenu contre la poitrine. Même consigne de tempo que la version maison.'],
+  'Squat bulgare': ['Squat bulgare', 'Pied arrière sur le banc, un haltère dans chaque main.'], 'Pont fessier': ['Hip thrust', 'Dos sur le banc, barre (avec mousse) ou haltère sur les hanches. Sur une jambe quand c’est facile.'],
+  'Soulevé de terre roumain': ['Soulevé de terre roumain', 'Haltères ou barre, dos bien droit, sur une jambe ou les deux.'], 'Fentes marchées': ['Fentes marchées', 'Un haltère dans chaque main.'],
+  'Hip thrust': ['Hip thrust', 'Dos sur le banc, barre avec mousse sur les hanches, poussée par les talons.'], 'Step-up': ['Step-up', 'Sur un banc ou une box, un haltère dans chaque main.'],
+  'Elliptique': ['Vélo', 'Vélo à rythme modéré, 30 min.'] };
+const P12V = {
+  A: { t: 'Musculation A · bas du corps', L: [['Squat poids du corps', 3, 10, 12, 'Squat lent : descente en 3 s.', 'Squat lent : descente en 4 s, pause 2 s en bas.'], ['Squat bulgare', 3, 8, 10, 'Pied arrière sur une chaise ou un banc, chaque jambe.', 'Descente en 3 s, sac à dos ou haltères.', ' chaque'], ['Pont fessier', 3, 10, 12, 'Pont fessier sur une jambe, l’autre tendue.', 'Sur une jambe, pause 2 s en haut.', ' chaque'], ['Soulevé de terre roumain', 3, 10, 10, 'Sur une jambe, avec sac à dos, bouteilles ou haltère, dos bien droit.', 'Sur une jambe, descente en 3 s.', ' chaque'], ['Gainage', 3, 20, 30, 'Planche sur les avant-bras, fesses serrées.', 'Planche, en levant un pied 2 s à tour de rôle.', ' s']] },
+  B: { t: 'Musculation B · jambes et tronc', L: [['Fentes marchées', 3, 10, 10, 'Chaque jambe, buste droit.', 'Descente lente en 3 s, haltères ou sac à dos.', ' chaque'], ['Squat poids du corps', 3, 10, 10, 'Squat avec pause de 2 s en bas.', 'Pause 3 s en bas, descente en 3 s.'], ['Hip thrust', 3, 12, 15, 'Dos appuyé sur le canapé (ou un banc), poussée par les talons.', 'Sur une jambe ou avec une charge sur les hanches.'], ['Step-up', 3, 10, 10, 'Montées sur une marche, chaque jambe.', 'Marche plus haute, descente lente.', ' chaque'], ['Dead bug', 3, 10, 10, 'Bas du dos plaqué au sol.', 'Mouvement lent, 3 s par répétition.', ' chaque']] }
+};
+const p12Steps = w => Math.min(10000, 6000 + 500 * Math.max(0, w - 1));
+function p12FatWeek(){
+  const w = Math.max(1, p12Week()), lvl = w <= 2 ? 0 : w <= 4 ? 1 : w <= 6 ? 2 : 3;
+  const sess = k => P12V[k].L.map(([n, sr, lo, hi, d1, d2, u]) => { const add = lvl >= 1 ? (u === ' s' ? 10 : 2) : 0, r = (lo === hi ? `${lo + add}` : `${lo + add}-${hi + add}`) + (u || '');
+    return exFromLib(n, { s: lvl >= 2 ? 4 : sr, r, desc: (lvl >= 3 ? d2 : d1) + ' Garde 2 à 3 répétitions en réserve, repos 60 à 90 s.', abs: ['Gainage', 'Dead bug'].includes(n) ? 1 : 0 }); }).filter(Boolean);
+  const warm = () => [exFromLib('Mobilité de hanches 90/90', { ph: 'warm', s: 1, r: '5 chaque' }), exFromLib('World’s greatest stretch', { ph: 'warm', s: 1, r: '5 chaque' })];
+  const cool = () => [exFromLib('Étirement du psoas', { ph: 'cool', s: 1 }), exFromLib('Étirement des ischios', { ph: 'cool', s: 1 })];
+  const st = p12Steps(w), walk = () => P12_WALK('60 min', `Marche rapide 1 h (on peut parler, pas chanter). Objectif de la semaine : ${st.toLocaleString('fr-FR')} pas par jour en moyenne.`);
+  const ell = exFromLib('Elliptique', { r: '30 min', desc: `Elliptique à rythme modéré, 30 min. Objectif de la semaine : ${st.toLocaleString('fr-FR')} pas par jour en moyenne.` });
+  return { D: { day0: [...warm(), ...sess('A'), ...cool()], day1: [walk()], day2: [ell], day3: [walk()], day4: [...warm(), ...sess('B'), ...cool()], day5: [walk()], day6: [] },
+    T: { day0: P12V.A.t, day1: 'Marche rapide · 1 h', day2: 'Elliptique · 30 min', day3: 'Marche rapide · 1 h', day4: P12V.B.t, day5: 'Marche rapide · 1 h', day6: 'Repos complet' } };
+}
+// séance du jour à la caserne (avec charges) ou à la maison (version du document, par défaut) : seulement pour aujourd'hui
+function venueDay(cas){
+  const k = 'day' + currentDay, L = data[k] || [];
+  L.forEach((e, i) => { if (!e) return;
+    if (cas && !e.orig && P12_CAS[e.n] && LIB_BY[P12_CAS[e.n][0]]){ const [to, tip] = P12_CAS[e.n], x = exFromLib(to, { s: e.s, bs: e.bs, r: to === 'Vélo' ? e.r : e.r, ph: e.ph, abs: e.abs, cmp: e.cmp, desc: tip + (e.desc && /réserve/.test(e.desc) ? ' Garde 2 à 3 répétitions en réserve, repos 60 à 90 s.' : '') }); x.orig = e; x.tmpD = today(); x.tmpWhy = 'caserne'; L[i] = x; }
+    else if (!cas && e.orig && e.tmpWhy === 'caserne') L[i] = e.orig; });
+  save(); render(); toast(cas ? '🚒 Version caserne pour aujourd’hui' : '🏠 Retour à la version maison');
+}
+const venueOn = k => (data[k] || []).some(e => e && e.tmpWhy === 'caserne' && e.tmpD === today());
+const venueCan = k => isP12() && profile.id === 'bea' && !!(prog.p12 && prog.p12.v3) && (data[k] || []).some(e => e && (P12_CAS[e.n] || (e.orig && e.tmpWhy === 'caserne')));
+function homeDay(on){ venueDay(!on); }
+const homeDayOn = k => false, homeDayCan = k => false;
+function beaFatOnce(){
+  if (profile.id !== 'bea' || !isP12() || (coach && coach.beaFat)) return;
+  prog.p12.v3 = 1; prog.p12.alt = prog.p12.alt || (todayIdx() >= 1 ? wkShift(curWk(), 1) : curWk()); prog.split = 'Perte de gras · 2 muscu + marche + elliptique';
+  if (nut){ nut.kcalMan = 1500; nut.kcalSeance = false; nut.pFix = 110; nut.obj = 'perte'; nut.act = 1.2; nut.kcoach = { from: prog.p12.alt ? wkDates(prog.p12.alt)[0] : today(), last: null }; }
+  coach = Object.assign({}, coach, { beaFat: today() }); save();
+  setTimeout(() => toast('🔥 Programme perte de gras dès lundi : muscu, marche, elliptique · 1 500 kcal, 110 g de protéines'), 2000);
+}
+/* coach calories (Béa, perte de gras) : 6 semaines après le départ (les pas ont eu le temps de monter) puis toutes les 3 semaines,
+   on compare la moyenne des pesées des 7 derniers jours à celle d'il y a 2 semaines : < 0,2 kg/sem perdus → −100 kcal ; > 0,7 kg/sem → +100 kcal ; bornes 1 350 – 1 600 */
+function beaKcalCoach(){
+  if (profile.id !== 'bea' || !nut || !nut.kcoach || !num(nut.kcalMan)) return null;
+  const K = nut.kcoach, now = new Date(), day = 864e5, dd = s => new Date(s + 'T12:00').getTime();
+  if (now - dd(K.from) < 42 * day || (K.last && now - dd(K.last) < 21 * day)) return null;
+  const B = (body || []).filter(b => b.p != null && b.d), win = (a, z) => { const L = B.filter(b => { const t = now - dd(b.d); return t >= a * day && t < z * day; }); return L.length >= 2 ? L.reduce((x, b) => x + b.p, 0) / L.length : null; };
+  const recent = win(0, 7), before = win(14, 21); if (recent == null || before == null) return null;
+  const rate = (before - recent) / 2, k = num(nut.kcalMan); let nk = k, why = '';
+  if (rate < .2){ nk = Math.max(1350, k - 100); why = `perte de ${fr(Math.max(0, +rate.toFixed(2)))} kg/semaine, un peu lente`; }
+  else if (rate > .7){ nk = Math.min(1600, k + 100); why = `perte de ${fr(+rate.toFixed(2))} kg/semaine, trop rapide pour garder le muscle`; }
+  K.last = today(); if (nk !== k){ nut.kcalMan = nk; save(); return { from: k, to: nk, why }; }
+  save(); return { from: k, to: k, why: `perte de ${fr(+rate.toFixed(2))} kg/semaine : parfait, on garde ${k} kcal` };
+}
 function p12AltLetter(wk, slot){ const n = (Math.max(1, p12Week(wk)) - 1) * 2 + slot; return 'ABC'[n % 3]; }
 function beaAltOnce(){
   if (profile.id !== 'bea' || !isP12() || (coach && coach.beaAlt)) return;
@@ -5646,12 +5803,14 @@ function beaAltOnce(){
 }
 function beaP12Week(force){
   if (profile.id !== 'bea' || !isP12() || !prog.p12.alt || curWk() < prog.p12.alt || (!force && prog.p12.altWk === curWk())) return;
+  if (prog.p12.v3){ const F = p12FatWeek(); data = F.D; titles = F.T; }
+  else {
   const { D } = p12Build(), S = { A: D.day0, B: D.day2, C: D.day4 }, noWalk = L => L.filter(e => e && !e.walk);
   const a = p12AltLetter(curWk(), 0), b = p12AltLetter(curWk(), 1);
   data = { day0: noWalk(S[a]), day1: [P12_WALKDAY()], day2: noWalk(D.day1), day3: noWalk(S[b]), day4: [P12_WALKDAY()], day5: [], day6: [] };
-  titles = { day0: P12S[a].t, day1: 'Marche · 10 000 pas', day2: HIIT_T[0], day3: P12S[b].t, day4: 'Marche · 10 000 pas', day5: 'Repos', day6: 'Repos' };
+  titles = { day0: P12S[a].t, day1: 'Marche · 10 000 pas', day2: HIIT_T[0], day3: P12S[b].t, day4: 'Marche · 10 000 pas', day5: 'Repos', day6: 'Repos' }; }
   Object.keys(data).forEach(k => { done[k] = []; remapKeys(k, () => null); });
-  prog.days = [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
+  prog.days = prog.p12.v3 ? [0, 4] : [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
 }
 const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
 const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
@@ -5666,13 +5825,13 @@ function p12MedCard(){
 }
 function p12Card(){
   const w = p12Week(), ph = p12Phase(w), B = prog.p12.b || {}, ms = w <= 1 ? 0 : P12_MS.includes(w) ? w : null, need = ms != null && !B[ms];
-  const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td></tr>` : ''; };
-  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours</small></div></div>
+  const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td>${prog.p12.v3 ? `<td>${x.p ?? '–'}</td><td>${x.e ?? '–'}</td>` : ''}</tr>` : ''; };
+  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">${prog.p12.v3 ? `Perte de gras · −4 à −6 kg en 3-4 mois · muscu lun et ven, marche mar, jeu, sam, elliptique mer · ${num(nut && nut.kcalMan) || 1500} kcal · objectif ${p12Steps(Math.max(1, p12Week())).toLocaleString('fr-FR')} pas/jour` : 'Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours'}</small></div></div>
     <div class="cycle" style="grid-template-columns:repeat(12,1fr)">${Array.from({ length: 12 }, (_, i) => `<div class="${i + 1 === w ? 'on' : i + 1 < w ? 'past' : ''}"><span>${[4, 8].includes(i + 1) ? '🪶' : i + 1 === 12 ? '🏁' : '·'}</span><small>${i + 1}</small></div>`).join('')}</div>
     <p style="font-size:13.5px"><b>${ph[0]}</b> ${ph[1]}</p>
-    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p><p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p></div>
+    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p>${prog.p12.v3 ? '<p>🎯 Musculation : 2 à 3 répétitions en réserve, repos 60 à 90 s. Semaines 1-2 apprentissage, 3-4 : +2 répétitions, 5-6 : 4 séries, 7-8 : variantes plus difficiles (l’appli met tout à jour chaque lundi).</p><p>🚶 Pas : 6 000 par jour au départ, +500 chaque semaine jusqu’à 8 000-10 000. C’est ce qui crée le déficit.</p><p>📏 Évaluation après 8 à 12 semaines. Si tu deviens plus forte mais que jambes et hanches ne bougent pas : parles-en au médecin (piste du lipœdème).</p><p>🍽️ ' + (num(nut && nut.kcalMan) || 1500) + ' kcal et 110 g de protéines (ton poids est stable à 1 500 kcal : le déficit vient des pas). Après 6 semaines, l’appli ajuste de 100 kcal si besoin selon tes pesées (pèse-toi 2 à 3 fois par semaine, le matin à jeun).</p>' : '<p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p>'}</div>
     ${need ? `<div class="advice up" style="margin-top:10px"><span>📏 <b>Bilan semaine ${ms}</b> : tours de taille, hanches, cuisse, mollet, photos et charges repères.</span><button class="btn sm pri" data-x="p12bilan">Faire le bilan</button></div>` : ''}
-    ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th></tr>${P12_MS.map(row).join('')}</table></div>` : ''}
+    ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th>${prog.p12.v3 ? '<th>kg</th><th>Énergie</th>' : ''}</tr>${P12_MS.map(row).join('')}</table></div>` : ''}
     ${p12MedCard()}
     <div class="row" style="margin-top:12px"><button class="btn sm" data-x="p12bilan">📏 Bilan / mesures</button>${coach && coach.prevMuscu ? '<button class="btn sm" data-x="muscuundo">↩️ Ancien programme</button>' : ''}<button class="btn sm" data-x="gear">🏋️ Mon matériel</button></div></div>`;
 }
@@ -5680,13 +5839,13 @@ function sheetP12Bilan(){
   const w = p12Week(), ms = w <= 1 ? 0 : [4, 8, 12].reduce((a, k) => w >= k ? k : a, 0), B = prog.p12.b || {}, x = B[ms] || {};
   const f = (id, l, v) => `<div class="fg"><label for="${id}">${l}</label><input id="${id}" class="inp" inputmode="decimal" value="${v ?? ''}" placeholder="cm"></div>`;
   openSheet(`<h2>📏 Bilan semaine ${ms}</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Le matin, à jeun. Le poids sur la balance est le moins important de ces indicateurs.</p>
-    <form id="p12f"><div class="two">${f('pT', 'Tour de taille (au nombril)', x.t)}${f('pH', 'Hanches (point le plus large)', x.h)}</div><div class="two">${f('pC', 'Cuisse (à mi-hauteur)', x.c)}${f('pM', 'Mollet', x.m)}</div>
+    <form id="p12f"><div class="two">${f('pT', 'Tour de taille (au nombril)', x.t)}${f('pH', 'Hanches (point le plus large)', x.h)}</div><div class="two">${f('pC', 'Cuisse (à mi-hauteur)', x.c)}${f('pM', 'Mollet', x.m)}</div>${prog.p12.v3 ? `<div class="two">${f('pP', 'Poids (kg)', x.p)}${f('pS', 'Pas par jour (moyenne)', x.s)}</div><div class="two">${f('pR', 'Répétitions squat (total 3 séries)', x.r)}${f('pE', 'Énergie (1 à 5)', x.e)}</div>` : ''}
     <div class="box"><h4>🏋️ Charges repères (meilleures notées)</h4><p>${P12_REF.map(([n, l]) => `${l} : ${p12Best(n) != null ? fr(p12Best(n)) + ' kg' : 'pas encore noté'}`).join('\n')}</p></div>
     <p class="muted" style="font-size:12.5px;margin:8px 2px">📸 Photos de face, de profil et de dos, dans la même lumière : garde-les dans ton téléphone.</p>
     <button class="btn pri block" type="submit">✅ Enregistrer le bilan</button></form>`);
   $('#p12f').onsubmit = ev => { ev.preventDefault(); const v = id => { const n = num($(id).value); return n > 0 ? n : null; };
-    const r = { d: today(), t: v('#pT'), h: v('#pH'), c: v('#pC'), m: v('#pM'), ch: Object.fromEntries(P12_REF.map(([n]) => [n, p12Best(n)])) };
-    prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t){ const E = body.find(b0 => b0.d === r.d); if (E) E.t = r.t; else body.push({ d: r.d, t: r.t }); }
+    const r = { d: today(), t: v('#pT'), h: v('#pH'), c: v('#pC'), m: v('#pM'), p: $('#pP') ? v('#pP') : null, s: $('#pS') ? v('#pS') : null, r: $('#pR') ? v('#pR') : null, e: $('#pE') ? v('#pE') : null, ch: Object.fromEntries(P12_REF.map(([n]) => [n, p12Best(n)])) };
+    prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t || r.p){ const E = body.find(b0 => b0.d === r.d); if (E){ if (r.t) E.t = r.t; if (r.p) E.p = r.p; } else body.push(Object.assign({ d: r.d }, r.t ? { t: r.t } : {}, r.p ? { p: r.p } : {})); }
     save(); closeSheet(); render(); toast('📏 Bilan enregistré'); };
 }
 // Béa (demande de Chris) : activité sédentaire, objectif recomposition, 1 500 kcal fixes par jour, 115 g de protéines. Une seule fois.
@@ -6174,7 +6333,7 @@ const modeToday = () => { const f = isTodayView() ? formeMode(formeOf()) : null;
 const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay]));
 function effS(e){ const n = e.cutS && e.cutS.d === today() ? e.cutS.n : +e.s || 0, m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob' || e.tab) return n; return Math.max(1, n + m.dS); }
 // durée estimée d'une liste d'exercices (séries, effort ~45 s, repos ; super-séries : repos court après le 1er exercice)
-function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
+function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.cir ? 25 : e.ssD === today() && e.ssF ? 15 : settings.preset; /* circuit : 45 s de repos pour 2 exercices enchaînés */ return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
 function sugW(e){ const a = advice(e); if (!a || a.w == null) return null; const m = modeToday(); return m && m.load < 1 ? snapW(e, Math.round(a.w * m.load / 2.5) * 2.5, 0) : a.w; }
 // remplacements temporaires du jour (douleur) : on remet les exercices d'origine les autres jours
 function restoreTemp(){
@@ -7047,7 +7206,7 @@ const COOK = {
 let batchScope = null;
 function batchData(){
   const nextW = todayIdx() >= 5, wk = batchScope ? batchScope.wk : (nextW ? wkShift(curWk(), 1) : curWk()), days = batchScope ? batchScope.days : 4;
-  const from = wk === curWk() ? Math.min(todayIdx(), 7 - days) : 0, D = Array.from({ length: days }, (_, j) => from + j).filter(d => d < 7);
+  const from = batchScope && batchScope.from != null ? batchScope.from : wk === curWk() ? Math.min(todayIdx(), 7 - days) : 0, D = Array.from({ length: days }, (_, j) => from + j).filter(d => d < 7);
   const tot = {}, boxes = []; let nBox = 0;
   D.forEach(d => { ['dej','din'].forEach(meal => { const names = new Set(); PROFILES.forEach(p => { const x = dayPortions(p.id, d, wk).find(z => z.meal === meal); if (!x || !x.por) return; names.add(x.por.r.n); nBox++; x.por.ing.forEach(([f, g]) => { tot[f] = (tot[f] || 0) + g; }); }); if (names.size) boxes.push([d, meal, [...names]]); }); });
   return { wk, D, tot, boxes, nBox, days };
@@ -7068,11 +7227,13 @@ function batchSteps(b){
   S.push(['1:30', '🧽 Vaisselle, et c’est fini pour la semaine ! 🎉']);
   return S;
 }
+function batchDefault(){ const d = todayIdx(); return d <= 2 ? { wk: curWk(), from: 3, days: 3 } : { wk: wkShift(curWk(), 1), from: 0, days: 3 }; }
 function sheetBatch(){
+  if (!batchScope && foyer.batch){ const bd = batchDefault(); if (planOf(bd.wk).batch) batchScope = bd; }
   const b = batchData(), st = safeGet('mp_batch_' + b.wk, {}), S = batchSteps(b), nx = b.wk !== curWk();
   openSheet(`<h2>🥘 Batch cooking</h2><p class="muted" style="font-size:13px;margin:-4px 0 10px">Tous les déjeuners et dîners de ${PROFILES.map(p => esc(p.nom)).join(' et ')} préparés en 1 h 30.</p>
     <div class="seg">${[[curWk(), 'Cette semaine'], [wkShift(curWk(), 1), 'Semaine prochaine']].map(([w, l]) => `<button class="${b.wk === w ? 'on' : ''}" data-x="bwk" data-wk="${w}">${l}</button>`).join('')}</div>
-    <div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>
+    ${planOf(b.wk).batch ? `<div class="seg" style="margin-top:8px">${[[0, '🥘 Dimanche · lun → mer'], [3, '🥘 Mercredi soir · jeu → sam']].map(([f, l]) => `<button class="${b.days === 3 && b.D[0] === f ? 'on' : ''}" data-x="bsess" data-f="${f}">${l}</button>`).join('')}</div><p class="muted" style="font-size:12.5px;margin-top:6px">Chaque plat est mangé 2 fois : tout est cuisiné en une fois, les quantités sont déjà doublées.</p>` : `<div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>`}
     <h3 class="sec">Les étapes</h3><div class="steps">${S.map(([t, x], j) => `<label class="step ${st[j] ? 'ok' : ''}"><input type="checkbox" data-bstep="${j}" ${st[j] ? 'checked' : ''}><span class="t">${t}</span><span>${x}</span></label>`).join('')}</div>
     ${awayCount(b.wk, PROFILES.map(p => p.id)) ? '<p class="muted" style="font-size:12.5px;margin-top:10px">🧳 Les repas hors de la maison sont déjà retirés.</p>' : ''}
     <h3 class="sec">Les boîtes</h3><div class="card"><table class="tbl"><tbody>${b.boxes.map(([d, m, n]) => `<tr><td>${DAY_SHORT[d]} ${m === 'dej' ? '🍽️' : '🌙'}</td><td>${n.map(esc).join(' / ') || '–'}</td></tr>`).join('')}</tbody></table></div>
@@ -7217,6 +7378,8 @@ function evoAct(a, b){
     case 'rundel': sheetConfirm('Supprimer cette sortie ?', 'Supprimer', () => { const r = runs.find(x => x.id === b.dataset.id); runs = runs.filter(x => x.id !== b.dataset.id); if (r) { const i = hist.findIndex(h => h.k === 'run' && h.d === r.d && h.w === r.km); if (i >= 0) hist.splice(i, 1); } save(); closeSheet(); viewRun(); }); break;
     case 'duo': startDuo(); break;
     case 'semwk': semNext = b.dataset.v === '1'; viewNutrition(); break;
+    case 'homeday': homeDay(b.dataset.v === '1'); break;
+    case 'venue': if ((b.dataset.v === '1') !== venueOn('day' + currentDay)) venueDay(b.dataset.v === '1'); break;
     case 'avent': aventToggle(b.dataset.pid); saveFoyer(); render(); break;
     case 'frigo': sheetFrigo(); break;
     case 'frigock': case 'frigoclr': case 'frigogo': frigoAct(a, b, false); break;
@@ -7272,8 +7435,10 @@ function evoAct(a, b){
     case 'away': { const d = +b.dataset.d, m = b.dataset.m, cur = awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m); setAway(awayWho, d, m, awayWk, !cur); awayChanged(); break; }
     case 'awday': { const d = +b.dataset.d, on = (m) => awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m), all = MEALS.every(([m]) => on(m)); MEALS.forEach(([m]) => setAway(awayWho, d, m, awayWk, !all)); awayChanged(); break; }
     case 'mout': { const d = nutDay, m = b.dataset.meal, wk = curWk(); setAway(profile.id, d, m, wk, !isAway(profile.id, d, m, wk)); saveFoyer(); viewNutrition(); toast(isAway(profile.id, d, m, wk) ? '🧳 Repas retiré des courses' : '🏠 Repas remis au menu'); break; }
-    case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: b0.days }; sheetBatch(); break; }
+    case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: planOf(b.dataset.wk).batch ? 3 : b0.days, from: planOf(b.dataset.wk).batch ? 0 : undefined }; sheetBatch(); break; }
     case 'bdays': { const b0 = batchData(); batchScope = { wk: b0.wk, days: +b.dataset.n }; sheetBatch(); break; }
+    case 'bsess': { const b0 = batchData(); batchScope = { wk: b0.wk, days: 3, from: +b.dataset.f }; sheetBatch(); break; }
+    case 'batchmode': { foyer.batch = foyer.batch ? 0 : 'auto'; const P = planBuild(wkShift(curWk(), 1)); saveFoyer(); viewNutrition(); toast(!foyer.batch ? 'Menus classiques dès la semaine prochaine' : P.batch ? '🥘 Semaine prochaine en batch : c’est le moins cher' : '🥘 Batch « si moins cher » activé : la semaine prochaine reste en menus classiques (moins chers)'); break; }
     case 'remopt': { const r = remCfg(); r[b.dataset.k] = !r[b.dataset.k]; safeSet('mp_settings', settings); viewSemaine(); break; }
     case 'remperm': if ('Notification' in window) Notification.requestPermission().then(p => { viewSemaine(); if (p === 'granted'){ notify('🔔 Notifications activées', 'Tu recevras tes rappels ici.', 'test'); } }); break;
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
@@ -7871,7 +8036,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 141;
+const APP_VERSION = 145;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
