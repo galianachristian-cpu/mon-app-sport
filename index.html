@@ -1088,7 +1088,7 @@ const firebaseConfig = {
   measurementId: "G-EVPMSD8YBW"
 };
 let db = null, auth = null;
-try { if (window.firebase) { firebase.initializeApp(firebaseConfig); try { auth = firebase.auth(); } catch (e) { auth = null; } db = firebase.firestore(); try { if (db.enablePersistence) db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {} } } catch (e) { db = null; }
+try { if (window.firebase) { firebase.initializeApp(firebaseConfig); try { auth = firebase.auth(); } catch (e) { auth = null; } db = firebase.firestore(); /* vieux Safari (iPad) : mode de connexion compatible détecté automatiquement */ try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch (e) {} /* cache local désactivé si l'appareil s'y bloque (réparation automatique) */ try { if (db.enablePersistence && localStorage.getItem('mp_nopersist') !== '1') db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {} } } catch (e) { db = null; }
 /* Profils : chacun a son propre document Firebase. « user1 » = ton document d'origine. */
 const PROFILES = [
   { id:'user1', nom:'Moi', a1:'#22d3ee', a2:'#a78bfa' },
@@ -1769,6 +1769,7 @@ function setStatus(st, msg){
 function savePillTap(){
   if ($('#saveDot').className.indexOf('local') < 0) return;
   if (auth && !auth.currentUser) return afficherConnexion(() => location.reload());
+  if (lastFetchErr === 'permission-denied' || lastFetchErr === 'unauthenticated'){ toast('🔐 Session expirée : reconnecte-toi'); try{ auth.signOut(); }catch(e){} return afficherConnexion(() => location.reload()); }
   toast('🔄 Nouvelle tentative de synchronisation…'); clearTimeout(syncTimer); retrySync().then(() => { if (!remoteReady) toast('⚠️ Toujours pas de connexion à la sauvegarde en ligne. Vérifie le Wi-Fi, puis réessaie.'); });
 }
 function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body, nut, journal, prog, forme, badges, runs, gear, coach, _t: saveT }; }
@@ -1791,12 +1792,17 @@ function applyDoc(src){
   Object.values(sl).forEach(S => (S || []).forEach(x => { if (x && !okVal('w', x.w)) x.w = ''; }));
   hist.forEach(h => { if (h.w != null && !okVal('w', h.w)) { h.w = null; (h.sl || []).forEach(x => { if (!okVal('w', x.w)) x.w = ''; }); } });
 }
+let fetchFails = 0, lastFetchErr = '';
 async function fetchDoc(id){
   if (!db) return null;
   try{
     const doc = await Promise.race([DOC(id).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))]); /* vieux iPad : la première lecture peut être lente */
-    online = true; return doc.exists ? fsDec(doc.data()) : {};
-  }catch(e){ online = false; return null; }
+    online = true; fetchFails = 0; lastFetchErr = ''; return doc.exists ? fsDec(doc.data()) : {};
+  }catch(e){ online = false; lastFetchErr = (e && (e.code || e.message)) || 'erreur';
+    /* connecté au Wi-Fi et au compte, mais la base ne répond pas 2 fois : on coupe le cache local et on redémarre (une seule fois) */
+    if (++fetchFails >= 2 && navigator.onLine !== false && auth && auth.currentUser && lastFetchErr === 'timeout' && localStorage.getItem('mp_nopersist') !== '1'){
+      try{ localStorage.setItem('mp_nopersist', '1'); }catch(x){} toast('🔧 Réparation de la connexion, l’appli redémarre…'); setTimeout(() => location.reload(), 1500); }
+    return null; }
 }
 async function load(){
   setStatus('saving', 'Chargement…'); loading = true; remoteReady = false; clearTimeout(syncTimer);
@@ -1921,6 +1927,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [149, [['🔧', 'Connexion réparée sur les vieux iPad', 'mode de connexion compatible avec les anciens Safari, et réparation automatique si l’appareil n’arrive pas à lire vos données (il redémarre une fois)']]],
   [148, [['🛡️', 'Menus communs : la version en ligne gagne toujours', 'un appareil qui se reconnecte reprend vos menus en ligne, il ne peut plus les remplacer par sa vieille copie']]],
   [147, [['🛡️', 'Menus communs protégés', 'si l’iPad (ou un téléphone) n’arrive pas à charger vos menus, il affiche « Chargement… » au lieu d’un faux menu, et il ne peut plus jamais remplacer vos menus en ligne par les siens']]],
   [146, [['⇄', 'Remplacer un ingrédient pour vous deux', 'sur un repas en commun, le remplacement vaut pour les deux portions (sur le téléphone comme sur l’iPad) ; le thon peut maintenant remplacer le jambon'], ['🖥️', 'Remplacer depuis l’écran tablette', 'dans la recette, touche ⇄ à côté d’un ingrédient : plus besoin de quitter le mode écran']]],
@@ -8059,7 +8066,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 148;
+const APP_VERSION = 149;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
