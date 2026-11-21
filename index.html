@@ -1918,6 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [144, [['🧠', 'Achats malins', 'dans Courses : à partir de votre liste de la semaine, le bon format à acheter (poulet entier, œufs par 30, fromage blanc 1 kg, surgelés en grand sachet…) et l’économie estimée']]],
   [143, [['💶', 'Budget courses : 90 € par semaine', 'prix « promos et discount » (−15 %) : les plats et petits-déjeuners trop chers sont remplacés par des équivalents de saison, riches en protéines, sans doublon ; le repas plaisir du dimanche est gardé ; corrige un prix dans « Les prix de mon magasin »']]],
   [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie'], ['🚒', 'Maison ou caserne', 'le jour de séance, choisis « 🏠 Maison » (version du document) ou « 🚒 Caserne » (mêmes mouvements avec haltères, barre et banc, vélo à la place de l’elliptique)']]],
   [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
@@ -4692,6 +4693,54 @@ function bonsPlans(tot){
   const best = {}; out.forEach(x => { if (!best[x.f] || x.save > best[x.f].save) best[x.f] = x; });
   return Object.values(best).sort((a, b) => b.save - a.save).slice(0, 3);
 }
+/* ACHATS MALINS : à partir de la liste de la semaine, le bon format à acheter et l'économie estimée (sans prospectus).
+   [aliment, quantité minimale sur la semaine (g), facteur de prix si on suit le conseil, conseil] */
+const MALIN = [
+  ['poulet', 500, .7, 'Un poulet entier (≈ 1,6 kg) plutôt que des blancs : on le découpe ou on le rôtit, la carcasse fait un bouillon.'],
+  ['oeuf', 360, .75, 'Boîte de 30 œufs (plein air, marque distributeur) plutôt que par 6 ou 12.'],
+  ['fblanc', 500, .65, 'Pot de 1 kg de fromage blanc plutôt que des petits pots.'],
+  ['skyr', 400, .75, 'Grand pot de skyr (450 g à 1 kg), ou fromage blanc 0 % à la place : même apport en protéines, moins cher.'],
+  ['yaourt', 500, .8, 'Yaourts nature par 16, marque distributeur.'],
+  ['boeuf', 300, .75, 'Steaks hachés 5 % surgelés en boîte de 10, ou haché en barquette familiale.'],
+  ['jambon', 240, .8, 'Jambon en paquet de 8 à 10 tranches (marque distributeur), plutôt que par 4.'],
+  ['dinde', 300, .8, 'Escalopes de dinde en barquette familiale, à congeler par 2.'],
+  ['colin', 300, .8, 'Grand sachet de poisson blanc surgelé (1 kg).'],
+  ['saumon', 250, .8, 'Pavés de saumon surgelés en sachet familial.'],
+  ['thon', 150, .85, 'Thon au naturel par lot de 3 ou 4 boîtes.'],
+  ['emmental', 100, .75, 'Emmental en bloc à râper soi-même plutôt que déjà râpé.'],
+  ['mozza', 150, .85, 'Mozzarella en lot de 3, marque distributeur.'],
+  ['riz', 300, .7, 'Riz en paquet de 1 à 2 kg, marque distributeur.'],
+  ['pates', 300, .7, 'Pâtes complètes en paquet de 1 kg, marque distributeur.'],
+  ['semoule', 200, .75, 'Semoule en paquet de 1 kg.'],
+  ['avoine', 200, .7, 'Flocons d’avoine en sachet de 1 kg (rayon céréales ou vrac).'],
+  ['lentille', 150, .7, 'Lentilles sèches en sachet de 1 kg ou en vrac.'],
+  ['poischiche', 300, .85, 'Pois chiches en grosse boîte (800 g).'],
+  ['pdt', 800, .7, 'Pommes de terre en filet de 2,5 à 5 kg.'],
+  ['carotte', 400, .7, 'Carottes en sachet de 1 à 2 kg.'],
+  ['brocoli', 400, .85, 'Légumes surgelés en sachet de 1 à 2,5 kg (brocoli, haricots verts, poêlées).'],
+  ['haricotvert', 400, .85, 'Haricots verts surgelés en sachet de 1 à 2,5 kg.'],
+  ['poelee', 400, .85, 'Poêlée de légumes surgelée en grand sachet.'],
+  ['epinard', 300, .85, 'Épinards surgelés en galets, sachet de 1 kg.'],
+  ['pomme', 600, .75, 'Pommes en filet ou en vrac de saison.'],
+  ['clementine', 400, .7, 'Clémentines en filet de 2 kg (pleine saison en novembre-décembre).'],
+  ['banane', 500, .9, 'Bananes au poids, un peu vertes pour tenir la semaine.'],
+  ['pain', 500, .8, 'Pain complet tranché en grand format : congèle la moitié, sors les tranches au fur et à mesure.'],
+  ['lait', 1000, .85, 'Lait demi-écrémé par pack de 6.'] ];
+function malinTips(){
+  let raw = {}; try{ raw = coursesList().raw || {}; }catch(e){ raw = {}; }
+  const L = MALIN.filter(([f, min]) => FOODS[f] && (raw[f] || 0) >= min).map(([f, , fac, tip]) => ({ f, tip, save: raw[f] / 1000 * priceKg(f) * (1 - fac) })).filter(x => x.save >= .3).sort((a, b) => b.save - a.save);
+  return { L, total: L.reduce((a, x) => a + x.save, 0) };
+}
+function malinCard(){
+  const { L, total } = malinTips(); if (!L.length) return '';
+  const nMix = (() => { try{ const plan = planOf(curWk()); return plan.days.reduce((a, d) => a + ['dej', 'din'].filter(m => { const id = typeof d[m] === 'string' ? d[m] : Object.values(d[m] || {})[0]; return REC_BY[id] && isMix({ r: REC_BY[id] }); }).length, 0); }catch(e){ return 0; } })();
+  return `<h3 class="sec">🧠 Achats malins de la semaine <small class="muted" style="text-transform:none;letter-spacing:0">· ≈ ${eur(total)} d’économie</small></h3><div class="card">
+    ${L.slice(0, 8).map(x => `<p style="font-size:13.5px;margin:6px 0">${foodIco(x.f)} <b>${esc(FOODS[x.f].n)}</b> : ${esc(x.tip)} <span style="color:var(--ok);font-weight:700">≈ −${eur(x.save)}</span></p>`).join('')}
+    <p style="font-size:13.5px;margin:8px 0 4px">🏷️ <b>Marques distributeur</b> (Lidl, Intermarché « Top budget »…) pour l’épicerie, la crémerie et les surgelés : même qualité nutritionnelle, 20 à 40 % moins cher.</p>
+    ${nMix >= 2 ? `<p style="font-size:13.5px;margin:4px 0">🥘 <b>Cuisinez en double</b> : ${nMix} plats mijotés cette semaine, une portion de plus va au congélateur pour un soir pressé.</p><button class="btn sm" data-x="batch" style="margin-top:4px">🥘 Batch cooking</button>` : ''}
+    <button class="btn sm" data-x="stock" style="margin-top:6px">🥡 Noter nos restes (ils sortent de la liste)</button>
+    <p class="muted" style="font-size:11.5px;margin-top:6px">Économies estimées d’après vos quantités de la semaine et des écarts de prix moyens constatés entre formats.</p></div>`;
+}
 function budgetCard(){
   const B = budgetCfg(), wk = curWk(), tot = weekCost(wk, 0), max = num(B.max), pct = max ? Math.min(100, tot * 100 / max) : 0, over = max && tot > max;
   const { raw } = coursesList(), bp = bonsPlans(raw), days = PROFILES.length * 7;
@@ -5107,6 +5156,7 @@ function nutCourses(){
     <button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste : ${nSt ? `${nSt} aliment${nSt > 1 ? 's' : ''}` : 'rien de noté'}</button>
     <p class="muted" style="font-size:12px;margin-top:8px">Du ${fmtD(dates[from])} au ${fmtD(dates[6])} · ${pids.length} personne${pids.length > 1 ? 's' : ''}${nAway ? ` · ${nAway} repas hors de la maison retirés` : ''}.${missing.length ? ` ⚠️ ${missing.map(esc).join(', ')} n’a pas encore rempli son profil nutrition : portions standard utilisées.` : ''}</p></div>
   ${budgetCard()}
+  ${malinCard()}
   <div class="card" style="margin-top:12px"><p style="font-size:14px">🛒 Total estimé de la liste : <b>${eur(total)}</b>${saved >= .5 ? ` · <span style="color:var(--ok)">${eur(saved)} économisés grâce à vos restes</span>` : ''}</p></div>
   ${have.length || mine.length ? `<h3 class="sec">🏠 Déjà à la maison</h3><div class="card">${have.length ? `<p class="muted" style="font-size:12.5px;margin-bottom:6px">Retiré de la liste grâce à vos restes :</p>${have.map(x => `<div class="shopit got"><span>${esc(x.n)}</span><b>− ${x.q}${x.all ? ' ✓' : ''}</b></div>`).join('')}` : ''}
     ${mine.map(x => `<div class="shopit got hvd"><span>${esc(x.n)}</span><button class="btn sm" data-hv="${x.f}" aria-label="Remettre ${esc(x.n)} dans la liste">↩️ À acheter</button></div>`).join('')}</div>` : ''}
@@ -7956,7 +8006,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 143;
+const APP_VERSION = 144;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

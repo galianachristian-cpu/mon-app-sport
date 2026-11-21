@@ -186,6 +186,7 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     foyer.plans[wk] = genPlan(wk); const sun = ridOf(foyer.plans[wk], 6, 'dej', profile.id), c0 = weekCost(wk, 0); foyer.budget = { max: Math.round(c0 * .8), store: 'moyen' }; budgetFit(wk);
     const ok = ridOf(foyer.plans[wk], 6, 'dej', profile.id) === sun && weekCost(wk, 0) < c0 && ![0, 1, 2, 3, 4, 5].some(d => ['dej', 'din'].some(m => REC_BY[ridOf(foyer.plans[wk], d, m, profile.id)].pl)) && !!STORES.promo;
     if (sb) foyer.budget = sb; else delete foyer.budget; if (sp) foyer.plans[wk] = sp; else delete foyer.plans[wk]; saveFoyer = sf; return ok; }));
+  check('Achats malins : conseils et économies à partir de la liste', await p.evaluate(() => { const ok1 = MALIN.every(([f, , fac]) => FOODS[f] && fac > 0 && fac < 1); const r = malinTips(); return ok1 && Array.isArray(r.L) && r.total >= 0 && typeof malinCard() === 'string'; }));
   check('Avent, frigo, courses à la voix', await p.evaluate(() => { const sf = saveFoyer; saveFoyer = () => {};
     const ok1 = AVENT.length === 24 && aventDay(new Date(2026, 11, 5)) === 5 && aventDay(new Date(2026, 10, 30)) === 0 && aventDay(new Date(2026, 11, 25)) === 0;
     FRIGO = new Set(['poulet', 'riz', 'brocoli']); const R = frigoResults(), ok2 = R.length > 0 && R[0].miss.length === 0;
