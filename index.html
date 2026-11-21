@@ -1819,7 +1819,7 @@ async function load(){
   beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
-  loadOther(); loadFoyer().then(() => { budgetOnce(); if (view === 'nutrition') render(); });
+  loadOther(); loadFoyer().then(() => { budgetOnce(); batchOnce(); if (view === 'nutrition') render(); });
   setTimeout(() => autoBackup(), 5000);
 }
 // la base n'a pas répondu au démarrage : on réessaie, et on garde la version la plus complète
@@ -1918,6 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [145, [['🥘', 'Menus spécial batch cooking', 'dès la semaine prochaine : 6 plats mijotés mangés 2 fois chacun (jamais 2 repas de suite). Dimanche après-midi : lun → mer ; mercredi soir : jeu → sam. Moins d’ingrédients, gros formats, moins de temps en cuisine']]],
   [144, [['🧠', 'Achats malins', 'dans Courses : à partir de votre liste de la semaine, le bon format à acheter (poulet entier, œufs par 30, fromage blanc 1 kg, surgelés en grand sachet…) et l’économie estimée']]],
   [143, [['💶', 'Budget courses : 90 € par semaine', 'prix « promos et discount » (−15 %) : les plats et petits-déjeuners trop chers sont remplacés par des équivalents de saison, riches en protéines, sans doublon ; le repas plaisir du dimanche est gardé ; corrige un prix dans « Les prix de mon magasin »']]],
   [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie'], ['🚒', 'Maison ou caserne', 'le jour de séance, choisis « 🏠 Maison » (version du document) ou « 🚒 Caserne » (mêmes mouvements avec haltères, barre et banc, vélo à la place de l’elliptique)']]],
@@ -4605,6 +4606,14 @@ function genPlan(wk, keep, from){
   const mo = monthOfWk(wk);
   const pids = PROFILES.map(p => p.id), excls = pids.map(id => exclOf(ctxOf(id))), S = wk + '#' + (foyer.salt || 0);
   const days = [], used = [], ctx = { used: new Set(), recent: platsOf(wkShift(wk, -1)), old: platsOf(wkShift(wk, -2)), stock: stockMap(), n: pids.length };
+  /* menus spécial batch (repas en commun) : 6 plats mijotés, chacun mangé 2 fois, jamais 2 repas de suite.
+     Dimanche après-midi : plats A, B, C pour lun midi → mer soir ; mercredi soir : D, E, F pour jeu midi → sam soir.
+     Ordre des repas : A B C A B C. Le dimanche midi reste le repas plaisir. */
+  const BT = foyer.batch && foyer.commun ? (() => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && isMix({ r }) && recipeOk(r, excls)), mo), 8), out = [];
+    /* variété : au plus 2 plats avec le même féculent et 2 avec la même protéine (sinon 5 plats de pâtes) */
+    const key = (r, G) => (r.ing.find(([f]) => G.includes(FOODS[f].grp)) || [''])[0], FEC = ['fec', 'cereale', 'pain', 'legumineuse'], PRO = ['prot'], nF = {}, nP = {};
+    for (let i = 0; i < 6; i++){ const ok = L.filter(r => (nF[key(r, FEC)] || 0) < 2 && (nP[key(r, PRO)] || 0) < 2), id = pickW(ok.length ? ok : L, rng(S + 'batch' + i), ctx); if (!id) return null;
+      const r = REC_BY[id]; nF[key(r, FEC)] = (nF[key(r, FEC)] || 0) + 1; nP[key(r, PRO)] = (nP[key(r, PRO)] || 0) + 1; out.push(id); ctx.used.add(id); } return out; })() : null;
   for (let d = 0; d < 7; d++){
     if (keep && d < from){ const day = keep.days[d]; days.push(day); ['dej','din'].forEach(m => { const v = day[m]; (typeof v === 'string' ? [v] : Object.values(v || {})).forEach(id => { used.push(id); ctx.used.add(id); }); }); continue; }
     const day = {};
@@ -4620,12 +4629,13 @@ function genPlan(wk, keep, from){
     }); });
     ['dej','din'].forEach(meal => {
       const PLS = d === 6 && meal === 'dej'; /* dimanche midi : repas plaisir */
+      if (BT && d < 6){ const sl = d * 2 + (meal === 'din' ? 1 : 0), id = BT[(sl < 6 ? 0 : 3) + (sl % 3)]; used.push(id); day[meal] = id; return; }
       if (foyer.commun){ const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
       else { day[meal] = {}; pids.forEach((pid, k) => { const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, [excls[k]])), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
   }
-  return { days, commun: foyer.commun, v: 2, season: 1, rv: RECIPES.length };
+  return { days, commun: foyer.commun, v: 2, season: 1, rv: RECIPES.length, batch: BT ? 1 : 0 };
 }
 const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
 function planOf(wk){
@@ -4669,9 +4679,12 @@ function budgetFit(wk){
     for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v] || REC_BY[v].pl) return; /* le repas plaisir du dimanche est gardé */ const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
     if (!worst) break;
     const used = new Set(); plan.days.forEach(day => ['dej', 'din'].forEach(m => { const v = day[m]; if (typeof v === 'string') used.add(v); }));
-    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .9);
+    const fecOf = r => (r.ing.find(([f]) => ['fec', 'cereale', 'pain', 'legumineuse'].includes(FOODS[f].grp)) || [''])[0], wr = REC_BY[plan.days[worst.d][worst.m]];
+    const nFec = f => [...used].filter(id => REC_BY[id] && REC_BY[id] !== wr && fecOf(REC_BY[id]) === f).length;
+    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .9 && (!plan.batch || (isMix({ r }) && nFec(fecOf(r)) < 2)));
     if (!alt){ tried.add(worst.d + worst.m); continue; }
-    plan.days[worst.d][worst.m] = alt.id; nSw++; tot = weekCost(wk, 0);
+    if (plan.batch){ const old = plan.days[worst.d][worst.m]; for (let d2 = from; d2 < 6; d2++) ['dej', 'din'].forEach(m2 => { if (plan.days[d2][m2] === old) plan.days[d2][m2] = alt.id; }); } else plan.days[worst.d][worst.m] = alt.id;
+    nSw++; tot = weekCost(wk, 0);
   }
   // encore au-dessus : petits-déjeuners moins chers (le plus proche en prix, pour garder de la variété)
   for (let guard = 0; tot > B.max && guard < 30; guard++){
@@ -4827,6 +4840,10 @@ async function loadFoyer(){
   mergeFoyerExtras(); if (push) saveFoyer();
 }
 // budget courses demandé par Chris : 90 € par semaine pour vous 2, en jouant les promos (prix estimés −15 %). Une seule fois.
+function batchOnce(){
+  if (!foyerReady || !foyer || foyer.batchSet) return;
+  foyer.batch = 1; foyer.batchSet = today(); const nx = wkShift(curWk(), 1); foyer.plans[nx] = genPlan(nx); if (budgetCfg().max) budgetFit(nx); saveFoyer();
+}
 function budgetOnce(){
   if (!foyerReady || !foyer || foyer.budgetSet) return;
   foyer.budget = Object.assign({}, foyer.budget, { max: 90, store: 'promo' }); foyer.budgetSet = today();
@@ -4975,7 +4992,7 @@ function changeMeal(meal){
   const L = seasonal(RECIPES.filter(r => r.type === type && r.id !== cur && recipeOk(r, ex) && !banOf()[r.id]), monthOfWk(wk)).sort((a, b) => (favOf()[b.id] ? 1 : 0) - (favOf()[a.id] ? 1 : 0));
   openSheet(`<h2>Choisir un autre plat</h2>${shared ? '<p class="muted" style="font-size:13px;margin-bottom:8px">👫 Repas en commun : le changement vaut pour vous deux.</p>' : ''}
     <div>${L.map(r => { const k2 = kcalOf(r.ing); return `<button class="libit" data-rid="${r.id}"><span class="emo">${r.e}</span><span class="t"><b>${favOf()[r.id] ? '❤️ ' : ''}${esc(r.n)}</b><small>${r.min} min · base ${kc(k2)} kcal</small></span><span class="plus">＋</span></button>`; }).join('')}</div>`);
-  $('#sheet').querySelectorAll('[data-rid]').forEach(b => b.onclick = () => { const v = plan.days[nutDay][meal]; if (typeof v === 'string') plan.days[nutDay][meal] = b.dataset.rid; else v[profile.id] = b.dataset.rid; saveFoyer(); closeSheet(); viewNutrition(); toast('🔄 Plat changé'); });
+  $('#sheet').querySelectorAll('[data-rid]').forEach(b => b.onclick = () => { const v = plan.days[nutDay][meal]; let n2 = 0; if (typeof v === 'string'){ if (plan.batch && nutDay < 6){ for (let d2 = todayIdx(); d2 < 6; d2++) ['dej', 'din'].forEach(m2 => { if (plan.days[d2][m2] === v && !(d2 === nutDay && m2 === meal)){ plan.days[d2][m2] = b.dataset.rid; n2++; } }); } plan.days[nutDay][meal] = b.dataset.rid; } else v[profile.id] = b.dataset.rid; saveFoyer(); closeSheet(); viewNutrition(); toast(n2 ? '🔄 Plat changé (aussi l’autre jour où il revient, batch oblige)' : '🔄 Plat changé'); });
 }
 function sheetOther(meal){
   const date = weekDates(curWk())[nutDay], J = journalOf(date), items = (J[meal] && J[meal].items) ? clone(J[meal].items) : [];
@@ -5106,7 +5123,7 @@ function nutSemaine(){
   const seg = `<div class="seg small" style="margin-top:14px">${[[0, 'Cette semaine'], [1, 'Semaine prochaine']].map(([v, l]) => `<button class="${+semNext === v ? 'on' : ''}" data-x="semwk" data-v="${v}">${l}</button>`).join('')}</div>`;
   if (semNext) return seg + nutSemaineNext();
   const wk = curWk(), plan = planOf(wk);
-  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
+  return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn ${foyer.batch ? 'pri' : ''}" data-x="batchmode" style="flex:1">${foyer.batch ? '✅ Menus batch' : '🥘 Menus batch : non'}</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
   ${(() => { const t = weekCost(wk, 0), mx = num(budgetCfg().max); return `<div class="card" style="margin-top:12px"><p style="font-size:14px">💶 Menus de la semaine : <b>≈ ${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>${mx && t > mx ? '<button class="btn sm pri" data-x="budfit" style="margin-top:8px">🎯 Ajuster les menus au budget</button>' : ''}</div>`; })()}
   <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
 }
@@ -7180,7 +7197,7 @@ const COOK = {
 let batchScope = null;
 function batchData(){
   const nextW = todayIdx() >= 5, wk = batchScope ? batchScope.wk : (nextW ? wkShift(curWk(), 1) : curWk()), days = batchScope ? batchScope.days : 4;
-  const from = wk === curWk() ? Math.min(todayIdx(), 7 - days) : 0, D = Array.from({ length: days }, (_, j) => from + j).filter(d => d < 7);
+  const from = batchScope && batchScope.from != null ? batchScope.from : wk === curWk() ? Math.min(todayIdx(), 7 - days) : 0, D = Array.from({ length: days }, (_, j) => from + j).filter(d => d < 7);
   const tot = {}, boxes = []; let nBox = 0;
   D.forEach(d => { ['dej','din'].forEach(meal => { const names = new Set(); PROFILES.forEach(p => { const x = dayPortions(p.id, d, wk).find(z => z.meal === meal); if (!x || !x.por) return; names.add(x.por.r.n); nBox++; x.por.ing.forEach(([f, g]) => { tot[f] = (tot[f] || 0) + g; }); }); if (names.size) boxes.push([d, meal, [...names]]); }); });
   return { wk, D, tot, boxes, nBox, days };
@@ -7201,11 +7218,13 @@ function batchSteps(b){
   S.push(['1:30', '🧽 Vaisselle, et c’est fini pour la semaine ! 🎉']);
   return S;
 }
+function batchDefault(){ const d = todayIdx(); return d <= 2 ? { wk: curWk(), from: 3, days: 3 } : { wk: wkShift(curWk(), 1), from: 0, days: 3 }; }
 function sheetBatch(){
+  if (!batchScope && foyer.batch) batchScope = batchDefault();
   const b = batchData(), st = safeGet('mp_batch_' + b.wk, {}), S = batchSteps(b), nx = b.wk !== curWk();
   openSheet(`<h2>🥘 Batch cooking</h2><p class="muted" style="font-size:13px;margin:-4px 0 10px">Tous les déjeuners et dîners de ${PROFILES.map(p => esc(p.nom)).join(' et ')} préparés en 1 h 30.</p>
     <div class="seg">${[[curWk(), 'Cette semaine'], [wkShift(curWk(), 1), 'Semaine prochaine']].map(([w, l]) => `<button class="${b.wk === w ? 'on' : ''}" data-x="bwk" data-wk="${w}">${l}</button>`).join('')}</div>
-    <div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>
+    ${foyer.batch ? `<div class="seg" style="margin-top:8px">${[[0, '🥘 Dimanche · lun → mer'], [3, '🥘 Mercredi soir · jeu → sam']].map(([f, l]) => `<button class="${b.days === 3 && b.D[0] === f ? 'on' : ''}" data-x="bsess" data-f="${f}">${l}</button>`).join('')}</div><p class="muted" style="font-size:12.5px;margin-top:6px">Chaque plat est mangé 2 fois : tout est cuisiné en une fois, les quantités sont déjà doublées.</p>` : `<div class="seg" style="margin-top:8px">${[[3, '3 jours'], [4, '4 jours'], [7, '7 jours']].map(([n, l]) => `<button class="${b.days === n ? 'on' : ''}" data-x="bdays" data-n="${n}">${l}</button>`).join('')}</div>`}
     <h3 class="sec">Les étapes</h3><div class="steps">${S.map(([t, x], j) => `<label class="step ${st[j] ? 'ok' : ''}"><input type="checkbox" data-bstep="${j}" ${st[j] ? 'checked' : ''}><span class="t">${t}</span><span>${x}</span></label>`).join('')}</div>
     ${awayCount(b.wk, PROFILES.map(p => p.id)) ? '<p class="muted" style="font-size:12.5px;margin-top:10px">🧳 Les repas hors de la maison sont déjà retirés.</p>' : ''}
     <h3 class="sec">Les boîtes</h3><div class="card"><table class="tbl"><tbody>${b.boxes.map(([d, m, n]) => `<tr><td>${DAY_SHORT[d]} ${m === 'dej' ? '🍽️' : '🌙'}</td><td>${n.map(esc).join(' / ') || '–'}</td></tr>`).join('')}</tbody></table></div>
@@ -7407,8 +7426,10 @@ function evoAct(a, b){
     case 'away': { const d = +b.dataset.d, m = b.dataset.m, cur = awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m); setAway(awayWho, d, m, awayWk, !cur); awayChanged(); break; }
     case 'awday': { const d = +b.dataset.d, on = (m) => awayWk ? isAway(awayWho, d, m, awayWk) : awayRecOf(awayWho, d, m), all = MEALS.every(([m]) => on(m)); MEALS.forEach(([m]) => setAway(awayWho, d, m, awayWk, !all)); awayChanged(); break; }
     case 'mout': { const d = nutDay, m = b.dataset.meal, wk = curWk(); setAway(profile.id, d, m, wk, !isAway(profile.id, d, m, wk)); saveFoyer(); viewNutrition(); toast(isAway(profile.id, d, m, wk) ? '🧳 Repas retiré des courses' : '🏠 Repas remis au menu'); break; }
-    case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: b0.days }; sheetBatch(); break; }
+    case 'bwk': { const b0 = batchData(); batchScope = { wk: b.dataset.wk, days: b0.days, from: foyer.batch ? (b0.D[0] || 0) : undefined }; sheetBatch(); break; }
     case 'bdays': { const b0 = batchData(); batchScope = { wk: b0.wk, days: +b.dataset.n }; sheetBatch(); break; }
+    case 'bsess': { const b0 = batchData(); batchScope = { wk: b0.wk, days: 3, from: +b.dataset.f }; sheetBatch(); break; }
+    case 'batchmode': foyer.batch = foyer.batch ? 0 : 1; { const nx = wkShift(curWk(), 1); foyer.plans[nx] = genPlan(nx); if (budgetCfg().max) budgetFit(nx); } saveFoyer(); viewNutrition(); toast(foyer.batch ? '🥘 Menus spécial batch dès la semaine prochaine' : 'Menus classiques dès la semaine prochaine'); break;
     case 'remopt': { const r = remCfg(); r[b.dataset.k] = !r[b.dataset.k]; safeSet('mp_settings', settings); viewSemaine(); break; }
     case 'remperm': if ('Notification' in window) Notification.requestPermission().then(p => { viewSemaine(); if (p === 'granted'){ notify('🔔 Notifications activées', 'Tu recevras tes rappels ici.', 'test'); } }); break;
     case 'remics': { const h = $('#rH'); if (h && h.value){ settings.rappelH = h.value; safeSet('mp_settings', settings); } downloadFile('rappels-mon-programme-' + profile.nom + '.ics', remIcs(), 'text/calendar'); toast('📅 Ouvre le fichier pour ajouter les rappels à ton agenda'); break; }
@@ -8006,7 +8027,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 144;
+const APP_VERSION = 145;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
