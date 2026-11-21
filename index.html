@@ -1921,6 +1921,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [148, [['🛡️', 'Menus communs : la version en ligne gagne toujours', 'un appareil qui se reconnecte reprend vos menus en ligne, il ne peut plus les remplacer par sa vieille copie']]],
   [147, [['🛡️', 'Menus communs protégés', 'si l’iPad (ou un téléphone) n’arrive pas à charger vos menus, il affiche « Chargement… » au lieu d’un faux menu, et il ne peut plus jamais remplacer vos menus en ligne par les siens']]],
   [146, [['⇄', 'Remplacer un ingrédient pour vous deux', 'sur un repas en commun, le remplacement vaut pour les deux portions (sur le téléphone comme sur l’iPad) ; le thon peut maintenant remplacer le jambon'], ['🖥️', 'Remplacer depuis l’écran tablette', 'dans la recette, touche ⇄ à côté d’un ingrédient : plus besoin de quitter le mode écran']]],
   [145, [['🥘', 'Menus batch, seulement si moins chers', 'chaque semaine l’appli prépare les menus classiques et une version batch (6 plats mijotés mangés 2 fois, cuisinés le dimanche et le mercredi soir) et garde la moins chère. Le détail est dans Semaine → Semaine prochaine']]],
@@ -4838,7 +4839,8 @@ async function loadFoyer(){
   let src = null;
   if (db){ try{ const doc = await Promise.race([DOC(FOYER_ID).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 15000))]); src = doc.exists ? fsDec(doc.data()) : {}; }catch(e){ src = null; } } /* vieil iPad : la lecture peut être lente */
   /* une copie locale faite pendant que les menus en ligne n'étaient pas chargés (_off) ne doit JAMAIS écraser la version en ligne */
-  const loc = safeGet('mp_foyer', null), push = !!src && !(loc && loc._off) && localNewer(loc, src);
+  /* la version en ligne gagne toujours : une copie locale n'est envoyée que s'il n'existe encore rien en ligne (première utilisation) */
+  const loc = safeGet('mp_foyer', null), push = !!src && !Object.keys(src).length && !!loc && !loc._off && !!(loc.plans && Object.keys(loc.plans).length);
   foyerReady = !!src || !db;
   if (!src || push) src = loc || {};
   if (!foyerReady) setTimeout(() => { if (!foyerReady) loadFoyer().then(() => { if (view === 'nutrition') render(); }); }, 10000);
@@ -8057,7 +8059,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 147;
+const APP_VERSION = 148;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
