@@ -1088,7 +1088,7 @@ const firebaseConfig = {
   measurementId: "G-EVPMSD8YBW"
 };
 let db = null, auth = null;
-try { if (window.firebase) { firebase.initializeApp(firebaseConfig); try { auth = firebase.auth(); } catch (e) { auth = null; } db = firebase.firestore(); /* vieux Safari (iPad) : mode de connexion compatible détecté automatiquement */ try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch (e) {} /* cache local désactivé si l'appareil s'y bloque (réparation automatique) */ try { if (db.enablePersistence && localStorage.getItem('mp_nopersist') !== '1') db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {} } } catch (e) { db = null; }
+try { if (window.firebase) { firebase.initializeApp(firebaseConfig); try { auth = firebase.auth(); } catch (e) { auth = null; try{ window.__authErr = String((e && (e.code || e.message)) || e).slice(0, 80); }catch(x){} } db = firebase.firestore(); /* vieux Safari (iPad) : mode de connexion compatible détecté automatiquement */ try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch (e) {} /* cache local désactivé si l'appareil s'y bloque (réparation automatique) */ try { if (db.enablePersistence && localStorage.getItem('mp_nopersist') !== '1') db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {} } } catch (e) { db = null; }
 /* Profils : chacun a son propre document Firebase. « user1 » = ton document d'origine. */
 const PROFILES = [
   { id:'user1', nom:'Moi', a1:'#22d3ee', a2:'#a78bfa' },
@@ -1769,8 +1769,40 @@ function setStatus(st, msg){
 function savePillTap(){
   if ($('#saveDot').className.indexOf('local') < 0) return;
   if (auth && !auth.currentUser) return afficherConnexion(() => location.reload());
-  if (lastFetchErr === 'permission-denied' || lastFetchErr === 'unauthenticated'){ toast('🔐 Session expirée : reconnecte-toi'); try{ auth.signOut(); }catch(e){} return afficherConnexion(() => location.reload()); }
-  toast('🔄 Nouvelle tentative de synchronisation…'); clearTimeout(syncTimer); retrySync().then(() => { if (!remoteReady) toast('⚠️ Toujours pas de connexion à la sauvegarde en ligne. Vérifie le Wi-Fi, puis réessaie.'); });
+  sheetDiag();
+}
+/* diagnostic de connexion (pastille « Sur cet appareil ») : ce que l'appareil voit, et des boutons pour réparer */
+let authInitErr = window.__authErr || '';
+async function diagTest(){
+  if (!db) return 'base indisponible';
+  try{ const t0 = Date.now(); await Promise.race([DOC(profile.id).get({ source: 'server' }), new Promise((_, rej) => setTimeout(() => rej(new Error('délai dépassé (20 s)')), 20000))]); return '✅ lecture réussie en ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }
+  catch(e){ return '❌ ' + ((e && (e.code || e.message)) || 'erreur'); }
+}
+function sheetDiag(){
+  const u = auth && auth.currentUser, mail = u && u.email ? u.email.replace(/^(.).*(@.*)$/, '$1•••$2') : '';
+  const ios = (navigator.userAgent.match(/OS (\d+)_(\d+)/) || []).slice(1).join('.'), L = [
+    ['Appareil', (/iPad/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent)) ? 'iPad' : /iPhone/.test(navigator.userAgent) ? 'iPhone' : 'autre') + (ios ? ' · iOS ' + ios : '')],
+    ['Internet', navigator.onLine === false ? '❌ hors ligne' : '✅ en ligne'],
+    ['Bibliothèque Firebase', window.firebase ? '✅ chargée' : '❌ non chargée'],
+    ['Module de connexion', auth ? '✅ prêt' : '❌ indisponible' + (authInitErr ? ' (' + authInitErr + ')' : '')],
+    ['Compte', u ? '✅ connecté' + (mail ? ' · ' + mail : '') : '❌ non connecté'],
+    ['Base de données', db ? '✅ prête' : '❌ indisponible'],
+    ['Cache local', localStorage.getItem('mp_nopersist') === '1' ? 'désactivé (réparation)' : 'activé'],
+    ['Dernière erreur de lecture', lastFetchErr || '–'],
+    ['Menus communs', foyerReady ? '✅ chargés' : '❌ pas chargés'],
+    ['Version', String(APP_VERSION)]];
+  openSheet(`<h2>🔧 Connexion de cet appareil</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Fais une capture de cet écran si ça ne marche pas : elle permet de trouver la cause.</p>
+    <table class="tbl"><tbody>${L.map(([a, b]) => `<tr><td>${a}</td><td><b>${esc(b)}</b></td></tr>`).join('')}<tr><td>Test de lecture</td><td><b id="dgT">⏳ en cours…</b></td></tr></tbody></table>
+    <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn pri" id="dgRetry">↻ Réessayer</button><button class="btn" id="dgLogin">🔐 Me reconnecter</button><button class="btn danger" id="dgFix">🧹 Réparer cet appareil</button></div>
+    <p class="muted" style="font-size:12px;margin-top:8px">« Réparer » efface seulement la copie gardée sur cet appareil puis redémarre l’appli : tes données en ligne ne sont pas touchées.</p>`);
+  diagTest().then(r => { const el = $('#dgT'); if (el) el.textContent = r; });
+  $('#dgRetry').onclick = () => { closeSheet(); toast('🔄 Nouvelle tentative…'); clearTimeout(syncTimer); retrySync().then(() => loadFoyer()).then(() => { render(); if (!remoteReady) toast('⚠️ Toujours pas de connexion'); }); };
+  $('#dgLogin').onclick = () => { closeSheet(); try{ auth && auth.signOut(); }catch(e){} if (auth) afficherConnexion(() => location.reload()); else toast('❌ Module de connexion indisponible sur cet appareil'); };
+  $('#dgFix').onclick = async () => { if (!confirm('Effacer la copie gardée sur cet appareil et redémarrer ? Tes données en ligne ne sont pas touchées.')) return;
+    try{ ['mp_foyer', backupKey(), backupKey(otherProfile() ? otherProfile().id : profile.id)].forEach(k => localStorage.removeItem(k)); localStorage.setItem('mp_nopersist', '1'); }catch(e){}
+    try{ if (db && db.clearPersistence) { await db.terminate(); await db.clearPersistence(); } }catch(e){}
+    try{ if (window.indexedDB && indexedDB.databases){ (await indexedDB.databases()).forEach(d => { if (/firestore/i.test(d.name || '')) indexedDB.deleteDatabase(d.name); }); } }catch(e){}
+    location.reload(); };
 }
 function snapshot(){ return { data, done, logs, sets, sl, hist, week, titles, sess, seances, body, nut, journal, prog, forme, badges, runs, gear, coach, _t: saveT }; }
 // Firestore refuse les tableaux dans des tableaux (aliments notés [[aliment, g]], tracés GPS) : on les emballe à l'envoi
@@ -1927,6 +1959,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [150, [['🔧', 'Diagnostic de connexion', 'si un appareil affiche « Sur cet appareil », touche la pastille : il montre ce qui bloque, avec « Réessayer », « Me reconnecter » et « Réparer cet appareil »']]],
   [149, [['🔧', 'Connexion réparée sur les vieux iPad', 'mode de connexion compatible avec les anciens Safari, et réparation automatique si l’appareil n’arrive pas à lire vos données (il redémarre une fois)']]],
   [148, [['🛡️', 'Menus communs : la version en ligne gagne toujours', 'un appareil qui se reconnecte reprend vos menus en ligne, il ne peut plus les remplacer par sa vieille copie']]],
   [147, [['🛡️', 'Menus communs protégés', 'si l’iPad (ou un téléphone) n’arrive pas à charger vos menus, il affiche « Chargement… » au lieu d’un faux menu, et il ne peut plus jamais remplacer vos menus en ligne par les siens']]],
@@ -8066,7 +8099,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 149;
+const APP_VERSION = 150;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8618,7 +8651,7 @@ function ecRender(){
     <div class="ec-grid">${ecPersonCol('user1')}${ecPersonCol('bea')}${ecCookCol()}</div>
     ${(() => { const g = ecDuoCol() + ecBilanCol(); return g ? `<div class="ec-grid2">${g}</div>` : ''; })()}
     <div class="ec-bot"><button data-ec="timers">⏱️ Minuteurs</button><button data-ec="shop">🛒 Courses</button><button data-ec="frigo">🧊 Ce soir ?</button><button data-ec="go" data-v="nutrition">🍽️ Menus</button><button data-ec="go" data-v="seance">📱 Ouvrir l’appli</button><button data-ec="sync">🔄 Actualiser</button></div>
-    <p class="ec-upd">${upd} · ${EC_LIEU.nom} · <button data-ec="quit" style="all:unset;cursor:pointer;text-decoration:underline">Quitter le mode écran</button></p>
+    <p class="ec-upd">${!remoteReady || !foyerReady ? `<button data-ec="diag" style="all:unset;cursor:pointer;color:#fbbf24;font-weight:700">⚠️ Données non synchronisées · Diagnostic</button> · ` : ''}${upd} · ${EC_LIEU.nom} · <button data-ec="quit" style="all:unset;cursor:pointer;text-decoration:underline">Quitter le mode écran</button></p>
   </div>`;
   el.scrollTop = sc;
 }
@@ -8662,6 +8695,7 @@ document.addEventListener('click', e => {
   else if (a === 'swapback'){ const R = EC.rec; if (R) ecOpenRec(R.d, R.meal, R.rid); }
   else if (a === 'swapreset'){ const R = EC.rec; if (R){ const pids = ecMealOf(+R.d, R.meal).filter(x => x.por && x.por.r.id === R.rid).map(x => x.p.id); ecFoyerEdit(() => swapReset(curWk(), +R.d, R.meal, pids)).then(() => { ecOpenRec(R.d, R.meal, R.rid); ecRender(); toast('↩️ Ingrédients de la recette'); }); } }
   else if (a === 'foyerretry'){ toast('↻ Chargement des menus…'); loadFoyer().then(() => { ecRender(); if (!foyerReady) toast('⚠️ Menus toujours indisponibles : vérifie le Wi-Fi'); }); }
+  else if (a === 'diag'){ ecLeave('seance'); setTimeout(sheetDiag, 300); }
   else if (a === 'agreload'){ EC.agendaErr = false; ecRender(); ecAgendaLoad(true); }
   else if (a === 'timer'){ ecTimerAdd(+b.dataset.min || 10, b.dataset.l || '⏱️ Cuisson'); ecCloseRec(); }
   else if (a === 'timers') ecOpenTimers(b.dataset.l);
