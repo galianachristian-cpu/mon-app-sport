@@ -1816,7 +1816,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaP12Week(); absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
@@ -1918,6 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [142, [['🔥', 'Béa : nouveau programme perte de gras', 'dès lundi : 3 circuits de 45 min (lun, mer, ven) avec finisher cardio, marche 10 000 pas mar et jeu, week-end repos ; 1 300 kcal et 115 g de protéines'], ['🏠', 'Version maison en un toucher', 'le jour de séance : « Je m’entraîne à la maison aujourd’hui » remplace les machines par des élastiques et l’elliptique']]],
   [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
@@ -2287,6 +2288,7 @@ function viewSeance(){
   ${fullCard(currentDay)}${hiitSessCard(currentDay)}${tabSessCard(currentDay)}
   ${hOn('mus') && !isHiitDay(currentDay) ? dayMusCard(k, list) : ''}
   ${adaptBanner(k)}
+  ${currentDay === todayIdx() && homeDayCan(k) ? `<button class="btn block ${homeDayOn(k) ? '' : 'pri'}" data-x="homeday" data-v="${homeDayOn(k) ? 0 : 1}" style="margin-top:12px">${homeDayOn(k) ? '🏋️ Revenir à la version salle' : '🏠 Je m’entraîne à la maison aujourd’hui'}</button>` : ''}
   ${currentDay === todayIdx() && list.length ? `<div class="row" style="margin-top:12px">${fullPlan(currentDay) ? '' : `<button class="btn ${isHiitDay(currentDay) ? '' : 'pri'}" data-act="guide" style="flex:1">${isHiitDay(currentDay) ? '📋 Version libre, à cocher' : '▶️ Séance guidée'}</button>${!sessStarted(k) ? '<button class="btn" data-x="warmnow">🔥 Échauffement</button>' : ''}`}<button class="btn" data-act="forme">${fm ? fm.ico + ' Forme' : '🩺 Ma forme'}</button>${other && other.p ? `<button class="btn" data-x="duo" aria-label="Séance en duo avec ${esc(other.p.nom)}">👫 Duo</button>` : ''}<button class="btn" data-x="short">⏱️ ${shortOn ? '~' + mins + ' min' : 'Peu de temps'}</button></div>` : ''}
   ${currentDay === todayIdx() && shortOn ? `<div class="advice up" style="margin-top:10px"><span>⏱️ <b>Séance courte (~${mins} min)</b> · exercices principaux gardés, isolation en super-séries 🔗</span><button class="btn sm" data-x="shortoff">Annuler</button></div>` : ''}
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
@@ -2347,7 +2349,7 @@ function exCard(k, e, i){
       <button class="check" data-act="done" data-i="${i}" aria-label="${isDone ? 'Marquer non fait' : 'Marquer fait'}" aria-pressed="${!!isDone}">✓</button></div></article>`;
   }
   if (isSkip(e)) return `<article class="ex skip" data-i="${i}"><div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span><span class="emo pkb">${exVis(e, true)}</span><div class="name"><b>${esc(e.n)}</b><span class="sub"><span class="ph">${e.cutD === today() ? '⏭️ Retiré aujourd’hui (séance courte)' : formeOf() && (formeOf().pain || []).length ? '⏭️ Mis de côté aujourd’hui (douleur)' : '⏭️ Pas cette fois · il revient la semaine prochaine'}</span></span></div><button class="btn sm" data-act="unskip" data-i="${i}" style="margin-left:auto">↩️ Reprendre</button></div></article>`;
-  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
+  return `<article class="ex ${isDone ? 'done' : ''} ${e.tmpD ? 'tmp' : ''}${justDone === key ? ' justdone' : ''}" data-i="${i}">${e.orig ? `<div class="tmpb">${e.tmpWhy === 'maison' ? '🏠 Version maison de' : e.tmpWhy === 'facile' ? '⬇️ Version plus facile de' : e.tmpWhy === 'dur' ? '⬆️ Version plus dure de' : '🩺 Remplace'} « ${esc(e.orig.n)} » aujourd’hui</div>` : ''}
     <div class="row1"><span class="dragh" data-dh="${i}" role="button" aria-label="Glisser pour déplacer ${esc(e.n)}">⠿</span>
       <button class="emo pkb" data-act="detail" data-i="${i}" aria-label="Voir ${esc(e.n)}">${exVis(e)}</button>
       <button class="name" data-act="detail" data-i="${i}"><b>${esc(e.n)}</b><span class="sub"><span class="mus" style="--c:${mcol(e.m)}">${esc(e.m)}</span><span class="sr">${t === 'c' ? esc(e.r) : `${effS(e)} × ${esc(e.r)}`}</span>${e.ssD === today() ? `<span class="ph ph-ss">🔗 avec ${esc(e.ssW)}</span>` : ''}${e.ph ? `<span class="ph ph-${e.ph}">${({ warm:'🧘 Échauffement', cool:'🌙 Retour au calme', plyo:'⚡ Explosif', mob:'🧘 Mobilité' })[e.ph]}</span>` : ''}</span></button>
@@ -5637,6 +5639,42 @@ function beaWeOnce(){
    Lun salle · Mar marche · Mer HIIT · Jeu salle · Ven marche · Sam/Dim repos. Les séances de salle tournent A → B → C d'une semaine à l'autre.
    Plus de marche ajoutée après les séances : elle a ses jours de marche. Démarre le lundi qui suit le changement. */
 const P12_WALKDAY = () => P12_WALK('75-90 min', 'Objectif du jour : 10 000 pas. Marche active à ton rythme, en une ou plusieurs fois (le matin, le midi, après le travail).');
+/* Béa (v142) : programme PERTE DE GRAS. 3 circuits de 45 min (lun, mer, ven) : échauffement, 3 blocs de 2 exercices enchaînés
+   (3 tours, repos court), finisher cardio sur machine sans sauts, retour au calme. Marche 10 000 pas mar et jeu, week-end repos.
+   Chaque séance a une version maison (élastiques, haltères légères, elliptique) en un toucher. */
+const P12F = {
+  1: { t: 'Séance 1 · jambes & fessiers + cardio', L: [['Squat goblet', 3, '12'], ['Rowing haltère un bras', 3, '12 chaque'], ['Hip thrust', 3, '12'], ['Développé haltères assis', 3, '10-12'], ['Fentes marchées', 3, '10 chaque'], ['Dead bug', 3, '10 chaque']], fin: ['Vélo', 'Finisher : 8 × (30 s vite / 30 s tranquille). On transpire, sans sauter.'] },
+  2: { t: 'Séance 2 · haut du corps + cardio', L: [['Tirage vertical (Lat Pulldown)', 3, '12'], ['Squat sumo haltère', 3, '12'], ['Développé incliné haltères', 3, '10-12'], ['Soulevé de terre roumain', 3, '12'], ['Tirage horizontal (Cable Row)', 3, '12'], ['Hollow hold', 3, '20-30 s']], fin: ['Rameur', 'Finisher : 8 × (30 s fort / 30 s tranquille).'] },
+  3: { t: 'Séance 3 · full body brûle-graisse', L: [['Step-up', 3, '10 chaque'], ['Face Pull', 3, '12-15'], ['Kettlebell swing', 3, '15'], ['Élévations latérales', 3, '12-15'], ['Marche du fermier', 3, '40 s'], ['Gainage', 3, '30-40 s']], fin: ['SkiErg', 'Finisher : 8 × (20 s fort / 40 s tranquille).'] }
+};
+// version maison : élastiques, haltères légères, elliptique
+const P12_HOME = { 'Rameur': 'Elliptique', 'Vélo': 'Elliptique', 'SkiErg': 'Elliptique', 'Tirage vertical (Lat Pulldown)': 'Rowing penché élastique', 'Tirage horizontal (Cable Row)': 'Tirage horizontal élastique', 'Hip thrust': 'Hip thrust à genoux élastique',
+  'Face Pull': 'Oiseau élastique', 'Kettlebell swing': 'Good morning élastique', 'Développé incliné haltères': 'Développé couché élastique', 'Soulevé de terre roumain': 'Good morning élastique', 'Développé haltères assis': 'Développé épaules élastique', 'Rowing haltère un bras': 'Rowing unilatéral élastique' };
+function p12FatWeek(){
+  const warm = () => [exFromLib('Rameur', { ph: 'warm', r: '5 min', desc: '5 min de rameur (ou vélo) facile, puis on monte un peu le rythme.' }), exFromLib('Mobilité de hanches 90/90', { ph: 'warm', s: 1, r: '5 chaque' }), exFromLib('World’s greatest stretch', { ph: 'warm', s: 1, r: '5 chaque' })];
+  const cool = () => [exFromLib('Étirement du psoas', { ph: 'cool', s: 1 }), exFromLib('Posture de l’enfant', { ph: 'cool', s: 1 })];
+  const sess = k => { const S = P12F[k], L = S.L.map(([n, sr, r], i) => { const x = exFromLib(n, { s: sr, bs: sr, r, cir: 1, cmp: i % 2 === 0 ? 1 : 0, desc: (LIB_BY[n] || {}).desc }); if (['Dead bug', 'Hollow hold', 'Gainage'].includes(n)) x.abs = 1; return x; }).filter(Boolean);
+    const f = exFromLib(S.fin[0], { r: '8 min', fin: 1, desc: S.fin[1] }); return [...warm(), ...L, f, ...cool()]; };
+  return { D: { day0: sess(1), day1: [P12_WALKDAY()], day2: sess(2), day3: [P12_WALKDAY()], day4: sess(3), day5: [], day6: [] },
+    T: { day0: P12F[1].t, day1: 'Marche · 10 000 pas', day2: P12F[2].t, day3: 'Marche · 10 000 pas', day4: P12F[3].t, day5: 'Repos', day6: 'Repos' } };
+}
+// aujourd'hui à la maison : on remplace les exercices de salle (pour aujourd'hui seulement)
+function homeDay(on){
+  const k = 'day' + currentDay, L = data[k] || [];
+  L.forEach((e, i) => { if (!e) return;
+    if (on && !e.orig && P12_HOME[e.n] && LIB_BY[P12_HOME[e.n]]){ const x = exFromLib(P12_HOME[e.n], { s: e.s, bs: e.bs, r: e.r, ph: e.ph, fin: e.fin, abs: e.abs, cir: e.cir, desc: e.fin || e.ph ? e.desc : undefined }); if (!x.desc) delete x.desc; x.orig = e; x.tmpD = today(); x.tmpWhy = 'maison'; L[i] = x; }
+    else if (!on && e.orig && e.tmpWhy === 'maison') L[i] = e.orig; });
+  save(); render(); toast(on ? '🏠 Version maison pour aujourd’hui' : '🏋️ Retour à la version salle');
+}
+const homeDayOn = k => (data[k] || []).some(e => e && e.tmpWhy === 'maison' && e.tmpD === today());
+const homeDayCan = k => isP12() && profile.id === 'bea' && (data[k] || []).some(e => e && (P12_HOME[e.n] || (e.orig && e.tmpWhy === 'maison')));
+function beaFatOnce(){
+  if (profile.id !== 'bea' || !isP12() || (coach && coach.beaFat)) return;
+  prog.p12.v3 = 1; prog.p12.alt = prog.p12.alt || (todayIdx() >= 1 ? wkShift(curWk(), 1) : curWk()); prog.split = 'Perte de gras · 3 circuits + marche';
+  if (nut){ nut.kcalMan = 1300; nut.kcalSeance = false; nut.pFix = 115; nut.obj = 'perte'; nut.act = 1.2; }
+  coach = Object.assign({}, coach, { beaFat: today() }); save();
+  setTimeout(() => toast('🔥 Nouveau programme perte de gras dès lundi · 1 300 kcal par jour'), 2000);
+}
 function p12AltLetter(wk, slot){ const n = (Math.max(1, p12Week(wk)) - 1) * 2 + slot; return 'ABC'[n % 3]; }
 function beaAltOnce(){
   if (profile.id !== 'bea' || !isP12() || (coach && coach.beaAlt)) return;
@@ -5646,12 +5684,14 @@ function beaAltOnce(){
 }
 function beaP12Week(force){
   if (profile.id !== 'bea' || !isP12() || !prog.p12.alt || curWk() < prog.p12.alt || (!force && prog.p12.altWk === curWk())) return;
+  if (prog.p12.v3){ const F = p12FatWeek(); data = F.D; titles = F.T; }
+  else {
   const { D } = p12Build(), S = { A: D.day0, B: D.day2, C: D.day4 }, noWalk = L => L.filter(e => e && !e.walk);
   const a = p12AltLetter(curWk(), 0), b = p12AltLetter(curWk(), 1);
   data = { day0: noWalk(S[a]), day1: [P12_WALKDAY()], day2: noWalk(D.day1), day3: noWalk(S[b]), day4: [P12_WALKDAY()], day5: [], day6: [] };
-  titles = { day0: P12S[a].t, day1: 'Marche · 10 000 pas', day2: HIIT_T[0], day3: P12S[b].t, day4: 'Marche · 10 000 pas', day5: 'Repos', day6: 'Repos' };
+  titles = { day0: P12S[a].t, day1: 'Marche · 10 000 pas', day2: HIIT_T[0], day3: P12S[b].t, day4: 'Marche · 10 000 pas', day5: 'Repos', day6: 'Repos' }; }
   Object.keys(data).forEach(k => { done[k] = []; remapKeys(k, () => null); });
-  prog.days = [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
+  prog.days = prog.p12.v3 ? [0, 2, 4] : [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
 }
 const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
 const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
@@ -5667,10 +5707,10 @@ function p12MedCard(){
 function p12Card(){
   const w = p12Week(), ph = p12Phase(w), B = prog.p12.b || {}, ms = w <= 1 ? 0 : P12_MS.includes(w) ? w : null, need = ms != null && !B[ms];
   const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td></tr>` : ''; };
-  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours</small></div></div>
+  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">${prog.p12.v3 ? 'Perte de gras · 3 circuits de 45 min (lun, mer, ven) + marche 10 000 pas (mar, jeu) · 1 300 kcal' : 'Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours'}</small></div></div>
     <div class="cycle" style="grid-template-columns:repeat(12,1fr)">${Array.from({ length: 12 }, (_, i) => `<div class="${i + 1 === w ? 'on' : i + 1 < w ? 'past' : ''}"><span>${[4, 8].includes(i + 1) ? '🪶' : i + 1 === 12 ? '🏁' : '·'}</span><small>${i + 1}</small></div>`).join('')}</div>
     <p style="font-size:13.5px"><b>${ph[0]}</b> ${ph[1]}</p>
-    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p><p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p></div>
+    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p>${prog.p12.v3 ? '<p>🔄 <b>Circuit</b> : enchaîne les 2 exercices de chaque bloc, 45 s de repos, 3 tours, puis bloc suivant. Finis par le cardio sur machine.</p><p>🎯 Charge qui laisse 2 répétitions en réserve : ça doit piquer à la fin.</p><p>🚶 Mardi et jeudi : 10 000 pas. Les autres jours, bouge le plus possible.</p><p>🍽️ 1 300 kcal et 115 g de protéines : c’est le déficit qui fait fondre le gras, le sport garde le muscle.</p>' : '<p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p>'}</div>
     ${need ? `<div class="advice up" style="margin-top:10px"><span>📏 <b>Bilan semaine ${ms}</b> : tours de taille, hanches, cuisse, mollet, photos et charges repères.</span><button class="btn sm pri" data-x="p12bilan">Faire le bilan</button></div>` : ''}
     ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th></tr>${P12_MS.map(row).join('')}</table></div>` : ''}
     ${p12MedCard()}
@@ -6174,7 +6214,7 @@ const modeToday = () => { const f = isTodayView() ? formeMode(formeOf()) : null;
 const isSkip = e => e && (e.skipD === today() || e.cutD === today() || (e.skipD && e.skipD === weekDates(curWk())[currentDay]));
 function effS(e){ const n = e.cutS && e.cutS.d === today() ? e.cutS.n : +e.s || 0, m = modeToday(); if (!m || typ(e) === 'c' || e.ph === 'warm' || e.ph === 'cool' || e.ph === 'mob' || e.tab) return n; return Math.max(1, n + m.dS); }
 // durée estimée d'une liste d'exercices (séries, effort ~45 s, repos ; super-séries : repos court après le 1er exercice)
-function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.ssD === today() && e.ssF ? 15 : settings.preset; return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
+function estMin(L){ return Math.round(L.reduce((a, e) => { if (isSkip(e) || e.walk) return a; if (e.tab) return a + 5; if (typ(e) === 'c') return a + topReps(e.r); const rest = e.cir ? 25 : e.ssD === today() && e.ssF ? 15 : settings.preset; /* circuit : 45 s de repos pour 2 exercices enchaînés */ return a + effS(e) * ((typ(e) === 's' ? topReps(e.r) : 45) + rest) / 60; }, 0)); }
 function sugW(e){ const a = advice(e); if (!a || a.w == null) return null; const m = modeToday(); return m && m.load < 1 ? snapW(e, Math.round(a.w * m.load / 2.5) * 2.5, 0) : a.w; }
 // remplacements temporaires du jour (douleur) : on remet les exercices d'origine les autres jours
 function restoreTemp(){
@@ -7217,6 +7257,7 @@ function evoAct(a, b){
     case 'rundel': sheetConfirm('Supprimer cette sortie ?', 'Supprimer', () => { const r = runs.find(x => x.id === b.dataset.id); runs = runs.filter(x => x.id !== b.dataset.id); if (r) { const i = hist.findIndex(h => h.k === 'run' && h.d === r.d && h.w === r.km); if (i >= 0) hist.splice(i, 1); } save(); closeSheet(); viewRun(); }); break;
     case 'duo': startDuo(); break;
     case 'semwk': semNext = b.dataset.v === '1'; viewNutrition(); break;
+    case 'homeday': homeDay(b.dataset.v === '1'); break;
     case 'avent': aventToggle(b.dataset.pid); saveFoyer(); render(); break;
     case 'frigo': sheetFrigo(); break;
     case 'frigock': case 'frigoclr': case 'frigogo': frigoAct(a, b, false); break;
@@ -7871,7 +7912,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 141;
+const APP_VERSION = 142;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
