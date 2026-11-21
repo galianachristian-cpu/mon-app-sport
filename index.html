@@ -1819,7 +1819,7 @@ async function load(){
   beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
-  loadOther(); loadFoyer().then(() => { if (view === 'nutrition') render(); });
+  loadOther(); loadFoyer().then(() => { budgetOnce(); if (view === 'nutrition') render(); });
   setTimeout(() => autoBackup(), 5000);
 }
 // la base n'a pas répondu au démarrage : on réessaie, et on garde la version la plus complète
@@ -1918,6 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [143, [['💶', 'Budget courses : 90 € par semaine', 'prix « promos et discount » (−15 %) : les plats et petits-déjeuners trop chers sont remplacés par des équivalents de saison, riches en protéines, sans doublon ; le repas plaisir du dimanche est gardé ; corrige un prix dans « Les prix de mon magasin »']]],
   [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie'], ['🚒', 'Maison ou caserne', 'le jour de séance, choisis « 🏠 Maison » (version du document) ou « 🚒 Caserne » (mêmes mouvements avec haltères, barre et banc, vélo à la place de l’elliptique)']]],
   [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
@@ -4551,7 +4552,7 @@ function portion(rid, pid, meal, di, wk){
   if (!dr && dessertOn(c.nut) && (meal === 'dej' || meal === 'din')){
     const used = f => !FOODS[f] || excl.includes(f) || ing.some(([x]) => x === f);
     let mo = new Date().getMonth() + 1; try{ mo = +String(wkDates(wk)[di]).slice(5, 7) || mo; }catch(e){}
-    const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)));
+    const FR = ['clementine', 'kiwi', 'poire', 'pomme', 'orange', 'banane', 'fruitrouge'].filter(f => !used(f) && (!SEASON[f] || SEASON[f].includes(mo)) && !(f === 'fruitrouge' && budgetCfg().max)); /* budget fixé : pas de fruits rouges surgelés (chers) */
     const fruit = FR.length ? FR[(di + (meal === 'din' ? 3 : 0)) % FR.length] : null, k = di % 3;
     const f = meal === 'din' && k === 0 && !used('chocolat') ? 'chocolat' : meal === 'din' && k === 1 && !used('compote') ? 'compote' : fruit;
     dess = { l: ['fblanc', 'skyr'].find(x => !used(x)), f, fg: f && FOODS[f].unit ? FOODS[f].unit.g * (f === 'clementine' ? 2 : 1) : 120 };
@@ -4645,7 +4646,7 @@ function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(
 const PRICE = { farine:1.5, beurre:9, sucre:1.3, creme:5, mascarpone:9, biscuit:8, frites:3, pizza:6, fondu:14, lardons:11, merguez:11, charcuterie:22, veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
   lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
   concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
-const STORES = { moyen:['Prix moyens',1], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
+const STORES = { moyen:['Prix moyens',1], promo:['Promos et discount (−15 %)',.85], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
 const budgetCfg = () => foyer.budget || {};
 const priceDef = f => +((PRICE[f] || 5) * (STORES[budgetCfg().store] || STORES.moyen)[1]).toFixed(2);
 const priceKg = f => { const o = (budgetCfg().p || {})[f]; return o != null ? o : priceDef(f); };
@@ -4658,17 +4659,28 @@ function budgetFit(wk){
   const B = budgetCfg(); if (!B.max) return null;
   const plan = foyer.plans[wk]; if (!plan) return null;
   const from = wk === curWk() ? todayIdx() : 0, excls = PROFILES.map(p => exclOf(ctxOf(p.id))), base = r => costOf(r.ing);
-  const plats = RECIPES.filter(r => r.type === 'plat' && recipeOk(r, excls) && !banOf()[r.id]).sort((a, b) => base(a) - base(b));
+  /* candidats : de saison, riches en protéines, jamais de plat plaisir ; on prend le plus proche en prix (pas le moins cher) pour garder de la variété */
+  const plats = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls) && !banOf()[r.id]), monthOfWk(wk)), 14).sort((a, b) => base(b) - base(a));
   const start = weekCost(wk, 0); let tot = start, n = 0, nSw = 0;
   const tried = new Set();
   while (tot > B.max && n++ < 40){
     let worst = null;
-    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v]) return; const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
+    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v] || REC_BY[v].pl) return; /* le repas plaisir du dimanche est gardé */ const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
     if (!worst) break;
     const used = new Set(); plan.days.forEach(day => ['dej', 'din'].forEach(m => { const v = day[m]; if (typeof v === 'string') used.add(v); }));
-    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .85) || plats.find(r => base(r) < worst.c * .85 && plan.days[worst.d][worst.m === 'dej' ? 'din' : 'dej'] !== r.id);
-    tried.add(worst.d + worst.m); if (!alt) continue;
+    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .9);
+    if (!alt){ tried.add(worst.d + worst.m); continue; }
     plan.days[worst.d][worst.m] = alt.id; nSw++; tot = weekCost(wk, 0);
+  }
+  // encore au-dessus : petits-déjeuners moins chers (le plus proche en prix, pour garder de la variété)
+  for (let guard = 0; tot > B.max && guard < 30; guard++){
+    let worst = null;
+    for (let d = from; d < 7; d++){ const v = plan.days[d].pdj; if (!v || typeof v !== 'object') continue; Object.entries(v).forEach(([pid, id]) => { if (!REC_BY[id] || tried.has('p' + d + pid)) return; const c = base(REC_BY[id]); if (!worst || c > worst.c) worst = { d, pid, c }; }); }
+    if (!worst) break;
+    const ex = exclOf(ctxOf(worst.pid)), L = seasonal(RECIPES.filter(r => r.type === 'pdj' && recipeOk(r, [ex])), monthOfWk(wk)).sort((a, b) => base(b) - base(a));
+    const prev = worst.d ? plan.days[worst.d - 1].pdj[worst.pid] : null, alt = L.find(r => base(r) < worst.c * .9 && r.id !== prev);
+    if (!alt){ tried.add('p' + worst.d + worst.pid); continue; }
+    plan.days[worst.d].pdj[worst.pid] = alt.id; nSw++; tot = weekCost(wk, 0);
   }
   if (nSw) saveFoyer();
   return { start, tot, ok: tot <= B.max, nSw };
@@ -4764,6 +4776,12 @@ async function loadFoyer(){
   if (!foyerReady) setTimeout(() => { if (!foyerReady) loadFoyer().then(() => { if (view === 'nutrition') render(); }); }, 15000);
   foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true }, src || {});
   mergeFoyerExtras(); if (push) saveFoyer();
+}
+// budget courses demandé par Chris : 90 € par semaine pour vous 2, en jouant les promos (prix estimés −15 %). Une seule fois.
+function budgetOnce(){
+  if (!foyerReady || !foyer || foyer.budgetSet) return;
+  foyer.budget = Object.assign({}, foyer.budget, { max: 90, store: 'promo' }); foyer.budgetSet = today();
+  const nx = wkShift(curWk(), 1); if (foyer.plans[nx]) budgetFit(nx); saveFoyer();
 }
 function saveFoyer(){
   foyer._t = Date.now(); safeSet('mp_foyer', foyer); clearTimeout(foyerTimer);
@@ -7938,7 +7956,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 142;
+const APP_VERSION = 143;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
