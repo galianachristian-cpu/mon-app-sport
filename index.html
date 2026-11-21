@@ -1921,6 +1921,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [147, [['🛡️', 'Menus communs protégés', 'si l’iPad (ou un téléphone) n’arrive pas à charger vos menus, il affiche « Chargement… » au lieu d’un faux menu, et il ne peut plus jamais remplacer vos menus en ligne par les siens']]],
   [146, [['⇄', 'Remplacer un ingrédient pour vous deux', 'sur un repas en commun, le remplacement vaut pour les deux portions (sur le téléphone comme sur l’iPad) ; le thon peut maintenant remplacer le jambon'], ['🖥️', 'Remplacer depuis l’écran tablette', 'dans la recette, touche ⇄ à côté d’un ingrédient : plus besoin de quitter le mode écran']]],
   [145, [['🥘', 'Menus batch, seulement si moins chers', 'chaque semaine l’appli prépare les menus classiques et une version batch (6 plats mijotés mangés 2 fois, cuisinés le dimanche et le mercredi soir) et garde la moins chère. Le détail est dans Semaine → Semaine prochaine']]],
   [144, [['🧠', 'Achats malins', 'dans Courses : à partir de votre liste de la semaine, le bon format à acheter (poulet entier, œufs par 30, fromage blanc 1 kg, surgelés en grand sachet…) et l’économie estimée']]],
@@ -4835,13 +4836,16 @@ function awayChanged(){ saveFoyer(); sheetAway(); if (view === 'nutrition') view
 let foyerTimer = null, foyerReady = false;
 async function loadFoyer(){
   let src = null;
-  if (db){ try{ const doc = await Promise.race([DOC(FOYER_ID).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 8000))]); src = doc.exists ? fsDec(doc.data()) : {}; }catch(e){ src = null; } }
-  const loc = safeGet('mp_foyer', null), push = !!src && localNewer(loc, src);
+  if (db){ try{ const doc = await Promise.race([DOC(FOYER_ID).get(), new Promise((_, rej) => setTimeout(() => rej(new Error('t')), 15000))]); src = doc.exists ? fsDec(doc.data()) : {}; }catch(e){ src = null; } } /* vieil iPad : la lecture peut être lente */
+  /* une copie locale faite pendant que les menus en ligne n'étaient pas chargés (_off) ne doit JAMAIS écraser la version en ligne */
+  const loc = safeGet('mp_foyer', null), push = !!src && !(loc && loc._off) && localNewer(loc, src);
   foyerReady = !!src || !db;
   if (!src || push) src = loc || {};
-  if (!foyerReady) setTimeout(() => { if (!foyerReady) loadFoyer().then(() => { if (view === 'nutrition') render(); }); }, 15000);
+  if (!foyerReady) setTimeout(() => { if (!foyerReady) loadFoyer().then(() => { if (view === 'nutrition') render(); }); }, 10000);
   foyer = Object.assign({ plans:{}, checked:{}, extra:{}, swaps:{}, away:{}, awayRec:{}, commun:true }, src || {});
   mergeFoyerExtras(); if (push) saveFoyer();
+  if (foyerReady && src && foyer._off){ delete foyer._off; safeSet('mp_foyer', foyer); }
+  if (foyerReady && window.EC && EC.on){ try{ ecRender(); }catch(e){} }
 }
 // budget courses demandé par Chris : 90 € par semaine pour vous 2, en jouant les promos (prix estimés −15 %). Une seule fois.
 /* menu d'une semaine : menus classiques, ou en mode batch « auto » les deux versions ajustées au budget, et on garde la moins chère */
@@ -4861,9 +4865,11 @@ function budgetOnce(){
   foyer.budget = Object.assign({}, foyer.budget, { max: 90, store: 'promo' }); foyer.budgetSet = today();
   const nx = wkShift(curWk(), 1); if (foyer.plans[nx]) budgetFit(nx); saveFoyer();
 }
+// connecté mais menus en ligne pas encore lus, et pas de vraie copie locale de la semaine : on attend au lieu d'afficher un menu fabriqué
+const foyerWaiting = () => { try{ return !!db && !foyerReady && !!(auth && auth.currentUser) && (!!foyer._off || !(foyer.plans && foyer.plans[curWk()])); }catch(e){ return false; } };
 function saveFoyer(){
-  foyer._t = Date.now(); safeSet('mp_foyer', foyer); clearTimeout(foyerTimer);
-  foyerTimer = setTimeout(async () => { if (!db || !foyerReady) return; try{ await DOC(FOYER_ID).set(Object.assign(fsEnc(clone(foyer)), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })); }catch(e){} }, 700);
+  foyer._t = Date.now(); if (db && !foyerReady && auth && auth.currentUser) foyer._off = 1; safeSet('mp_foyer', foyer); clearTimeout(foyerTimer);
+  foyerTimer = setTimeout(async () => { if (!db || !foyerReady) return; delete foyer._off; try{ await DOC(FOYER_ID).set(Object.assign(fsEnc(clone(foyer)), { lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })); }catch(e){} }, 700);
 }
 
 /* ============================================================
@@ -4877,6 +4883,7 @@ function viewNutrition(){
   if (!nutReady(nut) && nutTab !== 'profil') nutTab = 'profil';
   $('#app').innerHTML = `<div class="fade">
   <div class="seg" role="tablist" style="margin-top:16px">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${nutTab === k}" class="${nutTab === k ? 'on' : ''}" data-ntab="${k}">${l}</button>`).join('')}</div>
+  ${foyerWaiting() && nutTab !== 'profil' ? '<div class="advice" style="margin-top:12px"><span>⏳ <b>Chargement de vos menus communs…</b> Ceux affichés en attendant ne sont pas enregistrés.</span><button class="btn sm" data-x="foyerretry">↻ Réessayer</button></div>' : ''}
   <div id="ntab">${{ jour: nutJour, semaine: nutSemaine, courses: nutCourses, profil: nutProfil }[nutTab]()}</div></div>`;
   ({ jour: bindJour, semaine: () => {}, courses: bindCourses, profil: bindProfil })[nutTab]();
 }
@@ -7391,6 +7398,7 @@ function evoAct(a, b){
     case 'rundel': sheetConfirm('Supprimer cette sortie ?', 'Supprimer', () => { const r = runs.find(x => x.id === b.dataset.id); runs = runs.filter(x => x.id !== b.dataset.id); if (r) { const i = hist.findIndex(h => h.k === 'run' && h.d === r.d && h.w === r.km); if (i >= 0) hist.splice(i, 1); } save(); closeSheet(); viewRun(); }); break;
     case 'duo': startDuo(); break;
     case 'semwk': semNext = b.dataset.v === '1'; viewNutrition(); break;
+    case 'foyerretry': toast('↻ Chargement des menus…'); loadFoyer().then(() => { render(); if (!foyerReady) toast('⚠️ Menus toujours indisponibles : vérifie le Wi-Fi'); }); break;
     case 'homeday': homeDay(b.dataset.v === '1'); break;
     case 'venue': if ((b.dataset.v === '1') !== venueOn('day' + currentDay)) venueDay(b.dataset.v === '1'); break;
     case 'avent': aventToggle(b.dataset.pid); saveFoyer(); render(); break;
@@ -8049,7 +8057,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 146;
+const APP_VERSION = 147;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8183,6 +8191,8 @@ function ecMealBtn(d, meal, when){
   return Object.values(R).map(({ r, who }) => `<button class="ec-meal" data-ec="rec" data-d="${d}" data-meal="${meal}" data-rid="${esc(r.id)}"><span class="e">${r.e}</span><span><small>${when} · ${lbl}</small><b>${esc(r.n)}</b><small>⏱️ ${r.min} min · pour ${who.map(p => esc(ecNom(p))).join(' et ')}</small></span><span class="go">›</span></button>`).join('');
 }
 function ecCookCol(){
+  /* menus en ligne pas encore chargés : on ne montre pas un menu fabriqué sur l'iPad */
+  if (foyerWaiting()) return `<section class="ec-col ec-cook" style="--c:#fb923c"><h3>👩‍🍳 En cuisine</h3><p class="ec-rest">⏳ Chargement de vos menus…</p><p class="meta" style="margin:8px 0 12px">Si ça dure, vérifie le Wi-Fi.</p><button class="ec-done" data-ec="foyerretry" style="--c:#fb923c">↻ Réessayer</button></section>`;
   const nx = ecNextMeal(), d = todayIdx(), h = new Date().getHours() + new Date().getMinutes() / 60;
   let menu = '';
   try{
@@ -8642,6 +8652,7 @@ document.addEventListener('click', e => {
   else if (a === 'swapto') ecSwapDo(b.dataset.to);
   else if (a === 'swapback'){ const R = EC.rec; if (R) ecOpenRec(R.d, R.meal, R.rid); }
   else if (a === 'swapreset'){ const R = EC.rec; if (R){ const pids = ecMealOf(+R.d, R.meal).filter(x => x.por && x.por.r.id === R.rid).map(x => x.p.id); ecFoyerEdit(() => swapReset(curWk(), +R.d, R.meal, pids)).then(() => { ecOpenRec(R.d, R.meal, R.rid); ecRender(); toast('↩️ Ingrédients de la recette'); }); } }
+  else if (a === 'foyerretry'){ toast('↻ Chargement des menus…'); loadFoyer().then(() => { ecRender(); if (!foyerReady) toast('⚠️ Menus toujours indisponibles : vérifie le Wi-Fi'); }); }
   else if (a === 'agreload'){ EC.agendaErr = false; ecRender(); ecAgendaLoad(true); }
   else if (a === 'timer'){ ecTimerAdd(+b.dataset.min || 10, b.dataset.l || '⏱️ Cuisson'); ecCloseRec(); }
   else if (a === 'timers') ecOpenTimers(b.dataset.l);
