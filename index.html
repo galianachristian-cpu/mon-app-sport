@@ -13,10 +13,12 @@
 <meta name="apple-mobile-web-app-title" content="Mon Programme">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- Firebase SDK (sauvegarde en ligne) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<!-- Firebase SDK (sauvegarde en ligne) : fichiers officiels 9.22.0 hébergés avec l'appli (un appareil qui ne joint pas www.gstatic.com fonctionne quand même) -->
+<script src="vendor/firebase-app-compat-9.22.0.js"></script>
+<script src="vendor/firebase-firestore-compat-9.22.0.js"></script>
+<script src="vendor/firebase-auth-compat-9.22.0.js"></script>
+<script>/* secours : si les fichiers de l'appli n'ont pas pu être lus, second serveur (jsDelivr) */
+if (!window.firebase || !firebase.firestore || !firebase.auth){ window.__fbFallback = 1; ['app', 'firestore', 'auth'].forEach(m => document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-' + m + '-compat.js"><\/script>')); }</script>
 <style>
 #cnx{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 0%,rgba(167,139,250,.25),transparent 60%),var(--bg,#0b0f19)}
 #cnx.on{display:flex}
@@ -1783,7 +1785,7 @@ function sheetDiag(){
   const ios = (navigator.userAgent.match(/OS (\d+)_(\d+)/) || []).slice(1).join('.'), L = [
     ['Appareil', (/iPad/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent)) ? 'iPad' : /iPhone/.test(navigator.userAgent) ? 'iPhone' : 'autre') + (ios ? ' · iOS ' + ios : '')],
     ['Internet', navigator.onLine === false ? '❌ hors ligne' : '✅ en ligne'],
-    ['Bibliothèque Firebase', window.firebase ? '✅ chargée' : '❌ non chargée'],
+    ['Bibliothèque Firebase', window.firebase ? '✅ chargée' + (window.__fbFallback ? ' (serveur de secours)' : '') : '❌ non chargée'],
     ['Module de connexion', auth ? '✅ prêt' : '❌ indisponible' + (authInitErr ? ' (' + authInitErr + ')' : '')],
     ['Compte', u ? '✅ connecté' + (mail ? ' · ' + mail : '') : '❌ non connecté'],
     ['Base de données', db ? '✅ prête' : '❌ indisponible'],
@@ -1792,14 +1794,17 @@ function sheetDiag(){
     ['Menus communs', foyerReady ? '✅ chargés' : '❌ pas chargés'],
     ['Version', String(APP_VERSION)]];
   openSheet(`<h2>🔧 Connexion de cet appareil</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Fais une capture de cet écran si ça ne marche pas : elle permet de trouver la cause.</p>
-    <table class="tbl"><tbody>${L.map(([a, b]) => `<tr><td>${a}</td><td><b>${esc(b)}</b></td></tr>`).join('')}<tr><td>Test de lecture</td><td><b id="dgT">⏳ en cours…</b></td></tr></tbody></table>
+    <table class="tbl"><tbody>${L.map(([a, b]) => `<tr><td>${a}</td><td><b>${esc(b)}</b></td></tr>`).join('')}<tr><td>Accès aux serveurs de la base</td><td><b id="dgN">⏳ en cours…</b></td></tr><tr><td>Test de lecture</td><td><b id="dgT">⏳ en cours…</b></td></tr></tbody></table>
     <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn pri" id="dgRetry">↻ Réessayer</button><button class="btn" id="dgLogin">🔐 Me reconnecter</button><button class="btn danger" id="dgFix">🧹 Réparer cet appareil</button></div>
     <p class="muted" style="font-size:12px;margin-top:8px">« Réparer » efface seulement la copie gardée sur cet appareil puis redémarre l’appli : tes données en ligne ne sont pas touchées.</p>`);
   diagTest().then(r => { const el = $('#dgT'); if (el) el.textContent = r; });
+  Promise.all(['https://firestore.googleapis.com/', 'https://identitytoolkit.googleapis.com/'].map(u => Promise.race([fetch(u, { mode: 'no-cors', cache: 'no-store' }).then(() => true), new Promise(r => setTimeout(() => r(false), 10000))]).catch(() => false)))
+    .then(([a, b]) => { const el = $('#dgN'); if (el) el.textContent = a && b ? '✅ joignables' : '❌ bloqués (' + [!a && 'base', !b && 'connexion'].filter(Boolean).join(', ') + ') : Temps d’écran, bloqueur de pub ou filtre de la box ?'; });
   $('#dgRetry').onclick = () => { closeSheet(); toast('🔄 Nouvelle tentative…'); clearTimeout(syncTimer); retrySync().then(() => loadFoyer()).then(() => { render(); if (!remoteReady) toast('⚠️ Toujours pas de connexion'); }); };
   $('#dgLogin').onclick = () => { closeSheet(); try{ auth && auth.signOut(); }catch(e){} if (auth) afficherConnexion(() => location.reload()); else toast('❌ Module de connexion indisponible sur cet appareil'); };
   $('#dgFix').onclick = async () => { if (!confirm('Effacer la copie gardée sur cet appareil et redémarrer ? Tes données en ligne ne sont pas touchées.')) return;
     try{ ['mp_foyer', backupKey(), backupKey(otherProfile() ? otherProfile().id : profile.id)].forEach(k => localStorage.removeItem(k)); localStorage.setItem('mp_nopersist', '1'); }catch(e){}
+    try{ if (window.caches) (await caches.keys()).forEach(k => caches.delete(k)); }catch(e){} /* copies gardées par l'appli (fichiers abîmés) */
     try{ if (db && db.clearPersistence) { await db.terminate(); await db.clearPersistence(); } }catch(e){}
     try{ if (window.indexedDB && indexedDB.databases){ (await indexedDB.databases()).forEach(d => { if (/firestore/i.test(d.name || '')) indexedDB.deleteDatabase(d.name); }); } }catch(e){}
     location.reload(); };
@@ -1959,6 +1964,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [151, [['🔌', 'Connexion fiable sur l’iPad', 'les fichiers de connexion sont maintenant fournis avec l’appli (plus besoin de joindre un serveur de Google pour démarrer), avec un serveur de secours ; le diagnostic vérifie aussi l’accès aux serveurs']]],
   [150, [['🔧', 'Diagnostic de connexion', 'si un appareil affiche « Sur cet appareil », touche la pastille : il montre ce qui bloque, avec « Réessayer », « Me reconnecter » et « Réparer cet appareil »']]],
   [149, [['🔧', 'Connexion réparée sur les vieux iPad', 'mode de connexion compatible avec les anciens Safari, et réparation automatique si l’appareil n’arrive pas à lire vos données (il redémarre une fois)']]],
   [148, [['🛡️', 'Menus communs : la version en ligne gagne toujours', 'un appareil qui se reconnecte reprend vos menus en ligne, il ne peut plus les remplacer par sa vieille copie']]],
@@ -8099,7 +8105,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 150;
+const APP_VERSION = 151;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });

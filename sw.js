@@ -1,6 +1,6 @@
 /* Mon Programme : service worker pour l'installation et l'usage hors ligne */
-const CACHE = 'mon-programme-v150';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192-v2.png', './icon-512-v2.png', './apple-touch-icon-v2.png', './garage-icon.png'];
+const CACHE = 'mon-programme-v151';
+const CORE = ['./', './index.html', './manifest.webmanifest', './vendor/firebase-app-compat-9.22.0.js', './vendor/firebase-firestore-compat-9.22.0.js', './vendor/firebase-auth-compat-9.22.0.js', './icon-192-v2.png', './icon-512-v2.png', './apple-touch-icon-v2.png', './garage-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(CORE.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))).then(() => self.skipWaiting()));
