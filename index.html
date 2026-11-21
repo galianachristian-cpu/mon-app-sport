@@ -1918,7 +1918,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
-  [142, [['🔥', 'Béa : perte de gras', 'dès lundi : séances A, B, C du programme 12 semaines (lun, mer, ven), 10 000 pas mar et jeu, week-end repos ; 1 400 kcal et 115 g de protéines, ajustées toutes les 2 semaines selon les pesées (entre 1 250 et 1 500)'], ['🏠', 'Version maison en un toucher', 'le jour de séance : « Je m’entraîne à la maison aujourd’hui » passe à la version maison du programme (élastiques, sac à dos lesté, chaise, elliptique)']]],
+  [142, [['🔥', 'Béa : programme perte de gras', 'dès lundi : muscu A lundi, marche rapide 1 h mardi, jeudi et samedi, elliptique mercredi, muscu B vendredi, dimanche repos ; pas de 6 000 à 10 000 par jour (+500 chaque semaine) ; 1 500 kcal et 110 g de protéines'], ['📏', 'Bilan complet', 'semaines 0, 4, 8 et 12 : poids, taille, hanches, cuisse, pas moyens, répétitions de squat et énergie']]],
   [141, [['🍕', 'Repas plaisir le dimanche midi', 'une vraie pizza, un burger frites, une raclette, une tartiflette, un couscous… et un vrai dessert (tiramisu, fondant, tarte, crème brûlée, crêpes). +400 kcal ce jour-là, repris en douceur sur la semaine. Premier repas plaisir le dimanche qui suit la mise à jour, avec ses ingrédients dans la liste de courses']]],
   [140, [['🎄', 'Calendrier de l’Avent sportif', 'du 1er au 24 décembre, un petit défi par jour à cocher chacun, sur le téléphone et sur l’iPad, avec une surprise le 24'], ['🤝', 'Objectif commun', 'vos séances s’additionnent dans une même barre chaque semaine ; remplie = trophée'], ['🧊', 'Qu’est-ce qu’on mange ce soir ?', 'coche ce que vous avez, l’appli propose les plats qui demandent le moins de courses et les met au menu du soir'], ['🎤', 'Courses à la voix', 'dans la liste de courses (téléphone et iPad), touche 🎤 et dis « du lait, des œufs et du café »']]],
   [139, [['🎅', 'Compte à rebours de Noël sur l’iPad', 'jusqu’au réveillon (24 décembre 19 h) et jusqu’à Noël, à la seconde près, en haut de l’écran']]],
@@ -5639,20 +5639,28 @@ function beaWeOnce(){
    Lun salle · Mar marche · Mer HIIT · Jeu salle · Ven marche · Sam/Dim repos. Les séances de salle tournent A → B → C d'une semaine à l'autre.
    Plus de marche ajoutée après les séances : elle a ses jours de marche. Démarre le lundi qui suit le changement. */
 const P12_WALKDAY = () => P12_WALK('75-90 min', 'Objectif du jour : 10 000 pas. Marche active à ton rythme, en une ou plusieurs fois (le matin, le midi, après le travail).');
-/* Béa (v142) : PERTE DE GRAS en gardant le programme 12 semaines du document (séances A, B, C : force, double progression,
-   repos 1 min 30 à 2 min, pas de cardio intense en fin de séance). La perte de gras vient du déficit modéré (1 400 kcal ajustées
-   selon les pesées, 115 g de protéines) et des pas : 10 000 mar et jeu. Lun A · Mar marche · Mer B · Jeu marche · Ven C · week-end repos.
-   Chaque séance a une version maison (celle du document, sans pompes) en un toucher. */
-// version maison (document, page 6-7) : élastiques, sac à dos lesté, bouteilles, chaise, elliptique
-const P12_HOME = { 'Rameur': 'Elliptique', 'Vélo': 'Elliptique', 'Squat goblet': 'Squat poids du corps', 'Leg extension': 'Chaise', 'Développé incliné haltères': 'Développé couché élastique',
-  'Tirage vertical (Lat Pulldown)': 'Rowing penché élastique', 'Développé haltères assis': 'Développé épaules élastique', 'Rowing haltère un bras': 'Rowing unilatéral élastique', 'Oiseau (Rear Delt Fly)': 'Oiseau élastique',
-  'Hip thrust': 'Hip thrust unilatéral' };
-const P12_HOME_TIP = { 'Squat poids du corps': 'Squat lent : descente en 4 s, pause 2 s en bas, sac à dos lesté (bouteilles, livres) contre la poitrine.', 'Chaise': 'Chaise murale, dos bien plaqué au mur, cuisses à l’horizontale.',
-  'Hip thrust unilatéral': 'Dos appuyé sur le canapé, sac à dos lesté sur les hanches, une jambe à la fois.', 'Soulevé de terre roumain': 'À la maison : un pack d’eau ou un sac à dos lesté dans les mains.', 'Squat bulgare': 'À la maison : pied arrière sur une chaise, sac à dos si possible.' };
+/* Béa (v142) : « Programme de suivi – Perte de gras » (document du 21/11). Objectif : −4 à −6 kg de gras en 3 à 4 mois en gardant le muscle.
+   Poids stable depuis 2 ans à ~1 500 kcal : on garde 1 500 kcal, le déficit vient de l'activité (pas 6 000 → 10 000, marche, elliptique).
+   Lun muscu A (bas du corps) · Mar marche rapide 1 h · Mer elliptique 30 min · Jeu marche rapide 1 h · Ven muscu B (jambes et tronc) · Sam marche rapide 1 h · Dim repos.
+   Musculation : 2 à 3 répétitions en réserve, repos 60 à 90 s, faisable à la maison comme à la salle.
+   Progression : S1-2 apprentissage, S3-4 +2 répétitions, S5-6 4 séries, S7-8 et après variantes plus difficiles. */
+const P12_HOME = {}; // séances faites pour la maison comme pour la salle
+const P12_HOME_TIP = {};
+const P12V = {
+  A: { t: 'Musculation A · bas du corps', L: [['Squat poids du corps', 3, 10, 12, 'Squat lent : descente en 3 s.', 'Squat lent : descente en 4 s, pause 2 s en bas.'], ['Squat bulgare', 3, 8, 10, 'Pied arrière sur une chaise ou un banc, chaque jambe.', 'Descente en 3 s, sac à dos ou haltères.', ' chaque'], ['Pont fessier', 3, 10, 12, 'Pont fessier sur une jambe, l’autre tendue.', 'Sur une jambe, pause 2 s en haut.', ' chaque'], ['Soulevé de terre roumain', 3, 10, 10, 'Sur une jambe, avec sac à dos, bouteilles ou haltère, dos bien droit.', 'Sur une jambe, descente en 3 s.', ' chaque'], ['Gainage', 3, 20, 30, 'Planche sur les avant-bras, fesses serrées.', 'Planche, en levant un pied 2 s à tour de rôle.', ' s']] },
+  B: { t: 'Musculation B · jambes et tronc', L: [['Fentes marchées', 3, 10, 10, 'Chaque jambe, buste droit.', 'Descente lente en 3 s, haltères ou sac à dos.', ' chaque'], ['Squat poids du corps', 3, 10, 10, 'Squat avec pause de 2 s en bas.', 'Pause 3 s en bas, descente en 3 s.'], ['Hip thrust', 3, 12, 15, 'Dos appuyé sur le canapé (ou un banc), poussée par les talons.', 'Sur une jambe ou avec une charge sur les hanches.'], ['Step-up', 3, 10, 10, 'Montées sur une marche, chaque jambe.', 'Marche plus haute, descente lente.', ' chaque'], ['Dead bug', 3, 10, 10, 'Bas du dos plaqué au sol.', 'Mouvement lent, 3 s par répétition.', ' chaque']] }
+};
+const p12Steps = w => Math.min(10000, 6000 + 500 * Math.max(0, w - 1));
 function p12FatWeek(){
-  const { D } = p12Build(), noWalk = L => L.filter(e => e && !e.walk);
-  return { D: { day0: noWalk(D.day0), day1: [P12_WALKDAY()], day2: noWalk(D.day2), day3: [P12_WALKDAY()], day4: noWalk(D.day4), day5: [], day6: [] },
-    T: { day0: P12S.A.t, day1: 'Marche · 10 000 pas', day2: P12S.B.t, day3: 'Marche · 10 000 pas', day4: P12S.C.t, day5: 'Repos', day6: 'Repos' } };
+  const w = Math.max(1, p12Week()), lvl = w <= 2 ? 0 : w <= 4 ? 1 : w <= 6 ? 2 : 3;
+  const sess = k => P12V[k].L.map(([n, sr, lo, hi, d1, d2, u]) => { const add = lvl >= 1 ? (u === ' s' ? 10 : 2) : 0, r = (lo === hi ? `${lo + add}` : `${lo + add}-${hi + add}`) + (u || '');
+    return exFromLib(n, { s: lvl >= 2 ? 4 : sr, r, desc: (lvl >= 3 ? d2 : d1) + ' Garde 2 à 3 répétitions en réserve, repos 60 à 90 s.', abs: ['Gainage', 'Dead bug'].includes(n) ? 1 : 0 }); }).filter(Boolean);
+  const warm = () => [exFromLib('Mobilité de hanches 90/90', { ph: 'warm', s: 1, r: '5 chaque' }), exFromLib('World’s greatest stretch', { ph: 'warm', s: 1, r: '5 chaque' })];
+  const cool = () => [exFromLib('Étirement du psoas', { ph: 'cool', s: 1 }), exFromLib('Étirement des ischios', { ph: 'cool', s: 1 })];
+  const st = p12Steps(w), walk = () => P12_WALK('60 min', `Marche rapide 1 h (on peut parler, pas chanter). Objectif de la semaine : ${st.toLocaleString('fr-FR')} pas par jour en moyenne.`);
+  const ell = exFromLib('Elliptique', { r: '30 min', desc: `Elliptique à rythme modéré, 30 min. Objectif de la semaine : ${st.toLocaleString('fr-FR')} pas par jour en moyenne.` });
+  return { D: { day0: [...warm(), ...sess('A'), ...cool()], day1: [walk()], day2: [ell], day3: [walk()], day4: [...warm(), ...sess('B'), ...cool()], day5: [walk()], day6: [] },
+    T: { day0: P12V.A.t, day1: 'Marche rapide · 1 h', day2: 'Elliptique · 30 min', day3: 'Marche rapide · 1 h', day4: P12V.B.t, day5: 'Marche rapide · 1 h', day6: 'Repos complet' } };
 }
 // aujourd'hui à la maison : on remplace les exercices de salle (pour aujourd'hui seulement)
 function homeDay(on){
@@ -5666,22 +5674,22 @@ const homeDayOn = k => (data[k] || []).some(e => e && e.tmpWhy === 'maison' && e
 const homeDayCan = k => isP12() && profile.id === 'bea' && (data[k] || []).some(e => e && (P12_HOME[e.n] || (e.orig && e.tmpWhy === 'maison')));
 function beaFatOnce(){
   if (profile.id !== 'bea' || !isP12() || (coach && coach.beaFat)) return;
-  prog.p12.v3 = 1; prog.p12.alt = prog.p12.alt || (todayIdx() >= 1 ? wkShift(curWk(), 1) : curWk()); prog.split = 'Perte de gras · 3 circuits + marche';
-  if (nut){ nut.kcalMan = 1400; nut.kcalSeance = false; nut.pFix = 115; nut.obj = 'perte'; nut.act = 1.2; nut.kcoach = { from: today(), last: null }; }
+  prog.p12.v3 = 1; prog.p12.alt = prog.p12.alt || (todayIdx() >= 1 ? wkShift(curWk(), 1) : curWk()); prog.split = 'Perte de gras · 2 muscu + marche + elliptique';
+  if (nut){ nut.kcalMan = 1500; nut.kcalSeance = false; nut.pFix = 110; nut.obj = 'perte'; nut.act = 1.2; nut.kcoach = { from: prog.p12.alt ? wkDates(prog.p12.alt)[0] : today(), last: null }; }
   coach = Object.assign({}, coach, { beaFat: today() }); save();
-  setTimeout(() => toast('🔥 Nouveau programme perte de gras dès lundi · 1 400 kcal, ajustées selon tes pesées'), 2000);
+  setTimeout(() => toast('🔥 Programme perte de gras dès lundi : muscu, marche, elliptique · 1 500 kcal, 110 g de protéines'), 2000);
 }
-/* coach calories (Béa, perte de gras) : 3 semaines après le départ puis toutes les 2 semaines, on compare la moyenne des pesées
-   des 7 derniers jours à celle d'il y a 2 semaines : < 0,2 kg/sem perdus → −100 kcal ; > 0,7 kg/sem → +100 kcal ; bornes 1 250 – 1 500 */
+/* coach calories (Béa, perte de gras) : 6 semaines après le départ (les pas ont eu le temps de monter) puis toutes les 3 semaines,
+   on compare la moyenne des pesées des 7 derniers jours à celle d'il y a 2 semaines : < 0,2 kg/sem perdus → −100 kcal ; > 0,7 kg/sem → +100 kcal ; bornes 1 350 – 1 600 */
 function beaKcalCoach(){
   if (profile.id !== 'bea' || !nut || !nut.kcoach || !num(nut.kcalMan)) return null;
   const K = nut.kcoach, now = new Date(), day = 864e5, dd = s => new Date(s + 'T12:00').getTime();
-  if (now - dd(K.from) < 21 * day || (K.last && now - dd(K.last) < 14 * day)) return null;
+  if (now - dd(K.from) < 42 * day || (K.last && now - dd(K.last) < 21 * day)) return null;
   const B = (body || []).filter(b => b.p != null && b.d), win = (a, z) => { const L = B.filter(b => { const t = now - dd(b.d); return t >= a * day && t < z * day; }); return L.length >= 2 ? L.reduce((x, b) => x + b.p, 0) / L.length : null; };
   const recent = win(0, 7), before = win(14, 21); if (recent == null || before == null) return null;
   const rate = (before - recent) / 2, k = num(nut.kcalMan); let nk = k, why = '';
-  if (rate < .2){ nk = Math.max(1250, k - 100); why = `perte de ${fr(Math.max(0, +rate.toFixed(2)))} kg/semaine, un peu lente`; }
-  else if (rate > .7){ nk = Math.min(1500, k + 100); why = `perte de ${fr(+rate.toFixed(2))} kg/semaine, trop rapide pour garder le muscle`; }
+  if (rate < .2){ nk = Math.max(1350, k - 100); why = `perte de ${fr(Math.max(0, +rate.toFixed(2)))} kg/semaine, un peu lente`; }
+  else if (rate > .7){ nk = Math.min(1600, k + 100); why = `perte de ${fr(+rate.toFixed(2))} kg/semaine, trop rapide pour garder le muscle`; }
   K.last = today(); if (nk !== k){ nut.kcalMan = nk; save(); return { from: k, to: nk, why }; }
   save(); return { from: k, to: k, why: `perte de ${fr(+rate.toFixed(2))} kg/semaine : parfait, on garde ${k} kcal` };
 }
@@ -5701,7 +5709,7 @@ function beaP12Week(force){
   data = { day0: noWalk(S[a]), day1: [P12_WALKDAY()], day2: noWalk(D.day1), day3: noWalk(S[b]), day4: [P12_WALKDAY()], day5: [], day6: [] };
   titles = { day0: P12S[a].t, day1: 'Marche · 10 000 pas', day2: HIIT_T[0], day3: P12S[b].t, day4: 'Marche · 10 000 pas', day5: 'Repos', day6: 'Repos' }; }
   Object.keys(data).forEach(k => { done[k] = []; remapKeys(k, () => null); });
-  prog.days = prog.p12.v3 ? [0, 2, 4] : [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
+  prog.days = prog.p12.v3 ? [0, 4] : [0, 3]; prog.p12.altWk = curWk(); replaceBanned(); applyCycle(); save();
 }
 const P12_REF = [['Squat goblet', 'Squat goblet'], ['Hip thrust', 'Hip thrust'], ['Tirage vertical (Lat Pulldown)', 'Tirage vertical']];
 const p12Best = n => { const H = histOf(n).filter(h => h.w); return H.length ? Math.max(...H.map(h => h.w)) : null; };
@@ -5716,13 +5724,13 @@ function p12MedCard(){
 }
 function p12Card(){
   const w = p12Week(), ph = p12Phase(w), B = prog.p12.b || {}, ms = w <= 1 ? 0 : P12_MS.includes(w) ? w : null, need = ms != null && !B[ms];
-  const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td></tr>` : ''; };
-  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">${prog.p12.v3 ? `Perte de gras · séances A, B, C du programme (lun, mer, ven) + 10 000 pas (mar, jeu) · ${num(nut && nut.kcalMan) || 1400} kcal` : 'Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours'}</small></div></div>
+  const row = k => { const x = B[k]; return x ? `<tr><td>S${k}</td><td>${x.t ?? '–'}</td><td>${x.h ?? '–'}</td><td>${x.c ?? '–'}</td><td>${x.m ?? '–'}</td>${prog.p12.v3 ? `<td>${x.p ?? '–'}</td><td>${x.e ?? '–'}</td>` : ''}</tr>` : ''; };
+  return `<div class="card coach"><div class="row"><span style="font-size:30px">💪</span><div style="flex:1;min-width:0"><b style="font-size:15.5px">Programme 12 semaines · ${w <= 0 ? 'départ lundi' : `semaine ${Math.min(w, 12)}/12`}</b><small class="muted" style="display:block;font-size:12.5px">${prog.p12.v3 ? `Perte de gras · −4 à −6 kg en 3-4 mois · muscu lun et ven, marche mar, jeu, sam, elliptique mer · ${num(nut && nut.kcalMan) || 1500} kcal · objectif ${p12Steps(Math.max(1, p12Week())).toLocaleString('fr-FR')} pas/jour` : 'Jambes, hanches et silhouette · 3 séances de force + 2 HIIT machines + marche tous les jours'}</small></div></div>
     <div class="cycle" style="grid-template-columns:repeat(12,1fr)">${Array.from({ length: 12 }, (_, i) => `<div class="${i + 1 === w ? 'on' : i + 1 < w ? 'past' : ''}"><span>${[4, 8].includes(i + 1) ? '🪶' : i + 1 === 12 ? '🏁' : '·'}</span><small>${i + 1}</small></div>`).join('')}</div>
     <p style="font-size:13.5px"><b>${ph[0]}</b> ${ph[1]}</p>
-    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p>${prog.p12.v3 ? '<p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices. Pas de cardio intense après la séance : 5 à 10 min de vélo tranquille si tu veux.</p><p>🚶 Les pas font fondre le gras sans fatiguer : 10 000 mardi et jeudi, et le plus possible les autres jours.</p><p>📏 Si tu deviens nettement plus forte mais que tes jambes et tes hanches ne bougent pas à la semaine 12 : montre ton carnet et tes mesures au médecin (piste du lipœdème).</p><p>🍽️ ' + (num(nut && nut.kcalMan) || 1400) + ' kcal et 115 g de protéines : c’est le déficit qui fait fondre le gras, le sport garde le muscle. Toutes les 2 semaines, l’appli ajuste de 100 kcal selon tes pesées (pèse-toi 2 à 3 fois par semaine, le matin à jeun).</p>' : '<p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p>'}</div>
+    <div class="tips-list" style="margin-top:8px"><p>🔁 <b>Progression</b> : quand tu atteins le haut de la fourchette sur toutes les séries, l’appli te propose d’augmenter la charge (1 à 2 kg haltères, 2,5 à 5 kg barre).</p>${prog.p12.v3 ? '<p>🎯 Musculation : 2 à 3 répétitions en réserve, repos 60 à 90 s. Semaines 1-2 apprentissage, 3-4 : +2 répétitions, 5-6 : 4 séries, 7-8 : variantes plus difficiles (l’appli met tout à jour chaque lundi).</p><p>🚶 Pas : 6 000 par jour au départ, +500 chaque semaine jusqu’à 8 000-10 000. C’est ce qui crée le déficit.</p><p>📏 Évaluation après 8 à 12 semaines. Si tu deviens plus forte mais que jambes et hanches ne bougent pas : parles-en au médecin (piste du lipœdème).</p><p>🍽️ ' + (num(nut && nut.kcalMan) || 1500) + ' kcal et 110 g de protéines (ton poids est stable à 1 500 kcal : le déficit vient des pas). Après 6 semaines, l’appli ajuste de 100 kcal si besoin selon tes pesées (pèse-toi 2 à 3 fois par semaine, le matin à jeun).</p>' : '<p>🎯 Chaque série finit avec 1 à 3 répétitions en réserve. Repos 1 min 30 à 2 min sur les gros exercices.</p><p>🚶 Marche tous les jours : 8 000 à 10 000 pas en moyenne.</p>'}</div>
     ${need ? `<div class="advice up" style="margin-top:10px"><span>📏 <b>Bilan semaine ${ms}</b> : tours de taille, hanches, cuisse, mollet, photos et charges repères.</span><button class="btn sm pri" data-x="p12bilan">Faire le bilan</button></div>` : ''}
-    ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th></tr>${P12_MS.map(row).join('')}</table></div>` : ''}
+    ${Object.keys(B).length ? `<div class="box" style="margin-top:10px"><h4>📏 Mes bilans (cm)</h4><table class="p12t"><tr><th></th><th>Taille</th><th>Hanches</th><th>Cuisse</th><th>Mollet</th>${prog.p12.v3 ? '<th>kg</th><th>Énergie</th>' : ''}</tr>${P12_MS.map(row).join('')}</table></div>` : ''}
     ${p12MedCard()}
     <div class="row" style="margin-top:12px"><button class="btn sm" data-x="p12bilan">📏 Bilan / mesures</button>${coach && coach.prevMuscu ? '<button class="btn sm" data-x="muscuundo">↩️ Ancien programme</button>' : ''}<button class="btn sm" data-x="gear">🏋️ Mon matériel</button></div></div>`;
 }
@@ -5730,13 +5738,13 @@ function sheetP12Bilan(){
   const w = p12Week(), ms = w <= 1 ? 0 : [4, 8, 12].reduce((a, k) => w >= k ? k : a, 0), B = prog.p12.b || {}, x = B[ms] || {};
   const f = (id, l, v) => `<div class="fg"><label for="${id}">${l}</label><input id="${id}" class="inp" inputmode="decimal" value="${v ?? ''}" placeholder="cm"></div>`;
   openSheet(`<h2>📏 Bilan semaine ${ms}</h2><p class="muted" style="font-size:13px;margin-bottom:10px">Le matin, à jeun. Le poids sur la balance est le moins important de ces indicateurs.</p>
-    <form id="p12f"><div class="two">${f('pT', 'Tour de taille (au nombril)', x.t)}${f('pH', 'Hanches (point le plus large)', x.h)}</div><div class="two">${f('pC', 'Cuisse (à mi-hauteur)', x.c)}${f('pM', 'Mollet', x.m)}</div>
+    <form id="p12f"><div class="two">${f('pT', 'Tour de taille (au nombril)', x.t)}${f('pH', 'Hanches (point le plus large)', x.h)}</div><div class="two">${f('pC', 'Cuisse (à mi-hauteur)', x.c)}${f('pM', 'Mollet', x.m)}</div>${prog.p12.v3 ? `<div class="two">${f('pP', 'Poids (kg)', x.p)}${f('pS', 'Pas par jour (moyenne)', x.s)}</div><div class="two">${f('pR', 'Répétitions squat (total 3 séries)', x.r)}${f('pE', 'Énergie (1 à 5)', x.e)}</div>` : ''}
     <div class="box"><h4>🏋️ Charges repères (meilleures notées)</h4><p>${P12_REF.map(([n, l]) => `${l} : ${p12Best(n) != null ? fr(p12Best(n)) + ' kg' : 'pas encore noté'}`).join('\n')}</p></div>
     <p class="muted" style="font-size:12.5px;margin:8px 2px">📸 Photos de face, de profil et de dos, dans la même lumière : garde-les dans ton téléphone.</p>
     <button class="btn pri block" type="submit">✅ Enregistrer le bilan</button></form>`);
   $('#p12f').onsubmit = ev => { ev.preventDefault(); const v = id => { const n = num($(id).value); return n > 0 ? n : null; };
-    const r = { d: today(), t: v('#pT'), h: v('#pH'), c: v('#pC'), m: v('#pM'), ch: Object.fromEntries(P12_REF.map(([n]) => [n, p12Best(n)])) };
-    prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t){ const E = body.find(b0 => b0.d === r.d); if (E) E.t = r.t; else body.push({ d: r.d, t: r.t }); }
+    const r = { d: today(), t: v('#pT'), h: v('#pH'), c: v('#pC'), m: v('#pM'), p: $('#pP') ? v('#pP') : null, s: $('#pS') ? v('#pS') : null, r: $('#pR') ? v('#pR') : null, e: $('#pE') ? v('#pE') : null, ch: Object.fromEntries(P12_REF.map(([n]) => [n, p12Best(n)])) };
+    prog.p12.b = Object.assign({}, prog.p12.b, { [ms]: r }); if (r.t || r.p){ const E = body.find(b0 => b0.d === r.d); if (E){ if (r.t) E.t = r.t; if (r.p) E.p = r.p; } else body.push(Object.assign({ d: r.d }, r.t ? { t: r.t } : {}, r.p ? { p: r.p } : {})); }
     save(); closeSheet(); render(); toast('📏 Bilan enregistré'); };
 }
 // Béa (demande de Chris) : activité sédentaire, objectif recomposition, 1 500 kcal fixes par jour, 115 g de protéines. Une seule fois.
