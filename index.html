@@ -1964,6 +1964,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [155, [['🥔', 'Tortilla de pommes de terre : les pommes de terre sont revenues', 'avec « pas de féculents le soir », un féculent indispensable au plat (pommes de terre de la tortilla, pâtes des lasagnes, riz du risotto…) est gardé en demi-portion au lieu d’être retiré ; les prochains menus du soir privilégient les plats où le féculent s’enlève']]],
   [154, [['🍎', 'Plus de collation affichée avec le dessert', 'vue Semaine : la collation n’apparaît plus quand le dessert du midi et du soir la remplace (elle n’était déjà plus comptée)']]],
   [153, [['🛒', 'Liste de courses à jour', 'les kiwis de Béa sont retirés tout de suite sur tous les appareils, la liste et les menus se recalculent']]],
   [152, [['🥞', 'Plus de sarrasin', 'les galettes deviennent des crêpes salées complètes à la farine de blé'], ['🥝', 'Pas de kiwi pour Béa', 'ses desserts passent à d’autres fruits de saison']]],
@@ -4381,6 +4382,9 @@ function mealShare(n, meal){
   return s;
 }
 const FEC_GRP = ['fec', 'cereale', 'pain'];
+/* féculent au cœur du plat (tortilla de pommes de terre, lasagnes, risotto, wraps…) : on ne peut pas l'enlever le soir sans dénaturer la recette */
+const FEC_CORE = { pdt:['pomme de terre','pommes de terre','tartiflette','gratin','purée','hachis','frites'], patate:['patate'], pates:['pâtes','spaghetti','lasagne','tagliatelle','penne','macaroni','carbonara','bolognaise'], riz:['riz','risotto','paella'], semoule:['couscous','semoule','taboulé'], pain:['sandwich','croque','burger','tartine','bruschetta','bagnat'], tortilla:['wrap','tortillas','fajita','quesadilla','kebab','tacos','burrito','pizza tortilla'] };
+const fecCore = r => { const n = String(r.n).toLowerCase(); return new Set(r.ing.map(([f]) => f).filter(f => (FEC_CORE[f] || []).some(k => n.includes(k)))); };
 const OBJ = { perte:['Perte de poids','🔥'], maintien:['Maintien','⚖️'], muscle:['Prise de muscle','💪'], recompo:['Recomposition','🔄'] };
 const ACT = { 1.2:'Sédentaire (bureau, peu de marche)', 1.35:'Peu actif (marche, debout parfois)', 1.5:'Actif (métier physique, beaucoup debout)', 1.65:'Très actif (travail physique intense)' };
 
@@ -4596,7 +4600,8 @@ function portion(rid, pid, meal, di, wk){
   const share = mealShare(c.nut, meal);
   // pas de féculents le soir : on les retire et on les remplace par des légumes
   if (meal === 'din' && noFecSoir(c.nut) && ing.some(([f]) => FEC_GRP.includes(FOODS[f].grp))){
-    ing = ing.filter(([f]) => !FEC_GRP.includes(FOODS[f].grp));
+    const core = fecCore(r); /* féculent indispensable au plat : gardé, en demi-portion */
+    ing = ing.filter(([f]) => !FEC_GRP.includes(FOODS[f].grp) || core.has(f)).map(([f, g]) => core.has(f) ? [f, g / 2] : [f, g]);
     const lg = ['haricotvert', 'courgette', 'brocoli', 'poelee', 'chou'].find(f => !excl.includes(f) && !ing.some(([x]) => x === f));
     if (lg && ing.filter(([f]) => FOODS[f].grp === 'legume').reduce((a, [, g]) => a + g, 0) < 250) ing.push([lg, 200]);
   }
@@ -4624,6 +4629,8 @@ function portion(rid, pid, meal, di, wk){
   let side = null;
   if (t && !r.pl) side = macroFix(merged, { k: t.kcal * share + bonus - dessK, p: t.p * share, l: t.l * share }, excl, !dess, meal); /* repas plaisir : la vraie recette, juste mise à la bonne taille */
   Object.keys(merged).forEach(f => { if (MAXG[f]) merged[f] = Math.min(merged[f], MAXG[f]); });
+  /* féculent au cœur du plat : jamais moins de 40 % de la recette de base (sinon une tortilla avec 30 g de pommes de terre) */
+  if (r.type === 'plat'){ const core = fecCore(r); r.ing.forEach(([f, g]) => { if (core.has(f) && merged[f] != null) merged[f] = Math.max(merged[f], g * .4); }); }
   if (dess){ if (dess.l){ merged[dess.l] = roundG(dess.l, 125); side = dess.l; } if (dess.f) merged[dess.f] = roundG(dess.f, dess.fg); }
   if (dr) dr.ing.forEach(([f, g]) => { merged[f] = (merged[f] || 0) + g; });
   ing = Object.entries(merged).map(([f, g]) => [f, roundG(f, g)]);
@@ -4688,7 +4695,7 @@ function genPlan(wk, keep, from){
     ['dej','din'].forEach(meal => {
       const PLS = d === 6 && meal === 'dej'; /* dimanche midi : repas plaisir */
       if (BT && d < 6){ const sl = d * 2 + (meal === 'din' ? 1 : 0), id = BT[(sl < 6 ? 0 : 3) + (sl % 3)]; used.push(id); day[meal] = id; return; }
-      if (foyer.commun){ const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
+      if (foyer.commun){ const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14); const L1 = meal === 'din' && !PLS && pids.some(id => noFecSoir(ctxOf(id).nut)) ? L.filter(r => !fecCore(r).size) : L; /* pas de féculents le soir : de préférence des plats où le féculent peut s'enlever */ const id = pickW(L1.length >= 10 ? L1 : L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
       else { day[meal] = {}; pids.forEach((pid, k) => { const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, [excls[k]])), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
@@ -8116,7 +8123,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 154;
+const APP_VERSION = 155;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
