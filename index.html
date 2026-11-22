@@ -1964,6 +1964,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [154, [['🍎', 'Plus de collation affichée avec le dessert', 'vue Semaine : la collation n’apparaît plus quand le dessert du midi et du soir la remplace (elle n’était déjà plus comptée)']]],
   [153, [['🛒', 'Liste de courses à jour', 'les kiwis de Béa sont retirés tout de suite sur tous les appareils, la liste et les menus se recalculent']]],
   [152, [['🥞', 'Plus de sarrasin', 'les galettes deviennent des crêpes salées complètes à la farine de blé'], ['🥝', 'Pas de kiwi pour Béa', 'ses desserts passent à d’autres fruits de saison']]],
   [151, [['🔌', 'Connexion fiable sur l’iPad', 'les fichiers de connexion sont maintenant fournis avec l’appli (plus besoin de joindre un serveur de Google pour démarrer), avec un serveur de secours ; le diagnostic vérifie aussi l’accès aux serveurs']]],
@@ -4372,6 +4373,7 @@ const REC_BY = Object.fromEntries(RECIPES.map(r => [r.id, r]));
 const MEALS = [['pdj','Petit-déjeuner','☀️',.25],['dej','Déjeuner','🍽️',.35],['col','Collation','🍎',.10],['din','Dîner','🌙',.30]];
 // réglages repas d'une personne : dessert au déjeuner et au dîner à la place de la collation ; pas de féculents le soir
 const dessertOn = n => !!(n && n.dessert), noFecSoir = n => !!(n && n.noFecSoir);
+const mealsOf = n => MEALS.filter(([m]) => !(dessertOn(n) && m === 'col')); // repas affichés : sans collation quand le dessert la remplace
 function mealShare(n, meal){
   let s = (MEALS.find(m => m[0] === meal) || [0, 0, 0, .3])[3];
   if (dessertOn(n)){ if (meal === 'col') return 0; if (meal === 'dej' || meal === 'din') s += .05; }
@@ -5205,7 +5207,7 @@ function nutSemaine(){
   const wk = curWk(), plan = planOf(wk);
   return seg + `<div class="card" style="margin-top:12px"><div class="row"><span style="flex:1;font-size:14px">Menus générés pour ${PROFILES.map(p => esc(p.nom)).join(' et ')}, selon vos calories, vos séances et vos goûts.</span><button class="btn sm" data-act="regen">🎲 Nouveaux menus</button></div><div class="row" style="margin-top:10px"><button class="btn pri" data-x="batch" style="flex:1">🥘 Batch cooking</button><button class="btn ${foyer.batch ? 'pri' : ''}" data-x="batchmode" style="flex:1">${foyer.batch ? '🥘 Batch si moins cher ✓' : '🥘 Menus batch : non'}</button><button class="btn" data-x="awaysheet" style="flex:1">🧳 Absences</button></div><button class="btn block" data-x="stock" style="margin-top:8px">🥡 Ce qu’il nous reste</button></div>
   ${(() => { const t = weekCost(wk, 0), mx = num(budgetCfg().max); return `<div class="card" style="margin-top:12px"><p style="font-size:14px">💶 Menus de la semaine : <b>≈ ${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>${mx && t > mx ? '<button class="btn sm pri" data-x="budfit" style="margin-top:8px">🎯 Ajuster les menus au budget</button>' : ''}</div>`; })()}
-  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
+  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<button class="wkday" data-act="nday" data-day2="${i}" style="align-items:flex-start"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${(data['day'+i] || []).length ? '🏋️ ' + esc(dayTitle(i)) : '😴 Repos'}</b>${mealsOf(nut).map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; return `<small>${ico} ${isAway(profile.id, i, m, wk) ? '🧳 Hors de la maison' : r ? esc(r.n) : '–'}</small>`; }).join('')}</span></button>`).join('')}</div>${recettesCard()}`;
 }
 // semaine prochaine : aperçu des repas, chaque repas s'ouvre en fiche recette
 function nutSemaineNext(){
@@ -5214,7 +5216,7 @@ function nutSemaineNext(){
     <p style="font-size:14px;margin-top:6px">💶 ≈ <b>${eur(t)}</b> pour vous 2${mx ? ` · budget ${eur(mx)} ${t > mx ? '⚠️' : '✅'}` : ''}</p>
     ${plan.cmp ? `<p style="font-size:13px;margin-top:6px">🥘 ${plan.batch ? `Menus batch (≈ ${eur(plan.cmp.batch)}), moins chers que les menus classiques (≈ ${eur(plan.cmp.classique)})` : `Menus classiques (≈ ${eur(plan.cmp.classique)}) : le batch serait revenu plus cher (≈ ${eur(plan.cmp.batch)})`}.</p>` : ''}
     <p class="muted" style="font-size:12px;margin-top:6px">Touche un repas pour voir la recette et vos portions.</p></div>
-  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<div class="wkday" style="align-items:flex-start;cursor:default"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${esc(d)} ${fmtD(D[i])}</b>${MEALS.map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; if (isAway(profile.id, i, m, wk)) return `<small>${ico} 🧳 Hors de la maison</small>`; return r ? `<button class="semrec" data-x="semrec" data-d="${i}" data-m="${m}"><small>${ico} ${r.e} ${esc(r.n)} ›</small></button>` : ''; }).join('')}</span></div>`).join('')}</div>`;
+  <div class="wk" style="margin-top:12px">${DAY_NAMES.map((d, i) => `<div class="wkday" style="align-items:flex-start;cursor:default"><span class="n">${DAY_SHORT[i]}</span><span class="t"><b>${esc(d)} ${fmtD(D[i])}</b>${mealsOf(nut).map(([m, l, ico]) => { const r = REC_BY[ridOf(plan, i, m, profile.id)]; if (isAway(profile.id, i, m, wk)) return `<small>${ico} 🧳 Hors de la maison</small>`; return r ? `<button class="semrec" data-x="semrec" data-d="${i}" data-m="${m}"><small>${ico} ${r.e} ${esc(r.n)} ›</small></button>` : ''; }).join('')}</span></div>`).join('')}</div>`;
 }
 function sheetRecNext(d, meal){
   const wk = wkShift(curWk(), 1), rid = ridOf(planOf(wk), d, meal, profile.id), p = portion(rid, profile.id, meal, d, wk); if (!p) return;
@@ -8114,7 +8116,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 153;
+const APP_VERSION = 154;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
