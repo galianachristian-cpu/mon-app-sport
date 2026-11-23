@@ -890,11 +890,17 @@ body.ecran-on #mini.show{bottom:calc(16px + var(--safe-b))}
 .ec-meal b{font-family:'Outfit',system-ui,sans-serif;font-size:18px;display:block}
 .ec-meal small{color:var(--soft);font-size:13px}
 .ec-meal .go{margin-left:auto;font-size:22px;color:var(--muted)}
+.ec-meal.solo{border-left:6px solid var(--c)}
+.ec-whos{display:flex;gap:6px;margin-bottom:3px}
+.ec-who{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:14px;color:var(--c);vertical-align:middle}
+.ec-who i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--c);color:#0b0f19;display:grid;place-items:center;font-size:12px;font-weight:900}
+.ec-who.ec-both{color:var(--soft)}
+.ec-dm{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .ec-lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:12px}
 .ec-day{list-style:none;margin:6px 0 0;padding:0}
 .ec-day li{display:flex;gap:8px;font-size:14px;padding:5px 0;border-bottom:1px solid var(--line);align-items:baseline}
 .ec-day li:last-child{border-bottom:0}
-.ec-day li span{color:var(--muted);flex:0 0 92px}
+.ec-day li>span{color:var(--muted);flex:0 0 92px}
 .ec-day li.past{opacity:.45}
 .ec-day li button{all:unset;cursor:pointer;flex:1}
 .ec-bot{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
@@ -1964,6 +1970,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [155, [['📺', 'iPad, En cuisine : on voit pour qui est chaque plat', 'pastille de couleur (Moi en bleu, Béa en rose, comme pour le sport) sur les plats de chacun, et « Pour vous deux » quand c’est le même']]],
   [154, [['🍎', 'Plus de collation affichée avec le dessert', 'vue Semaine : la collation n’apparaît plus quand le dessert du midi et du soir la remplace (elle n’était déjà plus comptée)']]],
   [153, [['🛒', 'Liste de courses à jour', 'les kiwis de Béa sont retirés tout de suite sur tous les appareils, la liste et les menus se recalculent']]],
   [152, [['🥞', 'Plus de sarrasin', 'les galettes deviennent des crêpes salées complètes à la farine de blé'], ['🥝', 'Pas de kiwi pour Béa', 'ses desserts passent à d’autres fruits de saison']]],
@@ -8116,7 +8123,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 154;
+const APP_VERSION = 155;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8243,11 +8250,13 @@ function ecMealOf(d, meal){
     if (x) out.push(Object.assign({ p }, x)); });
   return out;
 }
+const ecWho = p => `<span class="ec-who" style="--c:${p.a1}"><i>${esc(ecNom(p).slice(0, 1).toUpperCase())}</i>${esc(ecNom(p))}</span>`;
 function ecMealBtn(d, meal, when){
   const L = ecMealOf(d, meal).filter(x => x.por), lbl = (MEALS.find(m => m[0] === meal) || [])[1] || '';
   if (!L.length) return `<p class="ec-more">${when} : personne à la maison ou pas de recette prévue.</p>`;
   const R = {}; L.forEach(x => { (R[x.por.r.id] = R[x.por.r.id] || { r: x.por.r, who: [] }).who.push(x.p); });
-  return Object.values(R).map(({ r, who }) => `<button class="ec-meal" data-ec="rec" data-d="${d}" data-meal="${meal}" data-rid="${esc(r.id)}"><span class="e">${r.e}</span><span><small>${when} · ${lbl}</small><b>${esc(r.n)}</b><small>⏱️ ${r.min} min · pour ${who.map(p => esc(ecNom(p))).join(' et ')}</small></span><span class="go">›</span></button>`).join('');
+  /* à qui est le plat : pastille et bord de la couleur de la personne (comme les colonnes sport) */
+  return Object.values(R).map(({ r, who }) => `<button class="ec-meal${who.length === 1 ? ' solo' : ''}" style="--c:${who.length === 1 ? who[0].a1 : 'var(--line)'}" data-ec="rec" data-d="${d}" data-meal="${meal}" data-rid="${esc(r.id)}"><span class="e">${r.e}</span><span><span class="ec-whos">${who.length > 1 && L.length > 1 && Object.keys(R).length === 1 ? '<span class="ec-who ec-both">👫 Pour vous deux</span>' : who.map(ecWho).join('')}</span><small>${when} · ${lbl}</small><b>${esc(r.n)}</b><small>⏱️ ${r.min} min</small></span><span class="go">›</span></button>`).join('');
 }
 function ecCookCol(){
   /* menus en ligne pas encore chargés : on ne montre pas un menu fabriqué sur l'iPad */
@@ -8256,8 +8265,11 @@ function ecCookCol(){
   let menu = '';
   try{
     menu = MEALS.map(([m, lbl, ico]) => { const L = ecMealOf(d, m).filter(x => x.por); if (!L.length) return '';
-      const names = [...new Set(L.map(x => x.por.r.e + ' ' + x.por.r.n))].join(' · '), past = { pdj: 10, dej: 14, col: 17, din: 22 }[m] <= h;
-      return `<li class="${past ? 'past' : ''}"><span>${ico} ${lbl}</span><button data-ec="rec" data-d="${d}" data-meal="${m}" data-rid="${esc(L[0].por.r.id)}">${esc(names)}</button></li>`; }).join('');
+      const past = { pdj: 10, dej: 14, col: 17, din: 22 }[m] <= h, same = new Set(L.map(x => x.por.r.id)).size === 1;
+      /* même plat pour les deux : une ligne ; plats différents : un plat par personne, avec sa pastille */
+      const btns = same ? `<button data-ec="rec" data-d="${d}" data-meal="${m}" data-rid="${esc(L[0].por.r.id)}">${esc(L[0].por.r.e + ' ' + L[0].por.r.n)}</button>`
+        : L.map(x => `<button data-ec="rec" data-d="${d}" data-meal="${m}" data-rid="${esc(x.por.r.id)}">${ecWho(x.p)} ${esc(x.por.r.e + ' ' + x.por.r.n)}</button>`).join('');
+      return `<li class="${past ? 'past' : ''}"><span>${ico} ${lbl}</span><div class="ec-dm">${btns}</div></li>`; }).join('');
   }catch(e){ menu = ''; }
   let nShop = 0; try{ nShop = ecShopData().n; }catch(e){ nShop = 0; }
   return `<section class="ec-col ec-cook"><h3>👩‍🍳 En cuisine</h3>${ecThawHtml()}
