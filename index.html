@@ -1970,6 +1970,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [156, [['🐑', 'Plus de variété de viandes', 'agneau (navarin, gigot, curry, brochettes), lapin, porc, veau et maquereau : 11 nouveaux plats légers'], ['🍗', 'Poulet et viande hachée : 2 repas chacun par semaine au plus', 'à partir des menus de la semaine prochaine (Nutrition → Semaine → Semaine prochaine)']]],
   [155, [['📺', 'iPad, En cuisine : on voit pour qui est chaque plat', 'pastille de couleur (Moi en bleu, Béa en rose, comme pour le sport) sur les plats de chacun, et « Pour vous deux » quand c’est le même']]],
   [154, [['🍎', 'Plus de collation affichée avec le dessert', 'vue Semaine : la collation n’apparaît plus quand le dessert du midi et du soir la remplace (elle n’était déjà plus comptée)']]],
   [153, [['🛒', 'Liste de courses à jour', 'les kiwis de Béa sont retirés tout de suite sur tous les appareils, la liste et les menus se recalculent']]],
@@ -4150,6 +4151,9 @@ const FOODS = Object.fromEntries([
   ['cacao','Cacao en poudre non sucré',360,20,14,11,'epicerie','cacao'],
   ['veau','Veau (sauté ou escalope)',120,21,0,4,'viande','prot'],
   ['porc','Filet mignon de porc',120,22,0,3.5,'viande','prot'],
+  ['agneau','Agneau (gigot ou épaule dégraissés)',180,20,0,11,'viande','prot'],
+  ['lapin','Lapin (cuisses ou râble)',135,21,0,5.5,'viande','prot'],
+  ['maquereau','Filets de maquereau (rayon poisson frais)',200,19,0,14,'viande','prot'],
   ['sarrasin','Farine de sarrasin',340,13,68,3,'epicerie','fec'],
   ['chevre','Fromage de chèvre (bûche)',300,18,2,25,'cremerie','fromage'],
   ['avocat','Avocats',160,2,2,15,'fruits','avocat',{u:'avocat',g:150}],
@@ -4174,10 +4178,10 @@ const FOODS = Object.fromEntries([
   ['charcuterie','Jambon cru et charcuterie',250,26,0.5,16,'viande','prot']
 ].map(([id, n, k, p, g, l, ray, grp, unit]) => [id, { id, n, k, p, g, l, ray, grp, unit }]));
 // poids cuit ≈ poids cru × facteur (les quantités des menus sont pesées crues)
-const CUIT = { veau:.75, porc:.75, riz:2.6, pates:2.3, semoule:2.3, lentille:2.5, poulet:.75, dinde:.75, boeuf:.75, colin:.8, saumon:.8 };
+const CUIT = { veau:.75, porc:.75, agneau:.7, lapin:.75, maquereau:.8, riz:2.6, pates:2.3, semoule:2.3, lentille:2.5, poulet:.75, dinde:.75, boeuf:.75, colin:.8, saumon:.8 };
 const cuitG = (f, g) => Math.round(g * CUIT[f] / 10) * 10;
 /* plats où tout cuit ensemble : poids de l'assiette une fois cuit (pain et salade servis à côté non comptés) */
-const MIX = new Set(['soupe-oignon', 'coquillettes-risotto', 'poelee-pc-epinards', 'lasagnes-legeres', 'carbonara-legere', 'tartiflette-legere', 'parmentier-colin', 'shakshuka', 'quiche-jambon-courgette', 'bowl-semoule-pc', 'pates-poulet-brocoli', 'bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
+const MIX = new Set(['navarin-agneau', 'curry-agneau', 'lapin-carottes', 'soupe-oignon', 'coquillettes-risotto', 'poelee-pc-epinards', 'lasagnes-legeres', 'carbonara-legere', 'tartiflette-legere', 'parmentier-colin', 'shakshuka', 'quiche-jambon-courgette', 'bowl-semoule-pc', 'pates-poulet-brocoli', 'bolo', 'chili', 'dahl', 'pates-thon', 'curry-pc', 'riz-cantonais', 'gratin-courgette', 'tofu-wok', 'poulet-chou', 'couscous-poulet', 'flan-epinard', 'colin-tomate', 'dinde-champi', 'boeuf-poivron', 'hachis-patate', 'salade-thon', 'salade-lentilles', 'minestrone', 'gratin-pates-thon', 'poulet-tikka', 'pates-sardines', 'tajine-poulet', 'wok-dinde', 'soupe-lentilles', 'pates-poulet-champi', 'boulettes-semoule', 'oeufs-epinards', 'salade-pdt-thon', 'chili-vege', 'gratin-chou-jambon', 'pates-saumon-epinard', 'boeuf-pdt-carottes', 'salade-pc-feta', 'soupe-poulet', 'riz-sardines', 'salade-pates-poulet']);
 const MIX_SIDE = new Set(['pain', 'salade']);
 const MIXC = Object.assign({}, CUIT, { champignon: .6, courgette: .85, epinard: .8, poivron: .85, oignon: .8, carotte: .9, brocoli: .9, haricotvert: .9, poelee: .9, chou: .9, patate: .9, pdt: .95, lait: .85, poireau: .8, endive: .7, lardons: .8, merguez: .8 });
 const isMix = por => !!(por && por.r && MIX.has(por.r.id));
@@ -4190,6 +4194,7 @@ const cuitTxt = (f, g) => CUIT[f] ? ` · cru, ≈ ${cuitG(f, g)} g cuit` : '';
 const RAYONS = { legumes:'🥦 Fruits & légumes frais', fruits:'🥦 Fruits & légumes frais', viande:'🥩 Boucherie & charcuterie', cremerie:'🥛 Crémerie & œufs', surgele:'🧊 Surgelés', epicerie:'🥫 Épicerie', boulangerie:'🥖 Boulangerie' };
 // remplacements possibles (même famille), dans l'ordre de préférence
 const SUBS = {
+  agneau:['boeuf','porc','dinde','poulet'], lapin:['poulet','dinde','porc'], porc:['dinde','poulet','veau'], veau:['dinde','poulet','porc'], maquereau:['sardine','saumon','thon'],
   poulet:['dinde','jambon','oeuf','tofu'], dinde:['poulet','jambon','oeuf','tofu'], boeuf:['dinde','poulet','haricotrouge','tofu'], jambon:['dinde','poulet','oeuf','thon'],
   thon:['sardine','poulet','oeuf','poischiche'], sardine:['thon','oeuf','poulet'], colin:['saumon','thon','poulet','oeuf'], saumon:['colin','sardine','thon','poulet'],
   tofu:['oeuf','poulet','poischiche'], oeuf:['jambon','tofu','fblanc'],
@@ -4346,6 +4351,18 @@ const RECIPES = [
   // Ajouts (v135) : classiques français, version légère
   R('blanquette-legere','Blanquette de veau légère & riz','plat',50,[['veau',150],['carotte',120],['champignon',80],['oignon',40],['fblanc',50],['riz',70]],'Faire revenir le veau en morceaux, couvrir d’eau avec un bouquet garni, l’oignon et les carottes, mijoter 40 min. Ajouter les champignons 10 min avant la fin. Hors du feu, lier la sauce avec le fromage blanc et un jus de citron. Servir avec le riz.','🍲'),
   R('filet-mignon-puree','Filet mignon, purée & carottes','plat',35,[['porc',150],['pdt',250],['lait',60],['carotte',150]],'Dorer le filet mignon sur toutes les faces, finir 20 min au four à 180 °C. Cuire les pommes de terre et les carottes à l’eau. Écraser les pommes de terre avec le lait chaud, sel, poivre, muscade.','🥩'),
+  /* plus de variété de viandes : agneau, lapin, porc, veau, maquereau (poulet et viande hachée limités à 2 repas chacun par semaine) */
+  R('navarin-agneau','Navarin d’agneau aux carottes & pommes de terre','plat',75,[['agneau',160],['carotte',150],['pdt',110],['haricotvert',100],['oignon',30]],'Dégraisser la viande et la couper en cubes. La dorer dans une cocotte avec l’huile et l’oignon, saupoudrer de thym, ail et laurier, couvrir d’eau. Mijoter 45 min à couvert. Ajouter carottes et pommes de terre en morceaux, 25 min de plus, puis les haricots verts 5 min.','🐑'),
+  R('gigot-haricots','Gigot d’agneau rôti, haricots verts & pommes de terre','plat',60,[['agneau',150],['haricotvert',200],['pdt',150],['huile',5]],'Piquer le gigot d’ail, frotter de thym et romarin. Four à 200 °C : 15 min par 500 g pour rosé. Pendant ce temps, rôtir les pommes de terre en quartiers avec l’huile et cuire les haricots verts. Laisser reposer la viande 10 min avant de trancher. Le reste du gigot se mange froid le lendemain.','🍖'),
+  R('curry-agneau','Curry d’agneau doux aux épinards & riz','plat',45,[['agneau',140],['epinard',150],['riz',60],['oignon',40],['fblanc',40],['huile',5]],'Dorer l’agneau en cubes avec l’oignon et l’huile, ajouter 2 c. à café de curry et un peu de gingembre, couvrir d’eau, mijoter 30 min. Ajouter les épinards 5 min. Hors du feu, lier avec le fromage blanc. Servir avec le riz.','🍛'),
+  R('brochettes-agneau','Brochettes d’agneau au citron, semoule & carottes au cumin','plat',30,[['agneau',140],['semoule',60],['carotte',150],['fblanc',50],['oignon',20]],'Mariner les cubes d’agneau 15 min avec citron, ail, cumin et herbes. Embrocher, griller 8 à 10 min. Carottes râpées au cumin et au citron. Sauce : fromage blanc, menthe ou ciboulette. Servir avec la semoule.','🍢'),
+  R('lapin-moutarde','Lapin à la moutarde, haricots verts & pommes de terre','plat',50,[['lapin',180],['haricotvert',200],['pdt',150],['oignon',30],['fblanc',40]],'Badigeonner le lapin de moutarde. Le dorer à la poêle avec l’oignon, mouiller d’un verre d’eau, couvrir et cuire 35 min. Hors du feu, ajouter le fromage blanc à la sauce. Servir avec les pommes de terre vapeur et les haricots verts.','🐇'),
+  R('lapin-carottes','Lapin mijoté aux carottes & riz','plat',55,[['lapin',180],['carotte',200],['riz',60],['oignon',30],['huile',5]],'Dorer les morceaux de lapin dans l’huile avec l’oignon, ajouter les carottes en rondelles, thym et laurier, couvrir d’eau à mi-hauteur. Mijoter 40 min à couvert. Servir avec le riz.','🥕'),
+  R('porc-brocoli','Sauté de porc au brocoli & riz','plat',25,[['porc',140],['brocoli',200],['carotte',80],['riz',60],['huile',5]],'Couper le filet mignon en lanières, le saisir 4 min dans l’huile chaude avec ail et gingembre. Ajouter les carottes en bâtonnets et le brocoli, 6 min à couvert. Servir avec le riz.','🥦'),
+  R('porc-lentilles','Filet mignon de porc aux lentilles & carottes','plat',40,[['porc',140],['lentille',60],['carotte',150],['oignon',30]],'Cuire les lentilles 25 min avec carottes en rondelles, oignon, thym et laurier. Dorer le filet mignon entier, finir 15 min au four à 180 °C. Trancher et servir sur les lentilles.','🐖'),
+  R('veau-poelee','Escalope de veau, poêlée de légumes & pâtes','plat',20,[['veau',150],['poelee',200],['pates',60],['huile',5]],'Cuire les pâtes. Poêler la poêlée de légumes 8 min. Saisir les escalopes 2 min par face dans l’huile, citron et persil. Servir ensemble.','🍝'),
+  R('maquereau-four','Maquereau au four, pommes de terre & salade','plat',30,[['maquereau',130],['pdt',170],['salade',60],['fblanc',60]],'Rôtir les pommes de terre en quartiers 25 min à 200 °C. Ajouter les filets de maquereau, côté peau en dessous, avec citron et herbes, pour les 10 dernières minutes. Servir avec la salade et une sauce fromage blanc, citron et ciboulette.','🐟'),
+  R('maquereau-poireaux','Papillote de maquereau aux poireaux & riz','plat',30,[['maquereau',130],['poireau',200],['riz',40],['fblanc',60]],'Faire fondre les poireaux émincés 10 min à la poêle avec un peu d’eau. Les répartir sur du papier cuisson, poser le maquereau, citron, poivre, fermer. Four 15 min à 200 °C. Servir avec le riz et le fromage blanc aux herbes.','🐠'),
   R('soupe-oignon','Soupe à l’oignon gratinée & œufs pochés','plat',40,[['oignon',250],['pain',60],['emmental',25],['oeuf',120]],'Faire fondre les oignons émincés 15 min à feu doux. Couvrir de bouillon, cuire 15 min. Pocher les œufs 3 min dans la soupe. Verser dans des bols, poser le pain grillé, parsemer d’emmental, gratiner 5 min.','🧅'),
   /* Chris et Béa n'aiment pas le sarrasin : crêpes salées à la farine de blé (même identifiant, pour les menus déjà prévus) */
   R('galettes-sarrasin','Crêpes salées complètes & poireaux','plat',25,[['farine',50],['lait',100],['oeuf',60],['jambon',60],['emmental',20],['poireau',150],['salade',50]],'Pâte : farine, lait, une pincée de sel, un filet d’eau si besoin, jusqu’à une pâte fluide. Faire fondre les poireaux émincés 10 min. Cuire une crêpe, garnir de poireaux, jambon, emmental, casser l’œuf au centre, replier les bords, couvrir 3 min.','🥞'),
@@ -4555,7 +4572,7 @@ function roundG(f, g){
 // Ajuste les protéines du repas vers l'objectif : plus d'aliments protéinés, moins de féculents (calories gardées)
 const PROT_G = ['prot','laitier','lait','legumineuse'], CARB_G = ['fec','cereale','pain'];
 // portion maximale raisonnable par repas (g, poids cru / égoutté)
-const MAXG = { poulet:200, dinde:200, boeuf:200, colin:250, saumon:180, thon:150, sardine:150, jambon:120, oeuf:240, tofu:250, poischiche:250, haricotrouge:250, lentille:100, riz:130, pates:140, semoule:130, avoine:100, pdt:500, patate:450 };
+const MAXG = { agneau:180, lapin:230, maquereau:170, porc:200, veau:200, poulet:200, dinde:200, boeuf:200, colin:250, saumon:180, thon:150, sardine:150, jambon:120, oeuf:240, tofu:250, poischiche:250, haricotrouge:250, lentille:100, riz:130, pates:140, semoule:130, avoine:100, pdt:500, patate:450 };
 // équilibre un repas : protéines (complément en dessert si besoin), puis lipides, puis glucides pour tomber sur les calories
 const FAT_G = ['gras','noix','fromage'];
 function macroFix(m, T, excl, side, meal){
@@ -4677,8 +4694,9 @@ function genPlan(wk, keep, from){
   const BT = foyer.batch === 1 && foyer.commun ? (() => { const L = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && isMix({ r }) && recipeOk(r, excls)), mo), 8), out = [];
     /* variété : au plus 2 plats avec le même féculent et 2 avec la même protéine (sinon 5 plats de pâtes) */
     const key = (r, G) => (r.ing.find(([f]) => G.includes(FOODS[f].grp)) || [''])[0], FEC = ['fec', 'cereale', 'pain', 'legumineuse'], PRO = ['prot'], nF = {}, nP = {};
-    for (let i = 0; i < 6; i++){ const ok = L.filter(r => (nF[key(r, FEC)] || 0) < 2 && (nP[key(r, PRO)] || 0) < 2), id = pickW(ok.length ? ok : L, rng(S + 'batch' + i), ctx); if (!id) return null;
+    for (let i = 0; i < 6; i++){ const ok0 = L.filter(r => (nF[key(r, FEC)] || 0) < 2 && (nP[key(r, PRO)] || 0) < 2 && protOk(r, nP)), ag = i === 0 ? ok0.filter(r => mainProt(r) === 'agneau') : [], ok = ag.length ? ag : ok0, id = pickW(ok.length ? ok : L, rng(S + 'batch' + i), ctx); if (!id) return null;
       const r = REC_BY[id]; nF[key(r, FEC)] = (nF[key(r, FEC)] || 0) + 1; nP[key(r, PRO)] = (nP[key(r, PRO)] || 0) + 1; out.push(id); ctx.used.add(id); } return out; })() : null;
+  if (BT){ ctx.prot = {}; BT.forEach(id => { const mp = mainProt(REC_BY[id]); ctx.prot[mp] = (ctx.prot[mp] || 0) + 2; }); } /* batch : chaque plat = 2 repas */
   for (let d = 0; d < 7; d++){
     if (keep && d < from){ const day = keep.days[d]; days.push(day); ['dej','din'].forEach(m => { const v = day[m]; (typeof v === 'string' ? [v] : Object.values(v || {})).forEach(id => { used.push(id); ctx.used.add(id); }); }); continue; }
     const day = {};
@@ -4695,13 +4713,15 @@ function genPlan(wk, keep, from){
     ['dej','din'].forEach(meal => {
       const PLS = d === 6 && meal === 'dej'; /* dimanche midi : repas plaisir */
       if (BT && d < 6){ const sl = d * 2 + (meal === 'din' ? 1 : 0), id = BT[(sl < 6 ? 0 : 3) + (sl % 3)]; used.push(id); day[meal] = id; return; }
-      if (foyer.commun){ const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14); const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; }
+      if (foyer.commun){ const L0 = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, excls)), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls)), mo), 14), cnt = ctx.prot || (ctx.prot = {}), L1 = L0.filter(r => protOk(r, cnt)), LA = !PLS && d === 2 && meal === 'din' && !cnt.agneau ? L1.filter(r => mainProt(r) === 'agneau') : [], L = LA.length ? LA : L1.length ? L1 : L0; /* un repas d'agneau par semaine */ const id = pickW(L, rng(S + meal + d), ctx); used.push(id); ctx.used.add(id); day[meal] = id; const mp = mainProt(REC_BY[id] || { ing: [] }); cnt[mp] = (cnt[mp] || 0) + 1; }
       else { day[meal] = {}; pids.forEach((pid, k) => { const L = PLS ? seasonal(RECIPES.filter(r => r.pl && recipeOk(r, [excls[k]])), mo) : protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, [excls[k]])), mo), 14); const id = pickW(L, rng(S + meal + d + pid), Object.assign({}, ctx, { n: 1 })); used.push(id); ctx.used.add(id); day[meal][pid] = id; }); }
     });
     days.push(day);
   }
   return { days, commun: foyer.commun, v: 2, season: 1, rv: RECIPES.length, batch: BT ? 1 : 0 };
 }
+const PROT_LIM = { poulet: 2, boeuf: 2, maquereau: 1 }, mainProt = r => (r.ing.find(([f]) => FOODS[f] && FOODS[f].grp === 'prot') || [''])[0];
+const protOk = (r, cnt) => !PROT_LIM[mainProt(r)] || (cnt[mainProt(r)] || 0) < PROT_LIM[mainProt(r)];
 const ridOf = (plan, d, meal, pid) => { const v = plan.days[d][meal]; return typeof v === 'string' ? v : v && v[pid]; };
 function planOf(wk){
   if (!foyer.plans[wk] || foyer.plans[wk].commun !== foyer.commun){ planBuild(wk); Object.keys(foyer.plans).sort().slice(0, -4).forEach(k => delete foyer.plans[k]); saveFoyer(); }
@@ -4719,7 +4739,7 @@ function dayPortions(pid, d, wk){ const plan = planOf(wk), dn = dessertOn(ctxOf(
 /* ============================================================
    BUDGET — prix moyens en supermarché (€ par kg, poids acheté), modifiables avec les prix de son magasin
    ============================================================ */
-const PRICE = { farine:1.5, beurre:9, sucre:1.3, creme:5, mascarpone:9, biscuit:8, frites:3, pizza:6, fondu:14, lardons:11, merguez:11, charcuterie:22, veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
+const PRICE = { agneau:16, lapin:12, maquereau:10, farine:1.5, beurre:9, sucre:1.3, creme:5, mascarpone:9, biscuit:8, frites:3, pizza:6, fondu:14, lardons:11, merguez:11, charcuterie:22, veau:22, porc:13, sarrasin:4, chevre:14, avocat:6, poireau:2.5, endive:3, kiwi:4, clementine:3, poire:3, compote:3.5, chocolat:12, cacao:12, oeuf:6, poulet:13, dinde:12, boeuf:13, jambon:14, thon:14, sardine:11, colin:11, saumon:20, tofu:9, riz:2.2, pates:2.5, semoule:2.2, pdt:1.5, patate:3, pain:4.5, tortilla:5, galette:11, avoine:2.2,
   lentille:3.5, poischiche:3.5, haricotrouge:3.5, brocoli:3.2, haricotvert:2.8, poelee:3, epinard:2.8, courgette:2.8, carotte:1.6, tomate:3.2, poivron:4.5, champignon:5, chou:3, concombre:2.5, salade:4, oignon:2,
   concassee:2.5, banane:2, pomme:2.6, orange:2.5, fruitrouge:7, fblanc:2.6, skyr:4.5, yaourt:2.5, lait:1.1, emmental:11, mozza:9, feta:12, huile:9, cacahuete:9, amande:16, miel:13, soja:7 };
 const STORES = { moyen:['Prix moyens',1], promo:['Promos et discount (−15 %)',.85], leclerc:['Leclerc',.95], inter:['Intermarché',.98], superu:['Super U',.99], carrefour:['Carrefour',1], auchan:['Auchan',.97], lidl:['Lidl',.85], aldi:['Aldi',.84] };
@@ -4739,14 +4759,17 @@ function budgetFit(wk){
   const plats = protDense(seasonal(RECIPES.filter(r => r.type === 'plat' && !r.pl && recipeOk(r, excls) && !banOf()[r.id]), monthOfWk(wk)), 14).sort((a, b) => base(b) - base(a));
   const start = weekCost(wk, 0); let tot = start, n = 0, nSw = 0;
   const tried = new Set();
+  const nAg = () => new Set(plan.days.flatMap(day => ['dej', 'din'].map(m => day[m]).filter(v => typeof v === 'string' && REC_BY[v] && mainProt(REC_BY[v]) === 'agneau'))).size; /* plats d'agneau différents (en batch, un plat = 2 repas) */
   while (tot > B.max && n++ < 40){
     let worst = null;
-    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v] || REC_BY[v].pl) return; /* le repas plaisir du dimanche est gardé */ const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
+    for (let d = from; d < 7; d++) ['dej', 'din'].forEach(m => { const v = plan.days[d][m]; if (typeof v !== 'string' || tried.has(d + m) || !REC_BY[v] || REC_BY[v].pl || (mainProt(REC_BY[v]) === 'agneau' && nAg() <= 1)) return; /* un repas d'agneau par semaine est gardé */ /* le repas plaisir du dimanche est gardé */ const c = base(REC_BY[v]); if (!worst || c > worst.c) worst = { d, m, c }; });
     if (!worst) break;
     const used = new Set(); plan.days.forEach(day => ['dej', 'din'].forEach(m => { const v = day[m]; if (typeof v === 'string') used.add(v); }));
     const fecOf = r => (r.ing.find(([f]) => ['fec', 'cereale', 'pain', 'legumineuse'].includes(FOODS[f].grp)) || [''])[0], wr = REC_BY[plan.days[worst.d][worst.m]];
     const nFec = f => [...used].filter(id => REC_BY[id] && REC_BY[id] !== wr && fecOf(REC_BY[id]) === f).length;
-    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .9 && (!plan.batch || (isMix({ r }) && nFec(fecOf(r)) < 2)));
+    const cntP = {}; plan.days.forEach(day => ['dej', 'din'].forEach(m => { const v = day[m]; if (typeof v === 'string' && REC_BY[v] && REC_BY[v] !== wr){ const mp = mainProt(REC_BY[v]); cntP[mp] = (cntP[mp] || 0) + 1; } })); /* repas déjà prévus par viande ; en batch, le nouveau plat compte pour 2 repas */
+    const altOk = r => !PROT_LIM[mainProt(r)] || (cntP[mainProt(r)] || 0) + (plan.batch ? 2 : 1) <= PROT_LIM[mainProt(r)];
+    const alt = plats.find(r => !used.has(r.id) && base(r) < worst.c * .9 && altOk(r) && (!plan.batch || (isMix({ r }) && nFec(fecOf(r)) < 2)));
     if (!alt){ tried.add(worst.d + worst.m); continue; }
     if (plan.batch){ const old = plan.days[worst.d][worst.m]; for (let d2 = from; d2 < 6; d2++) ['dej', 'din'].forEach(m2 => { if (plan.days[d2][m2] === old) plan.days[d2][m2] = alt.id; }); } else plan.days[worst.d][worst.m] = alt.id;
     nSw++; tot = weekCost(wk, 0);
@@ -8123,7 +8146,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 155;
+const APP_VERSION = 156;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
