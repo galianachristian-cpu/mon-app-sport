@@ -182,6 +182,12 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     foyer.plans[wk] = genPlan(wk); const r6 = REC_BY[ridOf(foyer.plans[wk], 6, 'dej', profile.id)], ok1 = !!(r6 && r6.pl) && ![0, 1, 2, 3, 4, 5].some(d => ['dej', 'din'].some(m => REC_BY[ridOf(foyer.plans[wk], d, m, profile.id)].pl));
     const ok2 = RECIPES.filter(r => r.pl).length >= 8 && RECIPES.filter(r => r.type === 'dp').length >= 5;
     if (sv) foyer.plans[wk] = sv; else delete foyer.plans[wk]; saveFoyer = sf; return ok1 && ok2; }));
+  check('Viandes variées : poulet et viande hachée ≤ 2 repas, un repas d’agneau par semaine (avec budget)', await p.evaluate(() => { const sf = saveFoyer, sb = clone(foyer.budget || null), sc = foyer.commun, sbt = foyer.batch, ss = foyer.salt, wk = wkShift(curWk(), 1), sp = foyer.plans[wk]; saveFoyer = () => {};
+    foyer.budget = { max: 90, store: 'promo' }; foyer.commun = true; foyer.batch = 0; let ok = true;
+    try{ for (let s = 0; s < 5; s++){ foyer.salt = s; delete foyer.plans[wk]; const P = planOf(wk), c = {}; P.days.forEach(day => ['dej', 'din'].forEach(m => { const mp = mainProt(REC_BY[day[m]]); c[mp] = (c[mp] || 0) + 1; }));
+      if ((c.poulet || 0) > 2 || (c.boeuf || 0) > 2 || !c.agneau) ok = false; } }
+    finally{ foyer.plans[wk] = sp; if (!sp) delete foyer.plans[wk]; foyer.budget = sb; foyer.commun = sc; foyer.batch = sbt; foyer.salt = ss; saveFoyer = sf; }
+    return ok; }));
   check('Budget : ajustement sans toucher au repas plaisir ni en mettre en semaine', await p.evaluate(() => { const sf = saveFoyer, sb = clone(foyer.budget || null), wk = wkShift(curWk(), 1), sp = foyer.plans[wk]; saveFoyer = () => {};
     foyer.plans[wk] = genPlan(wk); const sun = ridOf(foyer.plans[wk], 6, 'dej', profile.id), c0 = weekCost(wk, 0); foyer.budget = { max: Math.round(c0 * .8), store: 'moyen' }; budgetFit(wk);
     const ok = ridOf(foyer.plans[wk], 6, 'dej', profile.id) === sun && weekCost(wk, 0) < c0 && ![0, 1, 2, 3, 4, 5].some(d => ['dej', 'din'].some(m => REC_BY[ridOf(foyer.plans[wk], d, m, profile.id)].pl)) && !!STORES.promo;
