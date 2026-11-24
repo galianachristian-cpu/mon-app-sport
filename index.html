@@ -1970,6 +1970,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [158, [['⚡', 'Séance HIIT guidée remise dans l’ordre', 'échauffement → HIIT → abdos → retour au calme tout à la fin ; plus aucun étirement pour Moi']]],
   [157, [['🧘', 'Plus d’étirements pour Moi', 'retirés de toutes tes séances (fin de séance et séance souplesse du jour de repos), plus de proposition « Retour au calme » après la séance ; l’échauffement reste']]],
   [156, [['🐑', 'Plus de variété de viandes', 'agneau (navarin, gigot, curry, brochettes), lapin, porc, veau et maquereau : 11 nouveaux plats légers'], ['🍗', 'Poulet et viande hachée : 2 repas chacun par semaine au plus', 'à partir des menus de la semaine prochaine (Nutrition → Semaine → Semaine prochaine)']]],
   [155, [['📺', 'iPad, En cuisine : on voit pour qui est chaque plat', 'pastille de couleur (Moi en bleu, Béa en rose, comme pour le sport) sur les plats de chacun, et « Pour vous deux » quand c’est le même']]],
@@ -5716,19 +5717,22 @@ function fullPlan(di){
   let H = null, hs = null;
   try { H = hiit ? hiitOfDay(di) : null; hs = hiit ? hiitSeq(H, l) : null; } finally { HPICK = null; }
   let W = L.filter(e => e.ph === 'warm' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!W.length) W = FULL_WARM.filter(n => LIB_BY[n] && canDo(n) && !(isP12() && /jump|saut/i.test(n))); /* programme 12 semaines : pas de sauts */
-  let C = L.filter(e => e.ph === 'cool' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!C.length) C = FULL_COOL.filter(n => LIB_BY[n]);
+  let C = L.filter(e => e.ph === 'cool' && typ(e) !== 'c' && LIB_BY[e.n]).map(e => e.n); if (!C.length && !(coach && coach.noEtir)) C = FULL_COOL.filter(n => LIB_BY[n]); /* étirements refusés : aucun */
   const A = L.filter(e => e.abs && LIB_BY[e.n]).map(e => e.n);
   const S = [];
   // 1. échauffement : 45 s par mouvement (1 min de jumping jacks)
   W.forEach((n, j) => { S.push({ k: 'work', l: `Échauffement · ${n}`, nm: n, s: /jumping/i.test(n) ? 60 : 45, tour: j + 1, n: W.length }); S.push({ k: 'rest', l: 'On enchaîne', s: 8, next: W[j + 1] || (hiit ? 'HIIT' : T[0].n) }); });
   // 2. corps de séance
-  if (hiit) hs.forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
+  /* le retour au calme du HIIT (marche) passe tout à la fin, après les abdos : pas au milieu de la séance */
+  const calm = hiit && hs.length && /^Retour au calme/.test(hs[hs.length - 1].l) ? hs[hs.length - 1] : null;
+  if (hiit) (calm ? hs.slice(0, -1) : hs).forEach((x, j) => S.push(j === 0 ? Object.assign({}, x, { s: Math.min(x.s, 180) }) : x));
   else tabSeq(T.map(e => e.n), S, 'Tabata');
   // 3. abdos : 3 tours de 40 s / 20 s
   if (A.length){ S.push({ k: 'rest', l: 'Respire, on passe aux abdos', s: 45, next: A[0] });
     for (let t = 1; t <= 3; t++) A.forEach((n, j) => { S.push({ k: 'work', l: `Abdos · ${n}`, nm: n, s: 40, tour: t, n: 3 }); if (!(t === 3 && j === A.length - 1)) S.push({ k: 'rest', l: 'Repos', s: 20, next: A[(j + 1) % A.length] }); }); }
-  // 4. étirements : 40 s chacun
-  S.push({ k: 'rest', l: 'Retour au calme · on s’étire', s: 15, next: C[0] });
+  // 4. retour au calme : marche, puis étirements (40 s chacun) si la personne en veut
+  if (calm) S.push(Object.assign({}, calm, C.length ? { next: C[0] } : {}));
+  if (C.length) S.push({ k: 'rest', l: 'Retour au calme · on s’étire', s: 15, next: C[0] });
   C.forEach((n, j) => { S.push({ k: 'work', l: `Étirement · ${n}`, nm: n, s: 40, tour: j + 1, n: C.length }); if (C[j + 1]) S.push({ k: 'rest', l: 'On change', s: 8, next: C[j + 1] }); });
   const sec = S.reduce((a, x) => a + x.s, 0) + 10;
   return { S, hiit, H, l, T, W, A, C, min: Math.round(sec / 60), name: hiit ? H.n : 'Tabata · ' + ((TAB_POOL[(T[0] || {}).tabP] || {}).t || '') };
@@ -5739,7 +5743,7 @@ function fullCard(di){
   const step = (ic, t, d) => `<div><b>${ic} ${t}</b><span>${d}</span></div>`;
   return `<section class="card hiitc" style="border-color:var(--a1)"><div class="hih"><span class="hii">🎧</span><div><small class="muted">Séance complète guidée · sans prise de tête</small><h3>${esc(P.name)}</h3></div><span class="chip">⏱️ ${P.min} min</span></div>
     <p class="muted" style="font-size:13px;margin:6px 0 10px">Un seul bouton : le minuteur te guide du début à la fin, avec la voix, les bips et l’animation de chaque exercice. Tu n’as rien à toucher.</p>
-    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? (P.H.id === 'mix' ? `HIIT · ${P.H.B.length} blocs variés` : 'HIIT · ' + P.H.n) : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? P.H.B.map(b => `<span style="font-weight:800">${esc(hiitBT(b))}</span> : ${esc(b.ex.map(hiitEx).join(' / '))}`).join('<br>') : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → ')))}</div>
+    <div class="hib">${step('1.', 'Échauffement', esc(P.W.join(' → ')))}${step('2.', P.hiit ? (P.H.id === 'mix' ? `HIIT · ${P.H.B.length} blocs variés` : 'HIIT · ' + P.H.n) : `Tabata · ${P.T.length} blocs mixés de 4 min`, P.hiit ? P.H.B.map(b => `<span style="font-weight:800">${esc(hiitBT(b))}</span> : ${esc(b.ex.map(hiitEx).join(' / '))}`).join('<br>') : tabBlocks(P.T.map(e => e.n)).map((Q, j) => `<b>Bloc ${j + 1}</b> · ${esc(Q.join(' / '))}`).join('<br>'))}${P.A.length ? step('3.', 'Abdos · 3 tours de 40 s', esc(P.A.join(' + '))) : ''}${P.C.length ? step(P.A.length ? '4.' : '3.', 'Étirements', esc(P.C.join(' → '))) : step(P.A.length ? '4.' : '3.', 'Retour au calme', 'marche et respiration, 2 min')}</div>
     ${P.hiit ? `<div class="seg small" style="margin-top:10px">${LVL.map((x, i) => `<button class="${i === P.l ? 'on' : ''}" data-x="hiitlvl" data-l="${i}">${x}</button>`).join('')}</div>` : ''}
     ${di !== todayIdx() ? `<p class="his" style="text-align:center">▶️ Le bouton « Lancer ma séance complète » apparaîtra ${DAY_NAMES[di].toLowerCase()}, le jour de la séance.</p>` : all ? '<p class="his">✅ Séance faite, bravo !</p>' : `<button class="btn pri block" data-x="fullrun" style="margin-top:10px;padding:16px;font-size:17px">▶️ Lancer ma séance complète</button><button class="btn block" data-x="tvhelp" style="margin-top:8px">📺 La suivre sur la télé</button>`}</section>`;
 }
@@ -8158,7 +8162,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 157;
+const APP_VERSION = 158;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
