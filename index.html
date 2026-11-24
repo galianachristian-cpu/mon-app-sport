@@ -1868,7 +1868,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaKiwiOnce(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaKiwiOnce(); etirOff(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { budgetOnce(); batchOnce(); if (view === 'nutrition') render(); });
@@ -1970,6 +1970,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [157, [['🧘', 'Plus d’étirements pour Moi', 'retirés de toutes tes séances (fin de séance et séance souplesse du jour de repos), plus de proposition « Retour au calme » après la séance ; l’échauffement reste']]],
   [156, [['🐑', 'Plus de variété de viandes', 'agneau (navarin, gigot, curry, brochettes), lapin, porc, veau et maquereau : 11 nouveaux plats légers'], ['🍗', 'Poulet et viande hachée : 2 repas chacun par semaine au plus', 'à partir des menus de la semaine prochaine (Nutrition → Semaine → Semaine prochaine)']]],
   [155, [['📺', 'iPad, En cuisine : on voit pour qui est chaque plat', 'pastille de couleur (Moi en bleu, Béa en rose, comme pour le sport) sur les plats de chacun, et « Pour vous deux » quand c’est le même']]],
   [154, [['🍎', 'Plus de collation affichée avec le dessert', 'vue Semaine : la collation n’apparaît plus quand le dessert du midi et du soir la remplace (elle n’était déjà plus comptée)']]],
@@ -2360,7 +2361,7 @@ function viewSeance(){
   ${currentDay === todayIdx() && list.length ? fatigueCard() : ''}
   ${fm && fm.id !== 'ok' ? `<div class="advice ${fm.id === 'top' ? 'up' : ''}" style="margin-top:10px"><span>${fm.ico} <b>${fm.t}</b> · ${fm.d}</span>${fm.id === 'light' ? '<button class="btn sm" data-x="lightoff">Arrêter</button>' : ''}</div>` : ''}
   ${homeCfg().low ? '' : social}
-  ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button><button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button></div>` : ''}
+  ${s && s.end ? `<div class="row" style="margin-top:12px"><button class="btn" data-act="bilan" style="flex:1">🏁 Bilan</button>${coach && coach.noEtir ? '' : '<button class="btn pri" data-x="stretch" data-z="auto" style="flex:1">🧘 Étirements (5 min)</button>'}</div>` : ''}
   <div class="list">${list.length ? list.map((e, i) => exCard(k, e, i)).join('') : `<div class="empty"><div class="e">😴</div><b>Jour de repos ?</b><p>Ajoute un exercice pour ce jour si tu veux t’entraîner.</p><button class="btn pri" data-x="wwopen" style="margin-top:10px">📅 Faire le WOD de la semaine</button></div>`}</div>
   <div class="row" style="margin-top:14px"><button class="add" data-act="add" style="margin:0;flex:1">➕ Ajouter</button><button class="add" data-act="lib" style="margin:0;flex:1">📚 Bibliothèque</button></div>
   ${homeCfg().low ? social : ''}
@@ -5982,6 +5983,17 @@ function beaKiwiOnce(){
   if (profile.id !== 'bea' || !nut || (coach && coach.beaKiwi)) return;
   nut.excl = [...new Set([...(nut.excl || []), 'kiwi'])]; coach = Object.assign({}, coach, { beaKiwi: today() }); save();
 }
+/* Chris (« Moi ») ne veut plus d'étirements : retirés de toutes ses séances (fin de séance, séance souplesse du jour de repos),
+   plus de proposition « Retour au calme » ; vérifié à chaque ouverture (ancien programme restauré, nouveau programme…) */
+const isEtir = e => !!e && (e.ph === 'cool' || e.ph === 'mob' || e.m === 'Étirements');
+function etirOff(){
+  if (profile.id === 'user1' && !(coach && coach.noEtir)){ coach = Object.assign({}, coach, { noEtir: today() }); settings.cool = false; if (prog) prog.noEtir = true; save(); }
+  if (!(coach && coach.noEtir)) return;
+  let n = 0; for (let d = 0; d < 7; d++){ const k = 'day' + d, L = data[k] || []; if (!L.some(isEtir)) continue;
+    data[k] = L.filter(e => !isEtir(e)); n++;
+    if (!data[k].length && /mobilit/i.test(titles[k] || '')) titles[k] = 'Repos'; else if (titles[k]) titles[k] = titles[k].replace(/ \+ mobilité$/, ''); }
+  if (n) save();
+}
 function beaBanOnce(){
   if (profile.id !== 'bea' || (coach && coach.beaBan)) return;
   const B = Object.assign({}, (coach && coach.ban) || {}); ['Gainage latéral', 'Planche latérale avec rotation', ...POMPES].forEach(x => { B[x] = today(); });
@@ -6040,7 +6052,7 @@ function buildProgram(cfg){
     if (cfg.mob){
       const w = kind === 'up' ? MOB.warmUp : kind === 'low' ? MOB.warmLow : [MOB.warmLow[0], MOB.warmUp[0]], cl = kind === 'up' ? MOB.coolUp : kind === 'low' ? MOB.coolLow : [MOB.coolLow[0], MOB.coolUp[1]];
       pre.unshift(...w.slice(0, 2).map((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'warm', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; return x; }));
-      cl.slice(0, 2).forEach((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'cool', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; post.push(x); });
+      if (!(cfg.noEtir ?? (coach && coach.noEtir))) cl.slice(0, 2).forEach((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'cool', s: 1 }); x.bs = 1; x.cmp = 0; x.fx = 1; post.push(x); });
     }
     out['day' + day] = cfg.abs ? withAbs([...pre, ...list, ...post], i, cfg.niv) : [...pre, ...list, ...post]; titles2['day' + day] = tpl.t + (cfg.plyo && pre.some(x => x.ph === 'plyo') ? ' + pliométrie' : '') + (cfg.obj === 'perte' ? ' + cardio' : '');
   });
@@ -6052,7 +6064,7 @@ function buildProgram(cfg){
     cx.bs = 1; cx.cmp = 0; out['day' + d] = [cx]; titles2['day' + d] = 'Cardio léger';
   });
   // séance mobilité sur un jour de repos libre
-  if (cfg.mob){
+  if (cfg.mob && !(cfg.noEtir ?? (coach && coach.noEtir))){
     const free = [0,1,2,3,4,5,6].filter(d => !out['day' + d].length), d = free.includes(6) ? 6 : free[free.length - 1];
     const mk = n => MOB.day.slice(0, n).map((nm, j) => { const x = exFromLib(nm, { slot: 'mob', vi: j, ph: 'mob' }); x.bs = x.s; x.cmp = 0; x.fx = 1; return x; });
     if (d != null){ out['day' + d] = mk(cfg.dur >= 60 ? 8 : 6); titles2['day' + d] = 'Mobilité & souplesse'; }
@@ -8146,7 +8158,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 156;
+const APP_VERSION = 157;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
