@@ -890,6 +890,19 @@ body.ecran-on #mini.show{bottom:calc(16px + var(--safe-b))}
 .ec-meal b{font-family:'Outfit',system-ui,sans-serif;font-size:18px;display:block}
 .ec-meal small{color:var(--soft);font-size:13px}
 .ec-meal .go{margin-left:auto;font-size:22px;color:var(--muted)}
+.svid{width:100%;max-height:46vh;object-fit:cover;border-radius:14px;background:#000;margin-top:4px}
+.scard{margin-top:12px}.scard .sh{display:flex;gap:12px;align-items:center}.scard .sh img{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff}.scard .sh .ph{font-size:44px}
+.scard .sh b{display:block;font-size:16px;line-height:1.25}.scard .sh small{color:var(--muted);font-size:12.5px}
+.sgauge{display:flex;align-items:center;gap:12px;margin-top:12px}.sgauge .sv{display:flex;align-items:baseline;gap:2px;color:var(--sc)}.sgauge .sv b{font-size:34px;font-family:'Outfit',system-ui,sans-serif}.sgauge .sv small{color:var(--muted)}
+.sbar{flex:1;height:10px;border-radius:99px;background:var(--line);overflow:hidden}.sbar i{display:block;height:100%;border-radius:99px}.sgauge>span{font-weight:800;font-size:14px}
+.sx{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.45);border-radius:12px;padding:8px 12px;font-size:13.5px;margin:8px 0}
+.schips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.schips span{background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12.5px}
+.ns{font-weight:800;color:#0b0f19!important;border:0!important}.ns-a{background:#1e8f4e!important;color:#fff!important}.ns-b{background:#7ac547!important}.ns-c{background:#f6c623!important}.ns-d{background:#ee8100!important}.ns-e{background:#e63e11!important;color:#fff!important}
+.sgoal{background:var(--card2);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:13.5px}.sgoal p+p{margin-top:4px}
+.stab{margin-top:8px}.stab tr.sub td:first-child{padding-left:16px;color:var(--muted)}.stab td:last-child{text-align:right}
+.sh4{margin:12px 0 6px;font-size:14.5px}.sadd p{font-size:13px;padding:3px 0}.sadd small{color:var(--muted)}
+.sing{margin-top:10px;font-size:13px}.sing summary{cursor:pointer;font-weight:700}.sing p{margin-top:6px;color:var(--soft)}
+.smiss{font-size:12.5px;color:var(--muted);margin-top:8px}.sfail{background:var(--card2);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px}
 .ec-meal.solo{border-left:6px solid var(--c)}
 .ec-whos{display:flex;gap:6px;margin-bottom:3px}
 .ec-who{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:14px;color:var(--c);vertical-align:middle}
@@ -1970,6 +1983,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [159, [['📷', 'Scanner un produit', 'note sur 100, Nutri-Score, additifs, calories et protéines, et alerte si un aliment ne convient pas à l’un de vous deux (Nutrition → Courses → « Scanner un produit »)'], ['📱', 'Le scan marche aussi sur iPhone et iPad', 'y compris pour ajouter un aliment au journal']]],
   [158, [['⚡', 'Séance HIIT guidée remise dans l’ordre', 'échauffement → HIIT → abdos → retour au calme tout à la fin ; plus aucun étirement pour Moi']]],
   [157, [['🧘', 'Plus d’étirements pour Moi', 'retirés de toutes tes séances (fin de séance et séance souplesse du jour de repos), plus de proposition « Retour au calme » après la séance ; l’échauffement reste']]],
   [156, [['🐑', 'Plus de variété de viandes', 'agneau (navarin, gigot, curry, brochettes), lapin, porc, veau et maquereau : 11 nouveaux plats légers'], ['🍗', 'Poulet et viande hachée : 2 repas chacun par semaine au plus', 'à partir des menus de la semaine prochaine (Nutrition → Semaine → Semaine prochaine)']]],
@@ -5295,6 +5309,7 @@ function nutCourses(){
   ${byAisle(groups).map(([g, L]) => `<h3 class="sec">${g} <small class="muted" style="text-transform:none;letter-spacing:0">· ${eur(L.reduce((a, x) => a + x.c, 0))}</small></h3><div class="card shop">${L.map(x => `<label class="shopit ${ck[x.f] ? 'got' : ''}"><input type="checkbox" data-ck="${x.f}" ${ck[x.f] ? 'checked' : ''} aria-label="Acheté : ${esc(x.n)}"><span>${esc(x.n)}</span><b>${x.q}<small class="muted" style="font-weight:600;margin-left:6px">${eur(x.c)}</small></b><button class="hvb" data-hv="${x.f}" aria-label="J’ai déjà : ${esc(x.n)}">🏠<small>J’ai déjà</small></button></label>`).join('')}</div>`).join('')}
   <h3 class="sec">À ajouter</h3><div class="card shop">${ex.map((x, i) => `<label class="shopit ${ck['x' + i] ? 'got' : ''}"><input type="checkbox" data-ck="x${i}" ${ck['x' + i] ? 'checked' : ''}><span>${esc(x)}</span><button class="btn sm" data-exrm="${i}" aria-label="Retirer">✕</button></label>`).join('')}
     <form id="exf" class="row" style="margin-top:8px"><input id="exIn" class="inp" placeholder="Ex. : épices, café, lessive…" style="flex:1"><button class="btn" type="button" data-x="voiceadd" aria-label="Ajouter à la voix">🎤</button><button class="btn" type="submit">➕</button></form></div>
+  <button class="btn block" data-x="scan" style="margin-top:12px;padding:13px;font-size:15px">📷 Scanner un produit : note, additifs, calories</button>
   <button class="btn pri block" data-x="shopgo" style="margin-top:16px;padding:15px;font-size:16px">🛒 Mode magasin : cocher sur le téléphone</button>
   <button class="btn block" id="pdfBtn" style="margin-top:8px;padding:13px;font-size:15px">📄 Envoyer la liste en PDF</button>
   <div class="row" style="margin-top:8px">${navigator.share ? '<button class="btn" id="shareBtn">💬 En texte</button><button class="btn" id="mailBtn">✉️ Mail</button>' : '<button class="btn" id="mailBtn">✉️ Mail (texte)</button>'}<button class="btn" id="copyBtn">📋 Copier</button></div>`;
@@ -6697,18 +6712,145 @@ async function lookupBarcode(code){
   if (k == null) throw new Error('pas de valeurs');
   return { id: 'off_' + code, n: (p.product_name || 'Produit') + (p.brands ? ' (' + p.brands.split(',')[0] + ')' : ''), k: Math.round(k), p: +(nn.proteins_100g || 0), g: +(nn.carbohydrates_100g || 0), l: +(nn.fat_100g || 0), ray: 'epicerie', grp: 'autre', serv: p.serving_quantity ? +p.serving_quantity : null };
 }
-let scanStream = null;
-function stopScan(){ try{ scanStream && scanStream.getTracks().forEach(t => t.stop()); }catch(e){} scanStream = null; }
-async function startScan(onCode){
-  const box = $('#scanBox'); if (!box) return;
-  if (!('BarcodeDetector' in window) || !navigator.mediaDevices){ box.querySelector('.scanmsg').textContent = 'Le scan par caméra n’est pas disponible sur ce téléphone : tape le numéro sous le code-barres.'; return; }
-  try{
-    const det = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e'] });
-    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    const v = box.querySelector('video'); v.srcObject = scanStream; v.hidden = false; await v.play();
-    const loop = async () => { if (!scanStream) return; try{ const c = await det.detect(v); if (c && c.length){ stopScan(); v.hidden = true; return onCode(c[0].rawValue); } }catch(e){} requestAnimationFrame(loop); };
-    loop();
-  }catch(e){ box.querySelector('.scanmsg').textContent = 'Caméra non autorisée : tape le numéro sous le code-barres.'; }
+let scanStream = null, scanRun = 0;
+function stopScan(){ scanRun++; try{ scanStream && scanStream.getTracks().forEach(t => t.stop()); }catch(e){} scanStream = null; }
+/* lecteur de code-barres : celui du navigateur (Android) s'il existe, sinon la bibliothèque ZXing (iPhone, iPad), chargée à la demande */
+let zxP = null;
+const loadZXing = () => zxP = zxP || new Promise((ok, ko) => { if (window.ZXing) return ok(); const sc = document.createElement('script'); sc.src = 'vendor/zxing-library-0.21.3.min.js'; sc.onload = ok; sc.onerror = () => { zxP = null; ko(new Error('zxing')); }; document.head.appendChild(sc); });
+async function scanDetector(){
+  if ('BarcodeDetector' in window){ try{ const F = await BarcodeDetector.getSupportedFormats(); if (F.includes('ean_13')){ const d = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'].filter(x => F.includes(x)) }); return c => d.detect(c).then(r => r && r[0] ? r[0].rawValue : null).catch(() => null); } }catch(e){} }
+  await loadZXing(); const Z = window.ZXing, H = new Map(), R = new Z.MultiFormatReader();
+  H.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E]); H.set(Z.DecodeHintType.TRY_HARDER, true); R.setHints(H);
+  return async c => { try{ return R.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(c)))).getText(); }catch(e){ return null; } };
+}
+const normCode = c => { c = String(c || '').replace(/\D/g, ''); return c.length === 12 ? '0' + c : c; }; /* UPC-A → EAN-13 comme dans la base */
+async function startScan(onCode, sel){
+  const box = $(sel || '#scanBox'); if (!box) return; const msg = t => { const m = box.querySelector('.scanmsg'); if (m) m.textContent = t; };
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg('La caméra n’est pas accessible ici : tape le numéro sous le code-barres.'); return; }
+  stopScan(); const run = scanRun; let det;
+  try{ det = await scanDetector(); }catch(e){ msg('Lecteur de code-barres indisponible (pas d’Internet ?) : tape le numéro sous le code-barres.'); return; }
+  try{ scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }); }
+  catch(e){ msg(/Permission|NotAllowed/i.test(e && e.name) ? 'Caméra refusée : autorise-la (iPhone : Réglages → Safari → Caméra) ou tape le numéro sous le code-barres.' : 'Caméra indisponible : tape le numéro sous le code-barres.'); return; }
+  if (run !== scanRun){ stopScan(); return; }
+  const v = box.querySelector('video'); v.setAttribute('playsinline', ''); v.muted = true; v.srcObject = scanStream; v.hidden = false; try{ await v.play(); }catch(e){}
+  msg('Vise le code-barres, bien à plat, sans reflet…');
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+  const loop = async () => { if (run !== scanRun || !scanStream) return;
+    if (v.videoWidth){ const w = v.videoWidth, h = v.videoHeight, bh = Math.round(h * .5); /* bande centrale : plus rapide et plus fiable */
+      cv.width = w; cv.height = bh; cx.drawImage(v, 0, Math.round((h - bh) / 2), w, bh, 0, 0, w, bh);
+      const code = await det(cv); if (code && run === scanRun){ stopScan(); v.hidden = true; try{ navigator.vibrate && navigator.vibrate(80); }catch(e){} return onCode(normCode(code)); } }
+    setTimeout(loop, 200); };
+  loop();
+}
+
+/* ============================================================
+   SCANNER DE PRODUITS : fiche, note sur 100, alertes pour nous deux
+   Données Open Food Facts (licence ODbL). Note maison, à titre indicatif :
+   nutrition 60 pts (Nutri-Score), additifs 30 pts (avis EFSA), bio 10 pts.
+   ============================================================ */
+const OFF_F = 'code,product_name,product_name_fr,brands,quantity,image_front_small_url,nutriscore_grade,nova_group,nutriments,ingredients_text_fr,ingredients_text,additives_tags,labels_tags';
+/* additifs courants : [niveau, nom] — 3 risque élevé (interdit, cancérogène possible, alerte EFSA), 2 modéré, 1 limité, 0 sans risque connu */
+const ADD_RISK = { e171:[3,'Dioxyde de titane'], e173:[3,'Aluminium'], e249:[3,'Nitrite de potassium'], e250:[3,'Nitrite de sodium'], e251:[3,'Nitrate de sodium'], e252:[3,'Nitrate de potassium'], e320:[3,'BHA'], e127:[3,'Érythrosine'], e951:[3,'Aspartame'],
+  e102:[2,'Tartrazine'], e104:[2,'Jaune de quinoléine'], e110:[2,'Jaune orangé S'], e122:[2,'Azorubine'], e124:[2,'Ponceau 4R'], e129:[2,'Rouge allura'], e120:[2,'Cochenille'], e142:[2,'Vert S'], e151:[2,'Noir brillant'], e155:[2,'Brun HT'], e150c:[2,'Caramel ammoniacal'], e150d:[2,'Caramel au sulfite d’ammonium'],
+  e321:[2,'BHT'], e310:[2,'Gallate de propyle'], e220:[2,'Dioxyde de soufre'], e221:[2,'Sulfite de sodium'], e223:[2,'Disulfite de sodium'], e224:[2,'Disulfite de potassium'], e228:[2,'Bisulfite de potassium'], e211:[2,'Benzoate de sodium'], e212:[2,'Benzoate de potassium'],
+  e338:[2,'Acide phosphorique'], e339:[2,'Phosphates de sodium'], e340:[2,'Phosphates de potassium'], e341:[2,'Phosphates de calcium'], e450:[2,'Diphosphates'], e451:[2,'Triphosphates'], e452:[2,'Polyphosphates'], e407:[2,'Carraghénanes'], e407a:[2,'Algues Eucheuma transformées'], e466:[2,'Carboxyméthylcellulose'], e433:[2,'Polysorbate 80'], e435:[2,'Polysorbate 60'], e471:[2,'Mono- et diglycérides d’acides gras'], e472e:[2,'Esters DATEM'], e476:[2,'Polyricinoléate de polyglycérol'], e481:[2,'Stéaroyl-2-lactylate de sodium'], e950:[2,'Acésulfame K'], e955:[2,'Sucralose'], e954:[2,'Saccharine'], e952:[2,'Cyclamate'], e621:[2,'Glutamate monosodique'],
+  e133:[1,'Bleu brillant'], e141:[1,'Complexes cuivriques des chlorophylles'], e150a:[1,'Caramel'], e160b:[1,'Rocou'], e200:[0,'Acide sorbique'], e202:[1,'Sorbate de potassium'], e210:[1,'Acide benzoïque'], e270:[0,'Acide lactique'], e282:[1,'Propionate de calcium'], e300:[0,'Vitamine C'], e301:[0,'Ascorbate de sodium'], e306:[0,'Vitamine E'], e307:[0,'Alpha-tocophérol'], e322:[0,'Lécithines'],
+  e325:[0,'Lactate de sodium'], e330:[0,'Acide citrique'], e331:[0,'Citrates de sodium'], e332:[0,'Citrates de potassium'], e333:[0,'Citrates de calcium'], e334:[0,'Acide tartrique'], e392:[0,'Extraits de romarin'], e400:[0,'Acide alginique'], e401:[0,'Alginate de sodium'], e406:[0,'Agar-agar'], e410:[0,'Farine de graines de caroube'], e412:[0,'Gomme guar'], e414:[0,'Gomme arabique'], e415:[1,'Gomme xanthane'], e418:[0,'Gomme gellane'], e420:[1,'Sorbitol'], e422:[0,'Glycérol'], e440:[0,'Pectines'], e460:[1,'Cellulose'], e461:[1,'Méthylcellulose'], e464:[1,'Hydroxypropylméthylcellulose'],
+  e500:[0,'Carbonates de sodium'], e501:[0,'Carbonates de potassium'], e503:[0,'Carbonates d’ammonium'], e504:[0,'Carbonates de magnésium'], e509:[0,'Chlorure de calcium'], e516:[0,'Sulfate de calcium'], e551:[1,'Dioxyde de silicium'], e575:[0,'Glucono-delta-lactone'], e627:[1,'Guanylate disodique'], e631:[1,'Inosinate disodique'], e635:[1,'Ribonucléotides disodiques'], e901:[0,'Cire d’abeille'], e903:[1,'Cire de carnauba'], e960:[1,'Glycosides de stéviol'], e965:[1,'Maltitol'], e967:[1,'Xylitol'], e1422:[1,'Amidon modifié'], e1442:[1,'Amidon modifié'], e1450:[1,'Amidon modifié'],
+  e160a:[0,'Caroténoïdes'], e160c:[0,'Extrait de paprika'], e162:[0,'Rouge de betterave'], e163:[0,'Anthocyanes'], e170:[0,'Carbonate de calcium'], e290:[0,'Dioxyde de carbone'], e296:[0,'Acide malique'], e100:[0,'Curcumine'], e101:[0,'Riboflavine'], e140:[0,'Chlorophylles'], e948:[0,'Oxygène'], e941:[0,'Azote'], e938:[0,'Argon'] };
+const RISK_L = [['🟢', 'sans risque connu'], ['🟡', 'risque limité'], ['🟠', 'risque modéré'], ['🔴', 'risque élevé']];
+function addOf(p){ return [...new Set(p.additives_tags || [])].map(t => { const m = /^en:(e\d{3,4})([a-z]*)/i.exec(t); if (!m) return null; const k = (m[1] + m[2]).toLowerCase(), x = ADD_RISK[k] || ADD_RISK[m[1].toLowerCase()];
+  return { c: k.toUpperCase(), n: x ? x[1] : null, r: x ? x[0] : null }; }).filter(Boolean); }
+/* Nutri-Score estimé (calcul officiel simplifié des aliments solides) quand la base n'en donne pas */
+function nutriEst(n){
+  const kj = n['energy-kj_100g'] ?? (n['energy-kcal_100g'] != null ? n['energy-kcal_100g'] * 4.184 : null), su = n.sugars_100g, sf = n['saturated-fat_100g'], na = n.sodium_100g != null ? n.sodium_100g * 1000 : n.salt_100g != null ? n.salt_100g * 400 : null;
+  if ([kj, su, sf, na].some(x => x == null)) return null;
+  const st = (v, T) => T.filter(t => v > t).length, fi = n.fiber_100g || 0, pr = n.proteins_100g || 0, fv = n['fruits-vegetables-legumes-estimate-from-ingredients_100g'] ?? n['fruits-vegetables-nuts-estimate-from-ingredients_100g'] ?? 0;
+  const N = st(kj, [335, 670, 1005, 1340, 1675, 2010, 2345, 2680, 3015, 3350]) + st(su, [4.5, 9, 13.5, 18, 22.5, 27, 31, 36, 40, 45]) + st(sf, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) + st(na, [90, 180, 270, 360, 450, 540, 630, 720, 810, 900]);
+  const F = fv > 80 ? 5 : fv > 60 ? 2 : fv > 40 ? 1 : 0, P = st(fi, [.9, 1.9, 2.8, 3.7, 4.7]) + F + (N >= 11 && F < 5 ? 0 : st(pr, [1.6, 3.2, 4.8, 6.4, 8])), sc = N - P;
+  return sc <= -1 ? 'a' : sc <= 2 ? 'b' : sc <= 10 ? 'c' : sc <= 18 ? 'd' : 'e';
+}
+function scanScore(p){
+  const n = p.nutriments || {}; let g = /^[a-e]$/.test(p.nutriscore_grade || '') ? p.nutriscore_grade : null, est = false;
+  if (!g){ g = nutriEst(n); est = !!g; }
+  const A = addOf(p), bio = (p.labels_tags || []).some(t => /organic|biologique|ab-agriculture|bio-europeen/i.test(t));
+  if (!g) return { v: null, g: null, A, bio };
+  /* plafonds : un additif à risque élevé → 49 au plus ; Nutri-Score D → 49, E → 24 (un produit très déséquilibré ne peut pas être « bon ») */
+  let ad = 30, cap = 100, why = ''; A.forEach(a => { if (a.r === 3){ ad -= 15; cap = 49; why = 'un additif à risque élevé'; } else if (a.r === 2) ad -= 6; else if (a.r === 1) ad -= 2; });
+  if (g === 'e' && cap > 24){ cap = 24; why = 'Nutri-Score E'; } else if (g === 'd' && cap > 49){ cap = 49; why = 'Nutri-Score D'; }
+  const raw = Math.round({ a: 60, b: 45, c: 30, d: 15, e: 0 }[g] + Math.max(0, ad) + (bio ? 10 : 0));
+  return { v: Math.min(cap, raw), g, est, A, bio, cap: raw > cap ? why : '' };
+}
+const scoreLbl = v => v >= 75 ? ['Excellent', '#22c55e'] : v >= 50 ? ['Bon', '#84cc16'] : v >= 25 ? ['Médiocre', '#f59e0b'] : ['Mauvais', '#ef4444'];
+/* aliments exclus de Béa ou de moi trouvés dans le nom ou les ingrédients */
+const nrm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const EXCL_KW = { kiwi:['kiwi'], banane:['banane'], tomate:['tomate'], champignon:['champignon'], concombre:['concombre'], tofu:['tofu'], soja:['soja'], sarrasin:['sarrasin'], galette:['galette de riz', 'galettes de riz'], poisson:['poisson'], porc:['porc'], lactose:['lait', 'lactose'] };
+function scanExcl(p){
+  const txt = nrm([p.product_name_fr, p.product_name, p.ingredients_text_fr || p.ingredients_text].join(' ')).replace(/lecithines?[^,;.]{0,25}soja|huile de soja|traces? [^.]{0,60}/g, ' '), out = [];
+  PROFILES.forEach(pr => { let ex = []; try{ ex = exclOf(ctxOf(pr.id)); }catch(e){}
+    ex.forEach(f => { const kw = EXCL_KW[f] || [nrm(FOODS[f] ? FOODS[f].n : f).split(/[ (]/)[0].replace(/s$/, '')]; if (kw.some(k => k.length > 2 && txt.includes(nrm(k)))) out.push(`<b>${esc(FOODS[f] ? FOODS[f].n.split(' (')[0] : f)}</b> : exclu pour ${esc(pr.id === profile.id ? 'toi' : pr.nom)}`); }); });
+  return out;
+}
+/* pour nos objectifs (perte de gras) : protéines pour les calories, sucre, sel */
+function scanGoal(n){
+  const k = n['energy-kcal_100g'] ?? (n['energy_100g'] ? n['energy_100g'] / 4.184 : null), pr = n.proteins_100g, T = [];
+  if (k > 0 && pr != null){ const d = pr * 100 / k;
+    T.push(d >= 10 ? '💪 Très riche en protéines pour ses calories : idéal pour la perte de gras.' : d >= 6 ? '👍 Bon apport en protéines pour ses calories.' : k >= 350 && d < 3 ? '⚠️ Très calorique et peu protéiné : à garder pour le plaisir, en petite quantité.' : k >= 250 && d < 5 ? '⚖️ Assez calorique pour peu de protéines : à doser.' : ((n.sugars_100g ?? 0) >= 22.5 || (n.salt_100g ?? 0) >= 1.5 ? '🙂 Peu calorique pour 100 g.' : '🙂 Peu calorique : sans problème en portion normale.')); }
+  if ((n.sugars_100g ?? 0) >= 22.5) T.push('🍬 Très sucré (plus de 22 g pour 100 g).');
+  if ((n.salt_100g ?? 0) >= 1.5) T.push('🧂 Très salé (plus de 1,5 g de sel pour 100 g).');
+  return T;
+}
+async function offProduct(code){
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000);
+  try{ const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?lc=fr&fields=${OFF_F}`, { signal: ctl.signal });
+    const j = await r.json().catch(() => null); return j && j.status === 1 && j.product ? { p: j.product } : { none: 1 }; }
+  catch(e){ return { err: 1 }; } finally{ clearTimeout(tm); }
+}
+const g1 = v => v == null || isNaN(v) ? '–' : fr(Math.round(v * 10) / 10);
+function scanCard(code, p){
+  const n = p.nutriments || {}, S = scanScore(p), name = p.product_name_fr || p.product_name || 'Produit sans nom', br = (p.brands || '').split(',')[0].trim(), X = scanExcl(p), G = scanGoal(n);
+  const k = n['energy-kcal_100g'] ?? (n['energy_100g'] ? n['energy_100g'] / 4.184 : null), miss = [];
+  if (!p.nutriscore_grade || !/^[a-e]$/.test(p.nutriscore_grade)) miss.push(S.g ? 'Nutri-Score absent : estimé à partir des valeurs' : 'valeurs nutritionnelles incomplètes : pas de note possible');
+  if (!(p.ingredients_text_fr || p.ingredients_text)) miss.push('ingrédients non renseignés : les additifs peuvent manquer');
+  const L = S.v != null ? scoreLbl(S.v) : null, NV = { 1: 'brut ou peu transformé', 2: 'ingrédient culinaire', 3: 'transformé', 4: 'ultra-transformé' }[p.nova_group];
+  const row = (l, v, u, sub) => `<tr${sub ? ' class="sub"' : ''}><td>${l}</td><td>${v}${v === '–' ? '' : ' ' + u}</td></tr>`;
+  SCAN.last = { code, name: name + (br ? ' (' + br + ')' : '') };
+  return `<div class="scard">
+    <div class="sh">${p.image_front_small_url ? `<img src="${esc(p.image_front_small_url)}" alt="" loading="lazy">` : '<span class="ph">📦</span>'}<div><b>${esc(name)}</b><small>${esc([br, p.quantity].filter(Boolean).join(' · '))}</small></div></div>
+    ${L ? `<div class="sgauge"><div class="sv" style="--sc:${L[1]}"><b>${S.v}</b><small>/100</small></div><div class="sbar"><i style="width:${S.v}%;background:${L[1]}"></i></div><span style="color:${L[1]}">${L[0]}</span></div>
+      <p class="muted" style="font-size:11.5px;margin:4px 0 8px">Note maison : nutrition ${S.est ? '(estimée) ' : ''}60 pts · additifs 30 pts · bio 10 pts${S.cap ? ` · limitée à ${S.v} car ${S.cap}` : ''}.</p>` : '<p class="sfail">❔ Pas assez d’informations pour noter ce produit.</p>'}
+    ${X.length ? `<div class="sx">⛔ ${X.join('<br>⛔ ')}</div>` : ''}
+    <div class="schips">${S.g ? `<span class="ns ns-${S.g}">Nutri-Score ${S.g.toUpperCase()}${S.est ? ' (estimé)' : ''}</span>` : ''}${NV ? `<span>🏭 Transformation ${p.nova_group}/4 · ${NV}</span>` : ''}${S.bio ? '<span>🌿 Bio</span>' : ''}</div>
+    ${G.length ? `<div class="sgoal">${G.map(t => `<p>${t}</p>`).join('')}</div>` : ''}
+    <table class="tbl stab"><tr><th>Pour 100 g</th><th></th></tr>${row('Calories', k == null ? '–' : Math.round(k), 'kcal')}${row('Protéines', g1(n.proteins_100g), 'g')}${row('Glucides', g1(n.carbohydrates_100g), 'g')}${row('dont sucres', g1(n.sugars_100g), 'g', 1)}${row('Lipides', g1(n.fat_100g), 'g')}${row('dont saturés', g1(n['saturated-fat_100g']), 'g', 1)}${row('Fibres', g1(n.fiber_100g), 'g')}${row('Sel', g1(n.salt_100g), 'g')}</table>
+    <h4 class="sh4">🧪 Additifs (${S.A.length})</h4>${S.A.length ? `<div class="sadd">${S.A.sort((a, b) => (b.r ?? -1) - (a.r ?? -1)).map(a => `<p>${a.r == null ? '⚪' : RISK_L[a.r][0]} <b>${a.c}</b> ${esc(a.n || '')} <small>${a.r == null ? 'non évalué ici' : RISK_L[a.r][1]}</small></p>`).join('')}</div>` : '<p class="muted" style="font-size:13px">Aucun additif connu.</p>'}
+    ${(p.ingredients_text_fr || p.ingredients_text) ? `<details class="sing"><summary>📝 Ingrédients</summary><p>${esc(p.ingredients_text_fr || p.ingredients_text)}</p></details>` : ''}
+    ${miss.length ? `<p class="smiss">ℹ️ ${miss.join(' · ')}.</p>` : ''}
+    <div class="row" style="margin-top:12px"><button class="btn" data-x="scanagain">📷 Autre produit</button><span class="spacer"></span><button class="btn pri" data-x="scanshop">🛒 Ajouter aux courses</button></div>
+    <p class="muted" style="font-size:11px;margin-top:10px">Données <a href="https://fr.openfoodfacts.org/produit/${esc(code)}" target="_blank" rel="noopener">Open Food Facts</a> (licence ODbL), complétées par les contributeurs. Note indicative, calculée par l’appli : elle ne remplace pas un avis médical.</p></div>`;
+}
+const SCAN = { last: null };
+function sheetScan(){
+  openSheet(`<h2>📷 Scanner un produit</h2><p class="muted" style="font-size:13px;margin-bottom:8px">Note sur 100, Nutri-Score, additifs, et ce qui ne convient pas à l’un de vous deux.</p>
+    <div id="scanP"><video playsinline muted hidden class="svid"></video><p class="scanmsg muted" style="font-size:12.5px;margin:8px 0">Ouverture de la caméra…</p></div>
+    <form id="scF" class="row" style="flex-wrap:nowrap"><input id="scIn" class="inp" inputmode="numeric" autocomplete="off" placeholder="ou tape le numéro du code-barres" style="flex:1;min-width:0"><button class="btn" type="submit">🔎</button></form>
+    <div id="scRes"></div>`);
+  $('#scF').onsubmit = ev => { ev.preventDefault(); scanLook($('#scIn').value); };
+  startScan(scanLook, '#scanP');
+}
+async function scanLook(code){
+  code = normCode(code); const R = $('#scRes'); if (!R) return;
+  if (code.length < 8 || code.length > 14) return toast('Code-barres incomplet : 8 ou 13 chiffres.');
+  stopScan(); const v = $('#scanP video'); if (v) v.hidden = true; const m = $('#scanP .scanmsg'); if (m) m.textContent = `Code ${code}`;
+  R.innerHTML = '<p class="muted" style="margin:10px 0">🔎 Recherche du produit…</p>';
+  const r = await offProduct(code); if (!$('#scRes')) return;
+  R.innerHTML = r.p ? scanCard(code, r.p) : r.none ? `<p class="sfail">❔ Produit inconnu de la base Open Food Facts (code ${esc(code)}). Vérifie le numéro, ou essaie un autre produit.</p><button class="btn" data-x="scanagain" style="margin-top:8px">📷 Autre produit</button>`
+    : '<p class="sfail">📡 Pas de réponse de la base : vérifie la connexion Internet et réessaie.</p><button class="btn" data-x="scanagain" style="margin-top:8px">📷 Réessayer</button>';
+}
+function scanAgain(){ const R = $('#scRes'); if (R) R.innerHTML = ''; const i = $('#scIn'); if (i) i.value = ''; startScan(scanLook, '#scanP'); }
+function scanShop(){
+  const L = SCAN.last; if (!L) return;
+  ecFoyerEdit(() => { const wk = curWk(); foyer.extra[wk] = (foyer.extra[wk] || []).concat([L.name.slice(0, 80)]); }).then(() => toast(`🛒 Ajouté aux courses : ${L.name}`));
 }
 
 /* ============================================================
@@ -7510,6 +7652,9 @@ function evoAct(a, b){
     case 'frigo': sheetFrigo(); break;
     case 'frigock': case 'frigoclr': case 'frigogo': frigoAct(a, b, false); break;
     case 'voiceadd': voiceAdd(false); break;
+    case 'scan': sheetScan(); break;
+    case 'scanagain': scanAgain(); break;
+    case 'scanshop': scanShop(); break;
     case 'semrec': sheetRecNext(+b.dataset.d, b.dataset.m); break;
     case 'batch': batchScope = null; sheetBatch(); break;
     case 'awaysheet': awayWk = null; sheetAway(); break;
@@ -8162,7 +8307,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 158;
+const APP_VERSION = 159;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
