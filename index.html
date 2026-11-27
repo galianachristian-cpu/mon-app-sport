@@ -1056,6 +1056,7 @@ body.ecran-on.ec-noel:not(.ec-nuit) #ecran{padding-top:44px}
   body{background:var(--bg)}
   .guide,.story,.full.show:has(.itv.work){background:var(--bg)}
 }
+.garde-carte{display:flex;align-items:center;gap:12px;margin-top:14px;text-decoration:none;color:inherit;border:1px solid rgba(239,68,68,.45);background:linear-gradient(135deg,rgba(239,68,68,.16),var(--card))}.garde-carte .gc-ic{font-size:30px}.garde-carte b{display:block;font-size:16px}.garde-carte small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px;line-height:1.35}.garde-carte .gc-go{margin-left:auto;font-size:22px}
 </style>
 </head>
 <body>
@@ -1838,6 +1839,15 @@ const hasNested = v => Array.isArray(v) ? v.some(x => Array.isArray(x) || hasNes
 const richness = d => !d ? 0 : (d.nut ? 5 : 0) + (d.prog ? 5 : 0) + (d.body || []).length + (d.hist || []).length + Object.keys(d.journal || {}).length + (d.seances || []).length + (d.runs || []).length
   + Object.keys(d.plans || {}).length + Object.keys(d.swaps || {}).length + Object.keys(d.foods || {}).length;
 const localNewer = (loc, rem) => !!loc && richness(loc) >= richness(rem) * .5 && ((loc._t || 0) > (rem._t || 0) || (!rem._t && hasNested(loc)));
+// Séance de garde (page garde.html) : la séance terminée est déposée dans mp_garde_fait, on l'ajoute à l'historique une seule fois
+function gardeImport(){
+  if (typeof loading !== 'undefined' && loading) return;   // on attend les vraies données (sinon la séance serait écrasée)
+  const g = safeGet('mp_garde_fait', null); if (!g || !g.min) return;
+  try{ localStorage.removeItem('mp_garde_fait'); }catch(e){}
+  if (hist.some(h => h.k === 'garde' && h.id === g.id)) return;
+  hist.push({ d: g.d || today(), k:'garde', id: g.id, n: 'Séance de garde (' + (g.coach === 'f' ? 'Sergente-Chef' : 'Sergent-Chef') + ')', m:'Cardio', t:'c', s:1, r:String(g.min), w:null });
+  save(); toast('✅ Séance de garde : ' + g.min + ' min enregistrées');
+}
 function applyDoc(src){
   data = src.data || clone(DEFAULT_DATA);
   done = src.done || {}; logs = src.logs || {}; sets = src.sets || {}; sl = src.sl || {}; hist = src.hist || [];
@@ -1847,6 +1857,7 @@ function applyDoc(src){
   Object.values(logs).forEach(lg => { if (lg && !okVal('w', lg.w)) lg.w = ''; });
   Object.values(sl).forEach(S => (S || []).forEach(x => { if (x && !okVal('w', x.w)) x.w = ''; }));
   hist.forEach(h => { if (h.w != null && !okVal('w', h.w)) { h.w = null; (h.sl || []).forEach(x => { if (!okVal('w', x.w)) x.w = ''; }); } });
+  setTimeout(gardeImport, 0);
 }
 let fetchFails = 0, lastFetchErr = '';
 async function fetchDoc(id){
@@ -7220,6 +7231,7 @@ function viewIT(){
     : `<div class="fg"><label for="iC">Exercices (un par ligne)</label><textarea id="iC" class="inp" rows="5">${esc(c.circ)}</textarea></div><div class="two">${f('iCW', 'Effort', c.cWork, 's')}${f('iCR', 'Repos', c.cRest, 's')}</div><div class="two">${f('iCN', 'Tours', c.cRounds)}${f('iCP', 'Pause entre tours', c.cPause, 's')}</div>`;
   $('#app').innerHTML = `<div class="fade">${chronoSeg()}
     ${weekWodCard()}
+    <a class="card garde-carte" href="garde.html"><span class="gc-ic">🚒</span><span><b>Séance de garde</b><small>Le Sergent-Chef ou la Sergente-Chef te guide : 10, 20 ou 30 min au poids du corps, animé, avec la voix.</small></span><span class="gc-go">▶️</span></a>
     <h3 class="sec">🚒 WOD caserne</h3><div class="wods">${WODS.map((w, j) => { const b = wodBest(w.n); return `<button class="${c.wod === w.n ? 'on' : ''}" data-x="wod" data-w="${j}"><span>${w.ic}</span><b>${esc(w.n)}</b><small>${esc(w.d)}</small>${b ? `<em>🏆 ${esc(b)}</em>` : ''}</button>`; }).join('')}</div>
     <button class="btn block" data-x="wodrand" style="margin-top:10px">🎲 WOD surprise avec le matériel de la caserne</button>
     ${myWodsCard()}

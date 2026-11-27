@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f19">
+<title>Séance de garde</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--bg:#0b0f19;--bg2:#0f1524;--card:#141b2d;--card2:#1a2338;--line:#24304a;--text:#eef2f8;--muted:#8b9ab4;--a1:#22d3ee;--a2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--rouge:#ef4444;--r:18px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:radial-gradient(900px 500px at 80% -10%,rgba(239,68,68,.14),transparent 60%),var(--bg);color:var(--text);min-height:100vh;min-height:100dvh}
+button{font:inherit;color:inherit;cursor:pointer}
+.ecran{display:none;max-width:520px;margin:0 auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.ecran.on{display:block}
+.bandeau{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#fde68a;border-radius:14px;padding:9px 12px;font-size:12.5px;line-height:1.4;margin-bottom:14px}
+h1{font-size:26px;line-height:1.15}
+.muted{color:var(--muted);font-size:13.5px;line-height:1.4}
+.bloc{margin-top:16px}
+.bloc>b{display:block;font-size:14px;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:12px}
+.coachs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.coach{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:10px;text-align:center}
+.coach .vid{aspect-ratio:1;border-radius:14px;overflow:hidden;background:#fff}
+.coach video{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.coach span{display:block;font-weight:800;margin-top:8px;font-size:15px}
+.coach.on{border-color:var(--rouge);box-shadow:0 0 0 3px rgba(239,68,68,.25)}
+.choix{display:grid;gap:8px}
+.choix.c3{grid-template-columns:repeat(3,1fr)}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:11px 6px;text-align:center;font-weight:800;font-size:14px;line-height:1.2}
+.opt small{display:block;font-weight:600;color:var(--muted);font-size:11.5px;margin-top:3px}
+.opt.on{border-color:var(--rouge);background:rgba(239,68,68,.1)}
+.resume{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.resume b{color:var(--text)}
+.go{display:block;width:100%;margin-top:16px;border:0;border-radius:18px;padding:17px;font-size:18px;font-weight:900;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;box-shadow:0 10px 30px rgba(239,68,68,.35)}
+.lien{display:block;margin:12px auto 0;background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline}
+.opt-voix{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:14px}
+.opt-voix input{width:20px;height:20px;accent-color:var(--rouge)}
+/* séance */
+#seance{padding-top:10px}
+.haut{display:flex;align-items:center;gap:10px}
+.haut .etape{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.haut .x{margin-left:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-size:13px}
+.barre{height:6px;background:var(--card2);border-radius:99px;margin-top:8px;overflow:hidden}
+.barre i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ef4444,#f97316);transition:width .4s}
+.scene{position:relative;margin:14px auto 0;width:min(88vw,46vh,420px);aspect-ratio:1;border-radius:28px;overflow:hidden;background:#fff}
+.scene video{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.scene .repos{position:absolute;inset:0;background:rgba(11,15,25,.72);display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px}
+.scene.pause .repos,.scene.recup .repos{display:flex}
+.repos b{font-size:15px;color:#fde68a;text-transform:uppercase;letter-spacing:.08em}
+.repos span{font-size:22px;font-weight:900}
+.bulle{position:absolute;left:10px;right:10px;bottom:10px;background:#fff;color:#111;border-radius:16px;padding:8px 12px;font-weight:800;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.25);transform:translateY(130%);transition:transform .35s}
+.bulle.on{transform:none}
+.nom{text-align:center;margin-top:14px}
+.nom h2{font-size:24px;line-height:1.15}
+.nom p{color:var(--muted);font-size:14px;margin-top:4px}
+.chrono{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px}
+.rond{position:relative;width:96px;height:96px}
+.rond svg{transform:rotate(-90deg)}
+.rond b{position:absolute;inset:0;display:grid;place-items:center;font-size:32px;font-variant-numeric:tabular-nums}
+.ctrl{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.ctrl button{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;font-weight:800;font-size:15px;min-width:110px}
+.suivant{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}
+.suivant b{color:var(--text)}
+.suivant .mini{width:46px;height:46px;border-radius:10px;overflow:hidden;background:#fff;flex:0 0 auto}
+.suivant .mini video{width:100%;height:100%;object-fit:contain;display:block}
+/* fin */
+.fin{text-align:center;padding-top:30px}
+.fin .gros{font-size:64px}
+.fin h1{margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 6px}
+.stats b{display:block;font-size:22px}
+.stats span{font-size:12px;color:var(--muted)}
+.fin .vid{width:min(60vw,240px);aspect-ratio:1;margin:18px auto 0;border-radius:22px;overflow:hidden;background:#fff}
+.fin video{width:100%;height:100%;object-fit:contain}
+</style>
+</head>
+<body>
+
+<!-- ACCUEIL -->
+<section class="ecran on" id="accueil">
+  <a href="index.html" style="display:inline-block;margin-bottom:12px;color:#8b9ab4;text-decoration:none;font-weight:700">← Mon Programme</a>
+  <h1>🚒 Séance de garde</h1>
+  <p class="muted" style="margin-top:6px">Une séance au poids du corps, sans matériel, guidée de bout en bout. On lance, on suit, on transpire.</p>
+
+  <div class="bloc"><b>Ton coach</b>
+    <div class="coachs">
+      <button class="coach" data-coach="h"><div class="vid"><video data-k="jacks" data-c="h" autoplay muted loop playsinline></video></div><span>Sergent-Chef</span></button>
+      <button class="coach" data-coach="f"><div class="vid"><video data-k="jacks" data-c="f" autoplay muted loop playsinline></video></div><span>Sergente-Chef</span></button>
+    </div>
+  </div>
+
+  <div class="bloc"><b>Niveau</b>
+    <div class="choix c3" id="niveaux">
+      <button class="opt" data-niv="0">Recrue<small>30 s d'effort</small></button>
+      <button class="opt" data-niv="1">Équipier<small>40 s d'effort</small></button>
+      <button class="opt" data-niv="2">Chef d'agrès<small>45 s d'effort</small></button>
+    </div>
+  </div>
+
+  <div class="bloc"><b>Durée</b>
+    <div class="choix c3" id="durees">
+      <button class="opt" data-min="10">10 min<small>2 tours</small></button>
+      <button class="opt" data-min="20">20 min<small>3 tours</small></button>
+      <button class="opt" data-min="30">30 min<small>4 tours</small></button>
+    </div>
+  </div>
+
+  <label class="opt-voix"><input type="checkbox" id="voix" checked> 🔊 La voix du coach</label>
+  <div class="resume" id="resume"></div>
+  <button class="go" id="go">C'est parti ! 💪</button>
+</section>
+
+<!-- SÉANCE -->
+<section class="ecran" id="seance">
+  <div class="haut"><span class="etape" id="etape">Échauffement</span><button class="x" id="quitter">✕ Arrêter</button></div>
+  <div class="barre"><i id="prog"></i></div>
+  <div class="scene" id="scene">
+    <video id="vid" autoplay muted loop playsinline></video>
+    <div class="repos"><b id="reposTitre">Récup</b><span id="reposTexte">Respire</span></div>
+    <div class="bulle" id="bulle"></div>
+  </div>
+  <div class="nom"><h2 id="exNom">—</h2><p id="exAide"></p></div>
+  <div class="chrono">
+    <div class="rond"><svg width="96" height="96"><circle cx="48" cy="48" r="42" stroke="#24304a" stroke-width="9" fill="none"/><circle id="arc" cx="48" cy="48" r="42" stroke="#ef4444" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="0"/></svg><b id="sec">30</b></div>
+  </div>
+  <div class="ctrl"><button id="pause">⏸ Pause</button><button id="passer">⏭ Passer</button></div>
+  <div class="suivant" id="suivant"></div>
+</section>
+
+<!-- FIN -->
+<section class="ecran" id="fin">
+  <div class="fin">
+    <div class="gros">✅</div>
+    <h1>Séance validée !</h1>
+    <p class="muted" id="finTexte" style="margin-top:6px"></p>
+    <div class="vid"><video id="finVid" autoplay muted loop playsinline></video></div>
+    <div class="stats"><div><b id="stTemps">0</b><span>minutes</span></div><div><b id="stEx">0</b><span>exercices</span></div><div><b id="stTours">0</b><span>tours</span></div></div>
+    <p class="muted" style="margin-top:14px">✅ La séance est ajoutée à ton historique de Mon Programme.</p>
+    <button class="go" id="encore">Retour à Mon Programme</button>
+  </div>
+</section>
+
+<script>
+const V = new Proxy({}, { get: (o, k) => ({ h: 'img/garde/' + k + '-h.mp4', f: 'img/garde/' + k + '-f.mp4' }) });
+// cle, nom, consigne, famille (cardio / jambes / haut / abdos / dos), niveau minimum, côté alterné
+const EX = [
+  ['jacks','Jumping jacks','Écarte bras et jambes, reviens pieds joints.','cardio',0],
+  ['montees_genoux','Montées de genoux','Genoux à hauteur de hanches, les bras accompagnent.','cardio',0],
+  ['squat','Squat','Fesses en arrière, dos droit, cuisses parallèles au sol.','jambes',0],
+  ['fentes','Fentes avant','Un grand pas, le genou arrière frôle le sol. On alterne.','jambes',0],
+  ['chaise','Chaise','Dos au mur, cuisses à l’horizontale. On tient.','jambes',0],
+  ['pont_fessier','Pont fessier','Monte le bassin, serre les fessiers 2 s en haut.','jambes',0],
+  ['gainage','Gainage','Sur les avant-bras, corps bien aligné.','abdos',0],
+  ['crunch','Crunch bicyclette','Coude vers le genou opposé, on pédale.','abdos',0],
+  ['superman','Superman','Bras et jambes décollés, regard vers le sol.','dos',0],
+  ['pompes','Pompes','Corps gainé, poitrine près du sol. Sur les genoux si besoin.','haut',1],
+  ['mountain_climbers','Mountain climbers','En planche, ramène les genoux vite vers la poitrine.','cardio',1],
+  ['gainage_lateral','Gainage latéral','Hanches hautes. On change de côté à mi-temps.','abdos',1],
+  ['hollow','Hollow hold','Le corps en banane, bas du dos collé au sol.','abdos',1],
+  ['situps','Sit-up','On remonte le buste jusqu’aux genoux, on redescend doucement.','abdos',1],
+  ['burpee','Burpees','Squat, planche, pompe, retour et saut !','cardio',2],
+  ['etire_quadri','Étirement des cuisses','On attrape le pied derrière, genou vers le sol. On change à mi-temps.','calme',9],
+  ['etire_ischios','Étirement arrière des cuisses','Assis jambes tendues, on se penche vers les pieds.','calme',9],
+  ['etire_epaule','Étirement des épaules','Le bras en travers de la poitrine, on change à mi-temps.','calme',9],
+  ['etire_dos','Posture de l’enfant','À genoux, bras loin devant, on relâche le dos.','calme',9]
+].map(([k, n, aide, fam, niv]) => ({ k, n, aide, fam, niv }));
+const BY = Object.fromEntries(EX.map(e => [e.k, e]));
+const NIV = [{ nom: 'Recrue', eff: 30, rec: 20 }, { nom: 'Équipier', eff: 40, rec: 15 }, { nom: "Chef d'agrès", eff: 45, rec: 15 }];
+const TOURS = { 10: 2, 20: 3, 30: 4 };
+const PHRASES = {
+  go: ['Allez, on lâche rien !', 'C’est parti, à fond !', 'On y va, en équipe !', 'Concentration, on attaque !'],
+  mi: ['Tu tiens le rythme, continue !', 'La moitié, on garde la forme !', 'Respire, tu gères !', 'C’est dur ? C’est que ça marche !'],
+  fin3: ['Encore 3 secondes !'],
+  recup: ['Bien joué ! Souffle un coup.', 'Récup, bois une gorgée si besoin.', 'Propre ! On enchaîne bientôt.'],
+  tour: ['Tour terminé, beau boulot !', 'Un tour de plus dans les jambes !']
+};
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+// ---------- réglages (gardés sur le téléphone) ----------
+let R = { coach: 'h', niv: 0, min: 10, voix: true };
+try { Object.assign(R, JSON.parse(localStorage.getItem('garde-reglages') || '{}')); } catch (e) {}
+const sauver = () => { try { localStorage.setItem('garde-reglages', JSON.stringify(R)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+document.querySelectorAll('video[data-k]').forEach(v => v.src = V[v.dataset.k][v.dataset.c]);
+
+// ---------- fabrication de la séance ----------
+function melanger(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function circuit(niv, tours) {
+  const ok = EX.filter(e => e.niv <= niv && !['jacks', 'montees_genoux'].includes(e.k));
+  const fam = f => melanger(ok.filter(e => e.fam === f));
+  const parTour = tours <= 2 ? 5 : tours === 3 ? 6 : 7;
+  const t = [];
+  for (let n = 0; n < tours; n++) {
+    // un tour équilibré : jambes, haut ou cardio, abdos, jambes, dos, abdos, cardio…
+    const ordre = ['jambes', niv >= 1 ? 'haut' : 'cardio', 'abdos', 'jambes', 'dos', 'abdos', 'cardio'];
+    const pris = new Set(); const tour = [];
+    for (const f of ordre) {
+      if (tour.length >= parTour) break;
+      const choix = fam(f).find(e => !pris.has(e.k)) || melanger(ok).find(e => !pris.has(e.k));
+      if (choix) { pris.add(choix.k); tour.push(choix); }
+    }
+    t.push(tour);
+  }
+  return t;
+}
+function plan() {
+  const n = NIV[R.niv], tours = TOURS[R.min], c = circuit(R.niv, tours), P = [];
+  P.push({ ex: BY.jacks, d: 45, etape: 'Échauffement' }, { ex: BY.montees_genoux, d: 40, etape: 'Échauffement' });
+  c.forEach((tour, i) => tour.forEach(e => P.push({ ex: e, d: n.eff, etape: `Tour ${i + 1} / ${c.length}`, tour: i })));
+  ['etire_quadri', 'etire_ischios', 'etire_epaule', 'etire_dos'].forEach(k => P.push({ ex: BY[k], d: 30, etape: 'Retour au calme', calme: true }));
+  return { P, rec: n.rec, tours: c.length };
+}
+
+// ---------- accueil ----------
+function majAccueil() {
+  document.querySelectorAll('.coach').forEach(b => b.classList.toggle('on', b.dataset.coach === R.coach));
+  document.querySelectorAll('#niveaux .opt').forEach(b => b.classList.toggle('on', +b.dataset.niv === R.niv));
+  document.querySelectorAll('#durees .opt').forEach(b => b.classList.toggle('on', +b.dataset.min === R.min));
+  $('voix').checked = R.voix;
+  const n = NIV[R.niv], t = TOURS[R.min], c = circuit(R.niv, t);
+  const qui = R.coach === 'h' ? 'le Sergent-Chef' : 'la Sergente-Chef';
+  $('resume').innerHTML = `Avec <b>${qui}</b> : échauffement, <b>${t} tours</b> de ${c[0].length} exercices (<b>${n.eff} s</b> d'effort, ${n.rec} s de récup), puis retour au calme. <b>≈ ${R.min} min</b>, sans matériel (un mur pour la chaise).`;
+}
+document.querySelectorAll('.coach').forEach(b => b.onclick = () => { R.coach = b.dataset.coach; sauver(); majAccueil(); });
+document.querySelectorAll('#niveaux .opt').forEach(b => b.onclick = () => { R.niv = +b.dataset.niv; sauver(); majAccueil(); });
+document.querySelectorAll('#durees .opt').forEach(b => b.onclick = () => { R.min = +b.dataset.min; sauver(); majAccueil(); });
+$('voix').onchange = () => { R.voix = $('voix').checked; sauver(); };
+majAccueil();
+
+// ---------- son, voix, vibration, écran allumé ----------
+let ac = null;
+function bip(f = 880, d = 0.12, n = 1) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < n; i++) {
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * 0.18;
+      o.frequency.value = f; o.type = 'square'; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + 0.02);
+    }
+  } catch (e) {}
+}
+const VOIX = new Audio(); let voixFile = [];
+function voix(seq) {
+  if (!R.voix) return; voixFile = seq.slice();
+  const suivant = () => { const c = voixFile.shift(); if (!c) return; VOIX.onended = () => setTimeout(suivant, 120); VOIX.onerror = suivant;
+    VOIX.src = 'audio/garde/' + R.coach + '/' + c + '.mp3'; const p = VOIX.play(); if (p && p.catch) p.catch(() => { voixFile = []; }); };
+  try { VOIX.pause(); } catch (e) {} suivant();
+}
+function dire(txt) {
+  if (!R.voix || !window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang = 'fr-FR'; u.rate = 1.05;
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('fr')); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) {}
+}
+const vibrer = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+let verrou = null;
+async function garderEcran() { try { verrou = await navigator.wakeLock.request('screen'); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S && !S.fini) garderEcran(); });
+
+// ---------- déroulé ----------
+let S = null, tic = null;
+function montrer(id) { document.querySelectorAll('.ecran').forEach(e => e.classList.toggle('on', e.id === id)); scrollTo(0, 0); }
+function bulle(txt) { const b = $('bulle'); b.textContent = txt; b.classList.add('on'); clearTimeout(bulle.t); bulle.t = setTimeout(() => b.classList.remove('on'), 2600); }
+function demarrer() {
+  const p = plan(); S = { ...p, i: 0, phase: 'effort', reste: p.P[0].d, total: p.P[0].d, pause: false, t0: Date.now(), fini: false };
+  montrer('seance'); garderEcran(); bip(660, .15, 2); entrer();
+  clearInterval(tic); tic = setInterval(seconde, 1000);
+}
+function entrer() {
+  const it = S.P[S.i]; const e = it.ex;
+  $('vid').src = V[e.k][R.coach];
+  $('etape').textContent = it.etape; $('exNom').textContent = e.n; $('exAide').textContent = e.aide;
+  $('scene').classList.toggle('recup', S.phase === 'recup');
+  if (S.phase === 'recup') {
+    $('reposTitre').textContent = 'Récup'; $('reposTexte').textContent = 'Prochain : ' + e.n;
+    voix(['recup', 'ex-' + e.k]); bulle(pick(PHRASES.recup));
+  } else {
+    voix((it.calme && S.i && !S.P[S.i - 1].calme ? ['calme'] : S.i === 0 ? ['debut'] : []).concat(['ex-' + e.k, 's' + it.d])); setTimeout(() => S && S.phase === 'effort' && bulle(pick(PHRASES.go)), 900);
+  }
+  const suiv = S.phase === 'recup' ? S.P[S.i + 1] : S.P[S.i + 1];
+  $('suivant').innerHTML = suiv ? `<div class="mini"><video src="${V[suiv.ex.k][R.coach]}" autoplay muted loop playsinline></video></div><div>Ensuite : <b>${suiv.ex.n}</b><br>${suiv.etape}</div>` : '<div>🏁 Dernier exercice, finis en beauté !</div>';
+  majChrono();
+}
+function majChrono() {
+  $('sec').textContent = S.reste;
+  $('arc').style.stroke = S.phase === 'recup' ? '#fbbf24' : '#ef4444';
+  $('arc').style.strokeDashoffset = (263.9 * (1 - S.reste / S.total)).toFixed(1);
+  const fait = S.i + (S.phase === 'recup' ? 0 : 1 - S.reste / S.total);
+  $('prog').style.width = (100 * fait / S.P.length).toFixed(1) + '%';
+}
+function seconde() {
+  if (!S || S.pause || S.fini) return;
+  S.reste--;
+  if (S.phase === 'effort') {
+    if (S.reste === Math.floor(S.total / 2) && S.total >= 30) { bulle(pick(PHRASES.mi)); if (['gainage_lateral', 'etire_quadri', 'etire_epaule'].includes(S.P[S.i].ex.k)) { voix(['cote']); bulle('On change de côté !'); } }
+    if (S.reste > 0 && S.reste <= 3) { bip(880, .09); }
+  } else if (S.reste > 0 && S.reste <= 3) bip(660, .09);
+  if (S.reste <= 0) return suite();
+  majChrono();
+}
+function suite() {
+  if (S.phase === 'effort') {
+    vibrer(200); bip(1040, .25);
+    const it = S.P[S.i], nx = S.P[S.i + 1];
+    if (!nx) return terminer();
+    if (it.tour !== undefined && nx.tour !== it.tour) bulle(pick(PHRASES.tour));
+    S.i++;
+    // pas de récup pendant l'échauffement ni le retour au calme : on enchaîne
+    if (nx.calme || nx.etape === 'Échauffement') { S.phase = 'effort'; S.reste = S.total = nx.d; }
+    else { S.phase = 'recup'; S.reste = S.total = S.rec; }
+  } else { S.phase = 'effort'; S.reste = S.total = S.P[S.i].d; bip(880, .2, 2); vibrer([100, 60, 100]); }
+  entrer();
+}
+function terminer() {
+  S.fini = true; clearInterval(tic); try { verrou && verrou.release(); } catch (e) {}
+  const min = Math.max(1, Math.round((Date.now() - S.t0) / 60000));
+  $('stTemps').textContent = min; $('stEx').textContent = S.P.length; $('stTours').textContent = S.tours;
+  $('finVid').src = V.jacks[R.coach];
+  $('finTexte').textContent = R.coach === 'h' ? 'Le Sergent-Chef est fier de toi. Bonne garde !' : 'La Sergente-Chef est fière de toi. Bonne garde !';
+  voix(['fin']);
+  try { localStorage.setItem('mp_garde_fait', JSON.stringify({ id: Date.now(), d: new Date().toISOString().slice(0, 10), min, coach: R.coach })); } catch (e) {} bip(880, .15, 3); vibrer([200, 100, 200]);
+  montrer('fin');
+}
+$('go').onclick = () => { bip(1, .01); demarrer(); };
+$('pause').onclick = () => { if (!S) return; S.pause = !S.pause; $('pause').textContent = S.pause ? '▶ Reprendre' : '⏸ Pause';
+  $('scene').classList.toggle('pause', S.pause); if (S.pause) { $('reposTitre').textContent = 'Pause'; $('reposTexte').textContent = 'On reprend quand tu veux'; $('vid').pause(); } else { $('vid').play(); if (S.phase === 'recup') { $('reposTitre').textContent = 'Récup'; $('reposTexte').textContent = 'Prochain : ' + S.P[S.i].ex.n; } } };
+$('passer').onclick = () => { if (S && !S.fini && !S.pause) suite(); };
+$('quitter').onclick = () => { if (confirm('Arrêter la séance ?')) { S.fini = true; clearInterval(tic); try { speechSynthesis.cancel(); verrou && verrou.release(); } catch (e) {} montrer('accueil'); majAccueil(); } };
+$('encore').onclick = () => { location.href = 'index.html'; };
+</script>
+</body>
+</html>
