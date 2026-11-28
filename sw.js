@@ -1,5 +1,5 @@
 /* Mon Programme : service worker pour l'installation et l'usage hors ligne */
-const CACHE = 'mon-programme-v159';
+const CACHE = 'mon-programme-v160';
 const CORE = ['./', './index.html', './manifest.webmanifest', './vendor/firebase-app-compat-9.22.0.js', './vendor/firebase-firestore-compat-9.22.0.js', './vendor/firebase-auth-compat-9.22.0.js', './icon-192-v2.png', './icon-512-v2.png', './apple-touch-icon-v2.png', './garage-icon.png'];
 
 self.addEventListener('install', e => {

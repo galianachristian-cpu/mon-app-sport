@@ -890,6 +890,14 @@ body.ecran-on #mini.show{bottom:calc(16px + var(--safe-b))}
 .ec-meal b{font-family:'Outfit',system-ui,sans-serif;font-size:18px;display:block}
 .ec-meal small{color:var(--soft);font-size:13px}
 .ec-meal .go{margin-left:auto;font-size:22px;color:var(--muted)}
+.pzc{margin-top:10px;padding:10px 14px}.pz{display:flex;align-items:center;gap:10px;padding:6px 0}.pz+.pz{border-top:1px solid var(--line)}.pz b{display:block;font-size:14.5px}.pz small{font-size:12.5px}
+.pz .av{background:linear-gradient(135deg,var(--p1),var(--p2))}
+.pz-ok small,.ec-pause.pz-ok{color:var(--ok,#22c55e)}.pz-mid small,.ec-pause.pz-mid{color:#f59e0b}.pz-bad small,.ec-pause.pz-bad{color:#ef4444}
+.pz-mid b::before,.pz-bad b::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;background:currentColor}
+.pz-mid b{color:#f59e0b}.pz-bad b{color:#ef4444}
+.pzw{font-size:13.5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}.pzr{font-size:13px;margin-top:4px;color:var(--soft)}
+.pzrep{font-size:13.5px;margin-top:8px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);border-radius:10px;padding:8px 10px}
+.ec-pause{font-size:14px;font-weight:700;margin:4px 0 6px}
 .svid{width:100%;max-height:46vh;object-fit:cover;border-radius:14px;background:#000;margin-top:4px}
 .scard{margin-top:12px}.scard .sh{display:flex;gap:12px;align-items:center}.scard .sh img{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#fff}.scard .sh .ph{font-size:44px}
 .scard .sh b{display:block;font-size:16px;line-height:1.25}.scard .sh small{color:var(--muted);font-size:12.5px}
@@ -1881,7 +1889,7 @@ async function load(){
   if (push || !src.data || !src.week || (prog && prog.lastWk === w && week !== src.week)) save(true);
   else if (!remoteReady) safeSet(backupKey(), snapshot());
   setStatus(online ? 'saved' : 'local', online ? 'Synchronisé' : 'Sur cet appareil');
-  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaKiwiOnce(); etirOff(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek();
+  beaFitOnce(); beaKcalOnce(); beaPompesOnce(); beaP12Once(); beaNut1500Once(); beaBanOnce(); beaKiwiOnce(); etirOff(); beaWeOnce(); beaAltOnce(); beaFatOnce(); beaP12Week(); { const kc2 = beaKcalCoach(); if (kc2) setTimeout(() => toast(kc2.to !== kc2.from ? `🍽️ Coach : ${kc2.from} → ${kc2.to} kcal par jour (${kc2.why})` : `🍽️ Coach : ${kc2.why}`), 2600); } absOnce(); animOnce(); rotateWeek(); repriseCheck();
   const adj = autoAdjust(); if (adj) setTimeout(() => toast(`🤖 Nutrition : ${adj.delta > 0 ? '+' : ''}${adj.delta} kcal/jour (${adj.why})`), 1500);
   if (badges == null) checkBadges(true);
   loadOther(); loadFoyer().then(() => { budgetOnce(); batchOnce(); if (view === 'nutrition') render(); });
@@ -1983,6 +1991,7 @@ async function switchProfile(id, unlocked){
 }
 /* ---------- quoi de neuf : affiché une fois après chaque mise à jour, et depuis la fenêtre des profils ---------- */
 const NEWS = [
+  [160, [['⏱️', 'Depuis la dernière séance', 'pour toi et Béa, en vert, orange ou rouge : les jours de repos prévus ne comptent pas (Séance, et sur l’iPad)'], ['📅', 'Séances manquées de la semaine', 'avec un jour de repos proposé pour rattraper (jamais le dimanche)'], ['🔄', 'Séance de reprise', 'après 5 jours sans séance : une série de moins sur chaque exercice, mêmes charges, normal dès le lendemain'], ['🔔', 'Rappel « pause trop longue »', 'après 3 jours sans séance (Programme → Rappels)']]],
   [159, [['📷', 'Scanner un produit', 'note sur 100, Nutri-Score, additifs, calories et protéines, et alerte si un aliment ne convient pas à l’un de vous deux (Nutrition → Courses → « Scanner un produit »)'], ['📱', 'Le scan marche aussi sur iPhone et iPad', 'y compris pour ajouter un aliment au journal']]],
   [158, [['⚡', 'Séance HIIT guidée remise dans l’ordre', 'échauffement → HIIT → abdos → retour au calme tout à la fin ; plus aucun étirement pour Moi']]],
   [157, [['🧘', 'Plus d’étirements pour Moi', 'retirés de toutes tes séances (fin de séance et séance souplesse du jour de repos), plus de proposition « Retour au calme » après la séance ; l’échauffement reste']]],
@@ -2236,6 +2245,58 @@ function duoLine(){
   const t = (od.titles || {})[k] || DAY_SUB[todayIdx()];
   return `<button class="duo" data-go2="progres" style="--p1:${other.p.a1};--p2:${other.p.a2}"><span class="av sm">${esc(other.p.nom.slice(0, 1).toUpperCase())}</span><span><b>${esc(other.p.nom)}</b> aujourd’hui : ${l.length ? `${n}/${l.length} · ${esc(t)}` : 'repos'}</span>${l.length && n === l.length ? ' 🎉' : ''}</button>`;
 }
+/* ============================================================
+   DEPUIS LA DERNIÈRE SÉANCE : jours écoulés, séances prévues manquées (les jours de repos ne comptent pas),
+   bilan de la semaine avec rattrapage, séance de reprise allégée après 5 jours, rappel après 3 jours
+   ============================================================ */
+const planDayOf = (P, i) => ((P.data || {})['day' + i] || []).some(e => e && !isSkip(e));
+const wkDay = ds => (new Date(ds + 'T12:00').getDay() + 6) % 7;
+function lastSessDate(P){
+  const td = today(); let last = null;
+  (P.hist || []).forEach(h => { if (h && h.d && h.d <= td && (!last || h.d > last)) last = h.d; });
+  const D = wkDates(curWk()); for (let i = 0; i < 7; i++) if (D[i] <= td && ((P.done || {})['day' + i] || []).some(Boolean) && (!last || D[i] > last)) last = D[i];
+  return last;
+}
+function pauseInfo(P){
+  if (!P) return null; const last = lastSessDate(P); if (!last) return null;
+  const t0 = new Date(today() + 'T12:00'), l0 = new Date(last + 'T12:00'), days = Math.max(0, Math.round((t0 - l0) / 864e5));
+  let missed = 0; for (let k = 1; k < days; k++){ const d = new Date(l0); d.setDate(d.getDate() + k); if (planDayOf(P, (d.getDay() + 6) % 7)) missed++; }
+  return { last, days, missed, lvl: days <= 1 || !missed ? 0 : missed === 1 ? 1 : 2 };
+}
+const pauseTxt = I => !I ? 'Pas encore de séance enregistrée' : I.days === 0 ? 'Séance faite aujourd’hui' : I.days === 1 ? 'Dernière séance : hier' : `Dernière séance : il y a ${I.days} jours`;
+const pauseSub = I => !I || I.days <= 1 ? '' : I.missed ? `${I.missed} séance${I.missed > 1 ? 's' : ''} prévue${I.missed > 1 ? 's' : ''} manquée${I.missed > 1 ? 's' : ''}` : 'repos prévu, rien de manqué';
+/* semaine en cours : séances prévues faites / manquées (jours passés), et un jour de repos pour rattraper (jamais le dimanche) */
+function weekMiss(P){
+  const D = wkDates(curWk()), ti = todayIdx(), hd = new Set((P.hist || []).map(h => h.d)), did = i => hd.has(D[i]) || ((P.done || {})['day' + i] || []).some(Boolean);
+  let ok = 0; const miss = [];
+  for (let i = 0; i < 7; i++){ if (!planDayOf(P, i)) continue; if (did(i)) ok++; else if (i < ti) miss.push(i); }
+  const todayFree = !planDayOf(P, ti) && !did(ti), rest = [];
+  for (let i = ti; i < 6; i++) if (!planDayOf(P, i) && (i > ti || todayFree)) rest.push(i);
+  return { ok, miss, rest };
+}
+/* séance de reprise : après 5 jours sans séance, une série de moins sur chaque exercice du jour (charges conservées), rétabli le lendemain */
+function repriseCheck(){
+  if (!data) return; const td = today(), R = coach && coach.reprise;
+  if (R && R.d !== td){ ((data[R.k] || [])).forEach(e => { if (e && e.rs != null){ e.s = e.rs; delete e.rs; } }); coach = Object.assign({}, coach); delete coach.reprise; save(); }
+  if (coach && coach.reprise) return;
+  const k = 'day' + todayIdx(), L = data[k] || [], me = { data, done: week === curWk() ? done : {}, hist };
+  if (!planDayOf(me, todayIdx()) || (done[k] || []).some(Boolean)) return;
+  const I = pauseInfo(me); if (!I || I.days < 5) return;
+  let n = 0; L.forEach(e => { if (e && !isSkip(e) && !e.ph && !e.walk && typ(e) !== 'c' && (+e.s || 0) > 1){ e.rs = e.s; e.s = e.s - 1; n++; } });
+  if (n){ coach = Object.assign({}, coach, { reprise: { d: td, k, days: I.days } }); save(); }
+}
+const repriseOn = () => !!(coach && coach.reprise && coach.reprise.d === today());
+function pauseCard(){
+  const me = { p: profile, data, done: week === curWk() ? done : {}, hist }, ot = other && other.d ? ecPerson(other.p.id) : null;
+  const line = P => { const I = pauseInfo(P), c = ['ok', 'mid', 'bad'][I ? I.lvl : 0], sub = pauseSub(I);
+    return `<div class="pz pz-${c}"><span class="av sm" style="--p1:${P.p.a1};--p2:${P.p.a2}">${esc(P.p.nom.slice(0, 1).toUpperCase())}</span><div><b>⏱️ ${pauseTxt(I)}</b>${sub ? `<small>${sub}</small>` : ''}</div></div>`; };
+  const W = weekMiss(me), DN = n => DAY_NAMES[n].toLowerCase();
+  const wl = W.ok + W.miss.length ? `<p class="pzw">📅 Cette semaine : <b>${W.ok} faite${W.ok > 1 ? 's' : ''}</b>${W.miss.length ? ` · <b>${W.miss.length} manquée${W.miss.length > 1 ? 's' : ''}</b> (${W.miss.map(DN).join(', ')})` : ''}</p>
+    ${W.miss.length ? `<p class="pzr">${W.rest.length ? `💡 Tu peux rattraper ${W.miss.length > 1 ? 'la plus importante' : 'ta séance'} ${W.rest[0] === todayIdx() ? '<b>aujourd’hui</b>' : `<b>${DN(W.rest[0])}</b>`} (jour de repos) : touche ${W.miss.length > 1 ? 'un des jours manqués' : 'le jour manqué'} ci-dessous pour cocher en le faisant.` : '💡 Pas de jour libre pour rattraper cette semaine : ne double pas les séances, on repart normalement lundi.'}</p>` : ''}` : '';
+  const rp = repriseOn() ? `<p class="pzrep">🔄 <b>Séance de reprise</b> : ${coach.reprise.days} jours sans séance, alors <b>une série de moins</b> sur chaque exercice aujourd’hui, mêmes charges. Tout redevient normal demain.</p>` : '';
+  return `<div class="card pzc">${line(me)}${ot ? line(ot) : ''}${wl}${rp}</div>`;
+}
+
 // série de jours d'entraînement consécutifs (aujourd'hui compris s'il y a déjà quelque chose)
 function streakDays(){ const S = new Set(hist.map(h => h.d)); let n = 0; const d = new Date(); for (let i = 0; i < 400; i++){ if (S.has(ymd(d))) n++; else if (i > 0) break; d.setDate(d.getDate() - 1); } return n; }
 // trois anneaux concentriques (séance, calories, eau)
@@ -2350,6 +2411,7 @@ function viewSeance(){
   const social = currentDay === todayIdx() ? aventHtml(false) + (hOn('duo') ? duoLine() + cheerCard() : '') + (hOn('actions') ? actionsCard() : '') + (hOn('defis') ? duoChallenges() : '') + (hOn('bilan') ? reportBanner() : '') : '';
   $('#app').innerHTML = `<div class="fade">
   ${todayCard()}
+  ${currentDay === todayIdx() ? pauseCard() : ''}
   ${progFixCard()}
   ${currentDay === todayIdx() ? p12MedCard() : ''}
   ${todayIdx() >= 5 && currentDay === todayIdx() ? nextWeekCard() : ''}
@@ -7511,12 +7573,12 @@ function sheetBatch(){
 /* ============================================================
    RAPPELS (notifications + agenda)
    ============================================================ */
-const remCfg = () => (settings.rem = Object.assign({ seance:true, eau:false, pesee:true, bilan:true }, settings.rem || {}));
+const remCfg = () => (settings.rem = Object.assign({ seance:true, pause:true, eau:false, pesee:true, bilan:true }, settings.rem || {}));
 const notifOk = () => 'Notification' in window && Notification.permission === 'granted';
 function remCard(){
   const r = remCfg(), sup = 'Notification' in window, perm = sup ? Notification.permission : 'denied';
   return `<div class="card" style="margin-top:10px"><b>🔔 Notifications de l’appli</b>
-    ${[['seance','Séance du jour','À l’heure choisie ci-dessus'],['eau','Boire de l’eau','10 h, 12 h, 14 h, 16 h et 18 h si tu es en retard'],['pesee','Pesée du dimanche','Le dimanche matin'],['bilan','Bilan de la semaine','Le dimanche à 19 h']].map(([k, l, s]) => `<div class="toggle"><span>${l}<small>${s}</small></span><button class="sw ${r[k] ? 'on' : ''}" data-x="remopt" data-k="${k}" role="switch" aria-checked="${r[k]}" aria-label="${l}"></button></div>`).join('')}
+    ${[['seance','Séance du jour','À l’heure choisie ci-dessus'],['pause','Pause trop longue','À l’heure choisie, après 3 jours sans séance avec au moins une séance prévue manquée'],['eau','Boire de l’eau','10 h, 12 h, 14 h, 16 h et 18 h si tu es en retard'],['pesee','Pesée du dimanche','Le dimanche matin'],['bilan','Bilan de la semaine','Le dimanche à 19 h']].map(([k, l, s]) => `<div class="toggle"><span>${l}<small>${s}</small></span><button class="sw ${r[k] ? 'on' : ''}" data-x="remopt" data-k="${k}" role="switch" aria-checked="${r[k]}" aria-label="${l}"></button></div>`).join('')}
     ${!sup ? '<p class="muted" style="font-size:12.5px;margin-top:8px">Ce navigateur ne gère pas les notifications. Sur iPhone, installe d’abord l’appli sur l’écran d’accueil. Utilise sinon l’agenda ci-dessous.</p>'
       : perm === 'granted' ? '<p style="font-size:12.5px;margin-top:8px;color:var(--ok)">✓ Notifications autorisées</p>' : perm === 'denied' ? '<p class="muted" style="font-size:12.5px;margin-top:8px">Notifications bloquées : autorise-les dans les réglages du navigateur pour ce site.</p>' : '<button class="btn pri block" data-x="remperm" style="margin-top:10px">🔔 Autoriser les notifications</button>'}
     <p class="muted" style="font-size:12px;margin-top:8px">Les notifications arrivent quand l’appli est ouverte ou en arrière-plan. Pour être prévenu même appli fermée, ajoute aussi les rappels à ton agenda :</p>
@@ -7531,6 +7593,9 @@ function remCheck(){
   const r = remCfg(), n = new Date(), h = n.getHours() + n.getMinutes() / 60, d = today(), sent = safeGet('mp_notif', {}), once = (key, fn) => { if (sent[key]) return; sent[key] = 1; fn(); };
   Object.keys(sent).forEach(k => { if (k.slice(0, 10) < d) delete sent[k]; });
   const [rh, rm] = (settings.rappelH || '18:00').split(':').map(Number), rH = rh + rm / 60, k = 'day' + todayIdx(), L = data[k] || [];
+  /* 3 jours ou plus sans séance, dont au moins une séance prévue manquée : un rappel doux (remplace celui de la séance du jour) */
+  const PZ = r.pause ? pauseInfo({ data, done: week === curWk() ? done : {}, hist }) : null;
+  if (PZ && PZ.days >= 3 && PZ.missed >= 1 && h >= rH && h < rH + 1){ once(d + '-pause', () => notify(`⏱️ ${PZ.days} jours sans séance`, (L.length ? `Aujourd’hui : ${dayTitle(todayIdx())}. ` : 'Même 20 minutes de marche, ça compte. ') + 'On s’y remet ?', 'pause')); sent[d + '-seance'] = 1; }
   if (r.seance && L.length && h >= rH && h < rH + 1 && !L.every((x, j) => (done[k] || [])[j] || isSkip(x))) once(d + '-seance', () => notify('🏋️ C’est l’heure de ta séance', dayTitle(todayIdx()) + ' · ' + L.length + ' exercices. Commence par ton bilan de forme !', 'seance'));
   if (r.eau){ const f = forme[d] || {}, g = eauGoal(); [10, 12, 14, 16, 18].forEach(H => { if (h >= H && h < H + 1){ const exp = Math.round(g * (H - 8) / 12); if ((f.eau || 0) < exp) once(d + '-eau' + H, () => notify('💧 Pense à boire', `${f.eau || 0} verre${(f.eau || 0) > 1 ? 's' : ''} sur ${g} aujourd’hui. Un grand verre maintenant ?`, 'eau')); } }); }
   if (r.pesee && todayIdx() === 6 && h >= 8 && h < 11 && !body.some(b => b.d === d && b.p != null)) once(d + '-pesee', () => notify('⚖️ Pesée du dimanche', 'À jeun, après être passé aux toilettes. Note-la dans Progrès → Corps.', 'pesee'));
@@ -8307,7 +8372,7 @@ async function lockAction(k){
 }
 
 // version de l'appli (affichée dans la fenêtre des profils) et mise à jour automatique
-const APP_VERSION = 159;
+const APP_VERSION = 160;
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || G || DU) return; reloaded = true; location.reload(); });
@@ -8505,7 +8570,7 @@ function ecPersonCol(pid){
   const p0 = PROFILES.find(p => p.id === pid), P = ecPerson(pid), col = (P ? P.p : p0).a1;
   const head = `<h3><span class="av" style="background:${col}">${esc(ecNom(P ? P.p : p0).slice(0, 1).toUpperCase())}</span>${esc(ecNom(P ? P.p : p0))}</h3>`;
   if (!P) return `<section class="ec-col" style="--c:${col}">${head}<p class="ec-rest">Chargement…</p></section>`;
-  const di = todayIdx(), S = ecSession(P, di), st = ecStreak(P.hist), pc = S.list.length ? Math.round(S.nOk * 100 / S.list.length) : 0;
+  const di = todayIdx(), S = ecSession(P, di), st = ecStreak(P.hist), pc = S.list.length ? Math.round(S.nOk * 100 / S.list.length) : 0, PI = pauseInfo(P);
   const tomorrow = di < 6 ? ecSession(P, di + 1) : null;
   const MAX = 7, shown = S.list.slice(0, MAX);
   const body = S.list.length ? `<div class="ec-sub">🏋️ ${esc(S.title)} · ${S.list.length} exercices${S.min ? ` · ~${S.min} min` : ''}</div>
@@ -8518,6 +8583,7 @@ function ecPersonCol(pid){
   const W = ecWeightInfo(P);
   return `<section class="ec-col" style="--c:${col}">${head}
     ${st ? `<span class="ec-streak">🔥 ${st} jour${st > 1 ? 's' : ''} d’affilée</span>` : ''}
+    ${PI && PI.days >= 1 ? `<div class="ec-pause pz-${['ok', 'mid', 'bad'][PI.lvl]}">⏱️ ${pauseTxt(PI)}${pauseSub(PI) ? ` · ${pauseSub(PI)}` : ''}</div>` : ''}
     ${remind ? `<div class="ec-remind">💪 ${esc(ecNom(P.p))}, ta séance${S.min ? ` de ~${S.min} min` : ''} t’attend !</div>` : ''}
     ${body}
     <div class="ec-wt">⚖️ ${W ? `<span>${ecKg(W.p)} kg${W.today ? ' aujourd’hui' : ''}</span>${W.delta ? `<span class="${W.delta < 0 ? 'dn' : 'up'}">${W.delta > 0 ? '+' : ''}${ecKg(W.delta)} kg en 7 j</span>` : ''}` : '<span>pas encore de pesée</span>'}<button data-ec="weigh" data-pid="${pid}">${W && W.today ? 'Corriger' : 'Peser'}</button></div>
