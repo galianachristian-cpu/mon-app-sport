@@ -197,6 +197,15 @@ const check = (name, ok, detail) => { n++; if (ok) console.log('  ok  ' + name);
     const none = scanScore({ nutriments: {}, additives_tags: [] }).v === null;
     const sav = profile; let ex = []; try{ ex = scanExcl({ product_name_fr: 'Pâte à tartiner', ingredients_text_fr: 'sucre, huile de palme, émulsifiant : lécithines [soja], kiwi' }); }finally{}
     return a && e && r && est && none && ex.some(t => /Kiwi/i.test(t) && /Béa/.test(t)) && !ex.some(t => /soja/i.test(t)); }));
+  check('Pause : jours depuis la dernière séance, séances prévues manquées (repos exclus), reprise allégée puis rétablie', await p.evaluate(() => {
+    const ago = n => { const d = new Date(); d.setDate(d.getDate() - n); return ymd(d); }, D = {}; for (let i = 0; i < 7; i++) D['day' + i] = i === 6 ? [] : [{ n: 'Squat', t: 'f', s: 4, bs: 4 }];
+    const I = pauseInfo({ data: D, done: {}, hist: [{ d: ago(3) }] }), R = pauseInfo({ data: { day0: [] }, done: {}, hist: [{ d: ago(4) }] });
+    const sv = [data, hist, coach, done, save], k = 'day' + todayIdx(); let ok;
+    try{ save = () => {}; data = JSON.parse(JSON.stringify(D)); data[k] = [{ n: 'Squat', t: 'f', s: 4, bs: 4 }, { n: 'Rameur', t: 'c', s: 1 }]; hist = [{ d: ago(6) }]; done = {}; coach = {}; week = curWk();
+      repriseCheck(); const red = data[k][0].s === 3 && data[k][1].s === 1 && repriseOn();
+      coach.reprise.d = ago(1); hist.push({ d: ago(1) }); repriseCheck(); ok = red && data[k][0].s === 4 && !coach.reprise; }
+    finally{ [data, hist, coach, done, save] = sv; }
+    return I.days === 3 && I.missed === 2 && I.lvl === 2 && R.missed === 0 && R.lvl === 0 && ok; }));
   check('Budget : ajustement sans toucher au repas plaisir ni en mettre en semaine', await p.evaluate(() => { const sf = saveFoyer, sb = clone(foyer.budget || null), wk = wkShift(curWk(), 1), sp = foyer.plans[wk]; saveFoyer = () => {};
     foyer.plans[wk] = genPlan(wk); const sun = ridOf(foyer.plans[wk], 6, 'dej', profile.id), c0 = weekCost(wk, 0); foyer.budget = { max: Math.round(c0 * .8), store: 'moyen' }; budgetFit(wk);
     const ok = ridOf(foyer.plans[wk], 6, 'dej', profile.id) === sun && weekCost(wk, 0) < c0 && ![0, 1, 2, 3, 4, 5].some(d => ['dej', 'din'].some(m => REC_BY[ridOf(foyer.plans[wk], d, m, profile.id)].pl)) && !!STORES.promo;
